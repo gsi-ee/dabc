@@ -19,6 +19,11 @@
 #include "dabc/Buffer.h"
 #include "hadaq/Iterator.h"
 
+#include <cstdlib>
+#include <cstdio>
+#include <fstream>
+#include <streambuf>
+
 hadaq::MonitorModule::MonitorModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fInterval(1.),
@@ -36,6 +41,8 @@ hadaq::MonitorModule::MonitorModule(const std::string &name, dabc::Command cmd) 
    fTopFolder = Cfg("TopFolder", cmd).AsStr(fTopFolder);
 
    fAddrs = Cfg("Addrs", cmd).AsUIntVect();
+
+   fShellCmd = Cfg("ShellCmd", cmd).AsStr("du -d 0 .");
 
    fWorkerHierarchy.Create("TRBNET");
 
@@ -68,7 +75,29 @@ void hadaq::MonitorModule::OnThreadAssigned()
 
 uint32_t hadaq::MonitorModule::DoRead(uint32_t addr)
 {
-   return addr;
+   std::string tmpfile = "output.log";
+
+   std::string cmd = dabc::format(fShellCmd.c_str(), addr);
+
+   cmd.append(dabc::format(" >%s 2<&1", tmpfile.c_str()));
+
+   // execute command
+   std::system(cmd.c_str());
+
+   std::ifstream t(tmpfile);
+   std::string str((std::istreambuf_iterator<char>(t)),
+                    std::istreambuf_iterator<char>());
+
+   // remove temporary file
+   std::remove(tmpfile.c_str());
+
+   unsigned value = 0;
+
+   std::sscanf(str.c_str(),"%u", &value);
+
+   // DOUT0("Reading addr %x result %s %u", addr, str.c_str(), value);
+
+   return value;
 }
 
 
@@ -97,9 +126,9 @@ bool hadaq::MonitorModule::ReadAllVariables(dabc::Buffer &buf)
    for (unsigned n=0; n < fAddrs.size(); ++n) {
 
       iter.subevnt()->SetValue(rawdata++, fAddrs[n]); // write address
-      iter.subevnt()->SetValue(rawdata++, 0x1234567); // write value
+      // iter.subevnt()->SetValue(rawdata++, 0x1234567); // write value
 
-      // iter.subevnt()->SetValue(rawdata++, DoRead(fAddrs[n])); // write value
+      iter.subevnt()->SetValue(rawdata++, DoRead(fAddrs[n])); // write value
    }
 
    // closing buffer
