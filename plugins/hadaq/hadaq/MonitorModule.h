@@ -34,6 +34,7 @@ namespace hadaq {
 
          double  fInterval;       ///< Time interval for reading in seconds
          std::string fTopFolder;  ///< name of top folder, which should exists also in every variable
+         unsigned fSubevId;       ///< subevent id
          unsigned fTriggerType;   ///< trigger type
          std::string fShellCmd;   ///< shell command with formats pattern
 
