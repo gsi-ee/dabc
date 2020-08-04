@@ -40,12 +40,13 @@ void dabc::MultiplexerModule::ProcessInputEvent(unsigned port)
 {
    fQueue.Push(port);
 
-//   DOUT0("MultiplexerModule %s process inp event from input %u", GetName(), id);
+   if (port >= NumInputs())
+      EOUT("MultiplexerModule %s process inpevent from not existing input %u total %u", GetName(), port, NumInputs());
 
    CheckDataSending();
 }
 
-void dabc::MultiplexerModule::ProcessOutputEvent(unsigned indx)
+void dabc::MultiplexerModule::ProcessOutputEvent(unsigned)
 {
    CheckDataSending();
 }
@@ -58,9 +59,17 @@ void dabc::MultiplexerModule::CheckDataSending()
    while (CanSendToAllOutputs() && (fQueue.Size()>0)) {
       unsigned id = fQueue.Pop();
 
+      if (id >= NumInputs()) {
+         EOUT("MultiplexerModule %s wrong input port id %u, use 0", GetName(), id);
+         id = 0;
+      }
+
       dabc::Buffer buf = Recv(id);
 
-      if (buf.null()) EOUT("Fail to get buffer from input %u", id);
+      if (buf.null())
+         EOUT("Fail to get buffer from input %u", id);
+//      else
+//         DOUT0("Sending buffer %u to all outputs", buf.GetTotalSize());
 
       SendToAllOutputs(buf);
    }
@@ -89,7 +98,7 @@ dabc::RepeaterModule::RepeaterModule(const std::string &name, dabc::Command cmd)
 
 bool dabc::RepeaterModule::ProcessRecv(unsigned port)
 {
-   bool isout = (port<NumOutputs());
+   bool isout = (port < NumOutputs());
 
    if (isout && !CanSend(port)) return false;
 

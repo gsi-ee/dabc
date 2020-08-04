@@ -165,8 +165,12 @@ bool hadaq::ReadIterator::NextEvent()
 
 bool hadaq::ReadIterator::NextSubeventsBlock()
 {
-   if (fBufType == mbt_HadaqTransportUnit) return NextHadTu();
-   if (fBufType == mbt_HadaqEvents) return NextEvent();
+   if (fBufType == mbt_HadaqTransportUnit)
+      return NextHadTu();
+
+   if (fBufType == mbt_HadaqEvents)
+      return NextEvent();
+
    if (fBufType == mbt_HadaqSubevents) {
       // here only subevents
       if (!fFirstEvent) fEvPtr.reset();

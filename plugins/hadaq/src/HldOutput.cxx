@@ -36,10 +36,12 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fRunSlave(false),
    fLastRunNumber(0),
    fRunNumber(0),
+   fEventNumber(0),
    fEBNumber(0),
    fUseDaqDisk(false),
    fRfio(false),
    fLtsm(false),
+   fPlainName(false),
    fUrlOptions(),
    fLastPrefix(),
    fFile()
@@ -50,6 +52,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fUseDaqDisk = url.GetOptionInt("diskdemon", 0); // if specified, use number of /data partition from daq_disk demon
    fRfio = url.HasOption("rfio");
    fLtsm = url.HasOption("ltsm");
+   fPlainName = url.HasOption("plain") && (GetSizeLimitMB() <= 0);
    if (fRfio) {
       dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface");
 
@@ -149,9 +152,9 @@ bool hadaq::HldOutput::StartNewFile()
       pos = fname.rfind(".HLD");
 
    if ((pos != std::string::npos) && (pos == fname.length()-4)) {
-      fname.insert(pos, extens);
+      if (!fPlainName) fname.insert(pos, extens);
    } else {
-      fname += extens;
+      if (!fPlainName) fname += extens;
       fname += ".hld";
    }
    fCurrentFileName = fname;
@@ -173,7 +176,7 @@ bool hadaq::HldOutput::StartNewFile()
        fCurrentFileName=tmp;
        DOUT0("Note: Original file name %s was changed by implementation to %s", previous.c_str(), CurrentFileName().c_str());
      }
-   
+
    if (fRunSlave && fRfio)
       DOUT1("File %s is open for writing", CurrentFileName().c_str());
 
@@ -244,13 +247,19 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    bool is_eol = (buf.GetTypeId() == hadaq::mbt_HadaqStopRun);
 
-   if ((buf.GetTypeId() != hadaq::mbt_HadaqEvents) && !is_eol) {
+   bool is_subev = (buf.GetTypeId() == hadaq::mbt_HadaqSubevents);
+
+   bool is_events = (buf.GetTypeId() == hadaq::mbt_HadaqEvents);
+
+   if (!is_events && !is_eol && !is_subev) {
       ShowInfo(-1, dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
+      EOUT("Discard buffer %u", buf.GetTypeId());
+
       return dabc::do_Error;
    }
 
-   unsigned cursor(0);
-   bool startnewfile(false);
+   unsigned cursor = 0;
+   bool startnewfile = false;
    if (is_eol) {
       // just reset number
       fRunNumber = 0;
@@ -289,23 +298,23 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
          // only if file opened for writing, write rest buffers
          if (fFile.isWriting())
-         for (unsigned n=0;n<buf.NumSegments();n++) {
+            for (unsigned n=0;n<buf.NumSegments();n++) {
 
-            if (payload==0) break;
+               if (payload==0) break;
 
-            unsigned write_size = buf.SegmentSize(n);
-            if (write_size > payload) write_size = payload;
+               unsigned write_size = buf.SegmentSize(n);
+               if (write_size > payload) write_size = payload;
 
-            if (fRfio)
-               DOUT1("HldOutput write %u bytes from buffer with old runid", write_size);
+               if (fRfio)
+                  DOUT1("HldOutput write %u bytes from buffer with old runid", write_size);
 
-            if (!fFile.WriteBuffer(buf.SegmentPtr(n), write_size)) return dabc::do_Error;
+               if (!fFile.WriteBuffer(buf.SegmentPtr(n), write_size)) return dabc::do_Error;
 
-            DOUT1("HldOutput did flushes %d bytes (%d events) of old runid in buffer segment %d to file",
-                  write_size, numevents, n);
+               DOUT1("HldOutput did flushes %d bytes (%d events) of old runid in buffer segment %d to file",
+                     write_size, numevents, n);
 
-            payload -= write_size;
-         }// for
+               payload -= write_size;
+            }// for
       }
 
    } else {
@@ -338,44 +347,75 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    if (!fFile.isWriting()) return dabc::do_Error;
 
-   unsigned total_write_size(0);
+   unsigned total_write_size = 0, num_events = 0;
 
-   for (unsigned n=0;n<buf.NumSegments();n++) {
+   if (is_subev) {
+      // this is list of subevents in the buffer, one need to add artificial events headers for each subevents
 
-      unsigned write_size = buf.SegmentSize(n);
+      hadaq::RawEvent evnt;
 
-      if (cursor>=write_size) {
-         // skip segment completely
-         cursor -= write_size;
-         continue;
+      hadaq::ReadIterator iter(buf);
+      while (iter.NextSubeventsBlock()) {
+
+         if (!iter.NextSubEvent())
+            return dabc::do_Error;
+
+         char* write_ptr = (char*) iter.subevnt();
+         unsigned write_size = iter.subevnt()->GetPaddedSize();
+
+         evnt.Init(fEventNumber++, fRunNumber);
+         evnt.SetSize(write_size + sizeof(hadaq::RawEvent));
+
+         if (!fFile.WriteBuffer(&evnt, sizeof(hadaq::RawEvent)))
+            return dabc::do_Error;
+
+         if (!fFile.WriteBuffer(write_ptr, write_size))
+            return dabc::do_Error;
+
+         total_write_size += sizeof(hadaq::RawEvent) + write_size;
+         num_events ++;
       }
 
-      char* write_ptr = (char*) buf.SegmentPtr(n);
+   } else if (is_events) {
 
-      if(startnewfile)
-      {
-         DOUT2("Wrote to %s at segment %d, cursor %d, size %d", CurrentFileName().c_str(), n, cursor,  write_size-cursor);
+      for (unsigned n=0;n<buf.NumSegments();n++) {
+
+         unsigned write_size = buf.SegmentSize(n);
+
+         if (cursor >= write_size) {
+            // skip segment completely
+            cursor -= write_size;
+            continue;
+         }
+
+         char* write_ptr = (char*) buf.SegmentPtr(n);
+
+         if(startnewfile)
+            DOUT2("Wrote to %s at segment %d, cursor %d, size %d", CurrentFileName().c_str(), n, cursor,  write_size-cursor);
+
+         if (cursor > 0) {
+            write_ptr += cursor;
+            write_size -= cursor;
+            cursor = 0;
+         }
+
+         if (fRunSlave && fRfio && startnewfile)
+            DOUT1("HldOutput write %u bytes after new file was started", write_size);
+
+         if (!fFile.WriteBuffer(write_ptr, write_size))
+            return dabc::do_Error;
+
+         if (fRunSlave && fRfio && startnewfile)
+            DOUT1("HldOutput did write %u bytes after new file was started", write_size);
+
+         total_write_size += write_size;
       }
 
-      if (cursor>0) {
-         write_ptr += cursor;
-         write_size -= cursor;
-         cursor = 0;
-      }
-
-      if (fRunSlave && fRfio && startnewfile)
-         DOUT1("HldOutput write %u bytes after new file was started", write_size);
-
-      if (!fFile.WriteBuffer(write_ptr, write_size)) return dabc::do_Error;
-
-      if (fRunSlave && fRfio && startnewfile)
-         DOUT1("HldOutput did write %u bytes after new file was started", write_size);
-
-      total_write_size += write_size;
+      num_events = hadaq::ReadIterator::NumEvents(buf);
    }
 
    // TODO: in case of partial written buffer, account sizes to correct file
-   AccountBuffer(total_write_size, hadaq::ReadIterator::NumEvents(buf));
+   AccountBuffer(total_write_size, num_events);
 
    if (fRunSlave && fRfio && startnewfile)
       DOUT1("HldOutput write complete first buffer after new file was started");

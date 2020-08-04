@@ -309,6 +309,8 @@ namespace dabc {
 
          std::string ProduceFileName(const std::string &suffix);
 
+         int GetSizeLimitMB() const { return fSizeLimitMB; }
+
       public:
 
          virtual ~FileOutput();
