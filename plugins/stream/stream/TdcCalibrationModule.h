@@ -64,6 +64,7 @@ namespace stream {
       dabc::TimeStamp fLastCalibr;            ///< use not to check for calibration very often
       int fAutoTdcMode{0};                    ///< automatic mode of TDC creation 0 - off, 1 - with linear calibr, 2 - with normal calibr
       int fAutoToTRange{0};                   ///< ToT range, 0 - normal, 1 - DiRICH
+      int fLinearNumPoints{2};                ///< number of points used in linear calibration
       std::vector<uint64_t> fTDCs;            ///< remember TDCs in the beginning
       unsigned fTRB{0};                       ///< remember TRB id, used in module name
       int fProgress;                          ///< total calibration progress

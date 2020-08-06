@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context host="localhost" name="TestCalibr">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
+      <lib value="libDabcStream.so"/>
+      <lib value="libDabcHttp.so"/>
+      <logfile value="caltest.log"/>
+      <loglevel value="1"/>
+      <loglimit value="1000"/>
+      <control value="false"/>
+      <threads_layout value="balanced"/>
+    </Run>
+
+    <HttpServer name="http" port="8090"/>
+
+    <!-- If uncommented, all internal manager structures will be published in the web server -->
+    <!-- Publisher name="publ" manager="true"/ -->
+
+    <!-- If uncommented, profiling will be enabled for all threads -->
+    <!-- Thread name="*" publ="true" prof="true"/ -->
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="1000"/>
+    </MemoryPool>
+
+    <Module name="Multi" class="dabc::MultiplexerModule">
+       <NumInputs value="1"/>
+       <NumOutputs value="12"/>
+       <InputPort name="Input0" url="hld://sample50816*.hld?reduce=0.5"/>
+     </Module>
+
+
+    <Module name="Calibr1" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output0"/>
+    </Module>
+    <Module name="Calibr2" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output1"/>
+    </Module>
+    <Module name="Calibr3" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output2"/>
+    </Module>
+    <Module name="Calibr4" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output3"/>
+    </Module>
+
+    <Module name="Calibr5" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output4"/>
+    </Module>
+    <Module name="Calibr6" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output5"/>
+    </Module>
+    <Module name="Calibr7" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output6"/>
+    </Module>
+    <Module name="Calibr8" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output7"/>
+    </Module>
+
+    <Module name="Calibr9" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output8"/>
+    </Module>
+    <Module name="Calibr10" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output9"/>
+    </Module>
+    <Module name="Calibr11" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output10"/>
+    </Module>
+    <Module name="Calibr12" class="stream::TdcCalibrationModule">
+       <InputPort name="Input0" url="Multi/Output11"/>
+    </Module>
+
+    <Module name="Calibr*">
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+
+       <!-- InputPort name="Input0" url="hld://sample5081618338111441.hld?reduce=0.5"/-->
+       <!-- InputPort name="Input0" url="hld://sample50816*.hld?reduce=0.5"/-->
+
+       <OutputPort name="Output1" url="hld://res.hld"/>
+       <OutputPort name="Output2" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+
+       <FineMin value="31"/>
+       <FineMax value="480"/>
+
+       <!-- number of TDC channels -->
+       <NumChannels value="33"/>
+
+       <EdgeMask value="2"/>
+
+       <HistFilling value="0"/>
+
+       <!-- when auto mode enabled - this is allowed range for TDC ids -->
+       <TdcMin value="0x5000"/>
+       <TdcMax value="0x8000"/>
+
+       <!-- Which calibration mode is used, when TDC created automatically:
+            0 - none, 1 - linear mode, 2 - with normal calibrations
+            In the URL it is coded as "calibr" parameter -->
+       <Mode value="1"/>
+
+       <!-- file prefix where calibration will be stored or loaded -->
+       <CalibrFile value="calfull/local"/>
+
+       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - array with trigger types -->
+       <CalibrTrigger value="0xffff"/>
+
+       <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
+       <!--  DisableCalibrationFor value="0"/-->
+
+       <!-- Number of counts in each channel to perform calibration, 0 - switch off auto calibration -->
+       <Auto value="0"/>
+
+       <!-- Number of counts for different kinds of calibrations -->
+       <CountLinear value="100000"/>
+       <CountNormal value="100000"/>
+
+       <!-- Number of points in linear calibration -->
+       <LinearNumPoints value="2"/>
+
+       <!-- Should calibrated value replace old message (true, set by default) or
+            new calibration data should be inserted before hit messages (false)
+            When Replace==false, size of HLD data increased by 25%, but original data are preserved -->
+       <Replace value="false"/>
+
+       <!-- When value=2 start calibration in begin and ends when module is stopped -->
+       <Debug value="1"/>
+       <DataRate width="4" prec="2" low="0" up="10" debug="1"/>
+
+     </Module>
+
+  </Context>
+
+</dabc>

@@ -145,6 +145,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fCountLinear = Cfg("CountLinear", cmd).AsInt(10000);
    fCountNormal = Cfg("CountNormal", cmd).AsInt(100000);
 
+   fLinearNumPoints = Cfg("LinearNumPoints", cmd).AsInt(2);
+
+
    fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
    if (!fCalibrFile.empty()) {
       if ((fAutoTdcMode < 0) && (fAutoCalibr > 0))
@@ -293,6 +296,8 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
 
    tdc->SetAutoCalibration(fAutoCalibr);
 
+   tdc->SetLinearNumPoints(fLinearNumPoints);
+
    if (!fCalibrFile.empty()) {
       if (fAutoCalibr > 0)
           tdc->SetWriteCalibration(fCalibrFile.c_str(), true);
@@ -301,6 +306,7 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
 
    if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
    if (fAutoToTRange==1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
+
 
    tdc->UseExplicitCalibration();
 
