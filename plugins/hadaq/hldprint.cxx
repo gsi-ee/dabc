@@ -132,17 +132,23 @@ const char* TdcErrName(int cnt) {
 }
 
 struct SubevStat {
-   long unsigned num;        // number of subevent seen
-   long unsigned sizesum;    // sum of all subevents sizes
-   bool          istdc;      // indicate if it is TDC subevent
+   long unsigned num{0};               // number of subevent seen
+   long unsigned sizesum{0};           // sum of all subevents sizes
+   bool          istdc{false};         // indicate if it is TDC subevent
    std::vector<long unsigned> tdcerr;  // tdc errors
-   unsigned      maxch;      // maximal channel ID
+   unsigned      maxch{0};             // maximal channel ID
 
    double aver_size() { return num>0 ? sizesum / (1.*num) : 0.; }
    double tdcerr_rel(unsigned n) { return (n < tdcerr.size()) && (num>0) ? tdcerr[n] / (1.*num) : 0.; }
 
-   SubevStat() : num(0), sizesum(0), istdc(false), tdcerr(), maxch(0) {}
+   SubevStat() = default;
    SubevStat(const SubevStat& src) : num(src.num), sizesum(src.sizesum), istdc(src.istdc), tdcerr(src.tdcerr), maxch(src.maxch) {}
+
+   void accumulate(unsigned sz)
+   {
+      num++;
+      sizesum += sz;
+   }
 
    void IncTdcError(unsigned id)
    {
@@ -883,7 +889,7 @@ int main(int argc, char* argv[])
    hadaq::RawEvent *evnt = nullptr;
 
    std::map<unsigned,SubevStat> idstat; // events id counter
-   std::map<unsigned,SubevStat> stat;   // subevents statistic
+   std::map<unsigned,SubevStat> subsubstat;   // subevents statistic
    long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
    uint64_t lastsz{0}, currsz{0};
    dabc::TimeStamp last = dabc::Now();
@@ -904,10 +910,8 @@ int main(int argc, char* argv[])
 
       if (evnt) {
 
-         if (dostat) {
-            idstat[evnt->GetId()].num++;
-            idstat[evnt->GetId()].sizesum+=evnt->GetSize();
-         }
+         if (dostat)
+            idstat[evnt->GetId()].accumulate(evnt->GetSize());
 
          // ignore events which are nor match with specified id
          if ((fullid!=0) && (evnt->GetId()!=fullid)) continue;
@@ -1000,10 +1004,8 @@ int main(int argc, char* argv[])
                if (is_hub(datakind)) {
                   maxhublen--; // just decrement
                   if (dostat) {
-                     stat[datakind].num++;
-                     stat[datakind].sizesum += datalen;
-                  } else
-                  if (!showrate && print_subsubhdr) {
+                     subsubstat[datakind].accumulate(datalen);
+                  } else if (!showrate && print_subsubhdr) {
                      printf("         *** HHUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                   }
                   maxhhublen = datalen;
@@ -1034,10 +1036,8 @@ int main(int argc, char* argv[])
                } else if ((maxhublen==0) && is_hub(datakind)) {
                   // this is hack - skip hub header, inside is normal subsub events structure
                   if (dostat) {
-                     stat[datakind].num++;
-                     stat[datakind].sizesum+=datalen;
-                  } else
-                  if (!showrate && print_subsubhdr) {
+                     subsubstat[datakind].accumulate(datalen);
+                  } else if (!showrate && print_subsubhdr) {
                      printf("      *** HUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                   }
                   maxhublen = datalen;
@@ -1117,7 +1117,7 @@ int main(int argc, char* argv[])
                }
             } else
             if (dostat) {
-               SubevStat &substat = stat[datakind];
+               SubevStat &substat = subsubstat[datakind];
 
                substat.num++;
                substat.sizesum+=datalen;
@@ -1152,14 +1152,14 @@ int main(int argc, char* argv[])
       if (printcnt > 1000) width = 6;
 
       printf("  Events ids:\n");
-      for (std::map<unsigned,SubevStat>::iterator iter = idstat.begin(); iter!=idstat.end(); iter++)
-         printf("   0x%04x : cnt %*lu averlen %5.1f\n", iter->first, width, iter->second.num, iter->second.aver_size());
+      for (auto &entry : idstat)
+         printf("   0x%04x : cnt %*lu averlen %5.1f\n", entry.first, width, entry.second.num, entry.second.aver_size());
 
       printf("  Subsubevents ids:\n");
-      for (std::map<unsigned,SubevStat>::iterator iter = stat.begin(); iter!=stat.end(); iter++) {
-         SubevStat &substat = iter->second;
+      for (auto &entry : subsubstat) {
+         SubevStat &substat = entry.second;
 
-         printf("   0x%04x : cnt %*lu averlen %5.1f", iter->first, width, substat.num, substat.aver_size());
+         printf("   0x%04x : cnt %*lu averlen %5.1f", entry.first, width, substat.num, substat.aver_size());
 
          if (substat.istdc) {
             printf(" TDC ch:%2u", substat.maxch);
