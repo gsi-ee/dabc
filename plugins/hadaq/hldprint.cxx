@@ -888,8 +888,9 @@ int main(int argc, char* argv[])
 
    hadaq::RawEvent *evnt = nullptr;
 
-   std::map<unsigned,SubevStat> idstat; // events id counter
-   std::map<unsigned,SubevStat> subsubstat;   // subevents statistic
+   std::map<unsigned,SubevStat> idstat;     // events id statistic
+   std::map<unsigned,SubevStat> substat;    // sub-events statistic
+   std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
    long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
    uint64_t lastsz{0}, currsz{0};
    dabc::TimeStamp last = dabc::Now();
@@ -976,6 +977,9 @@ int main(int argc, char* argv[])
                   data, datalen, datakind;
 
          bool standalone_subevnt = sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt;
+
+         if (dostat)
+            substat[sub->GetId()].accumulate(sub->GetSize());
 
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
 
@@ -1153,13 +1157,17 @@ int main(int argc, char* argv[])
 
       printf("  Events ids:\n");
       for (auto &entry : idstat)
-         printf("   0x%04x : cnt %*lu averlen %5.1f\n", entry.first, width, entry.second.num, entry.second.aver_size());
+         printf("   0x%04x : cnt %*lu averlen %6.1f\n", entry.first, width, entry.second.num, entry.second.aver_size());
+
+      printf("  Subevents ids:\n");
+      for (auto &entry : substat)
+         printf("   0x%04x : cnt %*lu averlen %6.1f\n", entry.first, width, entry.second.num, entry.second.aver_size());
 
       printf("  Subsubevents ids:\n");
       for (auto &entry : subsubstat) {
          SubevStat &substat = entry.second;
 
-         printf("   0x%04x : cnt %*lu averlen %5.1f", entry.first, width, substat.num, substat.aver_size());
+         printf("   0x%04x : cnt %*lu averlen %6.1f", entry.first, width, substat.num, substat.aver_size());
 
          if (substat.istdc) {
             printf(" TDC ch:%2u", substat.maxch);
