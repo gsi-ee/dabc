@@ -1155,7 +1155,7 @@ int main(int argc, char* argv[])
       for (std::map<unsigned,SubevStat>::iterator iter = idstat.begin(); iter!=idstat.end(); iter++)
          printf("   0x%04x : cnt %*lu averlen %5.1f\n", iter->first, width, iter->second.num, iter->second.aver_size());
 
-      printf("  Subevents ids:\n");
+      printf("  Subsubevents ids:\n");
       for (std::map<unsigned,SubevStat>::iterator iter = stat.begin(); iter!=stat.end(); iter++) {
          SubevStat &substat = iter->second;
 
