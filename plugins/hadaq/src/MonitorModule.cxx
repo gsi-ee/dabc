@@ -92,13 +92,13 @@ uint32_t hadaq::MonitorModule::DoRead(uint32_t addr)
    // remove temporary file
    std::remove(tmpfile.c_str());
 
-   unsigned value = 0;
+   unsigned value1 = 0, value2 = 0;
 
-   std::sscanf(str.c_str(),"%u", &value);
+   std::sscanf(str.c_str(), "0x%x 0x%x", &value1, &value2);
 
-   // DOUT0("Reading addr %x result %s %u", addr, str.c_str(), value);
+   // DOUT0("Reading addr %x result %s %u", addr, str.c_str(), value2);
 
-   return value;
+   return value2;
 }
 
 
