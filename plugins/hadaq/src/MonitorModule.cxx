@@ -41,6 +41,7 @@ hadaq::MonitorModule::MonitorModule(const std::string &name, dabc::Command cmd) 
 
    fTopFolder = Cfg("TopFolder", cmd).AsStr(fTopFolder);
 
+   fAddrs0 = Cfg("Addrs0", cmd).AsUIntVect();
    fAddrs = Cfg("Addrs", cmd).AsUIntVect();
 
    fShellCmd = Cfg("ShellCmd", cmd).AsStr("du -d 0 .");
@@ -74,11 +75,15 @@ void hadaq::MonitorModule::OnThreadAssigned()
 
 }
 
-uint32_t hadaq::MonitorModule::DoRead(uint32_t addr)
+uint32_t hadaq::MonitorModule::DoRead(uint32_t addr0, uint32_t addr)
 {
    std::string tmpfile = "output.log";
 
-   std::string cmd = dabc::format(fShellCmd.c_str(), addr);
+   std::string cmd;
+   if (addr0 > 0)
+      cmd = dabc::format(fShellCmd.c_str(), addr0, addr);
+   else
+      cmd = dabc::format(fShellCmd.c_str(), addr);
 
    cmd.append(dabc::format(" >%s 2<&1", tmpfile.c_str()));
 
@@ -109,9 +114,11 @@ bool hadaq::MonitorModule::ReadAllVariables(dabc::Buffer &buf)
    buf.SetTypeId(hadaq::mbt_HadaqEvents);
 
    // initialzie buffer
+   int block_size = (fAddrs0.size() == 0) ? 2 : 3;
+
    hadaq::WriteIterator iter(buf);
-   if (!iter.NewEvent(fEventId, 0 ,fAddrs.size() * 8 + sizeof(hadaq::RawSubevent))) return false;
-   if (!iter.NewSubevent(fAddrs.size() * 8, fEventId)) return false;
+   if (!iter.NewEvent(fEventId, 0 ,fAddrs.size() * 4 * block_size + sizeof(hadaq::RawSubevent))) return false;
+   if (!iter.NewSubevent(fAddrs.size() * 4 * block_size, fEventId)) return false;
 
    // iter.evnt()->SetTrigTypeTrb3(0xC);
 
@@ -127,14 +134,20 @@ bool hadaq::MonitorModule::ReadAllVariables(dabc::Buffer &buf)
    uint32_t *rawdata = (uint32_t *) iter.rawdata();
    for (unsigned n=0; n < fAddrs.size(); ++n) {
 
+      unsigned addr0 = 0;
+      if (block_size == 3) {
+         addr0 = (fAddrs0.size() >= fAddrs.size()) ? fAddrs0[n] : fAddrs0[0];
+         iter.subevnt()->SetValue(rawdata++, addr0); // write address0
+      }
+
       iter.subevnt()->SetValue(rawdata++, fAddrs[n]); // write address
       // iter.subevnt()->SetValue(rawdata++, 0x1234567); // write value
 
-      iter.subevnt()->SetValue(rawdata++, DoRead(fAddrs[n])); // write value
+      iter.subevnt()->SetValue(rawdata++, DoRead(addr0, fAddrs[n])); // write value
    }
 
    // closing buffer
-   iter.FinishSubEvent(fAddrs.size() * 8);
+   iter.FinishSubEvent(fAddrs.size() * 4 * block_size);
    iter.FinishEvent();
 
    fEventId++;

@@ -38,6 +38,7 @@ namespace hadaq {
          unsigned fTriggerType;   ///< trigger type
          std::string fShellCmd;   ///< shell command with formats pattern
 
+         std::vector<uint64_t> fAddrs0;      ///< array of monitored address
          std::vector<uint64_t> fAddrs;      ///< array of monitored address
          uint32_t fEventId;                 ///< event number
 
@@ -48,7 +49,7 @@ namespace hadaq {
 
          bool ReadAllVariables(dabc::Buffer &buf);
 
-         uint32_t DoRead(uint32_t addr);
+         uint32_t DoRead(uint32_t addr0, uint32_t addr);
 
       public:
          MonitorModule(const std::string &name, dabc::Command cmd = nullptr);

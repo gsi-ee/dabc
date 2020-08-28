@@ -31,11 +31,15 @@ It reads via trbcmd several registers and stroe them in hld structure
        <!-- Subevent id -->
        <SubevId value="0x1001"/>
 
+       <!-- This is optional list of first addr arguments, if specified will be placed used as first argument if ShellCmd  -->
+       <Addrs0 value="[0x6000,0x6000,0x6100,0x6100]"/>
+
        <!-- This is list of addresses readed be module -->
        <Addrs value="[0x100,0x200,0x300,0x400]"/>
 
        <!-- Shell command to extract value. One can use %x from fprintf syntax to insert addr value -->
        <ShellCmd value="du -d 0 ."/>
+       <!-- ShellCmd value="trbcmd r 0x%x 0x%x"/-->
 
        <Period value="1."/>
      </Module>
