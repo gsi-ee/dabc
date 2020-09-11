@@ -42,7 +42,6 @@ namespace hadaq {
          std::vector<uint64_t> fAddrs;      ///< array of monitored address
          uint32_t fEventId;                 ///< event number
 
-
          virtual void OnThreadAssigned();
 
          std::string GetItemName(unsigned addr);
@@ -55,6 +54,8 @@ namespace hadaq {
          MonitorModule(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual void BeforeModuleStart();
    };
 }
 

@@ -55,7 +55,8 @@ hadaq::MonitorModule::MonitorModule(const std::string &name, dabc::Command cmd) 
       item.EnableHistory(100);
    }
 
-   CreateTimer("TrbNetRead", fInterval);
+   if (fInterval > 0)
+      CreateTimer("TrbNetRead", fInterval);
 
    if (fTopFolder.empty())
       Publish(fWorkerHierarchy, "TRBNET");
@@ -167,5 +168,14 @@ void hadaq::MonitorModule::ProcessTimerEvent(unsigned timer)
 
    if (ReadAllVariables(buf))
       SendToAllOutputs(buf);
+}
 
+void hadaq::MonitorModule::BeforeModuleStart()
+{
+   if (fInterval > 0) return;
+
+   dabc::Buffer buf = TakeBuffer();
+
+   if (ReadAllVariables(buf))
+      SendToAllOutputs(buf);
 }
