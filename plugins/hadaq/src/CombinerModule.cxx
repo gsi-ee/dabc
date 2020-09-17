@@ -57,6 +57,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fAllBuildEventsLimit = 0;
    fAllDiscEvents = 0;
    fAllDroppedData = 0;
+   fAllFullDrops = 0;
+   fMaxProcDist = 0;
 
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       fEventIdCount[i] = 0;
