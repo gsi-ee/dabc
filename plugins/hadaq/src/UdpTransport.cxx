@@ -45,7 +45,8 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    fLostRate(lost),
    fLostCnt(lost>0 ? 1 : -1),
    fDebug(debug),
-   fRunning(false)
+   fRunning(false),
+   fMaxProcDist(0.)
 {
    fMtuBuffer = malloc(fMTU);
 }
