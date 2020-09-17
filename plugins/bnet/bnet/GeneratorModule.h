@@ -21,10 +21,11 @@ namespace bnet {
 
       public:
          GeneratorModule(const std::string &name, dabc::Command cmd = nullptr);
+         virtual ~GeneratorModule() = default;
 
-         virtual void BeforeModuleStart();
+         void BeforeModuleStart() override;
 
-         virtual bool ProcessSend(unsigned port);
+         bool ProcessSend(unsigned port) override;
    };
 }
 
