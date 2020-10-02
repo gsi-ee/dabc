@@ -281,7 +281,11 @@ void stream::RunModule::ProduceMergedHierarchy()
 
       dabc::Hierarchy h = cmd.GetRef("hierarchy");
 
-      if (main.null()) { main = h; continue; }
+      if (main.null()) {
+         DOUT0("Adopt histograms from %s", mname.c_str());
+         main = h;
+         continue;
+      }
 
       dabc::Iterator iter1(main), iter2(h);
       bool miss = false;
@@ -310,12 +314,14 @@ void stream::RunModule::ProduceMergedHierarchy()
       if (miss) {
          EOUT("!!!!!!!!!!!!!! MISMATCH - CANNOT MERGE HISTOGRAMS !!!!!!!!!!!!");
          dabc::mgr.StopApplication();
+         return;
       } else {
-         DOUT0("Merged %d histograms", nhist);
+         DOUT0("Merged %d histograms from %s", nhist, mname.c_str());
       }
    }
 
-   if (fAsf.length()>0) SaveHierarchy(main.SaveToBuffer());
+   if (fAsf.length()>0)
+      SaveHierarchy(main.SaveToBuffer());
 }
 
 
