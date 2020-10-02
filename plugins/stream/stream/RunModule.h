@@ -62,6 +62,8 @@ namespace stream {
 
       void SaveHierarchy(dabc::Buffer buf);
 
+      void GenerateEOF(dabc::Buffer buf);
+
    public:
       RunModule(const std::string &name, dabc::Command cmd = nullptr);
       virtual ~RunModule();

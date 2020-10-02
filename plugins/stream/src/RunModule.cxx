@@ -43,7 +43,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fParallel(0),
    fInitFunc(nullptr),
-   fStopMode(0),
+   fStopMode(-1111),
    fProcMgr(nullptr),
    fAsf(),
    fFileUrl(),
@@ -58,6 +58,12 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    // we need one input and no outputs
    EnsurePorts(1, fParallel<0 ? 0 : fParallel);
+
+   if (fParallel > 0) {
+      SetPortSignaling(InputName(0), dabc::Port::SignalEvery);
+      for (unsigned n=0;n<NumOutputs();++n)
+         SetPortSignaling(OutputName(n), dabc::Port::SignalEvery);
+   }
 
    fInitFunc = cmd.GetPtr("initfunc");
 
@@ -163,6 +169,8 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
       cmddef = fWorkerHierarchy.CreateHChild("Control/StopRootFile");
       cmddef.SetField(dabc::prop_kind, "DABC.Command");
       // cmddef.SetField(dabc::prop_auth, true); // require authentication
+   } else {
+      CreateTimer("KeepAlive", 0.1);
    }
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
@@ -400,14 +408,15 @@ void stream::RunModule::AfterModuleStop()
 {
    if (fProcMgr) fProcMgr->UserPostLoop();
 
-   DOUT0("!!!! thread on start %s  !!!!!", thread().GetName());
+   // DOUT0("!!!! thread on start %s  !!!!!", thread().GetName());
 
-   DOUT0("STOP STREAM MODULE %s len %lu evnts %lu out %lu", GetName(), fTotalSize, fTotalEvnts, fTotalOutEvnts);
+   DOUT0("STOP STREAM MODULE %s data %lu evnts %lu outevents %lu  %s", GetName(), fTotalSize, fTotalEvnts, fTotalOutEvnts, (fTotalEvnts == fTotalOutEvnts ? "ok" : "MISSMATCH"));
 
-   if (fParallel>0) {
+   if (fParallel > 0) {
       ProduceMergedHierarchy();
-   } else
-   if (fAsf.length()>0) SaveHierarchy(fWorkerHierarchy.SaveToBuffer());
+   } else if (fAsf.length()>0) {
+      SaveHierarchy(fWorkerHierarchy.SaveToBuffer());
+   }
 
    DestroyPar("Events");
 }
@@ -487,26 +496,40 @@ bool stream::RunModule::ProcessNextBuffer()
    return true;
 }
 
+void stream::RunModule::GenerateEOF(dabc::Buffer buf)
+{
+   if ((fStopMode != -1111) || (fParallel <= 0)) return;
+
+   DOUT0("Inject EOF to finish parallel jobs");
+
+   SendToAllOutputs(buf);
+
+   fStopMode = fParallel;
+   SendToAllOutputs(buf);
+}
+
 bool stream::RunModule::RedistributeBuffers()
 {
    while (CanRecv()) {
 
       unsigned indx(0), max(0), min(10);
       for (unsigned n=0;n<NumOutputs();n++) {
-         unsigned can = NumCanSend(n);
-         if (can>max) { max = can; indx = n; }
-         if (can<min) min = can;
+         unsigned cansend = NumCanSend(n);
+         if (cansend > max) { max = cansend; indx = n; }
+         if (cansend < min) min = cansend;
       }
+
+      // one need at least one output to be able send something
       if (max==0) return false;
 
-      if ((min==0) && (RecvQueueItem().GetTypeId() == dabc::mbt_EOF)) return false;
+      // in case of EOF one need that all outputs can accept at least one buffer
+      if ((RecvQueueItem().GetTypeId() == dabc::mbt_EOF) && (min == 0))
+         return false;
 
       dabc::Buffer buf = Recv();
 
       if (buf.GetTypeId() == dabc::mbt_EOF) {
-         fStopMode = fParallel;
-         SendToAllOutputs(buf);
-         DOUT0("END of FILE, DO SOMETHING");
+         GenerateEOF(buf);
          return false;
       }
 
@@ -531,6 +554,7 @@ bool stream::RunModule::RedistributeBuffers()
       Send(indx, buf);
    }
 
+   // all possible buffers are processed, no reason to invoke method once again
    return false;
 }
 
@@ -546,6 +570,23 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
 {
    if (TimerName(timer) == "AutoSave") {
       if (fProcMgr) fProcMgr->SaveAllHistograms();
+      return;
+   }
+
+   if (TimerName(timer) == "KeepAlive") {
+      // std::string s = dabc::format("numcanrecv %u isconnected %s cansend", NumCanRecv(), DBOOL(IsPortConnected(InputName())));
+      // for (unsigned n=0;n<NumOutputs();n++)
+      //    s.append(dabc::format(" %u:%u", n, NumCanSend(n)));
+      // DOUT0("keep alive %s", s.c_str());
+
+      RedistributeBuffers();
+
+      if ((fTotalEvnts > 0) && !IsPortConnected(InputName())) {
+         dabc::Buffer buf = TakeBuffer();
+         buf.SetTypeId(dabc::mbt_EOF);
+         GenerateEOF(buf);
+      }
+
       return;
    }
 
