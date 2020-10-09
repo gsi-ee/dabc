@@ -37,9 +37,8 @@ It reads via trbcmd several registers and stroe them in hld structure
        <!-- This is list of addresses readed be module -->
        <Addrs value="[0x100,0x200,0x300,0x400]"/>
 
-       <!-- Shell command to extract value. One can use %x from fprintf syntax to insert addr value -->
-       <ShellCmd value="du -d 0 ."/>
-       <!-- ShellCmd value="trbcmd r 0x%x 0x%x"/-->
+       <!-- trbcmd with two arguments, requires Addrs0 to be specified.  -->
+       <ShellCmd value="trbcmd r 0x%x 0x%x"/>
 
        <Period value="1."/>
      </Module>
@@ -57,9 +56,8 @@ It reads via trbcmd several registers and stroe them in hld structure
        <!-- This is list of addresses readed be module -->
        <Addrs value="[0x500,0x600,0x700,0x800]"/>
 
-
-       <!-- Shell command to extract value. One can use %x from fprintf syntax to insert addr value -->
-       <ShellCmd value="du -d 0 ."/>
+       <!-- trbcmd with single argument -->
+       <ShellCmd value="trbcmd r 0x0800 0x%x"/>
 
        <Period value="0.7"/>
      </Module>
