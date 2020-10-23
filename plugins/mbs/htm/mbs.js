@@ -237,7 +237,7 @@ function MbsDisplay(state){
 // set up view elements of display:
 MbsDisplay.prototype.BuildView = function() {
    var hpainter = new JSROOT.HierarchyPainter('root', null);
-   
+
    var disp = new JSROOT.CustomDisplay();
    disp.AddFrame("EvRateDisplay", "EventRate");
    disp.AddFrame("DatRateDisplay", "DataRate");
@@ -248,21 +248,21 @@ MbsDisplay.prototype.BuildView = function() {
    disp.AddFrame("ReadoutInfo", "rash_log");
    disp.AddFrame("ReadoutInfo", "rast_log");
    disp.AddFrame("ReadoutInfo", "ratf_log");
-   
+
    hpainter.SetDisplay(disp);
 
    this.hpainter = null;
-   
+
    var pthis = this;
-   
+
    hpainter.OpenOnline("../", function() {
-      
+
       pthis.hpainter = hpainter;
-      
+
       pthis.SetTrending(false, 300);
-      
+
       hpainter.display("logger");
-      
+
       pthis.SetFileLogMode(4, 0, 0);   // init log window, but keep history and interval from server
    });
 }
@@ -288,7 +288,7 @@ MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
 
    if(history==0)
       history=document.getElementById("Loglength").value;
-   
+
    if(deltat==0)
       deltat=document.getElementById("Loginterval").value;
 
@@ -317,7 +317,7 @@ MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
       this.hpainter.display("ratf_log");
       break;
    };
-   
+
    if(mode!=0) return; // only change display mode, do not start new trending history
 
    MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval, function(result) {
@@ -336,7 +336,7 @@ MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
 MbsDisplay.prototype.RefreshMonitor = function() {
 
    if (this.hpainter == null) return;
-   
+
    this.hpainter.updateAll();
 
    // optionally adjust scrollbars at info logs:
@@ -703,12 +703,7 @@ $(function() {
       MyDisplay.RefreshView();
    });
 
-
-
    $("#buttonExecuteGosip").button({showLabel: false, icon:  "ui-icon-gear MyButtonStyle"});
-
-
-
 
       $( "#gosipcmd_form" ).submit(
             function(event) {

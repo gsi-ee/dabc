@@ -1,6 +1,4 @@
 
-
-
 /* took from old dabc.css to keep layout:*/
 
 * { padding: 0; margin: 0; }
@@ -50,22 +48,22 @@ p { margin-top: 6px; padding: 0 10px 1em; }
 .ui-widget-header .ui-state-active,
 a.ui-button:active,
 .ui-button:active,
-.ui-button.ui-state-active:hover 
+.ui-button.ui-state-active:hover
 {
 border: 1px solid #dddddd;
 color: #333333;
-background: #e9e9e9;            
+background: #e9e9e9;
 }
 
 .ui-button .ui-icon.ui-icon-poland {
     background-image: url("img/PolandLogo.png");
-    background-position: 0 0;  
+    background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button:hover .ui-icon.ui-icon-poland {
     background-image: url("img/PolandLogo.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
@@ -86,223 +84,218 @@ background: #e9e9e9;
 
 
 .ui-button  .ui-icon.ui-icon-stop {
-	background-image: url("/jsrootsys/style/images/ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images/ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-stop {
     background-image: url("img/Stop.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 
 .ui-button  .ui-icon.ui-icon-play {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-play {
     background-image: url("img/start.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 
 .ui-button  .ui-icon.ui-icon-refresh {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-refresh {
     background-image: url("img/refresh.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-disk {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-disk {
     background-image: url("img/filesave.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-image {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-image {
     background-image: url("img/tgraph.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 
 .ui-button  .ui-icon.ui-icon-wrench {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-wrench {
     background-image: url("img/control.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 
 .ui-button  .ui-icon.ui-icon-gear {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-gear {
     background-image: url("img/dllicon.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-trash {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-trash {
     background-image: url("img/clear.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-closethick {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-closethick {
     background-image: url("img/close16.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-cancel {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-cancel {
     background-image: url("img/shutanal.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-power {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-power {
     background-image: url("img/launchanal.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-circle-arrow-n {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-circle-arrow-n {
     background-image: url("img/Speed.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-star {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-star {
     background-image: url("img/saveall.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-seek-next {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-seek-next {
     background-image: url("img/startselected.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-document {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-document {
     background-image: url("img/filenew.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-link {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 
 .ui-button:hover .ui-icon.ui-icon-link {
     background-image: url("img/connect.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-arrowthick-1-s {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-arrowthick-1-s {
     background-image: url("img/shutanal.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-arrowthick-1-n {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-arrowthick-1-n {
     background-image: url("img/launchanal.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-alert {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-alert {
     background-image: url("img/info1.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
 
 .ui-button  .ui-icon.ui-icon-comment {
-	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");	
+	background-image: url("/jsrootsys/style/images//ui-icons_777777_256x240.png");
 	}
 
 .ui-button:hover .ui-icon.ui-icon-comment {
     background-image: url("img/mb_question_s.png");
-  	background-position: 0 0;  
+  	background-position: 0 0;
     background-size: contain;
 }
-
 
 .ui-resizable-helper {
     border: 1px dotted #999;
 }
-
-
-
-
