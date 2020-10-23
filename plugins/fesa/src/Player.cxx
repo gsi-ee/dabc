@@ -75,6 +75,8 @@ fesa::Player::Player(const std::string &name, dabc::Command cmd) :
    dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("BeamProfile");
    item.SetField(dabc::prop_kind, "FESA.2D");
    item.SetField("_autoload", "dabcsys/plugins/fesa/fesa.js");
+   item.SetField("_can_draw", true);
+
 
    fWorkerHierarchy.CreateHChild("BeamRate").SetField(dabc::prop_kind, "rate");
 
