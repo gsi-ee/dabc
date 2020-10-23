@@ -1,189 +1,181 @@
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 
 <head>
 
-<meta http-equiv="X-UA-Compatible" content="IE=Edge;text/html"/>
+   <meta charset="UTF-8"/>
 
+   <title>MBS web GUI</title>
 
+   <link rel="icon" type="image/png" href="img/mbslogo.png"/>
 
+   <script src="jsrootsys/scripts/JSRootCore.js?2d&jq2d&load=/httpsys/scripts/dabc.js;mbs.js" type="text/javascript"></script>
 
-	<title>MBS web GUI</title>
-	
-	<link rel="icon" type="image/png" href="img/mbslogo.png" />
-
-   <script src="jsrootsys/scripts/JSRootCore.js?2d&jq2d&load=/httpsys/scripts/dabc.js;mbs.js;mbs.css" type="text/javascript"></script>
-  
-   <link rel="stylesheet" type="text/css" href="/httpsys/files/dabc.css" />
-	
-	
+   <link rel="stylesheet" type="text/css" href="mbs.css"/>
 
 
 <style type="text/css">
 
 
 #mbs_container {
-	outline: outset medium;
-	position: fixed;
-	top: 2px;
-	min-height: 147px;
-	left: 2px;
-	width: 34.5%;
-	text-align: center;
-	overflow: hidden;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 2px;
+   min-height: 147px;
+   left: 2px;
+   width: 34.5%;
+   text-align: center;
+   overflow: hidden;
+   outline-style: groove;
 }
 
 
 #daq_log {
-	outline: outset medium;
-	position: fixed;
-	top: 155px;
-	height: 198px;
-	left: 2px;
-	width: 34.5%;
-	text-align: left;
-	overflow-y: auto;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 155px;
+   height: 198px;
+   left: 2px;
+   width: 34.5%;
+   text-align: left;
+   overflow-y: auto;
+   outline-style: groove;
 }
 
 #gosip_container {
-	outline: outset medium;
-	position: fixed;
-	top: 354px;
-	min-height: 70px;
-	left: 2px;
-	width: 34.5%;
-	overflow: hidden;
-	text-align: center;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 354px;
+   min-height: 70px;
+   left: 2px;
+   width: 34.5%;
+   overflow: hidden;
+   text-align: center;
+   outline-style: groove;
 }
 
 #gosip_log {
-	outline: outset medium;
-	position: fixed;
-	top: 426px;
-	bottom: 2.7em;
-	left: 2px;
-	width: 34.5%;
-	text-align: left;
-	overflow-y: auto;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 426px;
+   bottom: 2.7em;
+   left: 2px;
+   width: 34.5%;
+   text-align: left;
+   overflow-y: auto;
+   outline-style: groove;
 }
 
 #file_container {
-	outline: outset medium;
-	position: fixed;
-	top: 2px;
-	min-height: 70px;
-	left: 35%;
-	width: 35%;
-	text-align: center;
-	overflow: hidden;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 2px;
+   min-height: 70px;
+   left: 35%;
+   width: 35%;
+   text-align: center;
+   overflow: hidden;
+   outline-style: groove;
 }
 
 #filelog_mode_container {
-	outline: outset medium;
-	position: fixed;
-	top: 79px;
-	min-height: 70px;
-	left: 35%;
-	width: 35%;
-	overflow: hidden;
-	text-align: center;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 79px;
+   min-height: 70px;
+   left: 35%;
+   width: 35%;
+   overflow: hidden;
+   text-align: center;
+   outline-style: groove;
 }
 
 
 #file_log {
-	outline: outset medium;
-	position: fixed;
-	top: 155px;
-	bottom: 2.7em;
-	left: 35%;
-	width: 35%;
-	text-align: left;
-	overflow-y: auto;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 155px;
+   bottom: 2.7em;
+   left: 35%;
+   width: 35%;
+   text-align: left;
+   overflow-y: auto;
+   outline-style: groove;
 }
 
 #monitoring_container {
-	outline: outset medium;
-	position: fixed;
-	top: 2px;
-	min-height: 70px;
-	left: 70.5%;
-	right: 2px;
-	overflow: hidden;
-	text-align: center;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 2px;
+   min-height: 70px;
+   left: 70.5%;
+   right: 2px;
+   overflow: hidden;
+   text-align: center;
+   outline-style: groove;
 }
 
 #ratemode_container {
-	outline: outset medium;
-	position: fixed;
-	top: 79px;
-	min-height: 70px;
-	left: 70.5%;
-	right: 2px;
-	overflow: hidden;
-	text-align: center;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 79px;
+   min-height: 70px;
+   left: 70.5%;
+   right: 2px;
+   overflow: hidden;
+   text-align: center;
+   outline-style: groove;
 }
 
 #rate_container {
-	outline: outset medium;
-	position: fixed;
-	top: 155px;
-	bottom: 2.7em;
-	left: 70.5%;
-	right: 2px;
-	text-align: center;
-	overflow-y: auto;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   top: 155px;
+   bottom: 2.7em;
+   left: 70.5%;
+   right: 2px;
+   text-align: center;
+   overflow-y: auto;
+   outline-style: groove;
 }
 
 #status_container {
-	outline: outset medium;
-	position: fixed;
-	bottom: 2px;
-	height: 1 em;
-	left: 2px;
-	right: 2px;
-	text-align: left;
-	outline-style: groove;
+   outline: outset medium;
+   position: fixed;
+   bottom: 2px;
+   height: 1 em;
+   left: 2px;
+   right: 2px;
+   text-align: left;
+   outline-style: groove;
 }
 
 .styleGreen {
-	background-color: #00FF00;
+   background-color: #00FF00;
 }
 
 .styleRed {
-	background-color: #FF0000;
+   background-color: #FF0000;
 }
 
 .styleYellow {
-	background-color: #FFFF00;
+   background-color: #FFFF00;
 }
 
 .styleBlue {
-	background-color: #00CCFF;
+   background-color: #00CCFF;
 }
 
 .MyButtonStyle {
-  	transform: scale(1.5, 1.5); 
+     transform: scale(1.5, 1.5);
 }
 
 .MySpinnerStyle {
-	width: 50px;
+   width: 50px;
 }
 
-
 </style>
-
-
 
 </head>
 
@@ -191,188 +183,181 @@
 <body>
 
 
+   <div id="status_container">
+      <h3 id="status_message" title="Last Status">Status message</h3>
 
-	<div id="status_container">
-		<h3 id="status_message" title="Last Status">Status message</h3>
-
-	</div>
-
+   </div>
 
 
 
 
-	<div id="mbs_container">
-		<table style="width: 100%; height: 50%">
-			<caption>
-				<h3>MBS</h3>
-			</caption>
-			<tbody>
-				<tr>
-					<td style="height: 30px">
-						<button id="buttonStartAcquisition"
-							title="Start Acquisition via soft trigger 14">Start
-							acquisition</button>
-					</td>
-					<td style="height: 30px">
-						<button id="buttonStopAcquisition"
-							title="Stop  Acquisition via soft trigger 15">Stop
-							acquisition</button>
-					</td>
-					<td style="height: 30px">
-						<button id="buttonStartupAcquisition"
-							title="Execute startup.scom script">Startup</button>
-					</td> 
-					<td style="height: 30px">
-						<button id="buttonShutdownAcquisition"
-							title="Execute shutdown.scom script">Shutdown</button>
-					</td> 
-					<td><input id="ShowGosipToggle" type="checkbox"><label
-						for="ShowGosipToggle" title="Show/Hide Gosip command dock"> <span class="ui-icon ui-icon-wrench MyButtonStyle"> </span> </label></td>	
-							
-					
-				</tr>
-				<tr> 
-				<td colspan=5> &nbsp;</td>
-				</tr>
-				<tr> 
-				<td colspan=5> &nbsp;</td>
-				</tr>
-				
-				<tr>
-				<td colspan=4> <form id="mbscmd_form" accept-charset="utf-8">
-					<label for="commandMBS" title="Input mbs command">
-							mbs> </label><input id="commandMBS" type="text" size="35" value="">
-						<button id="buttonExecuteMBS" title="Execute MBS command" type="submit">Execute</button>
-					</form> </td>
-					<td><input id="MbsLoglength" type="text"  value="100"
-						class="MySpinnerStyle"><label for="MbsLoglength"
-							title="Specify length of MBS command logging history"> Log history</label></td>
-					
-				</tr>
-				
-				
-				
-			</tbody>
-		</table>
-		
-		
-		
-	</div>
 
-	<div id="daq_log">
-	   <div id="DeviceInfo"></div>
-	</div>
+   <div id="mbs_container">
+      <table style="width: 100%; height: 50%">
+         <caption>
+            <h3>MBS</h3>
+         </caption>
+         <tbody>
+            <tr>
+               <td style="height: 30px">
+                  <button id="buttonStartAcquisition"
+                     title="Start Acquisition via soft trigger 14">Start
+                     acquisition</button>
+               </td>
+               <td style="height: 30px">
+                  <button id="buttonStopAcquisition"
+                     title="Stop  Acquisition via soft trigger 15">Stop
+                     acquisition</button>
+               </td>
+               <td style="height: 30px">
+                  <button id="buttonStartupAcquisition"
+                     title="Execute startup.scom script">Startup</button>
+               </td>
+               <td style="height: 30px">
+                  <button id="buttonShutdownAcquisition"
+                     title="Execute shutdown.scom script">Shutdown</button>
+               </td>
+               <td><input id="ShowGosipToggle" type="checkbox"/><label
+                  for="ShowGosipToggle" title="Show/Hide Gosip command dock"> <span class="ui-icon ui-icon-wrench MyButtonStyle"> </span> </label></td>
+            </tr>
+            <tr>
+            <td colspan="5"> &nbsp;</td>
+            </tr>
+            <tr>
+            <td colspan="5"> &nbsp;</td>
+            </tr>
 
+            <tr>
+            <td colspan="4"> <form id="mbscmd_form" accept-charset="utf-8">
+               <label for="commandMBS" title="Input mbs command">
+                     mbs> </label><input id="commandMBS" type="text" size="35" value=""/>
+                  <button id="buttonExecuteMBS" title="Execute MBS command" type="submit">Execute</button>
+               </form> </td>
+               <td><input id="MbsLoglength" type="text"  value="100"
+                  class="MySpinnerStyle"/><label for="MbsLoglength"
+                     title="Specify length of MBS command logging history"> Log history</label></td>
 
-	<div id="gosip_container" class="styleBlue">
-		<table style="width: 100%; height: 50%">
-			<caption>
-				<h3>GOSIP</h3>
-			</caption>
-			<tbody>
-				<tr>
-
-					<td style="height: 30px">
-					<form id="gosipcmd_form" accept-charset="utf-8">
-					<label for="commandGosip" title="Input gosipcmd parameter">
-							gosipcmd </label><input id="commandGosip" type="text" value="-">
-						<button id="buttonExecuteGosip" title="Execute gosip command" type="submit">Execute</button>
-					</form>
-					</td>
-					<td style="height: 30px">
-						<button id="buttonClearGosipLog" title="Clear gosip logwindow">Clear log</button>
-					</td>
-					<td style="height: 30px">
-						<button id="buttonUserGUI" title="Start Frontend GUI">User
-							GUI</button>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-
-	<div id="gosip_log">
-		<td>
-			<div id="GosipLog"></div>
-		</td>
-	</div>
-
-
-	<div id="file_container">
-		<table style="width: 100%; height: 50%">
-			<caption>
-				<h3>File output</h3>
-			</caption>
-			<tbody>
-				<tr>						
-					<td style="height: 30px">
-					<form id="lmd_file_form" accept-charset="utf-8">
-						<button id="buttonStartFile" type="submit">Submit...</button>
-								
-					<input id="Filename" type="text" value="test.lmd"><label
-							for="Filename" title="Output file name (*.lmd)"> Filename</label>
-
-					<input id="Filesize" type="text" value="1000"
-						class="MySpinnerStyle"><label for="Filesize"
-							title="Maximum file size (will open next file after reaching this size)">
-								Max size</label>
-								
-							<td><input id="FileAutoMode" type="checkbox"><label
-						for="FileAutoMode"  title="Exact file names." ><span class="ui-icon ui-icon-star MyButtonStyle"></span></label></td>	
-							
-							<td><input id="FileRFIO" type="checkbox"><label
-						for="FileRFIO"  title="Write to RFIO server. Must be connected first with command connect rfio -DISK or -ARCHIVE."><span class="ui-icon ui-icon-disk MyButtonStyle"></span></label></td>	
-								
-					</form>
-					</td>
-					
-					
-					
-				</tr>
-			</tbody>
-		</table>
-	</div>
-
-	<div id="filelog_mode_container" class="styleYellow">
-		<table style="width: 100%; height: 50%">
-			<caption>
-				<h3>Rate logging</h3>
-			</caption>
-			<tbody>
-				<tr>
-					<td>
-						<div id="logmodes">
-							<input type="radio" id="rate" name="filelogmode" value='1' />
-							<label for="rate" title="Show size and rates for data, events and file output">rate</label>
-							<input type="radio" id="rash" name="filelogmode" value='2' />
-							<label for="rash" title="Show simple rates for data and events">rash</label> 
-							<input type="radio" id="rast" name="filelogmode" value='3' />
-							<label for="rast" title="Show size and rates for data, events and online server">rast</label> 
-							<input type="radio" id="ratf" name="filelogmode" value='4' checked="checked" />
-							<label for="ratf" title="Show all size and  rates for data, event, online server and file output">ratf</label>
-						</div>
-					</td>
-					<td><input id="Loglength" type="text" value="100" class="MySpinnerStyle"/>
-					    <label for="Loglength" title="Specify length of data taking log history. Stop GUI refresh to change it."> Log	history</label>
-  			      </td>
-								
-					<td><input id="Loginterval" type="text" value="100" class="MySpinnerStyle"/>
-					    <label for="Loginterval" title="Specify interval in seconds for rate calculation. Stop GUI refresh to change it."> Interval (s) </label>
-				    </td>			
-
-
-				</tr>
-				<tbody>
-		</table>
-	</div>
+            </tr>
 
 
 
-	<div id="file_log">
-		<td>
-			<div id="ReadoutInfo"></div>
-		</td>
-	</div>
+         </tbody>
+      </table>
+
+
+
+   </div>
+
+   <div id="daq_log">
+      <div id="DeviceInfo"></div>
+   </div>
+
+
+   <div id="gosip_container" class="styleBlue">
+      <table style="width: 100%; height: 50%">
+         <caption>
+            <h3>GOSIP</h3>
+         </caption>
+         <tbody>
+            <tr>
+
+               <td style="height: 30px">
+               <form id="gosipcmd_form" accept-charset="utf-8">
+               <label for="commandGosip" title="Input gosipcmd parameter">
+                     gosipcmd </label><input id="commandGosip" type="text" value="-"/>
+                  <button id="buttonExecuteGosip" title="Execute gosip command" type="submit">Execute</button>
+               </form>
+               </td>
+               <td style="height: 30px">
+                  <button id="buttonClearGosipLog" title="Clear gosip logwindow">Clear log</button>
+               </td>
+               <td style="height: 30px">
+                  <button id="buttonUserGUI" title="Start Frontend GUI">User
+                     GUI</button>
+               </td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
+
+   <div id="gosip_log">
+      <div id="GosipLog"></div>
+   </div>
+
+
+   <div id="file_container">
+      <table style="width: 100%; height: 50%">
+         <caption>
+            <h3>File output</h3>
+         </caption>
+         <tbody>
+            <tr>
+               <td style="height: 30px">
+               <form id="lmd_file_form" accept-charset="utf-8">
+                  <button id="buttonStartFile" type="submit">Submit...</button>
+
+                  <input id="Filename" type="text" value="test.lmd"/>
+                  <label for="Filename" title="Output file name (*.lmd)"> Filename</label>
+
+               <input id="Filesize" type="text" value="1000"
+                  class="MySpinnerStyle"/><label for="Filesize"
+                     title="Maximum file size (will open next file after reaching this size)">
+                        Max size</label>
+
+                     <td><input id="FileAutoMode" type="checkbox"/><label
+                  for="FileAutoMode"  title="Exact file names." ><span class="ui-icon ui-icon-star MyButtonStyle"></span></label></td>
+
+                     <td><input id="FileRFIO" type="checkbox"/><label
+                  for="FileRFIO"  title="Write to RFIO server. Must be connected first with command connect rfio -DISK or -ARCHIVE."><span class="ui-icon ui-icon-disk MyButtonStyle"></span></label></td>
+
+               </form>
+               </td>
+
+            </tr>
+         </tbody>
+      </table>
+   </div>
+
+   <div id="filelog_mode_container" class="styleYellow">
+      <table style="width: 100%; height: 50%">
+         <caption>
+            <h3>Rate logging</h3>
+         </caption>
+         <tbody>
+            <tr>
+               <td>
+                  <div id="logmodes">
+                     <input type="radio" id="rate" name="filelogmode" value='1' />
+                     <label for="rate" title="Show size and rates for data, events and file output">rate</label>
+                     <input type="radio" id="rash" name="filelogmode" value='2' />
+                     <label for="rash" title="Show simple rates for data and events">rash</label>
+                     <input type="radio" id="rast" name="filelogmode" value='3' />
+                     <label for="rast" title="Show size and rates for data, events and online server">rast</label>
+                     <input type="radio" id="ratf" name="filelogmode" value='4' checked="checked" />
+                     <label for="ratf" title="Show all size and  rates for data, event, online server and file output">ratf</label>
+                  </div>
+               </td>
+               <td><input id="Loglength" type="text" value="100" class="MySpinnerStyle"/>
+                   <label for="Loglength" title="Specify length of data taking log history. Stop GUI refresh to change it."> Log   history</label>
+                 </td>
+
+               <td><input id="Loginterval" type="text" value="100" class="MySpinnerStyle"/>
+                   <label for="Loginterval" title="Specify interval in seconds for rate calculation. Stop GUI refresh to change it."> Interval (s) </label>
+                </td>
+
+
+            </tr>
+            <tbody>
+      </table>
+   </div>
+
+
+
+   <div id="file_log">
+      <td>
+         <div id="ReadoutInfo"></div>
+      </td>
+   </div>
 
 
    <div id="rate_container">
@@ -381,54 +366,58 @@
       <div id="SrvRateDisplay" title="Online Monitor Rate (kB/s)" title="Eventrate (Ev/s)" style="height:33%;width:100%;overflow:hidden;"></div>
    </div>
 
-	<div id="ratemode_container" class="styleYellow">
-		<table style="width: 100%; height: 50%">
-			<caption>
-				<h3>Rate displays</h3>
-			</caption>
-			<tbody>
-				<tr>
-					<td><input id="Trending" type="checkbox" checked="true"><label
-						for="Trending" title="Show Rates as trending">
-							<span class="ui-icon ui-icon-image MyButtonStyle"></span></label></td>
+   <div id="ratemode_container" class="styleYellow">
+      <table style="width: 100%; height: 50%">
+         <caption>
+            <h3>Rate displays</h3>
+         </caption>
+         <tbody>
+            <tr>
+               <td><input id="Trending" type="checkbox" checked="true"><label
+                  for="Trending" title="Show Rates as trending">
+                     <span class="ui-icon ui-icon-image MyButtonStyle"></span></label></td>
 
-					<td><input id="Trendlength" type="text" value="100"
-						class="MySpinnerStyle"><label for="Trendlength"
-							title="Specify maximum visible trending history in seconds"> Trending
-								history (s)</label></td>
+               <td><input id="Trendlength" type="text" value="100"
+                  class="MySpinnerStyle"><label for="Trendlength"
+                     title="Specify maximum visible trending history in seconds"> Trending
+                        history (s)</label></td>
 
-				</tr>
-				</tbody>
-		</table>
-	</div>
+            </tr>
+            </tbody>
+      </table>
+   </div>
 
 
-	<div id="monitoring_container">
-		<table style="width: 100%; height: 50%">
-			<caption>
-				<h3>GUI settings</h3>
-			</caption>
-			<tbody>
-				<tr>
-					<td style="height: 30px">
-						<button id="buttonRefresh" title="Refresh view from server">Refresh
-							View</button>
-					</td>
-					<td><input id="Monitoring" type="checkbox" checked="checked"><label
-							for="Monitoring" 
-							title="Activate frequent refresh"> <span class="ui-icon ui-icon-play MyButtonStyle"></span></label></td>
-
-					<td><input id="Refreshtime" type="number" value="1"
-						class="MySpinnerStyle"><label for="Refreshtime"
-							title="Specify update interval"> Refresh Interval [s]</label></td>
-							
-							<td><input id="ConfirmCommandToggle" type="checkbox" checked="checked"><label
-						for="ConfirmCommandToggle"  title="Comfirm remote commands with dialog"> 
-						<span class="ui-icon ui-icon-wrench MyButtonStyle"></span></label></td>	
-				</tr>
-				<tbody>
-		</table>
-	</div>
+   <div id="monitoring_container">
+      <table style="width: 100%; height: 50%">
+         <caption>
+            <h3>GUI settings</h3>
+         </caption>
+         <tbody>
+            <tr>
+               <td style="height: 30px">
+                  <button id="buttonRefresh" title="Refresh view from server">Refresh View</button>
+               </td>
+               <td>
+                 <input id="Monitoring" type="checkbox" checked="checked"/>
+                 <label for="Monitoring" title="Activate frequent refresh">
+                    <span class="ui-icon ui-icon-play MyButtonStyle"></span>
+                 </label>
+               </td>
+               <td>
+                  <input id="Refreshtime" type="number" value="1" class="MySpinnerStyle"/>
+                  <label for="Refreshtime" title="Specify update interval"> Refresh Interval [s]</label>
+               </td>
+               <td>
+                 <input id="ConfirmCommandToggle" type="checkbox" checked="checked"/>
+                 <label for="ConfirmCommandToggle" title="Comfirm remote commands with dialog">
+                    <span class="ui-icon ui-icon-wrench MyButtonStyle"></span>
+                 </label>
+               </td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
 
 
 
