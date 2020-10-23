@@ -1069,7 +1069,7 @@
 
       obj._typename = 'TGraph';
       JSROOT.Create('TGraph', obj);
-      obj.fHistogram = JSROOT.CreateTH1(x.length);
+      obj.fHistogram = JSROOT.CreateHistogram('TH1F', x.length);
 
       var _title = item._title || item.fullitemname;
 
