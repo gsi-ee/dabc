@@ -14,11 +14,14 @@
 
    "use strict";
 
-   JSROOT.gStyle.DragAndDrop = true;
+   if (JSROOT.settings)
+      JSROOT.settings.DragAndDrop = true;
+   else
+      JSROOT.gStyle.DragAndDrop = true;
 
    DABC = {};
 
-   DABC.version = "2.10.0 23/05/2019";
+   DABC.version = "2.10.1 23/05/2019";
 
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
@@ -33,18 +36,43 @@
          if (pos<0) continue;
          if (src.indexOf("JSRootCore.")>0) continue;
 
-         JSROOT.console("Set DABC.source_dir to " + src.substr(0, pos) + ", " + DABC.version);
+         console.log("Set DABC.source_dir to " + src.substr(0, pos) + ", " + DABC.version);
          return src.substr(0, pos);
       }
       return "";
    }();
+
+   if (typeof JSROOT.httpRequest == 'function')
+      DABC.httpRequest = JSROOT.httpRequest;
+   else
+      DABC.httpRequest = function(url, kind, post_data) {
+         return new Promise((resolveFunc,rejectFunc) => {
+            let req = JSROOT.NewHttpRequest(url,kind, (res) => {
+               if (res === null)
+                  rejectFunc(Error(`Fail to request ${url}`));
+               else
+                  resolveFunc(res);
+            });
+
+            req.send(post_data || null);
+         });
+      }
+
+   DABC.hasUrlOption = function(name) {
+      if (typeof JSROOT.decodeUrl == 'function')
+        return JSROOT.decodeUrl().has(name);
+      return JSROOT.GetUrlOption(name) !== null;
+   }
+
+   let BasePainter = JSROOT.BasePainter || JSROOT.TBasePainter;
+   let ObjectPainter = JSROOT.ObjectPainter || JSROOT.TObjectPainter;
 
 
    DABC.InvokeCommand = function(itemname, args) {
       var url = itemname + "/execute";
       if (args && (typeof args == 'string')) url += "?" + args;
 
-      JSROOT.NewHttpRequest(url,"object").send();
+      DABC.httpRequest(url,"object");
    }
 
 
@@ -99,7 +127,7 @@
          DABC.InvokeCommand(itemname+"/RestartHldFile");
       });
 
-      var inforeq = null;
+      var inforeq = false;
 
       function UpdateDaqStatus(res) {
          if (res==null) return;
@@ -143,14 +171,13 @@
             return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
          }
 
-         inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
-            inforeq = null;
+         inforeq = true;
+         DABC.httpRequest(url, "object").then(res => {
             if (!res) return;
             UpdateDaqStatus(res[0].result);
             res.shift();
             DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter, true);
-         });
-         inforeq.send(null);
+         }).finally(() => { inforeq = false; });
       }, 2000);
    }
 
@@ -202,7 +229,7 @@
             $(this).find("button").button().click(function(){
                var histname = $(this).attr('hist');
                if ($(this).text() == "Clr") {
-                  JSROOT.NewHttpRequest(histname+"/cmd.json?command=ClearHistos", "object").send();
+                  DABC.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
                   return;
                }
                var frame = hpainter.GetDisplay().FindFrame("dabc_drawing");
@@ -274,7 +301,7 @@
          .button()
          .click(function() { DABC.InvokeCommand(itemname+"/Control/StopRootFile"); });
 
-      var inforeq = null;
+      var inforeq = false;
 
       function UpdateStreamStatus(res) {
          if (res==null) return;
@@ -290,14 +317,14 @@
          }
 
          if (inforeq) return;
+         inforeq = true;
 
-         inforeq = JSROOT.NewHttpRequest(itemname + "/Status/get.json", "object", function(res) {
-            inforeq = null;
-            if (res==null) return;
+         DABC.httpRequest(itemname + "/Status/get.json", "object").then(res => {
+            if (!res) return;
             UpdateStreamStatus(res);
             DABC.UpdateTRBStatus($(frame).find('.stream_tdc_calibr'), res._childs, hpainter, false);
-         });
-         inforeq.send(null);
+         }).finally(() => { inforeq = false; });
+
       }, 2000);
    }
 
@@ -313,7 +340,7 @@
    }
 
    DABC.BnetPainter = function(hpainter, itemname) {
-      JSROOT.TBasePainter.call(this);
+      BasePainter.call(this);
 
       this.hpainter = hpainter;
       this.itemname = itemname;
@@ -333,10 +360,10 @@
       this.inforeq = null;
    }
 
-   DABC.BnetPainter.prototype = Object.create(JSROOT.TBasePainter.prototype);
+   DABC.BnetPainter.prototype = Object.create(BasePainter.prototype);
 
    DABC.BnetPainter.prototype.Cleanup = function(arg) {
-      JSROOT.TBasePainter.prototype.Cleanup.call(this, arg);
+      BasePainter.prototype.Cleanup.call(this, arg);
 
       if (this.main_timer) {
          clearInterval(this.main_timer);
@@ -459,7 +486,7 @@
       html += "</div>";
 
       var painter = this, main = d3.select(this.frame).html(html),
-          ctrl_visible = JSROOT.GetUrlOption("browser") !== null ? "" : "none";
+          ctrl_visible = DABC.hasUrlOption("browser") ? "" : "none";
 
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
@@ -583,7 +610,7 @@
 
           for (var k=0;k<info.calibr.length;++k)
              if (info.calibr[k])
-                JSROOT.NewHttpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object").send();
+                DABC.httpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object");
        }
 
        setTimeout(this.hpainter.updateAll.bind(this.hpainter, false), 1000);
@@ -706,15 +733,14 @@
 
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
       for (var n in this.InputItems)
-         JSROOT.NewHttpRequest(this.InputItems[n].substr(1) + "/get.json", "object", this.ProcessReq.bind(this, false, n)).send();
+         DABC.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, false, n));
       for (var n in this.BuilderItems)
-         JSROOT.NewHttpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object", this.ProcessReq.bind(this, true, n)).send();
+         DABC.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, true, n));
       if (this.CalibrItem)
-         JSROOT.NewHttpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object", this.ProcessCalibrReq.bind(this)).send();
+         DABC.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(this.ProcessCalibrReq.bind(this));
    }
 
    DABC.BnetPainter.prototype.ProcessMainRequest = function(res) {
-      this.mainreq = null;
 
       d3.select(this.frame).style('background-color', res ? null : "grey");
 
@@ -811,10 +837,12 @@
    }
 
    DABC.BnetPainter.prototype.SendMainRequest = function() {
-      if (!this.mainreq) {
-         this.mainreq = JSROOT.NewHttpRequest(this.itemname + "/get.json", "object", this.ProcessMainRequest.bind(this));
-         this.mainreq.send();
-      }
+      if (this.mainreq) return;
+      this.mainreq = true;
+      DABC.httpRequest(this.itemname + "/get.json", "object")
+         .then(res => this.ProcessMainRequest(res))
+         .ctach(() => this.ProcessMainRequest(null))
+         .finally(() => { this.mainreq = false; });
    }
 
    DABC.BnetControl = function(hpainter, itemname) {
@@ -1074,7 +1102,7 @@
          return null;
       }
 
-      var painter = new JSROOT.TObjectPainter(obj);
+      var painter = new ObjectPainter(obj);
 
       painter.gauge = null;
       painter.min = 0;
@@ -1175,7 +1203,7 @@
    // ==========================================================================================
 
    DABC.DrawLog = function(divid, obj, opt) {
-      var painter = new JSROOT.TBasePainter();
+      var painter = new BasePainter();
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
 
@@ -1217,7 +1245,7 @@
 
    DABC.DrawCommand = function(divid, obj, opt) {
 
-      painter = new JSROOT.TBasePainter;
+      painter = new BasePainter;
 
       painter.SetDivId(divid, -1);
       painter.jsonnode = obj;
@@ -1298,7 +1326,7 @@
       }
 
       painter.InvokeCommand = function() {
-         if (this.req!=null) return;
+         if (this.req) return;
 
          var cmdelemid = this.select_main().attr('id');
 
@@ -1325,15 +1353,12 @@
                url += new String(arginp.val());
          }
 
-         var pthis = this;
+         this.req = true;
 
-         this.req = JSROOT.NewHttpRequest(url,"object", function(res) {
-            pthis.req = null;
-            if (res==null) resdiv.html("<h5>missing reply from server</h5>");
-            else resdiv.html("<h5>Get reply res=" + res['_Result_'] + "</h5>");
-         });
-
-         this.req.send(null);
+         DABC.httpRequest(url, "object")
+             .then(res => resdiv.html("<h5>Get reply res=" + res['_Result_'] + "</h5>"))
+             .catch(() => resdiv.html("<h5>missing reply from server</h5>"))
+             .finally(() => { this.req = false; });
 
       }
 
