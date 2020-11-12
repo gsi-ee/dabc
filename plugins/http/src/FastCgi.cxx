@@ -158,6 +158,7 @@ void* http::FastCgi::RunFunc(void* args)
       count++;
 
       const char* inp_path = FCGX_GetParam("PATH_INFO", request.envp);
+      if (!inp_path) inp_path = FCGX_GetParam("SCRIPT_FILENAME", request.envp);
       const char* inp_query = FCGX_GetParam("QUERY_STRING", request.envp);
 
       if (server->fDebugMode) {
@@ -170,7 +171,7 @@ void* http::FastCgi::RunFunc(void* args)
             "<h1>FastCGI echo (fcgiapp version)</h1>\n"
             "Request number %d<p>\n", count);
 
-         char *contentLength = FCGX_GetParam("CONTENT_LENGTH", request.envp);
+         const char *contentLength = FCGX_GetParam("CONTENT_LENGTH", request.envp);
          int len = 0;
 
          if (contentLength != NULL)
