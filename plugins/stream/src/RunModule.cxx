@@ -612,7 +612,9 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
 
       dabc::Hierarchy item = folder.CreateHChild(trb->GetName());
 
-      TdcCalibrationModule::SetTRBStatus(item, trb);
+      dabc::Hierarchy logitem;
+
+      TdcCalibrationModule::SetTRBStatus(item, logitem, trb);
    }
 
 }

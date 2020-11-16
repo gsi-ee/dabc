@@ -104,7 +104,7 @@ namespace stream {
       void BeforeModuleStart() override;
       void AfterModuleStop() override;
 
-      static void SetTRBStatus(dabc::Hierarchy &item, hadaq::TrbProcessor *trb, int *res_progress = nullptr, double *res_quality = nullptr, std::string *res_state = nullptr);
+      static void SetTRBStatus(dabc::Hierarchy &item, dabc::Hierarchy &logitem, hadaq::TrbProcessor *trb, int *res_progress = nullptr, double *res_quality = nullptr, std::string *res_state = nullptr);
 
    };
 

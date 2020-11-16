@@ -157,6 +157,10 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    item.SetField("value", fState);
 
+   dabc::Hierarchy logitem = fWorkerHierarchy.CreateHChild("CalibrLog");
+   logitem.SetField(dabc::prop_kind, "log");
+   logitem.EnableHistory(5000);
+
    // set ids and create more histograms
    if (fOwnProcMgr) {
       DOUT0("%s USER PRELLOP NUMCHILDS %u", GetName(), fWorkerHierarchy.NumChilds());
@@ -197,7 +201,7 @@ void stream::TdcCalibrationModule::ProcessTimerEvent(unsigned)
    fRecheckTdcs = (fAutoTdcMode > 0);
 }
 
-void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state)
+void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hierarchy &logitem, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state)
 {
    if (item.null() || (trb==0)) return;
 
@@ -215,12 +219,21 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    for (unsigned n=0;n<trb->NumberOfTDC();n++) {
       hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
 
-      if (tdc!=0) {
+      if (tdc) {
 
          double progr = tdc->GetCalibrProgress();
          std::string sname = tdc->GetCalibrStatus();
          double quality = tdc->GetCalibrQuality();
          int mode = tdc->GetExplicitCalibrationMode();
+
+         if (!logitem.null()) {
+            std::vector<std::string> errlog;
+            tdc->AppendCalibrLog(errlog);
+            for (unsigned n = 0; n < errlog.size(); ++n) {
+               logitem.SetField("value", errlog[n]);
+               logitem.MarkChangedItems();
+            }
+         }
 
          // DOUT0("TDC 0x%04x mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), mode, progr, quality, sname.c_str());
 
@@ -533,7 +546,10 @@ bool stream::TdcCalibrationModule::retransmit()
 
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
-               SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
+               dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
+
+
+               SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState);
 
                // DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
 
@@ -619,7 +635,9 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
       fLastCalibr.GetNow();
       dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
-      SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
+      dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
+
+      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState);
 
       cmd.SetDouble("quality", fQuality);
 
