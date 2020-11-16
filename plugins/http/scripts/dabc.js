@@ -211,13 +211,13 @@
 
          if ($(this).children().length == 0) {
             var code = "<div style='float:left'>";
-            code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "'>"+"Clr</button>";
+            code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "'>Clr</button>";
             if (!info.tdc) {
                code += "<button hist='" + makehname("TRB", info.trb, "ErrorBits") + "'>"+info.trb.toString(16)+"_ErrorBits</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>"+info.trb.toString(16)+"_TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "'>"+info.trb.toString(16)+"_SubevSize</button>";
             } else {
-               code += "<button hist='" + makehname("TRB", info.trb, "CalibrLog") + "'>Log</button>";
+               code += "<button hist='" + makehname("TRB", info.trb) + "'>Log</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "'>MsgPerTDC</button>";
                for (var j in info.tdc)
@@ -233,6 +233,11 @@
                   DABC.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
                   return;
                }
+               if ($(this).text() == "Log") {
+                  histname = histname.substr(0, histname.length-8) + "CalibrLog";
+                  console.log('Try to request log item', histname);
+               }
+
                var frame = hpainter.GetDisplay().FindFrame("dabc_drawing");
                if (frame) hpainter.GetDisplay().CleanupFrame(frame);
 
