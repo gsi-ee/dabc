@@ -637,6 +637,9 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
       dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
 
+      logitem.SetField("value", std::string("Performing calibration: ") + dabc::DateTime().AsString());
+      logitem.MarkChangedItems();
+
       SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState);
 
       cmd.SetDouble("quality", fQuality);
@@ -652,6 +655,11 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
 void stream::TdcCalibrationModule::BeforeModuleStart()
 {
+   dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
+
+   logitem.SetField("value", std::string("Starting calibration module: ") + dabc::DateTime().AsString());
+   logitem.MarkChangedItems();
+
    // fProfiler.Reserve(50);
    // fProfiler.MakeStatistic();
 }
