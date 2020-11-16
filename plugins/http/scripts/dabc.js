@@ -234,8 +234,8 @@
                   return;
                }
                if ($(this).text() == "Log") {
+                  // log item is one level higher then histograms, excluding trb module name
                   histname = histname.substr(0, histname.length-8) + "CalibrLog";
-                  console.log('Try to request log item', histname);
                }
 
                var frame = hpainter.GetDisplay().FindFrame("dabc_drawing");
