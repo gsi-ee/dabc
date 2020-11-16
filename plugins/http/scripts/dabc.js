@@ -217,6 +217,7 @@
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>"+info.trb.toString(16)+"_TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "'>"+info.trb.toString(16)+"_SubevSize</button>";
             } else {
+               code += "<button hist='" + makehname("TRB", info.trb, "CalibrLog") + "'>Log</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "'>MsgPerTDC</button>";
                for (var j in info.tdc)
