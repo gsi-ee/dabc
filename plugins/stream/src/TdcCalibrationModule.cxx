@@ -173,7 +173,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    // in AutoTDCMode==0 no data is changed, but also no new buffer are required
    if ((fAutoTdcMode==0) && !fReplace) fReplace = true;
 
-   // one need additionals buffers
+   // one need additional buffers
    if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
 
    if (fDebug) CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
