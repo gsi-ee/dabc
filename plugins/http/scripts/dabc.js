@@ -842,7 +842,7 @@
       this.mainreq = true;
       DABC.httpRequest(this.itemname + "/get.json", "object")
          .then(res => this.ProcessMainRequest(res))
-         .ctach(() => this.ProcessMainRequest(null))
+         .catch(() => this.ProcessMainRequest(null))
          .finally(() => { this.mainreq = false; });
    }
 
