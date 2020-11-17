@@ -173,9 +173,9 @@ namespace mbs {
             ioError
          };
 
-         std::string       fMbsNode;
+         std::string       fMbsNode;    // real mbs node name
          int               fPort;
-         std::string       fPrefix;   // prefix used to identify client
+         std::string       fPrefix;     // prefix used to identify client
 
          dabc::CommandsQueue fCmds;
 
@@ -227,6 +227,7 @@ namespace mbs {
          unsigned          fCounter;
 
          std::string       fMbsNode;    ///< name of MBS node to connect
+         std::string       fAlias;      // name appeared in hierarchy, node name by default
          double            fPeriod;     ///< period how often status is requested in seconds
          double            fRateInterval; ///< period for measuring the rate averages in seconds
          int               fHistory; ///< length of parameter history buffer

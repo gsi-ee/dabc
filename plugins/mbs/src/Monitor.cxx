@@ -145,6 +145,7 @@ mbs::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    fPrintf(false)
 {
    fMbsNode = Cfg("node", cmd).AsStr();
+   fAlias = Cfg("alias", cmd).AsStr(fMbsNode);
    fPeriod = Cfg("period", cmd).AsDouble(1.);
    fRateInterval = Cfg("rateinterval", cmd).AsDouble(1.);
    fHistory = Cfg("history", cmd).AsInt(200);
@@ -265,7 +266,7 @@ mbs::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
 
    // from this point on Publisher want to get regular update for the hierarchy
    if (publish)
-      Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
+      Publish(fHierarchy, std::string("/MBS/") + fAlias);
 
    if (fLoggerPort <= 0) NewMessage("!!! logger not activated !!!");
 }

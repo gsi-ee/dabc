@@ -5,21 +5,22 @@
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
     </Run>
-    
+
     <HttpServer name="http" port="8095">
        <!-- auth_file value="${DABCSYS}/.htdigest"/-->
        <!--auth_domain value="dabc@server"/-->
        <!--auth_default value="false"/-->
     </HttpServer>
-    
+
     <Module name="mbs1" class="mbs::Monitor">
        <node value="X86L-15"/>
+       <!--  alias value="node-15"/-->
        <!-- node value="depc418"/-->
        <period value="1"/>
        <history value="100"/>
        <!-- MBS statistic record, read from port 6008 -->
        <stat value="true"/>
-       <!-- new logger channel, running with sta logrem command 
+       <!-- new logger channel, running with sta logrem command
             Also can be specified, when MBS node started with prompter -->
        <logger value="true"/>
        <!-- command channel: true means new command channel started with sta cmdrem command
