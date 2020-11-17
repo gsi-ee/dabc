@@ -117,7 +117,7 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn, void* )
    http::Civetweb* server = (http::Civetweb*) (request_info ? request_info->user_data : 0);
    if (server==0) return 0;
 
-   DOUT0("BEGIN_REQ: uri:%s query:%s", request_info->local_uri, request_info->query_string);
+   DOUT3("BEGIN_REQ: uri:%s query:%s", request_info->local_uri, request_info->query_string);
 
    std::string filename;
 
