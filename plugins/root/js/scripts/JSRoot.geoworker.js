@@ -2,7 +2,9 @@ JSROOT = {}; // just place holder for JSROOT.GEO functions
 
 JSROOT.BIT = function(n) { return 1 << (n); }
 
-importScripts("three.min.js", "ThreeCSG.js", "JSRootGeoBase.js");
+// TODO: implement simple JSROOT.require wrapper
+
+importScripts("three.min.js", "JSRoot.csg.js", "JSRoot.geobase.js");
 
 // if (console) console.log('geoworker started ' + THREE.REVISION);
 
@@ -22,10 +24,12 @@ onmessage = function(e) {
    if (e.data.init) {
       // console.log('start worker ' +  (e.data.tm1 -  e.data.tm0));
 
-      var nodes = e.data.clones;
+      let nodes = e.data.clones;
       if (nodes) {
          // console.log('get clones ' + nodes.length);
          clones = new JSROOT.GEO.ClonedNodes(null, nodes);
+         clones.SetVisLevel(e.data.vislevel);
+         clones.SetMaxVisNodes(e.data.maxvisnodes);
          delete e.data.clones;
          clones.sortmap = e.data.sortmap;
       }
@@ -41,24 +45,24 @@ onmessage = function(e) {
    if (e.data.shapes) {
       // this is task to create geometries in the worker
 
-      var shapes = e.data.shapes, transferables = [];
+      let shapes = e.data.shapes, transferables = [];
 
       // build all shapes up to specified limit, also limit execution time
-      for (var n=0;n<100;++n) {
-         var res = clones.BuildShapes(shapes, e.data.limit, 1000);
+      for (let n=0;n<100;++n) {
+         let res = clones.BuildShapes(shapes, e.data.limit, 1000);
          if (res.done) break;
          postMessage({ progress: "Worker creating: " + res.shapes + " / " + shapes.length + " shapes,  "  + res.faces + " faces" });
       }
 
-      for (var n=0;n<shapes.length;++n) {
-         var item = shapes[n];
+      for (let n=0;n<shapes.length;++n) {
+         let item = shapes[n];
 
          if (item.geom) {
-            var bufgeom;
+            let bufgeom;
             if (item.geom instanceof THREE.BufferGeometry) {
                bufgeom = item.geom;
             } else {
-               var bufgeom = new THREE.BufferGeometry();
+               let bufgeom = new THREE.BufferGeometry();
                bufgeom.fromGeometry(item.geom);
             }
 
@@ -85,15 +89,17 @@ onmessage = function(e) {
       // this is task to collect visible nodes using camera position
 
       // first mark all visible flags
-      clones.MarkVisisble(false, false, e.data.visible);
-      delete e.data.visible;
+      clones.SetVisibleFlags(e.data.flags);
+      delete e.data.flags;
 
-      var matrix = null;
+      clones.ProduceIdShits();
+
+      let matrix = null;
       if (e.data.matrix)
          matrix = new THREE.Matrix4().fromArray(e.data.matrix);
       delete e.data.matrix;
 
-      var res = clones.CollectVisibles(e.data.collect, JSROOT.GEO.CreateFrustum(matrix), e.data.collect_nodes);
+      let res = clones.CollectVisibles(e.data.collect, JSROOT.GEO.createFrustum(matrix));
 
       e.data.new_nodes = res.lst;
       e.data.complete = res.complete; // inform if all nodes are selected

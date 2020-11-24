@@ -1,21 +1,130 @@
 # JSROOT changelog
 
-## Changes in dev
-1. Upgrade three.js 86 -> 97
-2. Upgrade d3.js 4.4.4 -> 5.7.0
-3. Many adjustment with new TWebCanvas
-4. Implement update of TF2 drawings, see tutorials/graphics/anim.C
-5. Use gStyle attributes to draw histogram title 
-6. Add support of TProfile2Poly class
-7. Support eve7 geometry viewer - render data generated in ROOT itself
-8. Provide initial WebVR support (#176), thanks to Diego Marcos (@dmarcos)
-9. Improve windows handling in flex(ible) layout    
-10. Use requestAnimationFrame when perform monitoring, improves performance
-11. Better position for text in TH2Poly drawings
-12. Fix - support clipping for tracks and points in geo painter
-13. Fix - drawing of TGeoNode with finder   
-14. Fix - key press events processed only in actvie pad (ROOT-9128)  
-15. Move most of ui5-specific code into ROOT repository, where it will be maintained 
+## Changes in v6
+
+1. Skip IE support
+2. Upgrade d3.js to v6.1.1, due to significant changes in API skip support of older versions
+3. Make heavy use of Promise class
+4. Provide JSROOT.httpRequest() function, which returns Promise instance
+5. JSROOT.draw/JSROOT.redraw also returns Promise, skip callback parameter
+6. JSROOT.OpenFile() returns Promise, if callback specified, old API will be working
+7. Upgrade three.js to r121:
+   - SoftwareRenderer was deprecated
+   - WebGL used both for browser and node.js (via headless-gl)
+   - Keep use of SVGRendered as backup solution
+   - support r3d_gl, r3d_img, r3d_svg rendering options for TGeo and histos
+8. Deprecate bower package manager
+9. Upgrade MathJax.js to version 3.1.1, reliably works in browser and node.js!
+10. Provide new code loader via JSROOT.require. It uses require.js when available or emulate behaviour
+    either with plain scripts loading or via node.js require(). Introducing clean dependencies in JSROOT code.
+    Deprecates old JSROOT.AssertPrerequisites function
+11. All latex/mathjax related methods moved to special JSRoot.latex.js script, only loaded when required
+12. Do not use classes - performance is not good enough compared to Object.prototype
+13. Improve TH2 col drawings for large number of bins - up to factor 5 faster
+14. Rename JSROOT scripts to follow common naming convention
+15. Support openui5 sap.ui.require loader if openui5 loaded before JSRootCore.js script
+16. Update jquery to 3.5.1, openui5 to 1.82.2
+17. Add support of log2 scale for axes drawing, v7 can have arbitrary log base
+18. Allow to move axis title to opposite position
+19. Fix zooming in color palette
+20. Add support of ZSTD compression
+
+
+## Changes in 5.9.0
+1. Support RX and RY drawing option together with COL of TH2
+2. Add support of #overline, #underline, #strike into TLatex parsing (#196)
+3. Add support of TGeoTessellated shape
+4. Major changes in v7 drawing: RFrame, RPalette, RColor, RStatBox, ...
+5. Fix in reading std::map member-wise
+6. Better handling of context menu position
+7. Support TASImage class - both PNG and binary content, including palette
+8. Let change TH2 values range via context menu
+9. Fix problem with TH2 col drawing when bins size too small
+
+
+## Changes in 5.8.2
+1. Fix - tooltip handling for TH2 Error draw
+2. Fix - use proper "fixed" position for enlarged drawing
+3. Fix - correctly extract TF1 parameter names
+4. Fix - keep stat box when update histogram drawing
+5. Fix - context menu for axes in 3D drawings
+
+
+## Changes in 5.8.1
+1. Fix - use Math.floor when search for bin label
+2. Fix - renable correct highlight of TGraphErrors
+3. Fix - adjust TH1/TH2/TAxis values to let stream them in ROOT
+4. Fix - adjust TH[1,2,3].Fill() method to update entries count
+
+
+## Changes in 5.8.0
+1. Many TGeo-related changes:
+   - use TGeoManager::fVisLevel in geometry painter
+   - "showtop" draw option for TGeoManager (equivalent to gGeoManager->SetTopVisible())
+   - "no_screen" draw option to let ignore kVisOnScreen bits for display, checked first by default
+   - radial and z-axis interactive transformation for TGeo drawings
+   - improve "comp" and "compx" option to show TGeoCompositeShape components
+   - support of TGeo objects embed in TCanvas
+   - monitoring of TGeoManager with THttpServer
+   - "rotyNN" and "rotzNN" options to TGeo painter - let customize camera position
+   - context menu command to show current camera position
+2. New and simpler TArrow drawing without use of svg markers, interactive movement of TArrow class
+3. Support different marker styles in 3D drawings
+4. Support "texte" and "texte0" draw options for TH2/TProfile2D classes
+5. Provide wrong_http_response workaround (#189)
+6. Update objects from list of histogram functions (#190)
+
+
+## Changes in 5.7.2
+1. Fix - add missing factor in TGeoPgon shape
+2. Fix - correctly handle "sync" specifier in JSROOT.NewHttpRequest
+3. Fix - verify that TH1/TH2 superimposing in 3D works properly
+4. Fix - use provided options in JSROOT.redraw function
+5. Fix - arb8 shape, used in composite
+
+
+## Changes in 5.7.1
+1. Fix - cover for WebVR API inconsistencies in Android devices (#184)
+2. Fix - add more checks in TF1 GetParName/GetParValue methods (#185)
+3. Fix - bins highlight in lego drawing with "zero" option
+4. Fix - drawing tracks with geometry from TObjArray
+5. Fix - interactive TGraph point move on time scale
+6. Fix - arb8 shapes faces building
+
+
+## Changes in 5.7.0
+1. Add support of TProfile2Poly class
+2. Add support of TGeoOverlap class, provide access from TGeoManager
+3. Add support of TGeoHalfSpace for composites
+4. Implement TF2 drawings update, see tutorials/graphics/anim.C
+5. Improve windows handling in flex(ible) layout
+6. Better position for text in TH2Poly drawings
+7. Enable projections drawing also with TH2 lego plots
+8. Use gStyle attributes to draw histogram title
+9. Use requestAnimationFrame when do monitoring, improves performance
+10. Support eve7 geometry viewer - render data generated in ROOT itself
+11. Many adjustment with new TWebCanvas - interactivity, attributes/position updates
+12. Provide initial WebVR support (#176), thanks to Diego Marcos (@dmarcos)
+13. Upgrade three.js 86 -> 102, use SoftwareRenderer instead of CanvasRenderer
+14. Upgrade d3.js 4.4.4 -> 5.7.0
+15. Use d3.js and three.js from npm when running with node.js
+16. Fix - support clipping for tracks and points in geo painter
+17. Fix - drawing of TGeoNode with finder
+18. Fix - key press events processed only in active pad (ROOT-9128)
+19. Fix - use X0/Y0 in xtru shape (#182), thanks to @altavir
+20. Move most of ui5-specific code into ROOT repository, where it will be maintained
+21. Provide special widget for object inspector
+
+
+## Changes in 5.6.4
+1. Fix - try workaround corrupted data in TTree
+2. Fix - support min0 draw option like ROOT does
+3. Fix - correctly handle TH2Poly draw options
+4. Fix - seldom error in JSROOT.cleanup
+5. Fix - repair TTree player UI
+6. Fix - error in TH3 filling
+7. Fix - correctly access top element in simple layout
+8. Fix - exclude duplicated points when drawing TH2 with SURF3 options
 
 
 ## Changes in 5.6.3
@@ -24,7 +133,7 @@
 3. Fix - use proper formatting for entries and integral (#179)
 4. Fix - TTree::Draw for 3d histogram was not properly performed
 
- 
+
 ## Changes in 5.6.2
 1. Fix - correctly handle negative parameter values in TF1/TF2
 
@@ -38,15 +147,15 @@
 
 
 ## Changes in 5.6.0
-1. By drawing outline speed up (factor 10) canvas with many small sub-pads 
+1. By drawing outline speed up (factor 10) canvas with many small sub-pads
 2. Let configure user click and double-click handlers, extend tooltip.htm example
-3. Implement workaround for standard THREE.SVGRenderer - no need for patched version  
+3. Implement workaround for standard THREE.SVGRenderer - no need for patched version
 4. When producing 3D graphical images in batch, use normal THREE.CanvasRenderer
 5. Use WebGL renderer in Chrome headless mode for 3D images generation
 6. Provide possibility to create SVG files for canvas or frame (#172)
 7. Support text drawing with TH1 bar option
 8. Fix - when drawing text, reserve extra y range to show it correctly
-9. Migrate to Node.js 8, do not support older versions 
+9. Migrate to Node.js 8, do not support older versions
 
 
 ## Changes in 5.5.2
@@ -60,7 +169,7 @@
 2. Fix - show RCanvas title
 3. New - implement 'nocache' option for JSROOT scripts loading. When specified in URL with
    JSRootCore.js script, tries to avoid scripts caching problem by adding stamp parameter to all URLs
-4. New - provide simple drawing for TObjString (#164) 
+4. New - provide simple drawing for TObjString (#164)
 
 
 ## Changes in 5.5.0
@@ -139,7 +248,7 @@
    - let combine "L" or "C" TGraph draw option with others
    - correct positioning of custom axis labels
    - correctly toggle lin/log axes in lego plot
-   - let correctly change marker attributes interactively 
+   - let correctly change marker attributes interactively
 
 
 ## Changes in 5.3.5
@@ -156,7 +265,7 @@
 
 
 ## Changes in 5.3.3
-1. Use latest jsdom and mathjax-node packages (Node.js only) 
+1. Use latest jsdom and mathjax-node packages (Node.js only)
 
 
 ## Changes in 5.3.2
