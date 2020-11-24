@@ -38,7 +38,7 @@ MbsState.prototype.DabcParameter = function(par, callback) {
    var pre = "../";
    var suf = "/get.json";
    var fullcom = pre + par + suf;
-   console.log(fullcom);
+   // console.log(fullcom);
    xmlHttp.open('GET', fullcom, true);
    xmlHttp.onreadystatechange = function() {
 
