@@ -1253,7 +1253,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
 
       if (!branch || !file || (branch._typename !== "TBranchElement") || (branch.fID < 0) || (branch.fStreamerType < 0)) return null;
 
-      let s_i = file.FindStreamerInfo(branch.fClassName, branch.fClassVersion, branch.fCheckSum),
+      let s_i = file.findStreamerInfo(branch.fClassName, branch.fClassVersion, branch.fCheckSum),
          arr = (s_i && s_i.fElements) ? s_i.fElements.arr : null;
       if (!arr) return null;
 
@@ -1292,7 +1292,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
    jsrio.DefineMemberTypeName = function(file, parent_class, member_name) {
       // return type name of given member in the class
 
-      let s_i = file.FindStreamerInfo(parent_class),
+      let s_i = file.findStreamerInfo(parent_class),
          arr = (s_i && s_i.fElements) ? s_i.fElements.arr : null,
          elem = null;
       if (!arr) return "";
@@ -1386,8 +1386,8 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
     * @desc TTree only can be read from the existing ROOT file, there is no possibility to create and fill tree
     * @example
     * JSROOT.openFile("https://root.cern/js/files/hsimple.root")
-    *      .then(file => file.ReadObject("ntuple;1"))
-    *      .then(tree => JSROOT.draw("drawing", tree, "px:py::pz>5"));
+    *       .then(file => file.readObject("ntuple;1"))
+    *       .then(tree => JSROOT.draw("drawing", tree, "px:py::pz>5"));
     */
    let TTreeMethods = {};
 
@@ -1515,7 +1515,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                // This should be equivalent to TBranch::GetEntry() method
                let shift = entry - this.first_entry, off;
                if (!this.branch.TestBit(jsrio.BranchBits.kDoNotUseBufferMap))
-                  this.raw.ClearObjectMap();
+                  this.raw.clearObjectMap();
                if (this.basket.fEntryOffset) {
                   off = this.basket.fEntryOffset[shift];
                   if (this.basket.fDisplacement)
@@ -1645,8 +1645,8 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                virtual: leaf.fVirtual,
                func: function(buf, obj) {
                   let clname = this.typename;
-                  if (this.virtual) clname = buf.ReadFastString(buf.ntou1() + 1);
-                  obj[this.name] = buf.ClassStreamer({}, clname);
+                  if (this.virtual) clname = buf.readFastString(buf.ntou1() + 1);
+                  obj[this.name] = buf.classStreamer({}, clname);
                }
             };
          } else
@@ -1712,7 +1712,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
 
                   if (elem.fType === jsrio.kAny) {
 
-                     let streamer = handle.file.GetStreamer(branch.fClassName, { val: branch.fClassVersion, checksum: branch.fCheckSum });
+                     let streamer = handle.file.getStreamer(branch.fClassName, { val: branch.fClassVersion, checksum: branch.fCheckSum });
                      if (!streamer) { elem = null; console.warn('not found streamer!'); } else
                         member = {
                            name: target_name,
@@ -1779,7 +1779,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                // when element represent base class, we need handling which differ from normal IO
                member.func = function(buf, obj) {
                   if (!obj[this.name]) obj[this.name] = { _typename: this.basename };
-                  buf.ClassStreamer(obj[this.name], this.basename);
+                  buf.classStreamer(obj[this.name], this.basename);
                };
             }
          }
@@ -1890,7 +1890,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                         stl_size: item_cnt.name,
                         type: elem.fType,
                         func: function(buf, obj) {
-                           obj[this.name] = buf.ReadFastArray(obj[this.stl_size], this.type);
+                           obj[this.name] = buf.readFastArray(obj[this.stl_size], this.type);
                         }
                      };
 
@@ -1900,7 +1900,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                         member.func = function(buf, obj) {
                            let sz0 = obj[this.stl_size], sz1 = obj[this.arr_size], arr = new Array(sz0);
                            for (let n = 0; n < sz0; ++n)
-                              arr[n] = (buf.ntou1() === 1) ? buf.ReadFastArray(sz1[n], this.type) : [];
+                              arr[n] = (buf.ntou1() === 1) ? buf.readFastArray(sz1[n], this.type) : [];
                            obj[this.name] = arr;
                         }
                      }
@@ -2074,15 +2074,13 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
          handle.process_arrays = false;
       }
 
-      function ReadBaskets(bitems, baskets_call_back) {
-         // read basket with tree data, selecting different files
-
-         let places = [], filename = "";
+      /** read basket with tree data, selecting different files */
+      function ReadBaskets(bitems) {
 
          function ExtractPlaces() {
             // extract places to read and define file name
 
-            places = []; filename = "";
+            let places = [], filename = "";
 
             for (let n = 0; n < bitems.length; ++n) {
                if (bitems[n].done) continue;
@@ -2091,15 +2089,15 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
 
                if (places.length === 0)
                   filename = branch.fFileName;
-               else
-                  if (filename !== branch.fFileName) continue;
+               else if (filename !== branch.fFileName)
+                  continue;
 
                bitems[n].selected = true; // mark which item was selected for reading
 
                places.push(branch.fBasketSeek[bitems[n].basket], branch.fBasketBytes[bitems[n].basket]);
             }
 
-            return places.length > 0;
+            return places.length > 0 ? { places: places, filename: filename } : null;
          }
 
          function ReadProgress(value) {
@@ -2119,13 +2117,13 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
             handle.selector.ShowProgress(portion);
          }
 
-         function ProcessBlobs(blobs) {
+         function ProcessBlobs(blobs, places) {
             if (!blobs || ((places.length > 2) && (blobs.length * 2 !== places.length)))
-               return JSROOT.callBack(baskets_call_back, null);
+               return Promise.resolve(null);
 
-            let n = 0, k = 0;
+            if (places.length == 2) blobs = [ blobs ];
 
-            function DoProcessing() {
+            function DoProcessing(k) {
 
                for (; k < bitems.length; ++k) {
                   if (!bitems[k].selected) continue;
@@ -2133,9 +2131,9 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                   bitems[k].selected = false;
                   bitems[k].done = true;
 
-                  let blob = (places.length > 2) ? blobs[n++] : blobs,
+                  let blob = blobs.shift(),
                      buf = new JSROOT.TBuffer(blob, 0, handle.file),
-                     basket = buf.ClassStreamer({}, "TBasket");
+                     basket = buf.classStreamer({}, "TBasket");
 
                   if (basket.fNbytes !== bitems[k].branch.fBasketBytes[bitems[k].basket])
                      console.error('mismatch in read basket sizes', bitems[k].branch.fBasketBytes[bitems[k].basket]);
@@ -2151,7 +2149,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                      bitems[k].raw = buf; // here already unpacked buffer
 
                     if (bitems[k].branch.fEntryOffsetLen > 0)
-                        buf.ReadBasketEntryOffset(basket, buf.raw_shift);
+                        buf.readBasketEntryOffset(basket, buf.raw_shift);
 
                     continue;
                   }
@@ -2170,26 +2168,30 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                      bitems[k].raw = buf; // here already unpacked buffer
 
                      if (bitems[k].branch.fEntryOffsetLen > 0)
-                        buf.ReadBasketEntryOffset(basket, buf.raw_shift);
+                        buf.readBasketEntryOffset(basket, buf.raw_shift);
 
-                     DoProcessing();  // continue processing
+                     return DoProcessing(k+1);  // continue processing
                   });
                }
 
-               if (ExtractPlaces())
-                  handle.file.ReadBuffer(places, filename, ReadProgress).then(ProcessBlobs).catch(() => ProcessBlobs(null));
-               else
-                  JSROOT.callBack(baskets_call_back, bitems);
+               let req = ExtractPlaces();
+
+               if (req)
+                  return handle.file.readBuffer(req.places, req.filename, ReadProgress).then(blobs => ProcessBlobs(blobs)).catch(() => { return null; });
+
+               return Promise.resolve(bitems);
              }
 
-             DoProcessing();
+             return DoProcessing(0);
          }
 
+         let req = ExtractPlaces();
+
          // extract places where to read
-         if (ExtractPlaces())
-            handle.file.ReadBuffer(places, filename, ReadProgress).then(ProcessBlobs).catch(() => ProcessBlobs(null));
-         else
-            JSROOT.callBack(baskets_call_back, null);
+         if (req)
+            return handle.file.readBuffer(req.places, req.filename, ReadProgress).then(blobs => ProcessBlobs(blobs, req.places)).catch(() => { return null; });
+
+         return Promise.resolve(null);
       }
 
       function ReadNextBaskets() {
@@ -2246,7 +2248,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
                      bitem.raw.raw_shift = bskt.fKeylen;
 
                      if (bskt.fBufferRef && (elem.branch.fEntryOffsetLen > 0))
-                        bitem.raw.ReadBasketEntryOffset(bskt, bitem.raw.raw_shift);
+                        bitem.raw.readBasketEntryOffset(bskt, bitem.raw.raw_shift);
 
                      bitem.bskt_obj = bskt;
                      is_direct = true;
@@ -2282,7 +2284,7 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
 
          handle.progress_showtm = new Date().getTime();
 
-         if (totalsz > 0) return ReadBaskets(bitems, ProcessBaskets);
+         if (totalsz > 0) return ReadBaskets(bitems).then(ProcessBaskets);
 
          if (is_direct) return ProcessBaskets([]); // directly process baskets
 
@@ -2867,8 +2869,8 @@ JSROOT.define(['io', 'math'], (jsrio, jsrmath) => {
          if (create_player === 1) { last_intermediate = intermediate; return; }
 
          // redirect drawing to the player
-         player_create = 1;
-         args.player_intermediate = res.progress;
+         create_player = 1;
+         // args.player_intermediate = res.progress;
          JSROOT.require("jq2d").then(() => {
             JSROOT.CreateTreePlayer(painter);
             painter.ConfigureTree(tree);

@@ -838,7 +838,7 @@
    }
 
    DABC.BnetControl = function(hpainter, itemname) {
-      hpainter.CreateCustomDisplay(itemname, "vert2", function() {
+      hpainter.createCustomDisplay(itemname, "vert2").then(() => {
          var painter = new DABC.BnetPainter(hpainter, itemname);
          if (painter.active()) {
             painter.RefreshHTML();

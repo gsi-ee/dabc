@@ -2773,7 +2773,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       let mesh = pnts.CreatePoints({ color: jsrp.getColor(hit.fMarkerColor) || "rgb(0,0,255)",
                                      style: hit.fMarkerStyle,
-                                     callback: function(delayed) { if (delayed) this.Render3D(100); }.bind(this) });
+                                     callback: delayed => { if (delayed) this.Render3D(100); }});
 
       mesh.renderOrder = 1000000; // to bring points to the front
       mesh.highlightScale = 2;
@@ -3214,7 +3214,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       let painter = this;
 
-      this._worker = new Worker(JSROOT.source_dir + "scripts/JSRootGeoWorker.js");
+      this._worker = new Worker(JSROOT.source_dir + "scripts/JSRoot.geoworker.js");
 
       this._worker.onmessage = function(e) {
 
@@ -4180,14 +4180,6 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    }
 
 
-   geo.getBrowserItem = function(item, itemname, callback) {
-      // mark object as belong to the hierarchy, require to
-      if (item._geoobj) item._geoobj.$geoh = true;
-
-      JSROOT.callBack(callback, item, item._geoobj);
-   }
-
-
    geo.createItem = function(node, obj, name) {
       let sub = {
          _kind: "ROOT." + obj._typename,
@@ -4195,7 +4187,11 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
          _title: obj.fTitle,
          _parent: node,
          _geoobj: obj,
-         _get: geo.getBrowserItem
+         _get: function(item /* ,itemname */) {
+             // mark object as belong to the hierarchy, require to
+             if (item._geoobj) item._geoobj.$geoh = true;
+             return Promise.resolve(item._geoobj);
+         }
       };
 
       let volume, shape, subnodes, iseve = false;
@@ -4289,8 +4285,8 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
           _parent: parent,
       }
 
-      item._get = function(item, itemname, callback) {
-         JSROOT.callBack(callback, item, item._geoobj || null);
+      item._get = function(item /*, itemname */) {
+         return Promise.resolve(item._geoobj || null);
       }
 
       item._expand = function(node, lst) {
@@ -4313,8 +4309,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       if (!parent._childs) parent._childs = [];
       parent._childs.push(item);
-
-   };
+   }
 
    geo.provideMenu = function(menu, item, hpainter) {
 

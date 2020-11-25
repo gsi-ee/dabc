@@ -1075,14 +1075,15 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          return true;
        }
 
-      if (!h) this.RefreshHtml();
+      if (!h) this.refreshHtml();
 
       return false;
    }
 
-   HierarchyPainter.prototype.RefreshHtml = function(callback) {
+   /** @summary Refresh HTML code of hierarchy painter */
+   HierarchyPainter.prototype.refreshHtml = function() {
 
-      if (!this.divid) return JSROOT.callBack(callback);
+      if (!this.divid) return Promise.resolve();
 
       let d3elem = this.select_main();
 
@@ -1092,14 +1093,14 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             .style('flex-direction','column');
 
       let h = this, factcmds = [], status_item = null;
-      this.ForEach(function(item) {
+      this.ForEach(item => {
          delete item._d3cont; // remove html container
          if (('_fastcmd' in item) && (item._kind == 'Command')) factcmds.push(item);
          if (('_status' in item) && !status_item) status_item = item;
       });
 
       if (!this.h || d3elem.empty())
-         return JSROOT.callBack(callback);
+         return Promise.resolve();
 
       if (factcmds.length) {
          let fastbtns = d3elem.append("div").attr("class","jsroot");
@@ -1160,7 +1161,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          if (hdiv) func(hdiv, this.itemFullName(status_item));
       }
 
-      JSROOT.callBack(callback);
+      return Promise.resolve();
    }
 
    HierarchyPainter.prototype.UpdateTreeNode = function(hitem, d3cont) {
@@ -1381,7 +1382,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             let files = [], addr = "", cnt = 0,
                 separ = () => (cnt++ > 0) ? "&" : "?";
 
-            this.ForEachRootFile(item => files.push(item._file.fFullURL));
+            this.forEachRootFile(item => files.push(item._file.fFullURL));
 
             if (!this.GetTopOnlineItem())
                addr = JSROOT.source_dir + "index.htm";
@@ -1448,7 +1449,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
                menu.add("Expand", () => this.expand(itemname));
 
             if (hitem._kind === "ROOT.TStyle")
-               menu.add("Apply", () => this.ApplyStyle(itemname));
+               menu.add("Apply", () => this.applyStyle(itemname));
          }
 
          if (typeof hitem._menu == 'function')
@@ -1467,18 +1468,18 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
    }
 
    /** @summary Creates configured JSROOT.MDIDisplay object
-   * @param callback - called when mdi object created */
-   HierarchyPainter.prototype.CreateDisplay = function(callback) {
+     * @return {Promise} with created mdi object */
+   HierarchyPainter.prototype.createDisplay = function() {
 
       if ('disp' in this) {
-         if (this.disp.NumDraw() > 0) return JSROOT.callBack(callback, this.disp);
+         if (this.disp.NumDraw() > 0) return Promise.resolve(this.disp);
          this.disp.Reset();
          delete this.disp;
       }
 
       // check that we can found frame where drawing should be done
       if (!document.getElementById(this.disp_frameid))
-         return JSROOT.callBack(callback, null);
+         return Promise.resolve(null);
 
       if (this.disp_kind == "tabs")
          this.disp = new TabsDisplay(this.disp_frameid);
@@ -1492,7 +1493,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if (this.disp)
          this.disp.CleanupFrame = this.CleanupFrame.bind(this);
 
-      JSROOT.callBack(callback, this.disp);
+      return Promise.resolve(this.disp);
    }
 
    HierarchyPainter.prototype.enable_dragging = function(element /*, itemname*/) {
@@ -1598,9 +1599,9 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             if (!filename) return;
 
             if ((filename.toLowerCase().lastIndexOf(".json") == filename.length-5))
-               this.OpenJsonFile(filename);
+               this.openJsonFile(filename);
             else
-               this.OpenRootFile(filename);
+               this.openRootFile(filename);
          }
 
          jmain.find(".gui_selectFileName").val("")
@@ -1622,15 +1623,17 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             for (let n=0;n<files.length;++n) {
                let f = files[n];
                main.select(".gui_urlToLoad").property('value', f.name);
-               this.OpenRootFile(f, localfile_read_callback);
+               this.openRootFile(f).then(localfile_read_callback);
             }
 
             localfile_read_callback = null;
          });
 
-         this.SelectLocalFile = function(read_callback) {
-            localfile_read_callback = read_callback;
-            $("#" + this.gui_div + " .jsroot_browser").find(".gui_localFile").click();
+         this.selectLocalFile = function() {
+            return new Promise(resolveFunc => {
+               localfile_read_callback = resolveFunc;
+               $("#" + this.gui_div + " .jsroot_browser").find(".gui_localFile").click();
+            });
          }
       }
 
@@ -1655,7 +1658,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       this.SetDivId(this.gui_div + '_browser_hierarchy');
 
       if (update_html) {
-         this.RefreshHtml();
+         this.refreshHtml();
          this.InitializeBrowser();
       }
 
@@ -1706,7 +1709,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             });
       } else if (!this.no_select) {
          let fname = "";
-         this.ForEachRootFile(item => { if (!fname) fname = item._fullurl; });
+         this.forEachRootFile(item => { if (!fname) fname = item._fullurl; });
          jmain.find(".gui_urlToLoad").val(fname);
       }
    }
@@ -2462,7 +2465,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          itemname = hpainter.itemFullName(item);
       }
 
-      let url = hpainter.GetOnlineItemUrl(itemname);
+      let url = hpainter.getOnlineItemUrl(itemname);
       if (!url) return null;
 
       let root_version = top._root_version ? parseInt(top._root_version) : 396545; // by default use version number 6-13-01
