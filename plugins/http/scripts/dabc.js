@@ -42,21 +42,7 @@
       return "";
    }();
 
-   if (typeof JSROOT.httpRequest == 'function')
-      DABC.httpRequest = JSROOT.httpRequest;
-   else
-      DABC.httpRequest = function(url, kind, post_data) {
-         return new Promise((resolveFunc,rejectFunc) => {
-            let req = JSROOT.NewHttpRequest(url,kind, (res) => {
-               if (res === null)
-                  rejectFunc(Error(`Fail to request ${url}`));
-               else
-                  resolveFunc(res);
-            });
-
-            req.send(post_data || null);
-         });
-      }
+   DABC.httpRequest = JSROOT.httpRequest;
 
    DABC.hasUrlOption = function(name) {
       if (typeof JSROOT.decodeUrl == 'function')
