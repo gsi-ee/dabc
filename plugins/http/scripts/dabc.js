@@ -65,7 +65,7 @@
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script
 
    DABC.HadaqDAQControl = function(hpainter, itemname) {
-      var mdi = hpainter.GetDisplay();
+      var mdi = hpainter.getDisplay();
       if (!mdi) return null;
 
       var frame = mdi.FindFrame(itemname, true);
@@ -224,8 +224,8 @@
                   histname = histname.substr(0, histname.length-8) + "CalibrLog";
                }
 
-               var frame = hpainter.GetDisplay().FindFrame("dabc_drawing");
-               if (frame) hpainter.GetDisplay().CleanupFrame(frame);
+               var frame = hpainter.getDisplay().FindFrame("dabc_drawing");
+               if (frame) hpainter.getDisplay().CleanupFrame(frame);
 
                hpainter.displayAll([histname],["frameid:dabc_drawing"]);
             });
@@ -251,7 +251,7 @@
 
 
    DABC.StreamControl = function(hpainter, itemname) {
-      var mdi = hpainter.GetDisplay();
+      var mdi = hpainter.getDisplay();
       if (!mdi) return null;
 
       var frame = mdi.FindFrame(itemname, true);
@@ -337,7 +337,7 @@
       this.hpainter = hpainter;
       this.itemname = itemname;
 
-      this.frame = hpainter.GetDisplay().FindFrame(itemname, true);
+      this.frame = hpainter.getDisplay().FindFrame(itemname, true);
       if (!this.frame) return;
 
       this.InputItems = [];
@@ -545,8 +545,8 @@
    }
 
    DABC.BnetPainter.prototype.ClearDisplay = function() {
-      var frame = this.hpainter.GetDisplay().FindFrame("dabc_drawing");
-      if (frame) this.hpainter.GetDisplay().CleanupFrame(frame);
+      var frame = this.hpainter.getDisplay().FindFrame("dabc_drawing");
+      if (frame) this.hpainter.getDisplay().CleanupFrame(frame);
    }
 
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {

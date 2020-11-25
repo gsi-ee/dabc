@@ -249,7 +249,7 @@ MbsDisplay.prototype.BuildView = function() {
    disp.AddFrame("ReadoutInfo", "rast_log");
    disp.AddFrame("ReadoutInfo", "ratf_log");
 
-   hpainter.SetDisplay(disp);
+   hpainter.setDisplay(disp);
 
    this.hpainter = null;
 
