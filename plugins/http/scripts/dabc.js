@@ -68,7 +68,7 @@
       var mdi = hpainter.getDisplay();
       if (!mdi) return null;
 
-      var frame = mdi.FindFrame(itemname, true);
+      var frame = mdi.findFrame(itemname, true);
       if (!frame) return null;
 
       var frameid = d3.select(frame).attr('id');
@@ -224,8 +224,8 @@
                   histname = histname.substr(0, histname.length-8) + "CalibrLog";
                }
 
-               var frame = hpainter.getDisplay().FindFrame("dabc_drawing");
-               if (frame) hpainter.getDisplay().CleanupFrame(frame);
+               var frame = hpainter.getDisplay().findFrame("dabc_drawing");
+               if (frame) hpainter.getDisplay().cleanupFrame(frame);
 
                hpainter.displayAll([histname],["frameid:dabc_drawing"]);
             });
@@ -254,7 +254,7 @@
       var mdi = hpainter.getDisplay();
       if (!mdi) return null;
 
-      var frame = mdi.FindFrame(itemname, true);
+      var frame = mdi.findFrame(itemname, true);
       if (!frame) return null;
 
       var ffid = d3.select(frame).attr('id');
@@ -337,7 +337,7 @@
       this.hpainter = hpainter;
       this.itemname = itemname;
 
-      this.frame = hpainter.getDisplay().FindFrame(itemname, true);
+      this.frame = hpainter.getDisplay().findFrame(itemname, true);
       if (!this.frame) return;
 
       this.InputItems = [];
@@ -545,8 +545,8 @@
    }
 
    DABC.BnetPainter.prototype.ClearDisplay = function() {
-      var frame = this.hpainter.getDisplay().FindFrame("dabc_drawing");
-      if (frame) this.hpainter.getDisplay().CleanupFrame(frame);
+      var frame = this.hpainter.getDisplay().findFrame("dabc_drawing");
+      if (frame) this.hpainter.getDisplay().cleanupFrame(frame);
    }
 
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
@@ -1176,7 +1176,7 @@
          this.SetDivId(this.divid);
       }
 
-      painter.CheckResize = function() {
+      painter.checkResize = function() {
          this.DrawValue(this.lastval);
       }
 

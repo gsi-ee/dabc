@@ -1447,7 +1447,7 @@ JSROOT.define(['d3'], (d3) => {
     * @returns {boolean} true if resize was detected
     * @abstract
     * @private */
-   BasePainter.prototype.CheckResize = function(/* arg */) {}
+   BasePainter.prototype.checkResize = function(/* arg */) {}
 
    /** @summary access to main HTML element used for drawing - typically <div> element
      * @desc if main element was layouted, returns main element inside layout
@@ -1957,7 +1957,7 @@ JSROOT.define(['d3'], (d3) => {
    /** @summary Checks if draw elements were resized and drawing should be updated.
     * @desc Redirects to {@link JSROOT.TPadPainter.CheckCanvasResize}
     * @private */
-   ObjectPainter.prototype.CheckResize = function(arg) {
+   ObjectPainter.prototype.checkResize = function(arg) {
       let p = this.canv_painter();
       if (!p) return false;
 
@@ -2265,6 +2265,7 @@ JSROOT.define(['d3'], (d3) => {
     *   -   3  if canvas and (or) frame missing, create them, but not set as main object
     *   -   4  major objects like TH3 (required canvas and frame in 3d mode)
     *   -   5  major objects like TGeoVolume (do not require canvas)
+    *   -   6  major objects like TGraphPolagram (requires canvas but not TFrame)
     *
     * @param {string|object} divid - id of div element or directly DOMElement
     * @param {number} [kind] - kind of object drawn with painter
@@ -2333,7 +2334,7 @@ JSROOT.define(['d3'], (d3) => {
             this.rstyle = pp.next_rstyle;
       }
 
-      if (((kind === 1) || (kind === 4) || (kind === 5)) && !svg_p.property('mainpainter'))
+      if (((kind === 1) || (kind === 4) || (kind === 5) || (kind === 6)) && !svg_p.property('mainpainter'))
          // when this is first main painter in the pad
          svg_p.property('mainpainter', this);
 
@@ -2450,10 +2451,9 @@ JSROOT.define(['d3'], (d3) => {
    }
 
    /** @summary call function for each painter in the pad
+     * @desc Iterate over all known painters
     * @private */
-   ObjectPainter.prototype.ForEachPainter = function(userfunc, kind) {
-      // Iterate over all known painters
-
+   ObjectPainter.prototype.forEachPainter = function(userfunc, kind) {
       // special case of the painter set as pointer of first child of main element
       let painter = this.AccessTopPainter();
       if (painter) {
@@ -2463,7 +2463,7 @@ JSROOT.define(['d3'], (d3) => {
 
       // iterate over all painters from pad list
       let pp = this.pad_painter();
-      if (pp) pp.ForEachPainterInPad(userfunc, kind);
+      if (pp) pp.forEachPainterInPad(userfunc, kind);
    }
 
    /** @summary indicate that redraw was invoked via interactive action (like context menu or zooming)
@@ -3375,7 +3375,7 @@ JSROOT.define(['d3'], (d3) => {
     * @desc function used to react on browser window resize event
     * While many resize events could come in short time,
     * resize will be handled with delay after last resize event
-    * handle can be function or object with CheckResize function
+    * handle can be function or object with checkResize function
     * one could specify delay after which resize event will be handled
     * @private */
    JSROOT.RegisterForResize = function(handle, delay) {
@@ -3391,13 +3391,13 @@ JSROOT.define(['d3'], (d3) => {
 
          document.body.style.cursor = 'wait';
          if (typeof handle == 'function') handle(); else
-            if ((typeof handle == 'object') && (typeof handle.CheckResize == 'function')) handle.CheckResize(); else
+            if ((typeof handle == 'object') && (typeof handle.checkResize == 'function')) handle.checkResize(); else
                if (typeof handle == 'string') {
                   let node = d3.select('#' + handle);
                   if (!node.empty()) {
                      let mdi = node.property('mdi');
                      if (mdi) {
-                        mdi.CheckMDIResize();
+                        mdi.checkMDIResize();
                      } else {
                         JSROOT.resize(node.node());
                      }
@@ -3721,8 +3721,8 @@ JSROOT.define(['d3'], (d3) => {
       if (!handle.func) {
          if (opt && (opt.indexOf("same") >= 0)) {
             let main_painter = JSROOT.get_main_painter(divid);
-            if (main_painter && (typeof main_painter.PerformDrop === 'function'))
-               return main_painter.PerformDrop(obj, "", null, opt);
+            if (main_painter && (typeof main_painter.performDrop === 'function'))
+               return main_painter.performDrop(obj, "", null, opt);
          }
 
          return Promise.reject(Error('Function not specified'));
@@ -4002,9 +4002,9 @@ JSROOT.define(['d3'], (d3) => {
          if (typeof arg !== 'object') arg = null;
       let done = false, dummy = new ObjectPainter();
       dummy.SetDivId(divid, -1);
-      dummy.ForEachPainter(painter => {
-         if (!done && (typeof painter.CheckResize == 'function'))
-            done = painter.CheckResize(arg);
+      dummy.forEachPainter(painter => {
+         if (!done && (typeof painter.checkResize == 'function'))
+            done = painter.checkResize(arg);
       });
       return done;
    }
@@ -4026,7 +4026,7 @@ JSROOT.define(['d3'], (d3) => {
    JSROOT.cleanup = function(divid) {
       let dummy = new ObjectPainter(), lst = [];
       dummy.SetDivId(divid, -1);
-      dummy.ForEachPainter(painter => {
+      dummy.forEachPainter(painter => {
          if (lst.indexOf(painter) < 0) lst.push(painter);
       });
       for (let n = 0; n < lst.length; ++n) lst[n].Cleanup();

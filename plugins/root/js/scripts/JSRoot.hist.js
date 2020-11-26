@@ -1373,7 +1373,8 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /** @summary Produce and draw TLegend object for the specified divid
     * @desc Should be called when all other objects are painted
     * Invoked when item "$legend" specified in JSROOT URL string
-    * @memberof JSROOT
+    * @returns 
+    * @memberof JSROOT.Painter
     * @private */
    let produceLegend = (divid, opt) => {
       let main_painter = JSROOT.get_main_painter(divid);
@@ -1995,7 +1996,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /** @summary copy draw options to all other histograms in the pad
      * @private */
    THistPainter.prototype.CopyOptionsToOthers = function() {
-      this.ForEachPainter(painter => {
+      this.forEachPainter(painter => {
          if ((painter !== this) && (typeof painter.CopyOptionsFrom == 'function'))
             painter.CopyOptionsFrom(this);
       }, "objects");
@@ -2145,7 +2146,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
             // find painters associated with histogram
             if (pp)
-               pp.ForEachPainterInPad(objp => {
+               pp.forEachPainterInPad(objp => {
                   if (objp.child_painter_id === pid)
                      painters.push(objp);
                }, "objects");

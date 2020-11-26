@@ -557,11 +557,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       return this.gui_div + "_drawing";
    }
 
-   BrowserLayout.prototype.CheckResize = function() {
-      if (this.hpainter && (typeof this.hpainter.CheckResize == 'function'))
-         this.hpainter.CheckResize();
-      else if (this.objpainter && (typeof this.objpainter.CheckResize == 'function')) {
-         this.objpainter.CheckResize(true);
+   /** @summary Check resize action */
+   BrowserLayout.prototype.checkResize = function() {
+      if (this.hpainter && (typeof this.hpainter.checkResize == 'function'))
+         this.hpainter.checkResize();
+      else if (this.objpainter && (typeof this.objpainter.checkResize == 'function')) {
+         this.objpainter.checkResize(true);
       }
    }
 
@@ -577,7 +578,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       if (with_browser) main.append("div").classed("jsroot_browser", true);
    }
 
-   BrowserLayout.prototype.CreateBrowserBtns = function() {
+   /** @summary Create buttons in the layout */
+   BrowserLayout.prototype.createBrowserBtns = function() {
       let br = this.main().select(".jsroot_browser");
       if (br.empty()) return;
       let btns = br.append("div").classed("jsroot_browser_btns", true).classed("jsroot", true);
@@ -625,10 +627,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       return !line.empty();
    }
 
-   BrowserLayout.prototype.CreateStatusLine = function(height, mode) {
-      if (!this.gui_div) return '';
-      JSROOT.require('jq2d').then(() => this.CreateStatusLine(height, mode));
-      return this.gui_div + "_status";
+   BrowserLayout.prototype.createStatusLine = function(height, mode) {
+      if (!this.gui_div) return Promise.resolve('');
+      return JSROOT.require('jq2d').then(() => this.createStatusLine(height, mode));
    }
 
    // ==============================================================================
@@ -785,7 +786,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       each_item(top);
    }
 
-   /** @summary Ssearch item in the hierarchy
+   /** @summary Search item in the hierarchy
     * @param {object|string} arg - item name or object with arguments
     * @param {string} arg.name -  item to search
     * @param {boolean} [arg.force = false] - specified elements will be created when not exists
@@ -999,13 +1000,11 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if ((arg.rest == d.rest) || (arg.rest.length <= d.rest.length))
                return Promise.resolve(result);
 
-         return new Promise(resolveFunc => {
-            this.expand(parentname, res => {
-               if (!res) return resolveFunc(result);
-               let newparentname = this.itemFullName(d.last);
-               if (newparentname.length>0) newparentname+="/";
-               this.getObject( { name: newparentname + d.rest, rest: d.rest }, options).then(resolveFunc);
-            }, null, true);
+         return this.expand(parentname, null, true).then(res => {
+            if (!res) return result;
+            let newparentname = this.itemFullName(d.last);
+            if (newparentname.length>0) newparentname+="/";
+            return this.getObject( { name: newparentname + d.rest, rest: d.rest }, options);
          });
       }
 
@@ -1068,10 +1067,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Returns true if given item displayed */
    HierarchyPainter.prototype.isItemDisplayed = function(itemname) {
       let mdi = this.getDisplay();
-      return mdi ? mdi.FindFrame(itemname) !== null : false;
+      return mdi ? mdi.findFrame(itemname) !== null : false;
    }
 
-   HierarchyPainter.prototype.display = function(itemname, drawopt, call_back) {
+   /** @summary Display specified item
+     * @return {Promise} with created painter object */
+   HierarchyPainter.prototype.display = function(itemname, drawopt) {
       let h = this,
           painter = null,
           updating = false,
@@ -1086,7 +1087,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          drawopt = drawopt.substr(0, p);
       }
 
-      function display_callback(respainter) {
+      function complete(respainter) {
          if (!updating) JSROOT.progress();
 
          if (respainter && (typeof respainter === 'object') && (typeof respainter.SetItemName === 'function')) {
@@ -1094,30 +1095,27 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if (item && !item._painter) item._painter = respainter;
          }
 
-         // prevent calling many times
-         let f = call_back;
-         call_back = null;
-         JSROOT.callBack(f, respainter || painter, display_itemname);
+         return respainter || painter;
       }
 
-      h.createDisplay().then(mdi => {
+      return h.createDisplay().then(mdi => {
 
-         if (!mdi) return display_callback();
+         if (!mdi) return complete();
 
          item = h.Find(display_itemname);
 
          if (item && ('_player' in item))
-            return h.player(display_itemname, drawopt).then(display_callback);
+            return h.player(display_itemname, drawopt).then(res => complete(res));
 
          updating = (typeof(drawopt)=='string') && (drawopt.indexOf("update:")==0);
 
          if (updating) {
             drawopt = drawopt.substr(7);
-            if (!item || item._doing_update) return display_callback();
+            if (!item || item._doing_update) return complete();
             item._doing_update = true;
          }
 
-         if (item && !h.canDisplay(item, drawopt)) return display_callback();
+         if (item && !h.canDisplay(item, drawopt)) return complete();
 
          let divid = "";
          if ((typeof(drawopt)=='string') && (drawopt.indexOf("divid:")>=0)) {
@@ -1128,27 +1126,27 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
          if (!updating) JSROOT.progress("Loading " + display_itemname);
 
-         h.getObject(display_itemname, drawopt).then(result => {
+         return h.getObject(display_itemname, drawopt).then(result => {
             if (!updating) JSROOT.progress();
 
             if (!item) item = result.item;
             let obj = result.obj;
 
             if (updating && item) delete item._doing_update;
-            if (!obj) return display_callback();
+            if (!obj) return complete();
 
             if (!updating) JSROOT.progress("Drawing " + display_itemname);
 
             if (divid.length > 0) {
                let draw_func = updating ? JSROOT.redraw : JSROOT.draw;
-               return draw_func(divid, obj, drawopt).then(display_callback).catch(() => display_callback(null));
+               return draw_func(divid, obj, drawopt).then(p => complete(p)).catch(() => complete(null));
             }
 
-            mdi.ForEachPainter((p, frame) => {
+            mdi.forEachPainter((p, frame) => {
                if (p.GetItemName() != display_itemname) return;
                // verify that object was drawn with same option as specified now (if any)
                if (!updating && (drawopt!=null) && (p.GetItemDrawOpt()!=drawopt)) return;
-               mdi.ActivateFrame(frame);
+               mdi.activateFrame(frame);
 
                let handle = null;
                if (obj._typename) handle = JSROOT.getDrawHandle("ROOT." + obj._typename);
@@ -1158,21 +1156,23 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                if (p.RedrawObject(obj)) painter = p;
             });
 
-            if (painter) return display_callback();
+            if (painter) return complete();
 
             if (updating) {
                console.warn(`something went wrong - did not found painter when doing update of ${display_itemname}`);
-               return display_callback();
+               return complete();
             }
 
-            let frame = mdi.FindFrame(frame_name, true);
+            let frame = mdi.findFrame(frame_name, true);
             d3.select(frame).html("");
-            mdi.ActivateFrame(frame);
+            mdi.activateFrame(frame);
 
-            JSROOT.draw(d3.select(frame).attr("id"), obj, drawopt).then(display_callback).catch(() => display_callback(null));
+            return JSROOT.draw(d3.select(frame).attr("id"), obj, drawopt).then(p => {
+               if (JSROOT.settings.DragAndDrop)
+                  h.enable_dropping(frame, display_itemname);
+               return complete(p);
+            }).catch(() => complete(null));
 
-            if (JSROOT.settings.DragAndDrop)
-               h.enable_dropping(frame, display_itemname);
          });
       });
    }
@@ -1185,38 +1185,37 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       // here is not defined - implemented with jquery
    }
 
-   HierarchyPainter.prototype.dropitem = function(itemname, divid, opt, call_back) {
+  /** @summary Drop item on specified element for drawing */
+   HierarchyPainter.prototype.dropItem = function(itemname, divid, opt) {
       if (opt && typeof opt === 'function') { call_back = opt; opt = ""; }
       if (opt===undefined) opt = "";
 
-      let drop_callback = drop_painter => {
+      let drop_complete = drop_painter => {
          if (drop_painter && (typeof drop_painter === 'object')) drop_painter.SetItemName(itemname, null, this);
-         JSROOT.callBack(call_back);
+         return drop_painter;
       }
 
       if (itemname == "$legend")
          return JSROOT.require("hist").then(() => {
-            let res = jsrp.produceLegend(divid, opt);
-            JSROOT.callBack(drop_callback, res);
+            let legend_painter = jsrp.produceLegend(divid, opt);
+            return drop_complete(legend_painter);
          });
 
-      this.getObject(itemname).then(res => {
+      return this.getObject(itemname).then(res => {
 
-         if (!res.obj) return JSROOT.callBack(call_back);
+         if (!res.obj) return null;
 
          let main_painter = JSROOT.get_main_painter(divid);
 
-         if (main_painter && (typeof main_painter.PerformDrop === 'function'))
-            return main_painter.PerformDrop(res.obj, itemname, res.item, opt).then(drop_callback);
+         if (main_painter && (typeof main_painter.performDrop === 'function'))
+            return main_painter.performDrop(res.obj, itemname, res.item, opt).then(p => drop_complete(p));
 
          if (main_painter && main_painter.accept_drops)
-            return JSROOT.draw(divid, res.obj, "same " + opt).then(drop_callback);
+            return JSROOT.draw(divid, res.obj, "same " + opt).then(p => drop_complete(p));
 
-         this.CleanupFrame(divid);
-         return JSROOT.draw(divid, res.obj, opt).then(drop_callback);
+         this.cleanupFrame(divid);
+         return JSROOT.draw(divid, res.obj, opt).then(p => drop_complete(p));
       });
-
-      return true;
    }
 
    /** @summary Update items
@@ -1228,7 +1227,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       let draw_items = [], draw_options = [];
 
-      this.disp.ForEachPainter(p => {
+      this.disp.forEachPainter(p => {
          let itemname = p.GetItemName();
          if (!itemname || (draw_items.indexOf(itemname)>=0)) return;
          if (typeof items == 'array') {
@@ -1257,7 +1256,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       let allitems = [], options = [];
 
       // first collect items
-      this.disp.ForEachPainter(p => {
+      this.disp.forEachPainter(p => {
          let itemname = p.GetItemName(),
              drawopt = p.GetItemDrawOpt();
          if ((typeof itemname != 'string') || (allitems.indexOf(itemname)>=0)) return;
@@ -1292,10 +1291,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          this.displayAll(allitems, options);
    }
 
-   /** @summary Display all provided elements */
-   HierarchyPainter.prototype.displayAll = function(items, options, call_back) {
+   /** @summary Display all provided elements
+     * @returns {Promise} when drawing finished */
+   HierarchyPainter.prototype.displayAll = function(items, options) {
 
-      if (!items || (items.length == 0)) return JSROOT.callBack(call_back);
+      if (!items || (items.length == 0))
+         return Promise.resolve(true);
 
       let h = this;
 
@@ -1311,7 +1312,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return h.getObject(items[0]).then(() => {
             let tm1 = new Date();
             d3.select("#" + h.disp_frameid).append("h2").html("Item " + items[0] + " reading time = " + (tm1.getTime() - tm0.getTime()) + "ms");
-            return JSROOT.callBack(call_back);
+            return Promise.resolve(true);
          });
       }
 
@@ -1382,13 +1383,14 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          let hitem = h.Find(items[n]);
          if (!hitem || h.canDisplay(hitem, options[n])) continue;
          // try to expand specified item
-         h.expand(items[n], null, null, true);
+         h.expand(items[n], null, true);
          items.splice(n, 1);
          options.splice(n, 1);
          dropitems.splice(n, 1);
       }
 
-      if (items.length == 0) return JSROOT.callBack(call_back);
+      if (items.length == 0)
+         return Promise.resolve(true);
 
       let frame_names = new Array(items.length), items_wait = new Array(items.length);
       for (let n=0; n < items.length;++n) {
@@ -1417,53 +1419,48 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if (items[n]===items[k]) items_wait[k] = (found_main != k);
       }
 
-      h.createDisplay().then(mdi => {
-         if (!mdi) return JSROOT.callBack(call_back);
+      return this.createDisplay().then(mdi => {
+         if (!mdi) return false;
 
          // Than create empty frames for each item
          for (let i = 0; i < items.length; ++i)
             if (options[i].indexOf('update:')!==0) {
-               mdi.CreateFrame(frame_names[i]);
+               mdi.createFrame(frame_names[i]);
                options[i] += "::_display_on_frame_::"+frame_names[i];
             }
 
          function DropNextItem(indx, painter) {
-            if (painter && dropitems[indx] && (dropitems[indx].length>0))
-               return h.dropitem(dropitems[indx].shift(), painter.divid, dropopts[indx].shift(), DropNextItem.bind(h, indx, painter));
+            if (painter && dropitems[indx] && (dropitems[indx].length > 0))
+               return h.dropItem(dropitems[indx].shift(), painter.divid, dropopts[indx].shift()).then(() => DropNextItem(indx, painter));
 
             dropitems[indx] = null; // mark that all drop items are processed
             items[indx] = null; // mark item as ready
 
-            let isany = false;
-
             for (let cnt = 0; cnt < items.length; ++cnt) {
                if (dropitems[cnt]) isany = true;
                if (items[cnt]===null) continue; // ignore completed item
-               isany = true;
                if (items_wait[cnt] && items.indexOf(items[cnt])===cnt) {
                   items_wait[cnt] = false;
-                  h.display(items[cnt], options[cnt], DropNextItem.bind(h,cnt));
+                  return h.display(items[cnt], options[cnt]).then(painter => DropNextItem(cnt, painter));
                }
             }
-
-            // only when items drawn and all sub-items dropped, one could perform call-back
-            if (!isany && call_back) {
-               JSROOT.callBack(call_back);
-               call_back = null;
-            }
          }
+
+         let promises = [];
 
          // We start display of all items parallel, but only if they are not the same
          for (let i = 0; i < items.length; ++i)
             if (!items_wait[i])
-               h.display(items[i], options[i], DropNextItem.bind(h,i));
+               promises.push(h.display(items[i], options[i]).then(painter => DropNextItem(i, painter)));
+
+         return Promise.all(promises);
       });
    }
 
    /** @summary Reload hierarhcy and refresh html code */
    HierarchyPainter.prototype.reload = function() {
       if ('_online' in this.h)
-         this.OpenOnline(this.h._online,() => this.refreshHtml());
+         this.openOnline(this.h._online).then(() => this.refreshHtml());
    }
 
    HierarchyPainter.prototype.UpdateTreeNode = function() {
@@ -1509,10 +1506,10 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                // if after last expand no better solution found - skip it
                if ((prev_found!==undefined) && (d.now_found === prev_found)) return find_next();
 
-               return this.expand(d.now_found, res => {
+               return this.expand(d.now_found).then(res => {
                   if (!res) return find_next();
                   let newname = this.itemFullName(d.last);
-                  if (newname.length>0) newname+="/";
+                  if (newname.length > 0) newname+="/";
                   find_next(newname + d.rest, d.now_found);
                });
             }
@@ -1543,19 +1540,22 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       }
 
       if (force && this.brlayout) {
-         if (!this.brlayout.browser_kind) return this.CreateBrowser('float', true, find_next);
-         if (!this.brlayout.browser_visible) this.brlayout.ToggleBrowserVisisbility();
+         if (!this.brlayout.browser_kind)
+           return this.createBrowser('float', true).then(find_next);
+         if (!this.brlayout.browser_visible)
+            this.brlayout.ToggleBrowserVisisbility();
       }
 
       // use recursion
       find_next();
    }
 
-   /** @summary expand specified item */
-   HierarchyPainter.prototype.expand = function(itemname, call_back, d3cont, silent) {
+   /** @summary expand specified item
+     * @returns {Promise} when ready */
+   HierarchyPainter.prototype.expand = function(itemname, d3cont, silent) {
       let hitem = this.Find(itemname);
 
-      if (!hitem && d3cont) return JSROOT.callBack(call_back);
+      if (!hitem && d3cont) return Promise.resolve();
 
       let DoExpandItem = (_item, _obj, _name) => {
          if (!_name) _name = this.itemFullName(_item);
@@ -1569,12 +1569,11 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          }
 
          if (handle && handle.expand) {
-            JSROOT.require(handle.prereq).then(() => {
+            return JSROOT.require(handle.prereq).then(() => {
                _item._expand = JSROOT.findFunction(handle.expand);
                if (_item._expand) return DoExpandItem(_item, _obj, _name);
-               JSROOT.callBack(call_back);
+               return true; // no need for other checks
             });
-            return true;
          }
 
          // try to use expand function
@@ -1587,8 +1586,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                } else {
                   if (!silent) this.UpdateTreeNode(_item, d3cont);
                }
-               JSROOT.callBack(call_back, _item);
-               return true;
+               return Promise.resolve(_item);
             }
          }
 
@@ -1600,35 +1598,39 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             } else {
                if (!silent) this.UpdateTreeNode(_item, d3cont);
             }
-            JSROOT.callBack(call_back, _item);
-            return true;
+            return Promise.resolve(_item);
          }
 
-         return false;
+         return Promise.resolve(-1);
       }
+
+      let promise = Promise.resolve(-1);
 
       if (hitem) {
          // item marked as it cannot be expanded, also top item cannot be changed
-         if ((hitem._more === false) || (!hitem._parent && hitem._childs)) return JSROOT.callBack(call_back);
+         if ((hitem._more === false) || (!hitem._parent && hitem._childs))
+            return Promise.resolve();
 
          if (hitem._childs && hitem._isopen) {
             hitem._isopen = false;
             if (!silent) this.UpdateTreeNode(hitem, d3cont);
-            return JSROOT.callBack(call_back);
+            return Promise.resolve();
          }
 
-         if (hitem._obj && DoExpandItem(hitem, hitem._obj, itemname)) return;
+         if (hitem._obj) promise = DoExpandItem(hitem, hitem._obj, itemname);
       }
 
-      JSROOT.progress("Loading " + itemname);
+      return promise.then(res => {
+         if (res !== -1) return res; // done
 
-      this.getObject(itemname, "hierarchy_expand").then(res => {
+         JSROOT.progress("Loading " + itemname);
 
-         JSROOT.progress();
+         return this.getObject(itemname, "hierarchy_expand").then(res => {
 
-         if (res.obj && DoExpandItem(res.item, res.obj)) return;
+            JSROOT.progress();
 
-         JSROOT.callBack(call_back);
+            if (res.obj) return DoExpandItem(res.item, res.obj).then(res => { return (res !== -1) ? res : undefined; });
+         });
       });
 
    }
@@ -1868,10 +1870,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       });
    }
 
-   HierarchyPainter.prototype.OpenOnline = function(server_address, user_callback) {
+   /** @summary Access THttpServer with provided address
+     * @returns {Promise} when ready */
+   HierarchyPainter.prototype.openOnline = function(server_address) {
       let AdoptHierarchy = result => {
          this.h = result;
-         if (!result) return;
+         if (!result) return Promise.resolve(null);
 
          if (('_title' in this.h) && (this.h._title!='')) document.title = this.h._title;
 
@@ -1887,7 +1891,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          this.h._expand = onlineHierarchy;
 
          let scripts = [], modules = [];
-         this.ForEach(function(item) {
+         this.ForEach(item => {
             if ('_childs' in item) item._expand = onlineHierarchy;
 
             if ('_autoload' in item) {
@@ -1903,7 +1907,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             }
          });
 
-         JSROOT.require(modules)
+         return JSROOT.require(modules)
                .then(() => JSROOT.loadScript(scripts))
                .then(() => {
                   this.ForEach(item => {
@@ -1915,7 +1919,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                         JSROOT.addDrawFunc({ name: typename, func: item._drawfunc, script: item._drawscript, opt: drawopt });
                   });
 
-                  JSROOT.callBack(user_callback, this);
+                  return this;
                });
       }
 
@@ -1927,7 +1931,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return AdoptHierarchy(h);
       }
 
-      JSROOT.httpRequest(server_address + "h.json?compact=3", 'object').then(AdoptHierarchy);
+      return JSROOT.httpRequest(server_address + "h.json?compact=3", 'object')
+                   .then(hh => AdoptHierarchy(hh));
    }
 
    HierarchyPainter.prototype.GetOnlineProp = function(itemname) {
@@ -2095,13 +2100,13 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
    HierarchyPainter.prototype.clear = function(withbrowser) {
       if (this.disp) {
-         this.disp.Reset();
+         this.disp.cleanup();
          delete this.disp;
       }
 
       let plainarr = [];
 
-      this.ForEach(function(item) {
+      this.ForEach(item => {
          delete item._painter; // remove reference on the painter
          // when only display cleared, try to clear all browser items
          if (!withbrowser && (typeof item.clear=='function')) item.clear();
@@ -2123,15 +2128,17 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       return this.disp;
    }
 
-   HierarchyPainter.prototype.CleanupFrame = function(divid) {
-      // hook to perform extra actions when frame is cleaned
+   /** @summary method called when MDI element is cleaned up
+     * @desc hook to perform extra actions when frame is cleaned */
+   HierarchyPainter.prototype.cleanupFrame = function(divid) {
 
       let lst = JSROOT.cleanup(divid);
 
       // we remove all painters references from items
-      if (lst && (lst.length>0))
-         this.ForEach(function(item) {
-            if (item._painter && lst.indexOf(item._painter)>=0) delete item._painter;
+      if (lst && (lst.length > 0))
+         this.ForEach(item => {
+            if (item._painter && lst.indexOf(item._painter) >= 0)
+               delete item._painter;
          });
    }
 
@@ -2140,9 +2147,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    HierarchyPainter.prototype.createDisplay = function() {
 
       if ('disp' in this) {
-         if ((this.disp.NumDraw() > 0) || (this.disp_kind == "custom"))
+         if ((this.disp.numDraw() > 0) || (this.disp_kind == "custom"))
             return Promise.resolve(this.disp);
-         this.disp.Reset();
+         this.disp.cleanup();
          delete this.disp;
       }
 
@@ -2157,9 +2164,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return JSROOT.require('jq2d').then(() => this.createDisplay());
 
       if (this.disp)
-         this.disp.CleanupFrame = this.CleanupFrame.bind(this);
+         this.disp.cleanupFrame = this.cleanupFrame.bind(this);
 
-      Promise.resolve(this.disp);
+      return Promise.resolve(this.disp);
    }
 
    /** @summary If possible, creates custom JSROOT.MDIDisplay for given item
@@ -2175,18 +2182,18 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       // check if display can be erased
       if (this.disp) {
-         let num = this.disp.NumDraw();
-         if ((num>1) || ((num==1) && !this.disp.FindFrame(itemname)))
+         let num = this.disp.numDraw();
+         if ((num > 1) || ((num == 1) && !this.disp.findFrame(itemname)))
             return this.createDisplay();
-         this.disp.Reset();
+         this.disp.cleanup();
          delete this.disp;
       }
 
       this.createDisplay();
    }
 
+   /** @summary function updates object drawings for other painters */
    HierarchyPainter.prototype.updateOnOtherFrames = function(painter, obj) {
-      // function should update object drawings for other painters
       let mdi = this.disp, handle = null, isany = false;
       if (!mdi) return false;
 
@@ -2194,19 +2201,21 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       if (handle && handle.draw_field && obj[handle.draw_field])
          obj = obj[handle.draw_field];
 
-      mdi.ForEachPainter((p, frame) => {
+      mdi.forEachPainter((p, frame) => {
          if ((p===painter) || (p.GetItemName() != painter.GetItemName())) return;
-         mdi.ActivateFrame(frame);
+         mdi.activateFrame(frame);
          if (p.RedrawObject(obj)) isany = true;
       });
       return isany;
    }
 
-   HierarchyPainter.prototype.CheckResize = function(size) {
-      if (this.disp) this.disp.CheckMDIResize(null, size);
+   HierarchyPainter.prototype.checkResize = function(size) {
+      if (this.disp) this.disp.checkMDIResize(null, size);
    }
 
-   HierarchyPainter.prototype.StartGUI = function(gui_div, gui_call_back, url) {
+   /** @summary Start GUI
+     * @returns {Promise} when ready */
+   HierarchyPainter.prototype.startGUI = function(gui_div, url) {
 
       let d = JSROOT.decodeUrl(url);
 
@@ -2340,65 +2349,35 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             let req = prereq;
             prereq = "";
             if (!req) { req = load; load = ""; }
-            return JSROOT.require(req).then(OpenAllFiles);
+            return JSROOT.require(req).then(OpenAllFiles, OpenAllFiles);
          }
 
          let promise;
 
-         if (browser_kind) { this.CreateBrowser(browser_kind); browser_kind = ""; }
-         if (status!==null) { this.CreateStatusLine(statush, status); status = null; }
-         if (jsonarr.length > 0)
+         if (browser_kind) {
+            promise = this.createBrowser(browser_kind); browser_kind = "";
+         } else if (status!==null) {
+            promise = this.createStatusLine(statush, status); status = null;
+         } else if (jsonarr.length > 0)
             promise = this.openJsonFile(jsonarr.shift());
          else if (filesarr.length > 0)
             promise = this.openRootFile(filesarr.shift());
          else if ((localfile!==null) && (typeof this.selectLocalFile == 'function')) {
             localfile = null; promise = this.selectLocalFile();
          } else if (expanditems.length > 0)
-            this.expand(expanditems.shift(), OpenAllFiles);
+            promise = this.expand(expanditems.shift());
          else if (style.length > 0)
             promise = this.applyStyle(style.shift());
          else {
             this.refreshHtml();
-            this.displayAll(itemsarr, optionsarr, () => {
+            return this.displayAll(itemsarr, optionsarr).then(() => {
                if (itemsarr) this.refreshHtml();
                this.SetMonitoring(monitor);
-               JSROOT.callBack(gui_call_back);
+               return this; // this is final return
            });
          }
 
-         if (promise) promise.then(OpenAllFiles, OpenAllFiles);
-      }
-
-      let AfterOnlineOpened = () => {
-         // check if server enables monitoring
-
-         if (!this.exclude_browser && !browser_configured && ('_browser' in this.h)) {
-            browser_kind = this.h._browser;
-            if (browser_kind==="no") browser_kind = ""; else
-            if (browser_kind==="off") { browser_kind = ""; status = null; this.exclude_browser = true; }
-         }
-
-         if (('_monitoring' in this.h) && !monitor)
-            monitor = this.h._monitoring;
-
-         if (('_loadfile' in this.h) && (filesarr.length==0))
-            filesarr = parseAsArray(this.h._loadfile);
-
-         if (('_drawitem' in this.h) && (itemsarr.length==0)) {
-            itemsarr = parseAsArray(this.h._drawitem);
-            optionsarr = parseAsArray(this.h._drawopt);
-         }
-
-         if (('_layout' in this.h) && !layout && ((this.is_online != "draw") || (itemsarr.length > 1)))
-            this.disp_kind = this.h._layout;
-
-         if (('_toptitle' in this.h) && this.exclude_browser && document)
-            document.title = this.h._toptitle;
-
-         if (gui_div)
-            this.PrepareGuiDiv(gui_div, this.disp_kind);
-
-         OpenAllFiles();
+         return promise.then(OpenAllFiles, OpenAllFiles);
       }
 
       let h0 = null;
@@ -2408,15 +2387,45 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       }
 
       if (h0 !== null)
-         return this.OpenOnline(h0, AfterOnlineOpened);
+         return this.openOnline(h0).then(() => {
+            // check if server enables monitoring
+            if (!this.exclude_browser && !browser_configured && ('_browser' in this.h)) {
+               browser_kind = this.h._browser;
+               if (browser_kind==="no") browser_kind = ""; else
+               if (browser_kind==="off") { browser_kind = ""; status = null; this.exclude_browser = true; }
+            }
+
+            if (('_monitoring' in this.h) && !monitor)
+               monitor = this.h._monitoring;
+
+            if (('_loadfile' in this.h) && (filesarr.length==0))
+               filesarr = parseAsArray(this.h._loadfile);
+
+            if (('_drawitem' in this.h) && (itemsarr.length==0)) {
+               itemsarr = parseAsArray(this.h._drawitem);
+               optionsarr = parseAsArray(this.h._drawopt);
+            }
+
+            if (('_layout' in this.h) && !layout && ((this.is_online != "draw") || (itemsarr.length > 1)))
+               this.disp_kind = this.h._layout;
+
+            if (('_toptitle' in this.h) && this.exclude_browser && document)
+               document.title = this.h._toptitle;
+
+            if (gui_div)
+               this.prepareGuiDiv(gui_div, this.disp_kind);
+
+            return OpenAllFiles();
+         });
 
       if (gui_div)
-         this.PrepareGuiDiv(gui_div, this.disp_kind);
+         this.prepareGuiDiv(gui_div, this.disp_kind);
 
-      OpenAllFiles();
+      return OpenAllFiles();
    }
 
-   HierarchyPainter.prototype.PrepareGuiDiv = function(myDiv, layout) {
+   /** @summary Prepare div element - create layout and buttons */
+   HierarchyPainter.prototype.prepareGuiDiv = function(myDiv, layout) {
 
       this.gui_div = myDiv.attr('id');
 
@@ -2425,33 +2434,38 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       this.brlayout.Create(!this.exclude_browser);
 
       if (!this.exclude_browser) {
-         let btns = this.brlayout.CreateBrowserBtns();
+         let btns = this.brlayout.createBrowserBtns();
 
          JSROOT.require(['interactive']).then(inter => {
             inter.ToolbarIcons.CreateSVG(btns, inter.ToolbarIcons.diamand, 15, "toggle fix-pos browser")
-                               .style("margin","3px").on("click", () => this.CreateBrowser("fix", true));
+                               .style("margin","3px").on("click", () => this.createBrowser("fix", true));
 
             if (!this.float_browser_disabled)
                inter.ToolbarIcons.CreateSVG(btns, inter.ToolbarIcons.circle, 15, "toggle float browser")
-                                  .style("margin","3px").on("click", () => this.CreateBrowser("float", true));
+                                  .style("margin","3px").on("click", () => this.createBrowser("float", true));
 
             if (!this.status_disabled)
                inter.ToolbarIcons.CreateSVG(btns, inter.ToolbarIcons.three_circles, 15, "toggle status line")
-                                  .style("margin","3px").on("click", () => this.CreateStatusLine(0, "toggle"));
+                                  .style("margin","3px").on("click", () => this.createStatusLine(0, "toggle"));
           });
       }
 
       this.setDisplay(layout, this.brlayout.drawing_divid());
    }
 
-   HierarchyPainter.prototype.CreateStatusLine = function(height, mode) {
-      if (this.status_disabled || !this.gui_div || !this.brlayout) return '';
-      return this.brlayout.CreateStatusLine(height, mode);
+   /** @summary Create status line */
+   HierarchyPainter.prototype.createStatusLine = function(height, mode) {
+      if (this.status_disabled || !this.gui_div || !this.brlayout)
+         return Promise.resolve("");
+      return this.brlayout.createStatusLine(height, mode);
    }
 
-   HierarchyPainter.prototype.CreateBrowser = function(browser_kind, update_html, call_back) {
-      if (this.gui_div)
-         JSROOT.require('jq2d').then(() => this.CreateBrowser(browser_kind, update_html, call_back));
+   /** @summary Create browser layout */
+   HierarchyPainter.prototype.createBrowser = function(browser_kind, update_html) {
+      if (!this.gui_div)
+         return Promise.resolve(false);
+
+      return JSROOT.require('jq2d').then(() => this.createBrowser(browser_kind, update_html));
    }
 
    // ======================================================================================
@@ -2460,7 +2474,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
      * @desc this function used on THttpServer to mark streamer infos list
      * as fictional TStreamerInfoList class, which has special draw function
      * @private */
-   JSROOT.MarkAsStreamerInfo = function(h,item,obj) {
+   JSROOT.markAsStreamerInfo = function(h,item,obj) {
       if (obj && (obj._typename=='TList'))
          obj._typename = 'TStreamerInfoList';
    }
@@ -2468,7 +2482,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Build gui without visisble hierarchy browser
      * @desc avoid loading of jquery part
      * @private */
-   JSROOT.BuildNobrowserGUI = function() {
+   JSROOT.buildNobrowserGUI = function() {
       let myDiv = d3.select('#simpleGUI'),
           online = false, drawing = false;
 
@@ -2505,20 +2519,17 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       hpainter.start_without_browser = true; // indicate that browser not required at the beginning
 
-      return new Promise(resolveFunc => {
+      return hpainter.startGUI(myDiv, () => {
+         if (!drawing) return hpainter;
 
-         hpainter.StartGUI(myDiv, () => {
-            if (!drawing) return resolveFunc(hpainter);
+         let func = JSROOT.findFunction('GetCachedObject');
+         let obj = (typeof func == 'function') ? JSROOT.parse(func()) : null;
+         if (obj) hpainter._cached_draw_object = obj;
+         let opt = d.get("opt", "");
 
-            let func = JSROOT.findFunction('GetCachedObject');
-            let obj = (typeof func == 'function') ? JSROOT.parse(func()) : null;
-            if (obj) hpainter._cached_draw_object = obj;
-            let opt = d.get("opt", "");
+         if (d.has("websocket")) opt+=";websocket";
 
-            if (d.has("websocket")) opt+=";websocket";
-
-            hpainter.display("", opt, () => resolveFunc(hpainter));
-         });
+         return hpainter.display("", opt).then(() => { return hpainter; });
       });
    }
 
@@ -2648,87 +2659,87 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          this.frameid = frameid;
          this.SetDivId(frameid);
          this.select_main().property('mdi', this);
-         this.CleanupFrame = JSROOT.cleanup; // use standard cleanup function by default
+         this.cleanupFrame = JSROOT.cleanup; // use standard cleanup function by default
          this.active_frame_title = ""; // keep title of active frame
       }
 
-      BeforeCreateFrame(title) { this.active_frame_title = title; }
+      beforeCreateFrame(title) { this.active_frame_title = title; }
 
       /** method dedicated to iterate over existing panels
         * @param {function} userfunc is called with arguments (frame)
         * @param {boolean} only_visible let select only visible frames */
-      ForEachFrame(/* userfunc, only_visible */) { console.warn("ForEachFrame not implemented in MDIDisplay"); }
+      forEachFrame(/* userfunc, only_visible */) { console.warn("forEachFrame not implemented in MDIDisplay"); }
 
       /** method dedicated to iterate over existing panles
         * @param {function} userfunc is called with arguments (painter, frame)
         * @param {boolean} only_visible let select only visible frames */
-      ForEachPainter(userfunc, only_visible) {
+      forEachPainter(userfunc, only_visible) {
 
-         this.ForEachFrame(frame => {
+         this.forEachFrame(frame => {
             let dummy = new JSROOT.ObjectPainter();
             dummy.SetDivId(frame, -1);
-            dummy.ForEachPainter(painter => userfunc(painter, frame));
+            dummy.forEachPainter(painter => userfunc(painter, frame));
          }, only_visible);
       }
 
-      NumDraw() {
+      numDraw() {
          let cnt = 0;
-         this.ForEachFrame(() => ++cnt);
+         this.forEachFrame(() => ++cnt);
          return cnt;
       }
 
-      FindFrame(searchtitle, force) {
+      findFrame(searchtitle, force) {
          let found_frame = null;
 
-         this.ForEachFrame(frame => {
+         this.forEachFrame(frame => {
             if (d3.select(frame).attr('frame_title') == searchtitle)
                found_frame = frame;
          });
 
          if (!found_frame && force)
-            found_frame = this.CreateFrame(searchtitle);
+            found_frame = this.createFrame(searchtitle);
 
          return found_frame;
       }
 
-      ActivateFrame(frame) { this.active_frame_title = d3.select(frame).attr('frame_title'); }
+      activateFrame(frame) { this.active_frame_title = d3.select(frame).attr('frame_title'); }
 
-      GetActiveFrame() { return this.FindFrame(this.active_frame_title); }
+      getActiveFrame() { return this.findFrame(this.active_frame_title); }
 
-      CheckMDIResize(only_frame_id, size) {
+      checkMDIResize(only_frame_id, size) {
          // perform resize for each frame
          let resized_frame = null;
 
-         this.ForEachPainter((painter, frame) => {
+         this.forEachPainter((painter, frame) => {
 
             if (only_frame_id && (d3.select(frame).attr('id') != only_frame_id)) return;
 
-            if ((painter.GetItemName()!==null) && (typeof painter.CheckResize == 'function')) {
+            if ((painter.GetItemName()!==null) && (typeof painter.checkResize == 'function')) {
                // do not call resize for many painters on the same frame
                if (resized_frame === frame) return;
-               painter.CheckResize(size);
+               painter.checkResize(size);
                resized_frame = frame;
             }
          });
       }
 
-      Reset() {
+      cleanup() {
          this.active_frame_title = "";
 
-         this.ForEachFrame(this.CleanupFrame);
+         this.forEachFrame(this.cleanupFrame);
 
          this.select_main().html("").property('mdi', null);
       }
 
-      Draw(title, obj, drawopt) {
+      draw(title, obj, drawopt) {
          // draw object with specified options
          if (!obj) return;
 
          if (!JSROOT.canDraw(obj._typename, drawopt)) return;
 
-         let frame = this.FindFrame(title, true);
+         let frame = this.findFrame(title, true);
 
-         this.ActivateFrame(frame);
+         this.activateFrame(frame);
 
          return JSROOT.redraw(frame, obj, drawopt);
       }
@@ -2749,7 +2760,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          this.frames[divid] += (itemname + ";");
       }
 
-      ForEachFrame(userfunc /* ,  only_visible */) {
+      forEachFrame(userfunc /* ,  only_visible */) {
          let ks = Object.keys(this.frames);
          for (let k = 0; k < ks.length; ++k) {
             let node = d3.select("#"+ks[k]);
@@ -2758,8 +2769,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          }
       }
 
-      CreateFrame(title) {
-         this.BeforeCreateFrame(title);
+      createFrame(title) {
+         this.beforeCreateFrame(title);
 
          let ks = Object.keys(this.frames);
          for (let k = 0; k < ks.length; ++k) {
@@ -2770,9 +2781,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return null;
       }
 
-      Reset() {
-         super.Reset();
-         this.ForEachFrame(frame => d3.select(frame).html(""));
+      cleanup() {
+         super.cleanup();
+         this.forEachFrame(frame => d3.select(frame).html(""));
       }
    } // class CustomDisplay
 
@@ -2883,10 +2894,10 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          if (sizes && (sizes.length!==num)) sizes = undefined;
 
          if (!this.simple_layout)
-            this.CreateGroup(this, this.select_main(), num, arr, sizes);
+            this.createGroup(this, this.select_main(), num, arr, sizes);
       }
 
-      CreateGroup(handle, main, num, childs, sizes) {
+      createGroup(handle, main, num, childs, sizes) {
 
          if (!sizes) sizes = new Array(num);
          let sum1 = 0, sum2 = 0;
@@ -2925,38 +2936,38 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                group.vertical = !handle.vertical;
                group.groups = [];
                elem.style('overflow','hidden');
-               this.CreateGroup(group, elem, childs[cnt]);
+               this.createGroup(group, elem, childs[cnt]);
             }
          }
 
-         if (this.use_separarators && this.CreateSeparator)
+         if (this.use_separarators && this.createSeparator)
             for (let cnt=1;cnt<num;++cnt)
-               this.CreateSeparator(handle, main, handle.groups[cnt]);
+               this.createSeparator(handle, main, handle.groups[cnt]);
       }
 
-      ForEachFrame(userfunc /*, only_visible */) {
+      forEachFrame(userfunc /*, only_visible */) {
          if (this.simple_layout)
-            userfunc(this.GetFrame());
+            userfunc(this.getGridFrame());
          else
             this.select_main().selectAll('.jsroot_newgrid').each(function() {
                userfunc(d3.select(this).node());
             });
       }
 
-      GetActiveFrame() {
-         if (this.simple_layout) return this.GetFrame();
+      getActiveFrame() {
+         if (this.simple_layout) return this.getGridFrame();
 
-         let found = super.GetActiveFrame();
+         let found = super.getActiveFrame();
          if (found) return found;
 
-         this.ForEachFrame(frame => { if (!found) found = frame; }, true);
+         this.forEachFrame(frame => { if (!found) found = frame; }, true);
 
          return found;
       }
 
-      ActivateFrame(frame) { this.active_frame_title = d3.select(frame).attr('frame_title'); }
+      activateFrame(frame) { this.active_frame_title = d3.select(frame).attr('frame_title'); }
 
-      GetFrame(id) {
+      getGridFrame(id) {
          if (this.simple_layout)
             return this.select_main('origin').node();
          let res = null;
@@ -2966,15 +2977,15 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return res;
       }
 
-      NumGridFrames() { return this.framecnt; }
+      numGridFrames() { return this.framecnt; }
 
-      CreateFrame(title) {
-         this.BeforeCreateFrame(title);
+      createFrame(title) {
+         this.beforeCreateFrame(title);
 
          let frame = null, maxloop = this.framecnt || 2;
 
          while (!frame && maxloop--) {
-            frame = this.GetFrame(this.getcnt);
+            frame = this.getGridFrame(this.getcnt);
             if (!this.simple_layout && this.framecnt)
                this.getcnt = (this.getcnt+1) % this.framecnt;
 
@@ -2982,7 +2993,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          }
 
          if (frame) {
-            this.CleanupFrame(frame);
+            this.cleanupFrame(frame);
             d3.select(frame).attr('frame_title', title);
          }
 

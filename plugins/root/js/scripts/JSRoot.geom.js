@@ -1308,10 +1308,13 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       this._controls.ProcessMouseMove = function(intersects) {
 
+         // painter already cleaned up, ignore any incoming events
+         if (!painter.ctrl || !painter._controls) return;
+
          let active_mesh = null, tooltip = null, resolve = null, names = [], geo_object, geo_index;
 
          // try to find mesh from intersections
-         for (let k=0;k<intersects.length;++k) {
+         for (let k = 0; k < intersects.length; ++k) {
             let obj = intersects[k].object, info = null;
             if (!obj) continue;
             if (obj.geo_object) info = obj.geo_name; else
@@ -1355,6 +1358,9 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       }
 
       this._controls.ProcessDblClick = function() {
+         // painter already cleaned up, ignore any incoming events
+         if (!painter.ctrl || !painter._controls) return;
+
          if (painter._last_manifest) {
             painter._last_manifest.wireframe = !painter._last_manifest.wireframe;
             if (painter._last_hidden)
@@ -2479,7 +2485,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
      * Such function should be possible to find via {@link JSROOT.findFunction}
      * Function has to return Promise with objects to draw on geometry
      * By default function with name "extract_geo_tracks" is checked */
-   TGeoPainter.prototype.PerformDrop = function(obj, itemname, hitem, opt) {
+   TGeoPainter.prototype.performDrop = function(obj, itemname, hitem, opt) {
 
       if (obj && (obj.$kind==='TTree')) {
          // drop tree means function call which must extract tracks from provided tree
@@ -3882,7 +3888,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    }
 
    /** @summary Check if HTML element was resized and drawing need to be adjusted */
-   TGeoPainter.prototype.CheckResize = function(arg) {
+   TGeoPainter.prototype.checkResize = function(arg) {
       let pad_painter = this.canv_painter();
 
       // firefox is the only browser which correctly supports resize of embedded canvas,
@@ -3912,11 +3918,11 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       return true;
    }
 
+   /** @summary Toggle enlarge state */
    TGeoPainter.prototype.toggleEnlarge = function() {
       if (this.enlarge_main('toggle'))
-        this.CheckResize();
+        this.checkResize();
    }
-
 
    TGeoPainter.prototype.ownedByTransformControls = function(child) {
       let obj = child.parent;

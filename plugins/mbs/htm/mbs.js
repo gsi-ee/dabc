@@ -255,16 +255,17 @@ MbsDisplay.prototype.BuildView = function() {
 
    var pthis = this;
 
-   hpainter.OpenOnline("../", function() {
-
+   function Complete() {
       pthis.hpainter = hpainter;
-
       pthis.SetTrending(false, 300);
-
       hpainter.display("logger");
-
       pthis.SetFileLogMode(4, 0, 0);   // init log window, but keep history and interval from server
-   });
+   }
+
+   if (JSROOT._)
+      hpainter.openOnline("../").then(Complete);
+   else
+      hpainter.OpenOnline("../", Complete);
 }
 
 
