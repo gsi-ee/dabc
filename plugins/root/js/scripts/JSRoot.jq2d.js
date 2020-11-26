@@ -590,14 +590,14 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
            helper : function() { return $(this).clone().css('background-color','grey'); },
            drag: function(event,ui) {
               pthis.SetButtonsPosition();
-              pthis.AdjustSeparator(ui.position.left, null);
+              pthis.adjustSeparators(ui.position.left, null);
            },
            stop: function(/* event,ui */) {
               pthis.checkResize();
            }
         });
 
-        this.AdjustSeparator(250, null, true, true);
+        this.adjustSeparators(250, null, true, true);
      }
 
       this.SetButtonsPosition();
@@ -711,11 +711,12 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       }
    }
 
+   /** @summary Delete content */
    BrowserLayout.prototype.DeleteContent = function() {
       let main = d3.select("#" + this.gui_div + " .jsroot_browser");
       if (main.empty()) return;
 
-      this.createStatusLine("delete");
+      this.createStatusLine(0, "delete");
       let vsepar = main.select(".jsroot_v_separator");
       if (!vsepar.empty())
          $(vsepar.node()).draggable('destroy');
@@ -731,19 +732,21 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
    /** @summary Creates status line */
    BrowserLayout.prototype.createStatusLine = function(height, mode) {
+
       let main = d3.select("#"+this.gui_div+" .jsroot_browser");
-      if (main.empty()) return Promise.resolve('');
+      if (main.empty())
+         return Promise.resolve('');
 
       let id = this.gui_div + "_status",
           line = d3.select("#"+id),
           is_visible = !line.empty();
 
       if (mode==="toggle") { mode = !is_visible; } else
-      if (height==="delete") { mode = false; height = 0; delete this.status_layout; } else
+      if (mode==="delete") { mode = false; height = 0; delete this.status_layout; } else
       if (mode===undefined) { mode = true; this.status_layout = "app"; }
 
       if (is_visible) {
-         if ((mode === true) || (this.status_layout==="app"))
+         if (mode === true)
             return Promise.resolve(id);
 
          let hsepar = main.select(".jsroot_h_separator");
@@ -753,14 +756,15 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          hsepar.remove();
          line.remove();
 
-         delete this.status_layout;
+         if (this.status_layout !== "app")
+            delete this.status_layout;
 
          if (this.status_handler && (jsrp.ShowStatus === this.status_handler)) {
             delete jsrp.ShowStatus;
             delete this.status_handler;
          }
 
-         this.AdjustSeparator(null, 0, true);
+         this.adjustSeparators(null, 0, true);
          return Promise.resolve("");
       }
 
@@ -784,7 +788,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          axis: "y" , cursor: "ns-resize", containment: "parent",
          helper: function() { return $(this).clone().css('background-color','grey'); },
          drag: function(event,ui) {
-            pthis.AdjustSeparator(null, -ui.position.top);
+            pthis.adjustSeparators(null, -ui.position.top);
          },
          stop: function(/*event,ui*/) {
             pthis.checkResize();
@@ -793,7 +797,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       if (!height || (typeof height === 'string')) height = this.last_hsepar_height || 20;
 
-      this.AdjustSeparator(null, height, true);
+      this.adjustSeparators(null, height, true);
 
       if (this.status_layout == "app")
          return Promise.resolve(id);
@@ -812,7 +816,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       return Promise.resolve(id);
    }
 
-   BrowserLayout.prototype.AdjustSeparator = function(vsepar, hsepar, redraw, first_time) {
+   /** @summary Adjust separator positions */
+   BrowserLayout.prototype.adjustSeparators = function(vsepar, hsepar, redraw, first_time) {
 
       if (!this.gui_div) return;
 
@@ -832,8 +837,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          let elem = main.select(".jsroot_h_separator"), hlimit = 0;
 
          if (!elem.empty()) {
-            if (hsepar<0) hsepar += ($(main.node()).outerHeight(true) - w);
-            if (hsepar<5) hsepar = 5;
+            if (hsepar < 0) hsepar += ($(main.node()).outerHeight(true) - w);
+            if (hsepar < 5) hsepar = 5;
             this.last_hsepar_height = hsepar;
             elem.style('bottom', hsepar+'px').style('height', w+'px');
             d3.select("#" + this.gui_div + "_status").style('height', hsepar+'px');
@@ -845,7 +850,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       if (vsepar!==null) {
          vsepar = parseInt(vsepar);
-         if (vsepar<50) vsepar = 50;
+         if (vsepar < 50) vsepar = 50;
          main.select(".jsroot_browser_area").style('width',(vsepar-5)+'px');
          d3.select("#" + this.gui_div + "_drawing").style('left',(vsepar+w)+'px');
          main.select(".jsroot_h_separator").style('left', (vsepar+w)+'px');
@@ -870,7 +875,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          for (let n=0;n<4;++n)
             maxh = Math.max(maxh, $(this.status_layout.getGridFrame(n)).children('label').outerHeight());
          if ((maxh>5) && ((maxh>this.last_hsepar_height) || (maxh<this.last_hsepar_height+5)))
-            this.AdjustSeparator(null, maxh, true);
+            this.adjustSeparators(null, maxh, true);
       }
    }
 
@@ -878,6 +883,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
    let HierarchyPainter = JSROOT.HierarchyPainter;
 
+   /** @summary returns true if item is last in parent childs list
+     * @private */
    HierarchyPainter.prototype.isLastSibling = function(hitem) {
       if (!hitem || !hitem._parent || !hitem._parent._childs) return false;
       let chlds = hitem._parent._childs, indx = chlds.indexOf(hitem);
@@ -887,8 +894,9 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       return true;
    }
 
+   /** @summary Create item html code
+     * @private */
    HierarchyPainter.prototype.addItemHtml = function(hitem, d3prnt, arg) {
-
       if (!hitem || ('_hidden' in hitem)) return true;
 
       let isroot = (hitem === this.h),
@@ -1007,7 +1015,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       if ('disp_kind' in h) {
          if (JSROOT.settings.DragAndDrop && can_click)
-           this.enable_dragging(d3a.node(), itemname);
+           this.enableDrag(d3a.node(), itemname);
          if (JSROOT.settings.ContextMenu && can_menu)
             d3a.on('contextmenu', function(evnt) { h.tree_contextmenu(evnt, this); });
 
@@ -1059,7 +1067,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       if (!('_childs' in hitem)) {
          if (!isopen || this.with_icons || (!hitem._expand && (hitem._more !== true))) return false;
-         this.expand(this.itemFullName(hitem));
+         this.expandItem(this.itemFullName(hitem));
          if (hitem._childs) hitem._isopen = true;
          return true;
       }
@@ -1085,7 +1093,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       return false;
    }
 
-   /** @summary Refresh HTML code of hierarchy painter */
+   /** @summary Refresh HTML code of hierarchy painter
+     * @returns {Promise} when done */
    HierarchyPainter.prototype.refreshHtml = function() {
 
       if (!this.divid) return Promise.resolve();
@@ -1098,7 +1107,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             .style('flex-direction','column');
 
       let h = this, factcmds = [], status_item = null;
-      this.ForEach(item => {
+      this.forEachItem(item => {
          delete item._d3cont; // remove html container
          if (('_fastcmd' in item) && (item._kind == 'Command')) factcmds.push(item);
          if (('_status' in item) && !status_item) status_item = item;
@@ -1115,7 +1124,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
                        .attr("class",'fast_command')
                        .attr("item", this.itemFullName(factcmds[n]))
                        .attr("title", factcmds[n]._title)
-                       .on("click", function() { h.ExecuteCommand(d3.select(this).attr("item"), this); } );
+                       .on("click", function() { h.executeCommand(d3.select(this).attr("item"), this); } );
 
             if ('_icon' in factcmds[n])
                btn.append('img').attr("src", factcmds[n]._icon);
@@ -1144,7 +1153,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if ('disp_kind' in this) {
          d3btns.append("text").text(" | ");
          d3btns.append("a").attr("class", "h_button").text("clear")
-               .attr("title","clear all drawn objects").on("click", h.clear.bind(h,false));
+               .attr("title","clear all drawn objects").on("click", () => this.cleanup(false));
       }
 
       let maindiv =
@@ -1163,15 +1172,17 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if (status_item && !this.status_disabled && !JSROOT.decodeUrl().has('nostatus')) {
          let func = JSROOT.findFunction(status_item._status);
          if (typeof func == 'function')
-            return this.createStatusLine().then(hdiv => {
-               if (hdiv) func(hdiv, this.itemFullName(status_item));
+            return this.createStatusLine().then(sdiv => {
+               if (sdiv) func(sdiv, this.itemFullName(status_item));
             });
       }
 
       return Promise.resolve();
    }
 
-   HierarchyPainter.prototype.UpdateTreeNode = function(hitem, d3cont) {
+   /** @summary Update item node
+     * @private */
+   HierarchyPainter.prototype.updateTreeNode = function(hitem, d3cont) {
       if ((d3cont===undefined) || d3cont.empty())  {
          d3cont = d3.select(hitem._d3cont ? hitem._d3cont : null);
          let name = this.itemFullName(hitem);
@@ -1187,7 +1198,9 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if (this.brlayout) this.brlayout.AdjustBrowserSize(true);
    }
 
-   HierarchyPainter.prototype.UpdateBackground = function(hitem, scroll_into_view) {
+   /** @summary Update item background
+     * @private */
+   HierarchyPainter.prototype.updateBackground = function(hitem, scroll_into_view) {
 
       if (!hitem || !hitem._d3cont) return;
 
@@ -1203,13 +1216,14 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          d3a.node().scrollIntoView(false);
    }
 
-   /** @summary Handler for click event of item in the hierarchy */
+   /** @summary Handler for click event of item in the hierarchy
+     * @private */
    HierarchyPainter.prototype.tree_click = function(evnt, node, place) {
       if (!node) return;
 
       let d3cont = d3.select(node.parentNode.parentNode),
           itemname = d3cont.attr('item'),
-          hitem = itemname ? this.Find(itemname) : null;
+          hitem = itemname ? this.findItem(itemname) : null;
       if (!hitem) return;
 
       if (hitem._break_point) {
@@ -1251,7 +1265,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          if (typeof hitem._icon_click == 'function') func = hitem._icon_click; else
          if (handle && typeof handle.icon_click == 'function') func = handle.icon_click;
          if (func && func(hitem,this))
-            this.UpdateTreeNode(hitem, d3cont);
+            this.updateTreeNode(hitem, d3cont);
          return;
       }
 
@@ -1261,7 +1275,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       // special case - one should expand item
       if (((place == "plusminus") && !('_childs' in hitem) && hitem._more) ||
           ((place == "item") && (dflt === "expand"))) {
-         return this.expand(itemname, d3cont);
+         return this.expandItem(itemname, d3cont);
       }
 
       if (place == "item") {
@@ -1273,7 +1287,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             return window.open(itemname + "/");
 
          if (handle && handle.execute)
-            return this.ExecuteCommand(itemname, node.parentNode);
+            return this.executeCommand(itemname, node.parentNode);
 
          if (handle && handle.ignore_online && this.isOnlineItem(hitem)) return;
 
@@ -1309,7 +1323,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             return this.display(itemname, drawopt);
 
          if (can_expand || dflt_expand)
-            return this.expand(itemname, d3cont);
+            return this.expandItem(itemname, d3cont);
 
          // cannot draw, but can inspect ROOT objects
          if ((typeof hitem._kind === "string") && (hitem._kind.indexOf("ROOT.")===0) && sett.inspect && (can_draw!==false))
@@ -1323,13 +1337,15 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       else
          hitem._isopen = true;
 
-      this.UpdateTreeNode(hitem, d3cont);
+      this.updateTreeNode(hitem, d3cont);
    }
 
+   /** @summary Handler for mouse-over event
+     * @private */
    HierarchyPainter.prototype.tree_mouseover = function(on, elem) {
       let itemname = d3.select(elem.parentNode.parentNode).attr('item');
 
-      let hitem = this.Find(itemname);
+      let hitem = this.findItem(itemname);
       if (!hitem) return;
 
       let painter, prnt = hitem;
@@ -1342,12 +1358,12 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          painter.MouseOverHierarchy(on, itemname, hitem);
    }
 
+   /** @summary alternative context menu, used in the object inspector
+     * @private */
    HierarchyPainter.prototype.direct_contextmenu = function(evnt, elem) {
-      // this is alternative context menu, used in the object inspector
-
       evnt.preventDefault();
       let itemname = d3.select(elem.parentNode.parentNode).attr('item');
-      let hitem = this.Find(itemname);
+      let hitem = this.findItem(itemname);
       if (!hitem) return;
 
       if (typeof this.fill_context !== 'function') return;
@@ -1361,6 +1377,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       });
    }
 
+   /** @summary Handle context menu in the hieararchy
+     * @private */
    HierarchyPainter.prototype.tree_contextmenu = function(evnt, elem) {
       // this is handling of context menu request for the normal objects browser
 
@@ -1368,11 +1386,11 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       let itemname = d3.select(elem.parentNode.parentNode).attr('item');
 
-      let hitem = this.Find(itemname);
+      let hitem = this.findItem(itemname);
       if (!hitem) return;
 
-      let onlineprop = this.GetOnlineProp(itemname),
-          fileprop = this.GetFileProp(itemname);
+      let onlineprop = this.getOnlineProp(itemname),
+          fileprop = this.getFileProp(itemname);
 
       function qualifyURL(url) {
          function escapeHTML(s) {
@@ -1391,11 +1409,11 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
             this.forEachRootFile(item => files.push(item._file.fFullURL));
 
-            if (!this.GetTopOnlineItem())
+            if (!this.getTopOnlineItem())
                addr = JSROOT.source_dir + "index.htm";
 
-            if (this.IsMonitoring())
-               addr += separ() + "monitoring=" + this.MonitoringInterval();
+            if (this.isMonitoring())
+               addr += separ() + "monitoring=" + this.getMonitoringInterval();
 
             if (files.length==1)
                addr += separ() + "file=" + files[0];
@@ -1423,7 +1441,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             menu.add("Direct link", () => window.open(addr));
             menu.add("Only items", () => window.open(addr + "&nobrowser"));
          } else if (onlineprop) {
-            this.FillOnlineMenu(menu, onlineprop, itemname);
+            this.fillOnlineMenu(menu, onlineprop, itemname);
          } else {
             let sett = JSROOT.getDrawSettings(hitem._kind, 'nosame');
 
@@ -1453,7 +1471,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             }
 
             if (sett.expand && !('_childs' in hitem) && (hitem._more || !('_more' in hitem)))
-               menu.add("Expand", () => this.expand(itemname));
+               menu.add("Expand", () => this.expandItem(itemname));
 
             if (hitem._kind === "ROOT.TStyle")
                menu.add("Apply", () => this.applyStyle(itemname));
@@ -1504,11 +1522,15 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       return Promise.resolve(this.disp);
    }
 
-   HierarchyPainter.prototype.enable_dragging = function(element /*, itemname*/) {
+   /** @summary Enable drag on the element
+     * @private  */
+   HierarchyPainter.prototype.enableDrag = function(element /*, itemname*/) {
       $(element).draggable({ revert: "invalid", appendTo: "body", helper: "clone" });
    }
 
-   HierarchyPainter.prototype.enable_dropping = function(frame, itemname) {
+   /** @summary Enable drop on the element
+     * @private  */
+   HierarchyPainter.prototype.enableDrop = function(frame, itemname) {
       let h = this;
       $(frame).droppable({
          hoverClass : "ui-state-active",
@@ -1516,7 +1538,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             let dropname = ui.parent().parent().attr('item');
             if ((dropname == itemname) || !dropname) return false;
 
-            let ditem = h.Find(dropname);
+            let ditem = h.findItem(dropname);
             if (!ditem || (!('_kind' in ditem))) return false;
 
             return ditem._kind.indexOf("ROOT.")==0;
@@ -1619,7 +1641,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
          jmain.find(".gui_ReadFileBtn").button().click(() => this.ReadSelectedFile());
 
-         jmain.find(".gui_ResetUIBtn").button().click(() => this.clear(true));
+         jmain.find(".gui_ResetUIBtn").button().click(() => this.cleanup(true));
 
          jmain.find(".gui_urlToLoad").keyup(e => {
             if (e.keyCode == 13) this.ReadSelectedFile();
@@ -1691,14 +1713,14 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          for (let i in selects.options) {
             let s = selects.options[i].text;
             if (typeof s !== 'string') continue;
-            if ((s == this.GetLayout()) || (s.replace(/ /g,"") == this.GetLayout())) {
+            if ((s == this.getLayout()) || (s.replace(/ /g,"") == this.getLayout())) {
                selects.selectedIndex = i; found = true;
                break;
             }
          }
          if (!found) {
             let opt = document.createElement('option');
-            opt.innerHTML = opt.value = this.GetLayout();
+            opt.innerHTML = opt.value = this.getLayout();
             selects.appendChild(opt);
             selects.selectedIndex = selects.options.length-1;
          }
@@ -1709,10 +1731,10 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             this.brlayout.SetBrowserTitle(this.h._toptitle);
          let painter = this;
          jmain.find(".gui_monitoring")
-           .prop('checked', this.IsMonitoring())
+           .prop('checked', this.isMonitoring())
            .click(function() {
-               painter.EnableMonitoring(this.checked);
-               painter.updateAll(!this.checked);
+               painter.enableMonitoring(this.checked);
+               painter.updateItems();
             });
       } else if (!this.no_select) {
          let fname = "";
@@ -1721,8 +1743,9 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       }
    }
 
-   HierarchyPainter.prototype.EnableMonitoring = function(on) {
-      this.SetMonitoring(undefined, on);
+   /** @summary Enable monitoring mode */
+   HierarchyPainter.prototype.enableMonitoring = function(on) {
+      this.setMonitoring(undefined, on);
 
       let chkbox = d3.select("#" + this.gui_div + " .jsroot_browser .gui_monitoring");
       if (!chkbox.empty() && (chkbox.property('checked') !== on))
@@ -2454,8 +2477,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
      * @private */
    JSROOT.drawTreePlayer = function(hpainter, itemname, askey, asleaf) {
 
-      let item = hpainter.Find(itemname),
-          top = hpainter.GetTopOnlineItem(item),
+      let item = hpainter.findItem(itemname),
+          top = hpainter.getTopOnlineItem(item),
           draw_expr = "", leaf_cnt = 0;
       if (!item || !top) return null;
 

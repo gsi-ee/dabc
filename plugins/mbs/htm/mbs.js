@@ -239,33 +239,26 @@ MbsDisplay.prototype.BuildView = function() {
    var hpainter = new JSROOT.HierarchyPainter('root', null);
 
    var disp = new JSROOT.CustomDisplay();
-   disp.AddFrame("EvRateDisplay", "EventRate");
-   disp.AddFrame("DatRateDisplay", "DataRate");
-   disp.AddFrame("SrvRateDisplay", "ServerRate");
-   disp.AddFrame("DeviceInfo", "logger");
+   disp.addFrame("EvRateDisplay", "EventRate");
+   disp.addFrame("DatRateDisplay", "DataRate");
+   disp.addFrame("SrvRateDisplay", "ServerRate");
+   disp.addFrame("DeviceInfo", "logger");
    // use same frame for different items
-   disp.AddFrame("ReadoutInfo", "rate_log");
-   disp.AddFrame("ReadoutInfo", "rash_log");
-   disp.AddFrame("ReadoutInfo", "rast_log");
-   disp.AddFrame("ReadoutInfo", "ratf_log");
+   disp.addFrame("ReadoutInfo", "rate_log");
+   disp.addFrame("ReadoutInfo", "rash_log");
+   disp.addFrame("ReadoutInfo", "rast_log");
+   disp.addFrame("ReadoutInfo", "ratf_log");
 
    hpainter.setDisplay(disp);
 
    this.hpainter = null;
 
-   var pthis = this;
-
-   function Complete() {
-      pthis.hpainter = hpainter;
-      pthis.SetTrending(false, 300);
+   hpainter.openOnline("../").then(() => {
+      this.hpainter = hpainter;
+      this.SetTrending(false, 300);
       hpainter.display("logger");
-      pthis.SetFileLogMode(4, 0, 0);   // init log window, but keep history and interval from server
-   }
-
-   if (JSROOT._)
-      hpainter.openOnline("../").then(Complete);
-   else
-      hpainter.OpenOnline("../", Complete);
+      this.SetFileLogMode(4, 0, 0);   // init log window, but keep history and interval from server
+   });
 }
 
 
@@ -338,14 +331,13 @@ MbsDisplay.prototype.RefreshMonitor = function() {
 
    if (this.hpainter == null) return;
 
-   this.hpainter.updateAll();
+   this.hpainter.updateItems();
 
    // optionally adjust scrollbars at info logs:
    $("#daq_log").scrollTop($("#daq_log")[0].scrollHeight - $("#daq_log").height());
    $("#file_log").scrollTop($("#file_log")[0].scrollHeight - $("#file_log").height());
 
-   pthis = this;
-   this.fMbsState.Update(function() { pthis.RefreshView(); });
+   this.fMbsState.Update(() => this.RefreshView());
 }
 
 

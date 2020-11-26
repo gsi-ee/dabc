@@ -73,7 +73,7 @@
 
       var frameid = d3.select(frame).attr('id');
 
-      var item = hpainter.Find(itemname);
+      var item = hpainter.findItem(itemname);
       var calarr = [];
       if (item) {
          for (var n in item._parent._childs) {
@@ -175,7 +175,7 @@
          str = prefix+"_"+str;
          if (name) str += "_"+name;
          var hitem = null;
-         hpainter.ForEach(function(item) { if ((item._name == str) && (hitem==null)) hitem = item; });
+         hpainter.forEachItem(item => { if ((item._name == str) && !hitem) hitem = item; });
          if (hitem) return hpainter.itemFullName(hitem);
          console.log("did not found histogram " + str);
          return str;
@@ -227,7 +227,7 @@
                var frame = hpainter.getDisplay().findFrame("dabc_drawing");
                if (frame) hpainter.getDisplay().cleanupFrame(frame);
 
-               hpainter.displayAll([histname],["frameid:dabc_drawing"]);
+               hpainter.displayItems([histname],["frameid:dabc_drawing"]);
             });
             if (info.tdc)
                $(this).find(".hadaq_progress").progressbar({ value: info.progress });
@@ -259,7 +259,7 @@
 
       var ffid = d3.select(frame).attr('id');
 
-      var item = hpainter.Find(itemname + "/Status");
+      var item = hpainter.findItem(itemname + "/Status");
       var calarr = [];
       if (item) {
          for (var n in item._childs)
@@ -487,8 +487,8 @@
 
       main.select(".bnet_monitoring").on("click", function() {
          var on = d3.select(this).property('checked');
-         painter.hpainter.EnableMonitoring(on);
-         painter.hpainter.updateAll(!on);
+         painter.hpainter.enableMonitoring(on);
+         painter.hpainter.updateItems();
       });
 
       main.selectAll(".bnet_item_label").on("click", function() {
@@ -577,7 +577,7 @@
       }
 
       this.ClearDisplay();
-      this.hpainter.displayAll([itemname], [opt]);
+      this.hpainter.displayItems([itemname], [opt]);
    }
 
    DABC.BnetPainter.prototype.DisplayCalItem = function(hubid, itemname) {
@@ -605,7 +605,7 @@
                 DABC.httpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object");
        }
 
-       setTimeout(this.hpainter.updateAll.bind(this.hpainter, false), 1000);
+       setTimeout(() => this.hpainter.updateItems(false), 1000);
    }
 
    DABC.BnetPainter.prototype.GetQualityColor = function(quality) {
@@ -737,8 +737,8 @@
       d3.select(this.frame).style('background-color', res ? null : "grey");
 
       var chkbox = d3.select(this.frame).select(".bnet_monitoring");
-      if (!chkbox.empty() && (chkbox.property('checked') !== this.hpainter.IsMonitoring()))
-         chkbox.property('checked', this.hpainter.IsMonitoring());
+      if (!chkbox.empty() && (chkbox.property('checked') !== this.hpainter.isMonitoring()))
+         chkbox.property('checked', this.hpainter.isMonitoring());
 
       if (!res) return;
 

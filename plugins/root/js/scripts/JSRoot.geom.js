@@ -554,11 +554,11 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       if (this._hpainter) {
          // show browser if it not visible
-         this._hpainter.activate(names, force);
+         this._hpainter.activateItems(names, force);
 
          // if highlight in the browser disabled, suppress in few seconds
          if (!this.ctrl.update_browser)
-            setTimeout(this._hpainter.activate.bind(this._hpainter, []), 2000);
+            setTimeout(() => this._hpainter.activateItems([]), 2000);
       }
    }
 
@@ -4347,14 +4347,14 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
          if (arg === 'self') {
             obj.fRnrSelf = !obj.fRnrSelf;
             item._icon = item._icon.split(" ")[0] + geo.provideVisStyle(obj);
-            hpainter.UpdateTreeNode(item);
+            hpainter.updateTreeNode(item);
          } else {
             ScanEveVisible(obj, { assign: (arg === "true") }, true);
-            hpainter.ForEach(function(m) {
+            hpainter.forEachItem(m => {
                // update all child items
                if (m._geoobj && m._icon) {
                   m._icon = item._icon.split(" ")[0] + geo.provideVisStyle(m._geoobj);
-                  hpainter.UpdateTreeNode(m);
+                  hpainter.updateTreeNode(m);
                }
             }, item);
          }
@@ -4365,15 +4365,15 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       function ToggleMenuBit(arg) {
          geo.ToggleBit(vol, arg);
          let newname = item._icon.split(" ")[0] + geo.provideVisStyle(vol);
-         hpainter.ForEach(function(m) {
+         hpainter.forEachItem(m => {
             // update all items with that volume
             if (item._volume === m._volume) {
                m._icon = newname;
-               hpainter.UpdateTreeNode(m);
+               hpainter.updateTreeNode(m);
             }
          });
 
-         hpainter.UpdateTreeNode(item);
+         hpainter.updateTreeNode(item);
          geo.findItemWithPainter(item, 'testGeomChanges');
       }
 
@@ -4424,11 +4424,11 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    geo.updateBrowserIcons = function(obj, hpainter) {
       if (!obj || !hpainter) return;
 
-      hpainter.ForEach(function(m) {
+      hpainter.forEachItem(m => {
          // update all items with that volume
          if ((obj === m._volume) || (obj === m._geoobj)) {
             m._icon = m._icon.split(" ")[0] + geo.provideVisStyle(obj);
-            hpainter.UpdateTreeNode(m);
+            hpainter.updateTreeNode(m);
          }
       });
    }
