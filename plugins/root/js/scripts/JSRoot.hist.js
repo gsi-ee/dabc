@@ -4255,7 +4255,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       return false;
    }
 
-   TH1Painter.prototype.CallDrawFunc = function(reason) {
+   TH1Painter.prototype.callDrawFunc = function(reason) {
 
       let main = this.main_painter(),
           fp = this.frame_painter();
@@ -4294,7 +4294,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    }
 
    TH1Painter.prototype.Redraw = function(reason) {
-      this.CallDrawFunc(reason);
+      return this.callDrawFunc(reason);
    }
 
    let drawHistogram1D = (divid, histo, opt) => {
@@ -4312,7 +4312,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
       painter.CreateStat(); // only when required
 
-      return painter.CallDrawFunc()
+      return painter.callDrawFunc()
             .then(() => painter.DrawNextFunction(0))
             .then(() => {
                if (!painter.options.Mode3D && painter.options.AutoZoom)
@@ -6306,7 +6306,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       return JSROOT.require('hist3d').then(() => this.Draw3D(reason));
    }
 
-   TH2Painter.prototype.CallDrawFunc = function(reason) {
+   TH2Painter.prototype.callDrawFunc = function(reason) {
 
       let main = this.main_painter(),
           fp = this.frame_painter();
@@ -6319,7 +6319,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    }
 
    TH2Painter.prototype.Redraw = function(reason) {
-      this.CallDrawFunc(reason);
+      return this.callDrawFunc(reason);
    }
 
    let drawHistogram2D = (divid, histo, opt) => {
@@ -6349,7 +6349,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
       painter.CreateStat(); // only when required
 
-      return painter.CallDrawFunc()
+      return painter.callDrawFunc()
                     .then(() => painter.DrawNextFunction(0))
                     .then(()=> {
          if (!painter.Mode3D && painter.options.AutoZoom) painter.AutoZoom();
@@ -6481,7 +6481,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
    THStackPainter.prototype.Cleanup = function() {
       let pp = this.pad_painter();
-      if (pp) pp.CleanPrimitives(this.Selector.bind(this, true));
+      if (pp) pp.CleanPrimitives(objp => { return (objp === this.firstpainter) || (this.painters.indexOf(objp) >= 0); });
       delete this.firstpainter;
       delete this.painters;
       JSROOT.ObjectPainter.prototype.Cleanup.call(this);
@@ -6494,10 +6494,9 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       return false;
    }
 
+   /** @summary Build sum of all histograms
+     * @desc Build a separate list fStack containing the running sum of all histograms  */
    THStackPainter.prototype.BuildStack = function(stack) {
-      //  build sum of all histograms
-      //  Build a separate list fStack containing the running sum of all histograms
-
       if (!stack.fHists) return false;
       let nhists = stack.fHists.arr.length;
       if (nhists <= 0) return false;
@@ -6603,59 +6602,48 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       return res;
    }
 
-   THStackPainter.prototype.DrawNextHisto = function(indx, mm, subp) {
-      if (mm === "callback") {
-         mm = null; // just misuse min/max argument to indicate callback
-         if (indx < 0) this.firstpainter = subp;
-                  else this.painters.push(subp);
-         indx++;
-
-         if (this._assign_divid) {
-            this.SetDivId(this.divid); // only when first histogram drawn, we could assign divid
-            delete this._assign_divid;
-         }
-      }
+   /** @summary Draw next stack histogram */
+   THStackPainter.prototype.drawNextHisto = function(indx) {
 
       let stack = this.GetObject(),
-          hist = stack.fHistogram, hopt = "",
           hlst = this.options.nostack ? stack.fHists : stack.fStack,
-          nhists = (hlst && hlst.arr) ? hlst.arr.length : 0, rindx = 0;
+          nhists = (hlst && hlst.arr) ? hlst.arr.length : 0;
 
-      if (indx>=nhists) return this.DrawingReady();
+      if (indx >= nhists)
+         return Promise.resolve(this);
 
-      if (indx>=0) {
-         rindx = this.options.horder ? indx : nhists-indx-1;
-         hist = hlst.arr[rindx];
-         hopt = hlst.opt[rindx] || hist.fOption || this.options.hopt;
-         if (hopt.toUpperCase().indexOf(this.options.hopt)<0) hopt += this.options.hopt;
-         if (this.options.draw_errors && !hopt) hopt = "E";
-         hopt += " same nostat";
+      let rindx = this.options.horder ? indx : nhists-indx-1;
+      let hist = hlst.arr[rindx];
+      let hopt = hlst.opt[rindx] || hist.fOption || this.options.hopt;
+      if (hopt.toUpperCase().indexOf(this.options.hopt) < 0)
+         hopt += this.options.hopt;
+      if (this.options.draw_errors && !hopt)
+         hopt = "E";
+      hopt += " same nostat";
 
-         // if there is auto colors assignment, try to provide it
-         if (this.options._pfc || this.options._plc || this.options._pmc) {
-            if (!this.palette && jsrp.GetColorPalette)
-               this.palette = jsrp.GetColorPalette();
-            if (this.palette) {
-               let color = this.palette.calcColor(rindx, nhists+1);
-               let icolor = this.add_color(color);
+      // if there is auto colors assignment, try to provide it
+      if (this.options._pfc || this.options._plc || this.options._pmc) {
+         if (!this.palette && jsrp.GetColorPalette)
+            this.palette = jsrp.GetColorPalette();
+         if (this.palette) {
+            let color = this.palette.calcColor(rindx, nhists+1);
+            let icolor = this.add_color(color);
 
-               if (this.options._pfc) hist.fFillColor = icolor;
-               if (this.options._plc) hist.fLineColor = icolor;
-               if (this.options._pmc) hist.fMarkerColor = icolor;
-            }
+            if (this.options._pfc) hist.fFillColor = icolor;
+            if (this.options._plc) hist.fLineColor = icolor;
+            if (this.options._pmc) hist.fMarkerColor = icolor;
          }
-
-      } else {
-         hopt = this.options.hopt + " axis";
-         // if (mm && (!this.options.nostack || (hist.fMinimum==-1111 && hist.fMaximum==-1111))) hopt += ";minimum:" + mm.min + ";maximum:" + mm.max;
-         if (mm) hopt += ";minimum:" + mm.min + ";maximum:" + mm.max;
       }
 
       // special handling of stacked histograms - set $baseh object for correct drawing
       // also used to provide tooltips
-      if ((rindx > 0) && !this.options.nostack) hist.$baseh = hlst.arr[rindx - 1];
+      if ((rindx > 0) && !this.options.nostack)
+         hist.$baseh = hlst.arr[rindx - 1];
 
-      JSROOT.draw(this.divid, hist, hopt).then(this.DrawNextHisto.bind(this, indx, "callback"));
+      return JSROOT.draw(this.divid, hist, hopt).then(subp => {
+          this.painters.push(subp);
+          return this.drawNextHisto(indx+1);
+      });
    }
 
    THStackPainter.prototype.DecodeOptions = function(opt) {
@@ -6670,7 +6658,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       if ((this.options.ndim==2) && !opt) opt = "lego1";
 
       if (stack.fHists && !this.options.nostack) {
-         for (let k=0;k<stack.fHists.arr.length;++k)
+         for (let k = 0; k < stack.fHists.arr.length; ++k)
             this.options.has_errors = this.options.has_errors || this.HasErrors(stack.fHists.arr[k]);
       }
 
@@ -6733,19 +6721,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       return histo;
    }
 
-   THStackPainter.prototype.startDrawStack = function(stack) {
-      // when building stack, one could fail to sum up histograms
-      if (!this.options.nostack)
-         this.options.nostack = ! this.BuildStack(stack);
-
-      if (!stack.fHistogram && !this.options.same)
-         stack.fHistogram = this.CreateHistogram(stack);
-
-      let mm = this.GetMinMax(this.options.errors || this.options.draw_errors, this.root_pad());
-
-      this.DrawNextHisto(this.options.same ? 0 : -1, mm);
-   }
-
+   /** @summary Update thstack object */
    THStackPainter.prototype.UpdateObject = function(obj) {
       if (!this.MatchObjectType(obj)) return false;
 
@@ -6753,12 +6729,11 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
       stack.fHists = obj.fHists;
       stack.fStack = obj.fStack;
+      stack.fTitle = obj.fTitle;
 
-      if (!this.options.nostack) {
+      if (!this.options.nostack)
          this.options.nostack = !this.BuildStack(stack);
-      }
 
-      let isany = false;
       if (this.firstpainter) {
          let src = obj.fHistogram;
          if (!src)
@@ -6775,58 +6750,74 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             this.firstpainter.ymin = mm.min;
             this.firstpainter.ymax = mm.max;
          }
-
-         isany = true;
       }
 
-      // try fully remove old histogram painters
-      let pp = this.pad_painter();
-      if (pp) pp.CleanPrimitives(this.Selector.bind(this, false));
-      this.painters = [];
+      // and now update histograms
+      let hlst = this.options.nostack ? stack.fHists : stack.fStack,
+          nhists = (hlst && hlst.arr) ? hlst.arr.length : 0;
 
-      this.did_update = isany;
+      if (nhists !== this.painters.length) {
+         let pp = this.pad_painter();
+         if (pp) pp.CleanPrimitives(objp => { return this.painters.indexOf(objp) >= 0; });
+         this.painters = [];
+         this.did_update = true;
+      } else {
+         for (let indx = 0; indx < nhists; ++indx) {
+            let rindx = this.options.horder ? indx : nhists-indx-1;
+            let hist = hlst.arr[rindx];
+            this.painters[indx].UpdateObject(hist);
+         }
+      }
 
-      return isany;
+      return true;
    }
 
-   /** @summary Returns true if painter belongs to stack, used in cleanup */
-   THStackPainter.prototype.Selector = function(fullclear, painter) {
-      if (fullclear && (painter===this.firstpainter)) return true;
-      return this.painters.indexOf(painter) >= 0;
-   }
-
-   /** @summary Redraw THStack, changes output only if Update was performed before */
+   /** @summary Redraw THStack,
+     * @desc Do something if previous Update had changed number of histograms */
    THStackPainter.prototype.Redraw = function() {
-      // do nothing in case of simple redraw
-      if (!this.did_update) return;
-
-      // remove flag set in update
-      delete this.did_update;
-
-      if (this.firstpainter)
-         this.firstpainter.Redraw();
-
-      this.DrawNextHisto(0, null);
+      if (this.did_update) {
+         delete this.did_update;
+         return this.drawNextHisto(0);
+       }
    }
 
-   /** @summary draw THStack object */
+   /** @summary draw THStack object
+     * @desc paint the list of histograms
+     * By default, histograms are shown stacked.
+     *   the first histogram is paint
+     *  then the sum of the first and second, etc
+     * @private */
    let drawHStack = (divid, stack, opt) => {
-      // paint the list of histograms
-      // By default, histograms are shown stacked.
-      // - the first histogram is paint
-      // - then the sum of the first and second, etc
+      if (!stack.fHists || !stack.fHists.arr)
+         return null; // drawing not needed
 
       let painter = new THStackPainter(stack, opt);
-      painter.SetDivId(divid, -1); // it maybe no element to set divid
+      painter.SetDivId(divid, 2); // in list of primitives, but not main painter
       painter.DecodeOptions(opt);
 
-      if (!stack.fHists || !stack.fHists.arr)
-         return painter.Promise(true); // drawing not needed
+     if (!painter.options.nostack)
+          painter.options.nostack = ! painter.BuildStack(stack);
 
-      painter._assign_divid = true; // indicate that we have to assign divid once first histogram is drawn
-      painter.startDrawStack(stack);
+      let promise = Promise.resolve(painter);
 
-      return painter.Promise();
+      if (!painter.options.same) {
+
+         if (!stack.fHistogram)
+             stack.fHistogram = painter.CreateHistogram(stack);
+
+         let mm = painter.GetMinMax(painter.options.errors || painter.options.draw_errors,  painter.root_pad());
+
+         let hopt = painter.options.hopt + " axis";
+         // if (mm && (!this.options.nostack || (hist.fMinimum==-1111 && hist.fMaximum==-1111))) hopt += ";minimum:" + mm.min + ";maximum:" + mm.max;
+         if (mm) hopt += ";minimum:" + mm.min + ";maximum:" + mm.max;
+
+         promise = JSROOT.draw(divid, stack.fHistogram, hopt).then(subp => {
+             painter.firstpainter = subp;
+             return painter;
+         });
+      }
+
+      return promise.then(() => painter.drawNextHisto(0));
    }
 
    // =================================================================================

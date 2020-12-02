@@ -106,7 +106,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    ///////////////////////////////////////////////////////////////////////////////
 
    /**
-    * @summary Holder of different functions and classes for geometries drawing
+    * @summary Painter class for geometries drawing
     *
     * @class
     * @memberof JSROOT
@@ -416,7 +416,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       if (_opt == "full") { res._debug = true; res._grid = true; res._full = true; res._bound = true; }
 
       let macro = opt.indexOf("macro:");
-      if (macro>=0) {
+      if (macro >= 0) {
          let separ = opt.indexOf(";", macro+6);
          if (separ<0) separ = opt.length;
          res.script_name = opt.substr(macro+6,separ-macro-6);
@@ -2431,9 +2431,10 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       // need to fill cached value line numvischld
       this._clones.ScanVisible();
 
-      let nshapes = 0, painter = this;
+      let nshapes = 0;
 
       let arg = {
+         clones: this._clones,
          cnt: [],
          func: function(node) {
             if (this.cnt[this.last]===undefined)
@@ -2441,9 +2442,9 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
             else
                this.cnt[this.last]++;
 
-            nshapes += geo.CountNumShapes(painter._clones.GetNodeShape(node.id));
+            nshapes += geo.CountNumShapes(this.clones.GetNodeShape(node.id));
 
-            // for debugginf - search if there some TGeoHalfSpace
+            // for debugging - search if there some TGeoHalfSpace
             //if (geo.HalfSpace) {
             //    let entry = this.CopyStack();
             //    let res = painter._clones.ResolveStack(entry.stack);
@@ -2474,21 +2475,21 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       else
          res.forEach(str => elem.append("p").text(str));
 
-      setTimeout(function() {
-         arg.domatrix = true;
-         tm1 = new Date().getTime();
-         numvis = painter._clones.ScanVisible(arg);
-         tm2 = new Date().getTime();
+      return new Promise(resolveFunc => {
+         setTimeout(() => {
+            arg.domatrix = true;
+            tm1 = new Date().getTime();
+            numvis = this._clones.ScanVisible(arg);
+            tm2 = new Date().getTime();
 
-         let last_str = "Time to scan with matrix: " + makeTime(tm2-tm1);
-         if (JSROOT.BatchMode)
-            res.push(last_str);
-         else
-            elem.append("p").text(last_str);
-         painter.DrawingReady();
-      }, 100);
-
-      return this;
+            let last_str = "Time to scan with matrix: " + makeTime(tm2-tm1);
+            if (JSROOT.BatchMode)
+               res.push(last_str);
+            else
+               elem.append("p").text(last_str);
+            resolveFunc(this);
+         }, 100);
+      });
    }
 
    /** @summary Handle drop operation
@@ -2522,12 +2523,13 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
          });
       }
 
-      if (this.drawExtras(obj, itemname)) {
-         if (hitem) hitem._painter = this; // set for the browser item back pointer
-         this.Render3D(100);
-      }
-
-      return Promise.resolve(this);
+      return this.drawExtras(obj, itemname).then(res => {
+         if (res) {
+            if (hitem) hitem._painter = this; // set for the browser item back pointer
+            this.Render3D(100);
+         }
+         return this;
+      });
    }
 
    /** @summary function called when mouse is going over the item in the browser */
@@ -2628,7 +2630,11 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
             if (!sname) sname = (itemname || "<prnt>") + "/[" + n + "]";
             promises.push(this.drawExtras(sobj, sname, add_objects));
          }
-         promise = Promise.all(promises).then(arr => { return arr.indexOf(true) > 0; })
+         promise = Promise.all(promises).then(arr => {
+            let res = false;
+            arr.forEach(elem => { if (elem) res = true; });
+            return res;
+         })
       } else if (obj._typename === 'THREE.Mesh') {
          // adding mesh as is
          this.addToExtrasContainer(obj);
@@ -2972,12 +2978,13 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       this._clones = clones;
    }
 
-   /** @summary Prepare drawings */
+   /** @summary Prepare drawings
+     * @desc Return value used as promise for painter, therefore should return this */
    TGeoPainter.prototype.prepareObjectDraw = function(draw_obj, name_prefix) {
 
       // if did cleanup - ignore all kind of activity
       if (this.did_cleanup)
-         return;
+         return null;
 
       if (name_prefix == "__geom_viewer_append__") {
          this._new_append_nodes = draw_obj;
@@ -3069,12 +3076,15 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       this.CreateToolbar();
 
-      if (this._clones) {
-         this.showDrawInfo("Drawing geometry");
-         this.startDrawGeometry(true);
-      } else {
-         this.completeDraw();
-      }
+      if (this._clones)
+         return new Promise(resolveFunc => {
+            this._resolveFunc = resolveFunc;
+            this.showDrawInfo("Drawing geometry");
+            this.startDrawGeometry(true);
+         });
+
+      this.completeDraw();
+      return this;
    }
 
    /** @summary methods show info when first geometry drawing is performed */
@@ -3091,7 +3101,6 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
          if (info.empty()) info = d3.select(main).append("p").attr("class","geo_info");
          info.html(msg + ", " + spent.toFixed(1) + "s");
       }
-
    }
 
    /** @summary Reentrant method to perform geometry drawing step by step */
@@ -3172,12 +3181,11 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
    /** @summary Call 3D rendering of the geometry
      * @param tmout - specifies delay, after which actual rendering will be invoked
-     * Timeout used to avoid multiple rendering of the picture when several 3D drawings
+     * @desc Timeout used to avoid multiple rendering of the picture when several 3D drawings
      * superimposed with each other. If tmeout<=0, rendering performed immediately
      * Several special values are used:
      *   -2222 - rendering performed only if there were previous calls, which causes timeout activation
      *   -1    - force recheck of rendering order based on camera position */
-
    TGeoPainter.prototype.Render3D = function(tmout, measure) {
 
       if (!this._renderer) {
@@ -3187,47 +3195,48 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       if (tmout === undefined) tmout = 5; // by default, rendering happens with timeout
 
-      if ((tmout <= 0) || !this._webgl || JSROOT.BatchMode) {
-         if ('render_tmout' in this) {
-            clearTimeout(this.render_tmout);
-         } else {
-            if (tmout === -2222) return; // special case to check if rendering timeout was active
-         }
-
-         jsrp.beforeRender3D(this._renderer);
-
-         let tm1 = new Date();
-
-         this.TestCameraPosition(tmout === -1);
-
-         // its needed for outlinePass - do rendering, most consuming time
-         if (this._webgl && this._effectComposer && (this._effectComposer.passes.length > 0)) {
-            this._effectComposer.render();
-         } else {
-       //     this._renderer.logarithmicDepthBuffer = true;
-            this._renderer.render(this._scene, this._camera);
-         }
-
-         let tm2 = new Date();
-
-         this.last_render_tm = tm2.getTime();
-
-         delete this.render_tmout;
-
-         if ((this.first_render_tm === 0) && measure) {
-            this.first_render_tm = tm2.getTime() - tm1.getTime();
-            console.log(`three.js r${THREE.REVISION}, first render tm = ${this.first_render_tm}`);
-         }
-
-         return jsrp.afterRender3D(this._renderer);
+      if ((tmout > 0) && this._webgl && !JSROOT.BatchMode) {
+         // do not shoot timeout many times
+         if (!this.render_tmout)
+            this.render_tmout = setTimeout(() => this.Render3D(0,measure), tmout);
+         return;
       }
 
-      // do not shoot timeout many times
-      if (!this.render_tmout)
-         this.render_tmout = setTimeout(this.Render3D.bind(this,0,measure), tmout);
+      if (this.render_tmout) {
+         clearTimeout(this.render_tmout);
+      } else {
+         if (tmout === -2222) return; // special case to check if rendering timeout was active
+      }
+
+      jsrp.beforeRender3D(this._renderer);
+
+      let tm1 = new Date();
+
+      this.TestCameraPosition(tmout === -1);
+
+      // its needed for outlinePass - do rendering, most consuming time
+      if (this._webgl && this._effectComposer && (this._effectComposer.passes.length > 0)) {
+         this._effectComposer.render();
+      } else {
+    //     this._renderer.logarithmicDepthBuffer = true;
+         this._renderer.render(this._scene, this._camera);
+      }
+
+      let tm2 = new Date();
+
+      this.last_render_tm = tm2.getTime();
+
+      delete this.render_tmout;
+
+      if ((this.first_render_tm === 0) && measure) {
+         this.first_render_tm = tm2.getTime() - tm1.getTime();
+         console.log(`three.js r${THREE.REVISION}, first render tm = ${this.first_render_tm}`);
+      }
+
+      return jsrp.afterRender3D(this._renderer);
    }
 
-
+   /** @summary Start geo worker */
    TGeoPainter.prototype.startWorker = function() {
 
       if (this._worker) return;
@@ -3656,6 +3665,9 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       return changed;
    }
 
+   /** @summary Assign callback, invoked every time when drawing is completed
+     * @desc Used together with web-based geometry viewer
+     * @private */
    TGeoPainter.prototype.setCompleteHandler = function(callback) {
       this._complete_handler = callback;
    }
@@ -3747,7 +3759,10 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       }
 
       // call it every time, in reality invoked only first time
-      this.DrawingReady();
+      if (typeof this._resolveFunc == 'function') {
+         this._resolveFunc(this);
+         delete this._resolveFunc;
+      }
 
       if (typeof this._complete_handler == 'function')
          this._complete_handler(this);
@@ -4103,10 +4118,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
          painter.addExtra(extras, extras_path);
       }
 
-      // TODO: convert to Promise-based variant
-      painter.loadMacro(painter.ctrl.script_name).then(arg => painter.prepareObjectDraw(arg.obj, arg.prefix));
-
-      return painter;
+      return painter.loadMacro(painter.ctrl.script_name).then(arg => painter.prepareObjectDraw(arg.obj, arg.prefix));
    }
 
    // ===============================================================================
