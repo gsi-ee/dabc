@@ -696,7 +696,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Cleanup hierarchy painter */
    HierarchyPainter.prototype.Cleanup = function() {
       // clear drawing and browser
-      this.cleanup(true);
+      this.clearHierarchy(true);
 
       JSROOT.BasePainter.prototype.Cleanup.call(this);
 
@@ -799,6 +799,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
      * @param {boolean} [arg.force] - specified elements will be created when not exists
      * @param {boolean} [arg.last_exists] -  when specified last parent element will be returned
      * @param {boolean} [arg.check_keys] - check TFile keys with cycle suffix
+     * @param {boolean} [arg.allow_index] - let use sub-item indexes instead of name
      * @param {object} [arg.top] - element to start search from
      * @protected */
    HierarchyPainter.prototype.findItem = function(arg) {
@@ -859,15 +860,15 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
                let allow_index = arg.allow_index;
                if ((localname[0] === '[') && (localname[localname.length-1] === ']') &&
-                   !isNaN(parseInt(localname.substr(1,localname.length-2)))) {
+                    /^\d+$/.test(localname.substr(1,localname.length-2))) {
                   allow_index = true;
                   localname = localname.substr(1,localname.length-2);
                }
 
                // when search for the elements it could be allowed to check index
-               if (allow_index) {
+               if (allow_index && /^\d+$/.test(localname)) {
                   let indx = parseInt(localname);
-                  if (!isNaN(indx) && (indx>=0) && (indx<top._childs.length))
+                  if (!isNaN(indx) && (indx >= 0) && (indx < top._childs.length))
                      return process_child(top._childs[indx]);
                }
             }
@@ -972,7 +973,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Refresh HTML for hierachy painter
      * @returns {Promise} when completed */
    HierarchyPainter.prototype.refreshHtml = function() {
-      if (!this.divid) return Promise.resolve();
+      if (!this.divid || JSROOT.BatchMode) return Promise.resolve();
       return JSROOT.require('jq2d').then(() => this.refreshHtml());
    }
 
@@ -1008,7 +1009,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
            else item = this.findItem( { name: itemname, allow_index: true, check_keys: true } );
 
       // if item not found, try to find nearest parent which could allow us to get inside
-      let d = (item!=null) ? null : this.findItem({ name: itemname, last_exists: true, check_keys: true, allow_index: true });
+
+      let d = item ? null : this.findItem({ name: itemname, last_exists: true, check_keys: true, allow_index: true });
 
       // if item not found, try to expand hierarchy central function
       // implements not process get in central method of hierarchy item (if exists)
@@ -1024,7 +1026,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return this.expandItem(parentname, null, true).then(res => {
             if (!res) return result;
             let newparentname = this.itemFullName(d.last);
-            if (newparentname.length>0) newparentname+="/";
+            if (newparentname.length > 0) newparentname += "/";
             return this.getObject( { name: newparentname + d.rest, rest: d.rest }, options);
          });
       }
@@ -1050,16 +1052,16 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Just envelope, one should be able to redefine it for sub-classes
      * @desc Redirect to {@link JSROOT.draw} method
      * @protected */
-   HierarchyPainter.prototype.draw = function(divid, obj, drawopt) {
-      return JSROOT.draw(divid, obj, drawopt);
-   }
+   //HierarchyPainter.prototype.draw = function(divid, obj, drawopt) {
+   //   return JSROOT.draw(divid, obj, drawopt);
+   //}
 
    /** @summary Just envelope, one should be able to redefine it for sub-classes
      * @desc Redirect to {@link JSROOT.redraw} method
      * @protected */
-   HierarchyPainter.prototype.redraw = function(divid, obj, drawopt) {
-      return JSROOT.redraw(divid, obj, drawopt);
-   }
+   //HierarchyPainter.prototype.redraw = function(divid, obj, drawopt) {
+   //   return JSROOT.redraw(divid, obj, drawopt);
+   //}
 
    /** @summary Starts player for specified item
      * @returns {Promise} when ready*/
@@ -1164,8 +1166,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if (!updating) JSROOT.progress("Drawing " + display_itemname);
 
             if (divid.length > 0) {
-               let draw_func = updating ? JSROOT.redraw : JSROOT.draw;
-               return draw_func(divid, obj, drawopt).then(p => complete(p)).catch(() => complete(null));
+               let func = updating ? JSROOT.redraw : JSROOT.draw;
+               return func(divid, obj, drawopt).then(p => complete(p)).catch(() => complete(null));
             }
 
             mdi.forEachPainter((p, frame) => {
@@ -1193,7 +1195,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             d3.select(frame).html("");
             mdi.activateFrame(frame);
 
-            return JSROOT.draw(d3.select(frame).attr("id"), obj, drawopt).then(p => {
+            return JSROOT.draw(frame, obj, drawopt).then(p => {
                if (JSROOT.settings.DragAndDrop)
                   h.enableDrop(frame, display_itemname);
                return complete(p);
@@ -1277,7 +1279,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                let forced = false, handle = JSROOT.getDrawHandle(item._kind);
                if (handle && ('monitor' in handle)) {
                   if ((handle.monitor === false) || (handle.monitor == 'never')) return;
-                  if (handle.monitor==='always') forced = true;
+                  if (handle.monitor == 'always') forced = true;
                }
                if (!forced && only_auto_items) return;
             }
@@ -1313,13 +1315,13 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          options.push("");
 
       if ((options.length == 1) && (options[0] == "iotest")) {
-         h.cleanup();
-         d3.select("#" + h.disp_frameid).html("<h2>Start I/O test</h2>")
+         this.clearHierarchy();
+         d3.select("#" + this.disp_frameid).html("<h2>Start I/O test</h2>")
 
          let tm0 = new Date();
-         return h.getObject(items[0]).then(() => {
+         return this.getObject(items[0]).then(() => {
             let tm1 = new Date();
-            d3.select("#" + h.disp_frameid).append("h2").html("Item " + items[0] + " reading time = " + (tm1.getTime() - tm0.getTime()) + "ms");
+            d3.select("#" + this.disp_frameid).append("h2").html("Item " + items[0] + " reading time = " + (tm1.getTime() - tm0.getTime()) + "ms");
             return Promise.resolve(true);
          });
       }
@@ -1561,31 +1563,46 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       find_next();
    }
 
+   /** @summary Check if item can be (potentially) expand
+     * @private*/
+   HierarchyPainter.prototype.canExpandItem = function(item) {
+      if (!item) return false;
+      if (item._expand) return true;
+      let handle = JSROOT.getDrawHandle(item._kind, "::expand");
+      return handle && (handle.expand_item || handle.expand);
+   }
+
    /** @summary expand specified item
      * @param {String} itemname - item name
      * @returns {Promise} when ready */
    HierarchyPainter.prototype.expandItem = function(itemname, d3cont, silent) {
       let hitem = this.findItem(itemname);
 
-      if (!hitem && d3cont) return Promise.resolve();
+      if (!hitem && d3cont)
+         return Promise.resolve();
 
-      let DoExpandItem = (_item, _obj, _name) => {
-         if (!_name) _name = this.itemFullName(_item);
+      let DoExpandItem = (_item, _obj) => {
 
-         let handle = _item._expand ? null : JSROOT.getDrawHandle(_item._kind, "::expand");
+         if (typeof _item._expand == 'string')
+            _item._expand = JSROOT.findFunction(item._expand);
 
-         if (_obj && handle && handle.expand_item) {
-            _obj = _obj[handle.expand_item]; // just take specified field from the object
-            if (_obj && _obj._typename)
-               handle = JSROOT.getDrawHandle("ROOT."+_obj._typename, "::expand");
-         }
+         if (typeof _item._expand !== 'function') {
+            let handle = JSROOT.getDrawHandle(_item._kind, "::expand");
 
-         if (handle && handle.expand) {
-            return JSROOT.require(handle.prereq).then(() => {
-               _item._expand = JSROOT.findFunction(handle.expand);
-               if (_item._expand) return DoExpandItem(_item, _obj, _name);
-               return true; // no need for other checks
-            });
+            if (handle && handle.expand_item) {
+               _obj = _obj[handle.expand_item];
+              if (_obj && _obj._typename)
+                 handle = JSROOT.getDrawHandle("ROOT."+_obj._typename, "::expand");
+            }
+
+            if (handle && handle.expand) {
+               if (typeof handle.expand == 'string')
+                  return JSROOT.require(handle.prereq).then(() => {
+                     _item._expand = handle.expand = JSROOT.findFunction(handle.expand);
+                     return _item._expand ? DoExpandItem(_item, _obj) : true;
+                  });
+               _item._expand = handle.expand;
+            }
          }
 
          // try to use expand function
@@ -2113,7 +2130,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       if (!this.register_resize) {
          this.register_resize = true;
-         JSROOT.RegisterForResize(this);
+         JSROOT.registerForResize(this);
       }
    }
 
@@ -2130,7 +2147,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    }
 
    /** @summary Cleanup hierarchy painter */
-   HierarchyPainter.prototype.cleanup = function(withbrowser) {
+   HierarchyPainter.prototype.clearHierarchy = function(withbrowser) {
       if (this.disp) {
          this.disp.cleanup();
          delete this.disp;
@@ -2373,22 +2390,18 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       if (this.start_without_browser) browser_kind = "";
 
-      if (status || browser_kind) prereq += "jq2d;";
+      if ((status || browser_kind) && !JSROOT.BatchMode) prereq += "jq2d;";
 
       this._topname = GetOption("topname");
 
-      let OpenAllFiles = () => {
-         if (prereq || load) {
-            // load first prerequicities and then special script
-            let req = prereq;
-            prereq = "";
-            if (!req) { req = load; load = ""; }
-            return JSROOT.require(req).then(OpenAllFiles, OpenAllFiles);
-         }
-
+      let openAllFiles = () => {
          let promise;
 
-         if (browser_kind) {
+         if (prereq) {
+            promise = JSROOT.require(prereq); prereq = "";
+         } else if (load) {
+            promise = JSROOT.loadScript(load.split(";")); load = "";
+         } else if (browser_kind) {
             promise = this.createBrowser(browser_kind); browser_kind = "";
          } else if (status!==null) {
             promise = this.createStatusLine(statush, status); status = null;
@@ -2411,7 +2424,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
            });
          }
 
-         return promise.then(OpenAllFiles, OpenAllFiles);
+         return promise.then(openAllFiles, openAllFiles);
       }
 
       let h0 = null;
@@ -2449,13 +2462,13 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if (gui_div)
                this.prepareGuiDiv(gui_div, this.disp_kind);
 
-            return OpenAllFiles();
+            return openAllFiles();
          });
 
       if (gui_div)
          this.prepareGuiDiv(gui_div, this.disp_kind);
 
-      return OpenAllFiles();
+      return openAllFiles();
    }
 
    /** @summary Prepare div element - create layout and buttons */
@@ -2635,8 +2648,14 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    jsrp.drawInspector = function(divid, obj) {
 
       JSROOT.cleanup(divid);
-
       let painter = new JSROOT.HierarchyPainter('inspector', divid, 'white');
+
+      // in batch mode HTML drawing is not possible, just keep object reference for a minute
+      if (JSROOT.BatchMode) {
+         painter.select_main().property("_json_object_", obj);
+         return Promise.resolve(painter);
+      }
+
       painter.default_by_click = "expand"; // default action
       painter.with_icons = false;
       painter.h = { _name: "Object", _title: "", _click_action: "expand", _nosimple: false, _do_context: true };
@@ -2700,8 +2719,10 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       constructor(frameid) {
          super();
          this.frameid = frameid;
-         this.SetDivId(frameid);
-         this.select_main().property('mdi', this);
+         if (frameid != "$batch$") {
+            this.SetDivId(frameid);
+            this.select_main().property('mdi', this);
+         }
          this.cleanupFrame = JSROOT.cleanup; // use standard cleanup function by default
          this.active_frame_title = ""; // keep title of active frame
       }
@@ -2717,7 +2738,6 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
         * @param {function} userfunc is called with arguments (painter, frame)
         * @param {boolean} only_visible let select only visible frames */
       forEachPainter(userfunc, only_visible) {
-
          this.forEachFrame(frame => {
             let dummy = new JSROOT.ObjectPainter();
             dummy.SetDivId(frame, -1);
@@ -2774,18 +2794,6 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          this.select_main().html("").property('mdi', null);
       }
 
-      draw(title, obj, drawopt) {
-         // draw object with specified options
-         if (!obj) return;
-
-         if (!JSROOT.canDraw(obj._typename, drawopt)) return;
-
-         let frame = this.findFrame(title, true);
-
-         this.activateFrame(frame);
-
-         return JSROOT.redraw(frame, obj, drawopt);
-      }
    } // class MDIDisplay
 
 
@@ -2817,7 +2825,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          for (let k = 0; k < ks.length; ++k) {
             let node = d3.select("#"+ks[k]);
             if (!node.empty())
-               JSROOT.callBack(userfunc, node.node());
+               userfunc(node.node());
          }
       }
 
@@ -2827,7 +2835,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          let ks = Object.keys(this.frames);
          for (let k = 0; k < ks.length; ++k) {
             let items = this.frames[ks[k]];
-            if (items.indexOf(title+";")>=0)
+            if (items.indexOf(title+";") >= 0)
                return d3.select("#"+ks[k]).node();
          }
          return null;
@@ -2837,6 +2845,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          super.cleanup();
          this.forEachFrame(frame => d3.select(frame).html(""));
       }
+
    } // class CustomDisplay
 
    // ================================================
@@ -2847,20 +2856,23 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
     * @class
     * @memberof JSROOT
     * @private
-    * @param {string} frameid - where grid display is created
-    * @param {string} kind - kind of grid
-    * @desc  following kinds are supported
-    *    - vertical or horizontal - only first letter matters, defines basic orientation
-    *    - 'x' in the name disable interactive separators
-    *    - v4 or h4 - 4 equal elements in specified direction
-    *    - v231 -  created 3 vertical elements, first divided on 2, second on 3 and third on 1 part
-    *    - v23_52 - create two vertical elements with 2 and 3 subitems, size ratio 5:2
-    *    - gridNxM - normal grid layout without interactive separators
-    *    - gridiNxM - grid layout with interactive separators
-    *    -  simple - no layout, full frame used for object drawings
     */
 
+
    class GridDisplay extends MDIDisplay {
+
+    /** @summary Create GridDisplay instance
+      * @param {string} frameid - where grid display is created
+      * @param {string} kind - kind of grid
+      * @desc  following kinds are supported
+      *    - vertical or horizontal - only first letter matters, defines basic orientation
+      *    - 'x' in the name disable interactive separators
+      *    - v4 or h4 - 4 equal elements in specified direction
+      *    - v231 -  created 3 vertical elements, first divided on 2, second on 3 and third on 1 part
+      *    - v23_52 - create two vertical elements with 2 and 3 subitems, size ratio 5:2
+      *    - gridNxM - normal grid layout without interactive separators
+      *    - gridiNxM - grid layout with interactive separators
+      *    -  simple - no layout, full frame used for object drawings */
 
       constructor(frameid, kind, kind2) {
 
@@ -2888,7 +2900,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if (kind2) kind = kind + "x" + kind2;
                   else kind = kind.substr(4).trim();
             this.use_separarators = false;
-            if (kind[0]==="i") {
+            if (kind[0] === "i") {
                this.use_separarators = true;
                kind = kind.substr(1);
             }
@@ -2905,15 +2917,14 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if (isNaN(sizex)) sizex = 3;
             if (isNaN(sizey)) sizey = 3;
 
-            if (sizey>1) {
+            if (sizey > 1) {
                this.vertical = true;
                num = sizey;
                if (sizex>1) {
                   arr = new Array(num);
-                  for (let k=0;k<num;++k) arr[k] = sizex;
+                  for (let k = 0; k < num; ++k) arr[k] = sizex;
                }
-            } else
-            if (sizex > 1) {
+            } else if (sizex > 1) {
                this.vertical = false;
                num = sizex;
             } else {
@@ -3016,6 +3027,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             });
       }
 
+      /** @summary Returns active frame */
       getActiveFrame() {
          if (this.simple_layout) return this.getGridFrame();
 
@@ -3027,8 +3039,10 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return found;
       }
 
-      activateFrame(frame) { this.active_frame_title = d3.select(frame).attr('frame_title'); }
+      /** @summary Returns number of frames in grid layout */
+      numGridFrames() { return this.framecnt; }
 
+      /** @summary Return grid frame by its id */
       getGridFrame(id) {
          if (this.simple_layout)
             return this.select_main('origin').node();
@@ -3039,8 +3053,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          return res;
       }
 
-      numGridFrames() { return this.framecnt; }
-
+      /** @summary Create new frame */
       createFrame(title) {
          this.beforeCreateFrame(title);
 
@@ -3064,6 +3077,97 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
    } // class GridDisplay
 
+   // ==================================================
+
+   /**
+    * @summary Batch MDI display
+    *
+    * @class
+    * @memberof JSROOT
+    * @desc Can be used together with hierarchy painter in node.js
+    * @private
+    */
+
+   class BatchDisplay extends MDIDisplay {
+      constructor(width, height) {
+         super("$batch$");
+         this.frames = []; // array of configured frames
+         this.width = width || 1200;
+         this.height = height || 800;
+      }
+
+      forEachFrame(userfunc) {
+         this.frames.forEach(userfunc)
+      }
+
+      createFrame(title) {
+         this.beforeCreateFrame(title);
+
+         let frame;
+         if (!JSROOT.nodejs) {
+            frame = d3.select('body').append("div").style("visible", "hidden");
+         } else {
+            if (!JSROOT._.nodejs_document) {
+             // use eval while old minifier is not able to parse newest Node.js syntax
+               const { JSDOM } = require("jsdom");
+              JSROOT._.nodejs_window = (new JSDOM("<!DOCTYPE html>hello")).window;
+              JSROOT._.nodejs_document = JSROOT._.nodejs_window.document; // used with three.js
+              JSROOT._.nodejs_window.d3 = d3.select(JSROOT._.nodejs_document); //get d3 into the dom
+            }
+            frame = JSROOT._.nodejs_window.d3.select('body').append('div');
+         }
+
+         if (this.frames.length == 0)
+            JSROOT._.svg_3ds = undefined;
+
+         frame.attr("width", this.width).attr("height", this.height);
+         frame.style("width", this.width + "px").style("height", this.height + "px");
+         frame.attr("id","jsroot_batch_" + this.frames.length);
+         frame.attr('frame_title', title);
+         this.frames.push(frame.node());
+
+         return frame.node();
+      }
+
+      /** @summary Returns number of created frames */
+      numFrames() { return this.frames.length; }
+
+      /** @summary returns JSON representation if any
+        * @desc Now works only for inspector, can be called once */
+      makeJSON(id, spacing) {
+         let frame = this.frames[id];
+         if (!frame) return;
+         let obj = d3.select(frame).property('_json_object_');
+         if (obj) {
+            d3.select(frame).property('_json_object_', null);
+            return JSROOT.toJSON(obj, spacing);
+         }
+      }
+
+      /** @summary Create SVG for specified frame id */
+      makeSVG(id) {
+         let frame = this.frames[id];
+         if (!frame) return;
+         let main = d3.select(frame);
+         let has_workarounds = JSROOT._.svg_3ds && jsrp.processSvgWorkarounds;
+         main.select('svg')
+             .attr("xmlns", "http://www.w3.org/2000/svg")
+             .attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+             .attr("width", this.width)
+             .attr("height", this.height)
+             .attr("title", null).attr("style", null).attr("class", null).attr("x", null).attr("y", null);
+
+         let svg = main.html();
+         if (has_workarounds)
+            svg = jsrp.processSvgWorkarounds(svg, id != this.frames.length-1);
+
+         svg = jsrp.compressSVG(svg);
+
+         main.remove();
+         return svg;
+      }
+   } // class BatchDisplay
+
 
    // export all functions and classes
 
@@ -3081,6 +3185,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    JSROOT.MDIDisplay = MDIDisplay;
    JSROOT.CustomDisplay = CustomDisplay;
    JSROOT.GridDisplay = GridDisplay;
+   JSROOT.BatchDisplay = BatchDisplay;
 
    return JSROOT;
 

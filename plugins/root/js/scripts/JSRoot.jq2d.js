@@ -1061,35 +1061,44 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       return true;
    }
 
-   /** @summary Toggle open state of the item */
+   /** @summary Toggle open state of the item
+     * @desc Used with "open all" / "close all" buttons in normal GUI
+     * @param {boolean} isopen - if items should be expand or closed
+     * @returns {boolean} tru when any item was changed */
    HierarchyPainter.prototype.toggleOpenState = function(isopen, h) {
-      let hitem = h ? h : this.h;
+      let hitem = h || this.h;
 
-      if (!('_childs' in hitem)) {
-         if (!isopen || this.with_icons || (!hitem._expand && (hitem._more !== true))) return false;
+      if (hitem._childs === undefined) {
+         if (!isopen) return false;
+
+         if (this.with_icons) {
+            // in normal hierarchy check precisely if item can be expand
+            if (!hitem._more && !hitem._expand && !this.canExpandItem(hitem)) return false;
+         }
+
          this.expandItem(this.itemFullName(hitem));
-         if (hitem._childs) hitem._isopen = true;
-         return true;
+         if (hitem._childs !== undefined) hitem._isopen = true;
+         return hitem._isopen;
       }
 
-      if ((hitem != this.h) && isopen && !hitem._isopen) {
+      if ((hitem !== this.h) && isopen && !hitem._isopen) {
          // when there are childs and they are not see, simply show them
          hitem._isopen = true;
          return true;
       }
 
       let change_child = false;
-      for (let i=0; i < hitem._childs.length; ++i)
-         if (this.toggleOpenState(isopen, hitem._childs[i])) change_child = true;
+      for (let i = 0; i < hitem._childs.length; ++i)
+         if (this.toggleOpenState(isopen, hitem._childs[i]))
+            change_child = true;
 
-      if ((hitem != this.h) && !isopen && hitem._isopen && !change_child) {
+      if ((hitem !== this.h) && !isopen && hitem._isopen && !change_child) {
          // if none of the childs can be closed, than just close that item
          delete hitem._isopen;
          return true;
        }
 
       if (!h) this.refreshHtml();
-
       return false;
    }
 
@@ -1133,27 +1142,27 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       let d3btns = d3elem.append("p").attr("class", "jsroot").style("margin-bottom","3px").style("margin-top",0);
       d3btns.append("a").attr("class", "h_button").text("open all")
-            .attr("title","open all items in the browser").on("click", h.toggleOpenState.bind(h,true));
+            .attr("title","open all items in the browser").on("click", () => this.toggleOpenState(true));
       d3btns.append("text").text(" | ");
       d3btns.append("a").attr("class", "h_button").text("close all")
-            .attr("title","close all items in the browser").on("click", h.toggleOpenState.bind(h,false));
+            .attr("title","close all items in the browser").on("click", () => this.toggleOpenState(false));
 
-      if (typeof h.removeInspector == 'function') {
+      if (typeof this.removeInspector == 'function') {
          d3btns.append("text").text(" | ");
          d3btns.append("a").attr("class", "h_button").text("remove")
-               .attr("title","remove inspector").on("click", h.removeInspector.bind(h));
+               .attr("title","remove inspector").on("click", () => this.removeInspector());
       }
 
       if ('_online' in this.h) {
          d3btns.append("text").text(" | ");
          d3btns.append("a").attr("class", "h_button").text("reload")
-               .attr("title","reload object list from the server").on("click", h.reload.bind(h));
+               .attr("title","reload object list from the server").on("click", () => this.reload());
       }
 
       if ('disp_kind' in this) {
          d3btns.append("text").text(" | ");
          d3btns.append("a").attr("class", "h_button").text("clear")
-               .attr("title","clear all drawn objects").on("click", () => this.cleanup(false));
+               .attr("title","clear all drawn objects").on("click", () => this.clearHierarchy(false));
       }
 
       let maindiv =
@@ -1641,7 +1650,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
          jmain.find(".gui_ReadFileBtn").button().click(() => this.ReadSelectedFile());
 
-         jmain.find(".gui_ResetUIBtn").button().click(() => this.cleanup(true));
+         jmain.find(".gui_ResetUIBtn").button().click(() => this.clearHierarchy(true));
 
          jmain.find(".gui_urlToLoad").keyup(e => {
             if (e.keyCode == 13) this.ReadSelectedFile();
@@ -2014,10 +2023,6 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          return found;
       }
 
-      activateFrame(frame) {
-         this.active_frame_title = d3.select(frame).attr('frame_title');
-      }
-
       createFrame(title) {
 
          this.beforeCreateFrame(title);
@@ -2061,7 +2066,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             div = div.find(".flex_draw").get(0);
             let dummy = new JSROOT.ObjectPainter();
             dummy.SetDivId(div, -1);
-            jsrp.SelectActivePad({ pp: dummy.canv_painter(), active: true });
+            jsrp.selectActivePad({ pp: dummy.canv_painter(), active: true });
 
             JSROOT.resize(div);
          }
@@ -2306,7 +2311,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          this.dflt_expr = dflt_expr;
       }
 
-      player.ConfigureTree = function(tree) {
+      player.configureTree = function(tree) {
          this.local_tree = tree;
       }
 
@@ -2334,13 +2339,16 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       }
 
       player.Show = function(divid, args) {
-         this.drawid = divid + "_draw";
+
+         this.SetDivId(divid, -1); // just to get access to main element
+
+         let main = $(this.select_main().node());
+
+         this.drawid = "jsroot_tree_player_" + JSROOT._.id_counter++ + "_draw";
 
          this.keyup = this.KeyUp.bind(this);
 
          let show_extra = args && (args.parse_cut || args.numentries || args.firstentry);
-
-         let main = $("#" + divid);
 
          main.html("<div class='treedraw_buttons' style='padding-left:0.5em'>" +
                "<button class='treedraw_exe' title='Execute draw expression'>Draw</button>" +
