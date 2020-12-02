@@ -1033,15 +1033,14 @@
          // join both arrays with history entries
          if ((item.history == null) || (arr.length >= item['hlimit']) || gap) {
             item.history = arr;
-         } else
-            if (arr.length>0) {
-               modified = true;
-               var total = item.history.length + arr.length;
-               if (total > item['hlimit'])
-                  this.history.splice(0, total - item['hlimit']);
+         } else if (arr.length>0) {
+            modified = true;
+            var total = item.history.length + arr.length;
+            if (total > item['hlimit'])
+               this.history.splice(0, total - item['hlimit']);
 
-               item.history = item.history.concat(arr);
-            }
+            item.history = item.history.concat(arr);
+         }
       }
 
       if (obj._kind == "log") {
