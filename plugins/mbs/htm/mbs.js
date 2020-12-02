@@ -329,7 +329,7 @@ MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
 
 MbsDisplay.prototype.RefreshMonitor = function() {
 
-   if (this.hpainter == null) return;
+   if (!this.hpainter) return;
 
    this.hpainter.updateItems();
 
@@ -339,7 +339,6 @@ MbsDisplay.prototype.RefreshMonitor = function() {
 
    this.fMbsState.Update(() => this.RefreshView());
 }
-
 
 
 MbsDisplay.prototype.ChangeMonitoring = function(on) {

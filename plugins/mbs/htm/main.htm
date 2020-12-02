@@ -10,7 +10,7 @@
 
    <link rel="icon" type="image/png" href="img/mbslogo.png"/>
 
-   <script src="jsrootsys/scripts/JSRootCore.js?2d&jq2d&load=./httpsys/scripts/dabc.js;mbs.js" type="text/javascript"></script>
+   <script src="jsrootsys/scripts/JSRoot.core.js" type="text/javascript"></script>
 
    <link rel="stylesheet" type="text/css" href="mbs.css"/>
 
@@ -400,5 +400,10 @@
    </div>
 
 </body>
+
+<script type="text/javascript">
+   JSROOT.require(['2d','jq2d'])
+         .then(() => JSROOT.loadScript(["./httpsys/scripts/dabc.js","mbs.js"]))
+</script>
 
 </html>

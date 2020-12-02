@@ -34,7 +34,7 @@
 
          var pos = src.indexOf("dabc.js");
          if (pos<0) continue;
-         if (src.indexOf("JSRootCore.")>0) continue;
+         if ((src.indexOf("JSRootCore.") > 0) || (src.indexOf("JSRoot.core.") > 0)) continue;
 
          console.log("Set DABC.source_dir to " + src.substr(0, pos) + ", " + DABC.version);
          return src.substr(0, pos);
@@ -1368,7 +1368,7 @@
       icon: DABC.source_dir + "../img/gauge.png",
       func: "<dummy>",
       opt: "line;gauge",
-      monitor: true,
+      monitor: 'always',
       make_request: DABC.MakeItemRequest,
       after_request: DABC.AfterItemRequest
    });
