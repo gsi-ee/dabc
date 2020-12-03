@@ -1188,7 +1188,7 @@
 
       painter.Draw(obj);
 
-      return painter.DrawingReady();
+      return Promise.resolve(painter);
    }
 
    // ==========================================================================================
@@ -1230,7 +1230,7 @@
 
       painter.Draw();
 
-      return painter.DrawingReady();
+      return Promise.resolve(painter);
    }
 
 
@@ -1357,7 +1357,7 @@
 
       painter.SetDivId(divid);
 
-      return painter.DrawingReady();
+      return Promise.resolve(painter);
    }
 
    // =============================================================
