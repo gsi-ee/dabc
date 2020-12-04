@@ -1091,7 +1091,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       menu.AddAttributesMenu(this);
 
       if (menu.size() > 0)
-         menu.add('Inspect', this.ShowInspector);
+         menu.add('Inspect', this.showInspector);
 
       return menu.size() > 0;
    }
@@ -1274,75 +1274,69 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    }
 
    let drawPave = (divid, pave, opt) => {
-      // one could force drawing of PaveText on specific sub-pad
-      let onpad;
-      if ((typeof opt == 'string') && (opt.indexOf("onpad:")==0)) {
-         onpad = opt.substr(6);
-         opt = "";
-      }
-
       let painter = new JSROOT.TPavePainter(pave);
 
-      painter.SetDivId(divid, 2, onpad);
+      return jsrp.ensureTCanvas(painter, divid, false).then(() => {
 
-      if ((pave.fName === "title") && (pave._typename === "TPaveText")) {
-         let tpainter = painter.FindPainterFor(null, "title");
-         if (tpainter && (tpainter !== painter)) {
-            tpainter.DeleteThis();
-         } else if ((opt == "postitle") || painter.IsDummyPos(pave)) {
-            let st = JSROOT.gStyle, fp = painter.frame_painter();
-            if (st && fp) {
-               let midx = st.fTitleX, y2 = st.fTitleY, w = st.fTitleW, h = st.fTitleH;
-               if (!h && fp) h = (y2-fp.fY2NDC)*0.7;
-               if (!w && fp) w = fp.fX2NDC - fp.fX1NDC;
-               if (!h || isNaN(h) || (h<0)) h = 0.06;
-               if (!w || isNaN(w) || (w<0)) w = 0.44;
-               pave.fX1NDC = midx - w/2;
-               pave.fY1NDC = y2 - h;
-               pave.fX2NDC = midx + w/2;
-               pave.fY2NDC = y2;
-               pave.fInit = 1;
+         if ((pave.fName === "title") && (pave._typename === "TPaveText")) {
+            let tpainter = painter.FindPainterFor(null, "title");
+            if (tpainter && (tpainter !== painter)) {
+               tpainter.DeleteThis();
+            } else if ((opt == "postitle") || painter.IsDummyPos(pave)) {
+               let st = JSROOT.gStyle, fp = painter.frame_painter();
+               if (st && fp) {
+                  let midx = st.fTitleX, y2 = st.fTitleY, w = st.fTitleW, h = st.fTitleH;
+                  if (!h && fp) h = (y2-fp.fY2NDC)*0.7;
+                  if (!w && fp) w = fp.fX2NDC - fp.fX1NDC;
+                  if (!h || isNaN(h) || (h<0)) h = 0.06;
+                  if (!w || isNaN(w) || (w<0)) w = 0.44;
+                  pave.fX1NDC = midx - w/2;
+                  pave.fY1NDC = y2 - h;
+                  pave.fX2NDC = midx + w/2;
+                  pave.fY2NDC = y2;
+                  pave.fInit = 1;
+               }
             }
+         } else if (pave._typename === "TPaletteAxis") {
+            pave.fBorderSize = 1;
+            pave.fShadowColor = 0;
+
+            // check some default values of TGaxis object, otherwise axis will not be drawn
+            if (pave.fAxis) {
+               if (!pave.fAxis.fChopt) pave.fAxis.fChopt = "+";
+               if (!pave.fAxis.fNdiv) pave.fAxis.fNdiv = 12;
+               if (!pave.fAxis.fLabelOffset) pave.fAxis.fLabelOffset = 0.005;
+            }
+
+            painter.z_handle = new JSROOT.TAxisPainter(pave.fAxis, true);
+            painter.z_handle.SetDivId(divid, -1);
+
+            painter.UseContextMenu = true;
          }
-      } else if (pave._typename === "TPaletteAxis") {
-         pave.fBorderSize = 1;
-         pave.fShadowColor = 0;
 
-         // check some default values of TGaxis object, otherwise axis will not be drawn
-         if (pave.fAxis) {
-            if (!pave.fAxis.fChopt) pave.fAxis.fChopt = "+";
-            if (!pave.fAxis.fNdiv) pave.fAxis.fNdiv = 12;
-            if (!pave.fAxis.fLabelOffset) pave.fAxis.fLabelOffset = 0.005;
+         switch (pave._typename) {
+            case "TPaveLabel":
+               painter.PaveDrawFunc = painter.DrawPaveLabel;
+               break;
+            case "TPaveStats":
+               painter.PaveDrawFunc = painter.DrawPaveStats;
+               painter.$secondary = true; // indicates that painter created from others
+               break;
+            case "TPaveText":
+            case "TPavesText":
+            case "TDiamond":
+               painter.PaveDrawFunc = painter.DrawPaveText;
+               break;
+            case "TLegend":
+               painter.PaveDrawFunc = painter.DrawPaveLegend;
+               break;
+            case "TPaletteAxis":
+               painter.PaveDrawFunc = painter.DrawPaletteAxis;
+               break;
          }
 
-         painter.z_handle = new JSROOT.TAxisPainter(pave.fAxis, true);
-         painter.z_handle.SetDivId(divid, -1);
-
-         painter.UseContextMenu = true;
-      }
-
-      switch (pave._typename) {
-         case "TPaveLabel":
-            painter.PaveDrawFunc = painter.DrawPaveLabel;
-            break;
-         case "TPaveStats":
-            painter.PaveDrawFunc = painter.DrawPaveStats;
-            painter.$secondary = true; // indicates that painter created from others
-            break;
-         case "TPaveText":
-         case "TPavesText":
-         case "TDiamond":
-            painter.PaveDrawFunc = painter.DrawPaveText;
-            break;
-         case "TLegend":
-            painter.PaveDrawFunc = painter.DrawPaveLegend;
-            break;
-         case "TPaletteAxis":
-            painter.PaveDrawFunc = painter.DrawPaletteAxis;
-            break;
-      }
-
-      return painter.DrawPave(opt);
+         return painter.DrawPave(opt);
+      });
    }
 
    /** @summary Produce and draw TLegend object for the specified divid
@@ -1352,7 +1346,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
      * @memberof JSROOT.Painter
      * @private */
    let produceLegend = (divid, opt) => {
-      let main_painter = JSROOT.get_main_painter(divid);
+      let main_painter = JSROOT.getMainPainter(divid);
       if (!main_painter) return;
 
       let pp = main_painter.pad_painter(),
@@ -2130,6 +2124,9 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
                for (let n=0;n<obj.fFunctions.arr.length;++n) {
                   let func = obj.fFunctions.arr[n];
                   if (!func || !func._typename) continue;
+
+                  if (!this.needDrawFunc(histo, func)) continue;
+
                   let funcpainter = null, func_indx = -1;
 
                   // try to find matching object in associated list of painters
@@ -2165,7 +2162,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             if (pp && (newfuncs.length > 0)) {
                let arr = [], prev_name = pp.has_canvas ? pp.CurrentPadName(pp.this_pad_name) : undefined;
                for (let k = 0; k < newfuncs.length; ++k)
-                  arr.push(JSROOT.draw_new(this.divid, newfuncs[k]));
+                  arr.push(JSROOT.draw(this.divid, newfuncs[k]));
                Promise.all(arr).then(parr => {
                   for (let k = 0; k < parr.length; ++k)
                      if (parr[k]) parr[k].child_painter_id = pid;
@@ -2262,7 +2259,6 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       fp.SetAxesRanges(histo.fXaxis, this.xmin, this.xmax, histo.fYaxis, this.ymin, this.ymax, histo.fZaxis, 0, 0);
       fp.CreateXY({ ndim: this.Dimension(),
                     check_pad_range: this.check_pad_range,
-                    create_canvas: this.create_canvas,
                     zoom_ymin: this.zoom_ymin,
                     zoom_ymax: this.zoom_ymax,
                     ymin_nz: this.ymin_nz,
@@ -2394,7 +2390,10 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          return statpainter.Enabled;
       }
 
-      JSROOT.draw(this.divid, stat, "onpad:" + this.pad_name);
+      let prev_name = this.CurrentPadName(this.pad_name);
+      JSROOT.draw(this.divid, stat).then(() => {
+         this.CurrentPadName(prev_name);
+      });
 
       return true;
    }
@@ -2544,14 +2543,23 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          histo.fFunctions.Add(obj);
    }
 
+   /** @summary Check if such function should be drawn directly */
+   THistPainter.prototype.needDrawFunc = function(histo, func) {
+      if (func._typename === 'TPaveText' || func._typename === 'TPaveStats')
+          return !histo.TestBit(TH1StatusBits.kNoStats) && !this.options.NoStat;
+
+       if (func._typename === 'TF1')
+          return !func.TestBit(JSROOT.BIT(9));
+
+       return func._typename !== 'TPaletteAxis';
+   }
+
    /** @summary Method draws next function from the functions list
      * @returns {Promise} fulfilled when drawing is ready */
-   THistPainter.prototype.DrawNextFunction = function(indx) {
-
+   THistPainter.prototype.drawNextFunction = function(indx) {
       let histo = this.GetHisto();
-      if (!this.options.Func || !histo.fFunctions ||
-          (indx >= histo.fFunctions.arr.length))
-             return Promise.resolve(true);
+      if (!this.options.Func || !histo.fFunctions || (indx >= histo.fFunctions.arr.length))
+          return Promise.resolve(true);
 
       let func = histo.fFunctions.arr[indx],
           opt = histo.fFunctions.opt[indx],
@@ -2560,23 +2568,16 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
       // no need to do something if painter for object was already done
       // object will be redraw automatically
-      if (func_painter === null) {
-         if (func._typename === 'TPaveText' || func._typename === 'TPaveStats') {
-            do_draw = !histo.TestBit(TH1StatusBits.kNoStats) && !this.options.NoStat;
-         } else if (func._typename === 'TF1') {
-            do_draw = !func.TestBit(JSROOT.BIT(9));
-         } else {
-            do_draw = (func._typename !== 'TPaletteAxis');
-         }
-      }
+      if (func_painter === null)
+         do_draw = this.needDrawFunc(histo, func);
 
       if (!do_draw)
-         return this.DrawNextFunction(indx+1);
+         return this.drawNextFunction(indx+1);
 
       return JSROOT.draw(this.divid, func, opt).then(painter => {
          if (painter && (typeof painter == "object"))
             painter.child_painter_id = this.hist_painter_id;
-         return this.DrawNextFunction(indx+1);
+         return this.drawNextFunction(indx+1);
       });
    }
 
@@ -4206,7 +4207,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
       menu.addDrawMenu("Draw with", sett.opts, function(arg) {
          if (arg==='inspect')
-            return this.ShowInspector();
+            return this.showInspector();
 
          this.DecodeOptions(arg);
 
@@ -4301,26 +4302,28 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       // create painter and add it to canvas
       let painter = new TH1Painter(histo);
 
-      if (!painter.SetDivId(divid, 1)) return null;
+      return jsrp.ensureTCanvas(painter, divid).then(() => {
+         // tend to be main painter - if first
+         painter.setAsMainPainter();
 
-      // here we deciding how histogram will look like and how will be shown
-      painter.DecodeOptions(opt);
+         // here we deciding how histogram will look like and how will be shown
+         painter.DecodeOptions(opt);
 
-      painter.CheckPadRange(!painter.options.Mode3D);
+         painter.CheckPadRange(!painter.options.Mode3D);
 
-      painter.ScanContent();
+         painter.ScanContent();
 
-      painter.CreateStat(); // only when required
+         painter.CreateStat(); // only when required
 
-      return painter.callDrawFunc()
-            .then(() => painter.DrawNextFunction(0))
-            .then(() => {
-               if (!painter.options.Mode3D && painter.options.AutoZoom)
-                  painter.AutoZoom();
-               painter.FillToolbar();
-               painter.DrawingReady();
-               return painter;
-            });
+         return painter.callDrawFunc();
+      }).then(() => painter.drawNextFunction(0)).then(() => {
+
+          if (!painter.options.Mode3D && painter.options.AutoZoom)
+             painter.AutoZoom();
+          painter.FillToolbar();
+
+          return painter;
+      });
    }
 
    // ========================================================================
@@ -4466,7 +4469,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
       menu.addDrawMenu("Draw with", sett.opts, function(arg) {
          if (arg==='inspect')
-            return this.ShowInspector();
+            return this.showInspector();
          this.DecodeOptions(arg);
          this.InteractiveRedraw("pad", "drawopt");
       });
@@ -6326,37 +6329,42 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       // create painter and add it to canvas
       let painter = new JSROOT.TH2Painter(histo);
 
-      if (!painter.SetDivId(divid, 1)) return null;
+      return jsrp.ensureTCanvas(painter, divid).then(() => {
 
-      // here we deciding how histogram will look like and how will be shown
-      painter.DecodeOptions(opt);
+         painter.setAsMainPainter();
 
-      if (painter.IsTH2Poly()) {
-         if (painter.options.Mode3D)
-            painter.options.Lego = 12; // lego always 12
-         else if (!painter.options.Color)
-            painter.options.Color = true; // default is color
-      }
+         // here we deciding how histogram will look like and how will be shown
+         painter.DecodeOptions(opt);
 
-      painter._show_empty_bins = false;
+         if (painter.IsTH2Poly()) {
+            if (painter.options.Mode3D)
+               painter.options.Lego = 12; // lego always 12
+            else if (!painter.options.Color)
+               painter.options.Color = true; // default is color
+         }
 
-      painter._can_move_colz = true;
+         painter._show_empty_bins = false;
 
-      // special case for root 3D drawings - pad range is wired
-      painter.CheckPadRange(!painter.options.Mode3D && (painter.options.Contour != 14));
+         painter._can_move_colz = true;
 
-      painter.ScanContent();
+         // special case for root 3D drawings - pad range is wired
+         painter.CheckPadRange(!painter.options.Mode3D && (painter.options.Contour != 14));
 
-      painter.CreateStat(); // only when required
+         painter.ScanContent();
 
-      return painter.callDrawFunc()
-                    .then(() => painter.DrawNextFunction(0))
-                    .then(()=> {
-         if (!painter.Mode3D && painter.options.AutoZoom) painter.AutoZoom();
-            painter.FillToolbar();
+         painter.CreateStat(); // only when required
+
+         return painter.callDrawFunc();
+
+      }).then(() => painter.drawNextFunction(0)).then(()=> {
+
+         if (!painter.Mode3D && painter.options.AutoZoom)
+            painter.AutoZoom();
+
+         painter.FillToolbar();
          if (painter.options.Project && !painter.mode3d)
               painter.ToggleProjection(painter.options.Project);
-          painter.DrawingReady();
+
           return painter;
       });
    }
@@ -6792,15 +6800,15 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          return null; // drawing not needed
 
       let painter = new THStackPainter(stack, opt);
-      painter.SetDivId(divid, 2); // in list of primitives, but not main painter
-      painter.DecodeOptions(opt);
 
-     if (!painter.options.nostack)
-          painter.options.nostack = ! painter.BuildStack(stack);
+      return jsrp.ensureTCanvas(painter, divid, false).then(() => {
 
-      let promise = Promise.resolve(painter);
+         painter.DecodeOptions(opt);
 
-      if (!painter.options.same) {
+         if (!painter.options.nostack)
+             painter.options.nostack = ! painter.BuildStack(stack);
+
+         if (painter.options.same) return;
 
          if (!stack.fHistogram)
              stack.fHistogram = painter.CreateHistogram(stack);
@@ -6811,13 +6819,10 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          // if (mm && (!this.options.nostack || (hist.fMinimum==-1111 && hist.fMaximum==-1111))) hopt += ";minimum:" + mm.min + ";maximum:" + mm.max;
          if (mm) hopt += ";minimum:" + mm.min + ";maximum:" + mm.max;
 
-         promise = JSROOT.draw(divid, stack.fHistogram, hopt).then(subp => {
-             painter.firstpainter = subp;
-             return painter;
+         return JSROOT.draw(divid, stack.fHistogram, hopt).then(subp => {
+            painter.firstpainter = subp;
          });
-      }
-
-      return promise.then(() => painter.drawNextHisto(0));
+      }).then(() => painter.drawNextHisto(0));
    }
 
    // =================================================================================

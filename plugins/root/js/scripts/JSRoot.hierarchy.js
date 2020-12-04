@@ -477,6 +477,84 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       return true;
    }
 
+   /** @summary Create hierarchy for streamer info object
+     * @memberof JSROOT.Painter
+     * @private */
+   function createStreamerInfoContent(lst) {
+      let h = { _name : "StreamerInfo", _childs : [] };
+
+      for (let i = 0; i < lst.arr.length; ++i) {
+         let entry = lst.arr[i]
+
+         if (entry._typename == "TList") continue;
+
+         if (typeof entry.fName == 'undefined') {
+            console.warn(`strange element in StreamerInfo with type ${entry._typename}`);
+            continue;
+         }
+
+         let item = {
+            _name : entry.fName + ";" + entry.fClassVersion,
+            _kind : "class " + entry.fName,
+            _title : "class:" + entry.fName + ' version:' + entry.fClassVersion + ' checksum:' + entry.fCheckSum,
+            _icon: "img_class",
+            _childs : []
+         };
+
+         if (entry.fTitle != '') item._title += '  ' + entry.fTitle;
+
+         h._childs.push(item);
+
+         if (typeof entry.fElements == 'undefined') continue;
+         for ( let l = 0; l < entry.fElements.arr.length; ++l) {
+            let elem = entry.fElements.arr[l];
+            if (!elem || !elem.fName) continue;
+            let info = elem.fTypeName + " " + elem.fName,
+                title = elem.fTypeName + " type:" + elem.fType;
+            if (elem.fArrayDim===1)
+               info += "[" + elem.fArrayLength + "]";
+            else
+               for (let dim=0;dim<elem.fArrayDim;++dim)
+                  info+="[" + elem.fMaxIndex[dim] + "]";
+            if (elem.fBaseVersion===4294967295) info += ":-1"; else
+            if (elem.fBaseVersion!==undefined) info += ":" + elem.fBaseVersion;
+            info += ";";
+            if (elem.fTitle != '') info += " // " + elem.fTitle;
+
+            item._childs.push({ _name : info, _title: title, _kind: elem.fTypeName, _icon: (elem.fTypeName == 'BASE') ? "img_class" : "img_member" });
+         }
+         if (item._childs.length == 0) delete item._childs;
+      }
+
+      return h;
+   }
+
+   /** @summary Create hierarchy for object inspector
+     * @memberof JSROOT.Painter
+     * @private */
+   function createInspectorContent(obj) {
+      let h = { _name: "Object", _title: "", _click_action: "expand", _nosimple: false, _do_context: true };
+
+      if ((typeof obj.fName === 'string') && (obj.fName.length > 0))
+         h._name = obj.fName;
+
+      if ((typeof obj.fTitle === 'string') && (obj.fTitle.length > 0))
+         h._title = obj.fTitle;
+
+      if (obj._typename)
+         h._title += "  type:" + obj._typename;
+
+      if (JSROOT.isRootCollection(obj)) {
+         h._name = obj.name || obj._typename;
+         listHierarchy(h, obj);
+      } else {
+         objectHierarchy(h, obj);
+      }
+
+      return h;
+   }
+
+
    /** @summary Parse string value as array.
     * @desc It could be just simple string:  "value" or
     * array with or without string quotes:  [element], ['elem1',elem2]
@@ -592,7 +670,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       this.main().select(".jsroot_browser").select(".jsroot_browser_btns").remove();
    }
 
-   BrowserLayout.prototype.SetBrowserContent = function(guiCode) {
+   BrowserLayout.prototype.setBrowserContent = function(guiCode) {
       let main = d3.select("#" + this.gui_div + " .jsroot_browser");
       if (main.empty()) return;
 
@@ -973,7 +1051,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Refresh HTML for hierachy painter
      * @returns {Promise} when completed */
    HierarchyPainter.prototype.refreshHtml = function() {
-      if (!this.divid || JSROOT.BatchMode) return Promise.resolve();
+      if (!this.divid || JSROOT.BatchMode)
+         return Promise.resolve(this);
       return JSROOT.require('jq2d').then(() => this.refreshHtml());
    }
 
@@ -1234,7 +1313,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
          if (!res.obj) return null;
 
-         let main_painter = JSROOT.get_main_painter(divid);
+         let main_painter = JSROOT.getMainPainter(divid);
 
          if (main_painter && (typeof main_painter.performDrop === 'function'))
             return main_painter.performDrop(res.obj, itemname, res.item, opt).then(p => drop_complete(p));
@@ -1486,7 +1565,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       if (typeof items == 'string') items = [ items ];
 
-      let active = [],  // array of elements to activate
+      let active = [], // array of elements to activate
           update = []; // array of elements to update
       this.forEachItem(item => { if (item._background) { active.push(item); delete item._background; } });
 
@@ -1554,7 +1633,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       if (force && this.brlayout) {
          if (!this.brlayout.browser_kind)
-           return this.createBrowser('float', true).then(find_next);
+           return this.createBrowser('float', true).then(() => find_next());
          if (!this.brlayout.browser_visible)
             this.brlayout.ToggleBrowserVisisbility();
       }
@@ -1875,7 +1954,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       }
 
       if (!itemname && item && ('_cached_draw_object' in this) && (req.length == 0)) {
-         // special handling for drawGUI when cashed
+         // special handling for online draw when cashed
          let obj = this._cached_draw_object;
          delete this._cached_draw_object;
          return Promise.resolve(obj);
@@ -2345,7 +2424,6 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       if (title) document.title = title;
 
       let load = GetOption("load");
-      if (load) prereq += ";io;gpad;";
 
       if (expanditems.length==0 && (GetOption("expand")==="")) expanditems.push("");
 
@@ -2354,9 +2432,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          for (let i=0;i<jsonarr.length;++i) jsonarr[i] = filesdir + jsonarr[i];
       }
 
-      if ((itemsarr.length==0) && GetOption("item")==="") itemsarr.push("");
+      if ((itemsarr.length == 0) && GetOption("item") === "") itemsarr.push("");
 
-      if ((jsonarr.length==1) && (itemsarr.length==0) && (expanditems.length==0)) itemsarr.push("");
+      if ((jsonarr.length == 1) && (itemsarr.length == 0) && (expanditems.length==0)) itemsarr.push("");
 
       if (!this.disp_kind) {
          if ((typeof layout == "string") && (layout.length > 0))
@@ -2415,22 +2493,25 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             promise = this.expandItem(expanditems.shift());
          else if (style.length > 0)
             promise = this.applyStyle(style.shift());
-         else {
-            this.refreshHtml();
-            return this.displayItems(itemsarr, optionsarr).then(() => {
-               if (itemsarr) this.refreshHtml();
-               this.setMonitoring(monitor);
-               return this; // this is final return
-           });
-         }
+         else
+            return this.refreshHtml()
+                   .then(() => this.displayItems(itemsarr, optionsarr))
+                   .then(() => {
+                      this.setMonitoring(monitor);
+                      return itemsarr ? this.refreshHtml() : this; // this is final return
+                   });
 
          return promise.then(openAllFiles, openAllFiles);
       }
 
       let h0 = null;
       if (this.is_online) {
-         if (typeof GetCachedHierarchy == 'function') h0 = GetCachedHierarchy();
+         if (typeof GetCachedHierarchy == 'function')
+            h0 = GetCachedHierarchy();
          if (typeof h0 !== 'object') h0 = "";
+
+         if ((this.is_online == "draw") && !itemsarr.length)
+            itemsarr.push("");
       }
 
       if (h0 !== null)
@@ -2518,6 +2599,17 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       return JSROOT.require('jq2d').then(() => this.createBrowser(browser_kind, update_html));
    }
 
+   /** @summary Redraw hierarchy
+     * @desc works only when inspector or streamer info is displayed */
+   HierarchyPainter.prototype.RedrawObject = function(obj) {
+      if (!this._inspector && !this._streamer_info) return false;
+      if (this._streamer_info)
+         this.h = createStreamerInfoContent(obj)
+      else
+         this.h = createInspectorContent(obj);
+      return this.refreshHtml().then(() => { this.setTopPainter(); });
+   }
+
    // ======================================================================================
 
    /** @summary tag item in hierarchy painter as streamer info
@@ -2532,16 +2624,16 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Build gui without visisble hierarchy browser
      * @desc avoid loading of jquery part
      * @private */
-   JSROOT.buildNobrowserGUI = function() {
-      let myDiv = d3.select('#simpleGUI'),
-          online = false, drawing = false;
+   JSROOT.buildNobrowserGUI = function(gui_element, gui_kind) {
 
-      if (myDiv.empty()) {
+      let myDiv = (typeof gui_element == 'string') ? d3.select('#' + gui_element) : d3.select(gui_element);
+      if (myDiv.empty()) return alert('no div for simple nobrowser gui found');
+
+      let online = false, drawing = false;
+      if (gui_kind == 'online')
          online = true;
-         myDiv = d3.select('#onlineGUI');
-         if (myDiv.empty()) { myDiv = d3.select('#drawGUI'); drawing = true; }
-         if (myDiv.empty()) return alert('no div for simple nobrowser gui found');
-      }
+      else if (gui_kind == 'draw')
+         online = drawing = true;
 
       if (myDiv.attr("ignoreurl") === "true")
          JSROOT.settings.IgnoreUrlOptions = true;
@@ -2562,7 +2654,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          myDiv.style('position',"absolute").style('left',0).style('top',0).style('bottom',0).style('right',0).style('padding',1);
       }
 
-      let hpainter = new JSROOT.HierarchyPainter('root', null);
+      let hpainter = new HierarchyPainter('root', null);
 
       if (online) hpainter.is_online = drawing ? "draw" : "online";
       if (drawing) hpainter.exclude_browser = true;
@@ -2571,13 +2663,13 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       return hpainter.startGUI(myDiv, () => {
          if (!drawing) return hpainter;
-
          let func = JSROOT.findFunction('GetCachedObject');
          let obj = (typeof func == 'function') ? JSROOT.parse(func()) : null;
          if (obj) hpainter._cached_draw_object = obj;
          let opt = d.get("opt", "");
 
          if (d.has("websocket")) opt+=";websocket";
+         console.log('try to draw first object');
 
          return hpainter.display("", opt).then(() => { return hpainter; });
       });
@@ -2586,57 +2678,15 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Display streamer info
      * @private */
    jsrp.drawStreamerInfo = function(divid, lst) {
-      let painter = new JSROOT.HierarchyPainter('sinfo', divid, 'white');
+      let painter = new HierarchyPainter('sinfo', divid, 'white');
 
-      painter.h = { _name : "StreamerInfo", _childs : [] };
-
-      for (let i = 0; i < lst.arr.length; ++i) {
-         let entry = lst.arr[i]
-
-         if (entry._typename == "TList") continue;
-
-         if (typeof (entry.fName) == 'undefined') {
-            console.warn(`strange element in StreamerInfo with type ${entry._typename}`);
-            continue;
-         }
-
-         let item = {
-            _name : entry.fName + ";" + entry.fClassVersion,
-            _kind : "class " + entry.fName,
-            _title : "class:" + entry.fName + ' version:' + entry.fClassVersion + ' checksum:' + entry.fCheckSum,
-            _icon: "img_class",
-            _childs : []
-         };
-
-         if (entry.fTitle != '') item._title += '  ' + entry.fTitle;
-
-         painter.h._childs.push(item);
-
-         if (typeof entry.fElements == 'undefined') continue;
-         for ( let l = 0; l < entry.fElements.arr.length; ++l) {
-            let elem = entry.fElements.arr[l];
-            if (!elem || !elem.fName) continue;
-            let info = elem.fTypeName + " " + elem.fName,
-                title = elem.fTypeName + " type:" + elem.fType;
-            if (elem.fArrayDim===1)
-               info += "[" + elem.fArrayLength + "]";
-            else
-               for (let dim=0;dim<elem.fArrayDim;++dim)
-                  info+="[" + elem.fMaxIndex[dim] + "]";
-            if (elem.fBaseVersion===4294967295) info += ":-1"; else
-            if (elem.fBaseVersion!==undefined) info += ":" + elem.fBaseVersion;
-            info += ";";
-            if (elem.fTitle != '') info += " // " + elem.fTitle;
-
-            item._childs.push({ _name : info, _title: title, _kind: elem.fTypeName, _icon: (elem.fTypeName == 'BASE') ? "img_class" : "img_member" });
-         }
-         if (item._childs.length == 0) delete item._childs;
-      }
+      painter._streamer_info = true;
+      painter.h = createStreamerInfoContent(lst);
 
       // painter.select_main().style('overflow','auto');
 
       return painter.refreshHtml().then(() => {
-         painter.SetDivId(divid);
+         painter.setTopPainter();
          return painter;
       });
    }
@@ -2648,7 +2698,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    jsrp.drawInspector = function(divid, obj) {
 
       JSROOT.cleanup(divid);
-      let painter = new JSROOT.HierarchyPainter('inspector', divid, 'white');
+      let painter = new HierarchyPainter('inspector', divid, 'white');
 
       // in batch mode HTML drawing is not possible, just keep object reference for a minute
       if (JSROOT.BatchMode) {
@@ -2658,22 +2708,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       painter.default_by_click = "expand"; // default action
       painter.with_icons = false;
-      painter.h = { _name: "Object", _title: "", _click_action: "expand", _nosimple: false, _do_context: true };
-      if ((typeof obj.fTitle === 'string') && (obj.fTitle.length>0))
-         painter.h._title = obj.fTitle;
+      painter._inspector = true; // keep
 
       if (painter.select_main().classed("jsroot_inspector"))
          painter.removeInspector = function() {
             this.select_main().remove();
          }
-
-      if (obj._typename)
-         painter.h._title += "  type:" + obj._typename;
-
-      if ((typeof obj.fName === 'string') && (obj.fName.length > 0))
-         painter.h._name = obj.fName;
-
-      // painter.select_main().style('overflow','auto');
 
       painter.fill_context = function(menu, hitem) {
          let sett = JSROOT.getDrawSettings(hitem._kind, 'nosame');
@@ -2685,22 +2725,17 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                   divid = this.select_main().node().parentNode;
                   this.removeInspector();
                   if (arg == "inspect")
-                     return this.ShowInspector(obj);
+                     return this.showInspector(obj);
                }
                JSROOT.cleanup(divid);
                JSROOT.draw(divid, obj, arg);
             });
       }
 
-      if (JSROOT.isRootCollection(obj)) {
-         painter.h._name = obj.name || obj._typename;
-         listHierarchy(painter.h, obj);
-      } else {
-         objectHierarchy(painter.h, obj);
-      }
+      painter.h = createInspectorContent(obj);
 
       return painter.refreshHtml().then(() => {
-         painter.SetDivId(divid);
+         painter.setTopPainter();
          return painter;
       });
    }
@@ -2720,7 +2755,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          super();
          this.frameid = frameid;
          if (frameid != "$batch$") {
-            this.SetDivId(frameid);
+            this.SetDivId(frameid); // base painter
             this.select_main().property('mdi', this);
          }
          this.cleanupFrame = JSROOT.cleanup; // use standard cleanup function by default

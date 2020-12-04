@@ -541,6 +541,7 @@
 
       // set DivId after drawing
       this.SetDivId(this.frame);
+      this.setTopPainter();
    }
 
    DABC.BnetPainter.prototype.ClearDisplay = function() {
@@ -1092,8 +1093,8 @@
          return null;
       }
 
-      var painter = new ObjectPainter(obj);
-      painter.SetDivId(divid, -1);
+      var painter = new BasePainter(obj);
+      painter.SetDivId(divid);
 
       painter.gauge = null;
       painter.min = 0;
@@ -1172,7 +1173,7 @@
          }
 
          // always set painter
-         this.SetDivId(this.divid);
+         this.setTopPainter();
       }
 
       painter.checkResize = function() {
@@ -1193,10 +1194,10 @@
 
    DABC.DrawLog = function(divid, obj, opt) {
       var painter = new BasePainter();
+      painter.SetDivId(divid);
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
 
-      painter.SetDivId(divid);
 
       if (painter.history) {
          painter.select_main().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
@@ -1204,7 +1205,7 @@
          painter.select_main().html("<div></div>");
       }
       // set divid after child element created - only then we could set painter
-      painter.SetDivId(divid);
+      painter.setTopPainter();
 
       painter.RedrawObject = function(obj) {
          this.obj = obj;
@@ -1235,8 +1236,8 @@
    DABC.DrawCommand = function(divid, obj, opt) {
 
       painter = new BasePainter;
-
       painter.SetDivId(divid);
+
       painter.jsonnode = obj;
       painter.req = null;
 
@@ -1353,7 +1354,7 @@
 
       painter.ShowCommand();
 
-      painter.SetDivId(divid);
+      painter.setTopPainter();
 
       return Promise.resolve(painter);
    }
