@@ -539,7 +539,6 @@
          painter.ClearAllHistograms();
       });
 
-
       // set DivId after drawing
       this.SetDivId(this.frame);
    }
@@ -1094,6 +1093,7 @@
       }
 
       var painter = new ObjectPainter(obj);
+      painter.SetDivId(divid, -1);
 
       painter.gauge = null;
       painter.min = 0;
@@ -1184,8 +1184,6 @@
          return true;
       }
 
-      painter.SetDivId(divid, -1);
-
       painter.Draw(obj);
 
       return Promise.resolve(painter);
@@ -1198,7 +1196,7 @@
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
 
-      painter.SetDivId(divid, 1);
+      painter.SetDivId(divid);
 
       if (painter.history) {
          painter.select_main().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
@@ -1238,7 +1236,7 @@
 
       painter = new BasePainter;
 
-      painter.SetDivId(divid, -1);
+      painter.SetDivId(divid);
       painter.jsonnode = obj;
       painter.req = null;
 
