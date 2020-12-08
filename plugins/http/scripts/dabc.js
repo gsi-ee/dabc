@@ -316,12 +316,13 @@
    }
 
    DABC.BnetPainter = function(hpainter, itemname) {
-      JSROOT.BasePainter.call(this);
 
       this.hpainter = hpainter;
       this.itemname = itemname;
-
       this.frame = hpainter.getDisplay().findFrame(itemname, true);
+
+      JSROOT.BasePainter.call(this, this.frame);
+
       if (!this.frame) return;
 
       this.InputItems = [];
@@ -523,8 +524,7 @@
          painter.ClearAllHistograms();
       });
 
-      // set DivId after drawing
-      this.setDom(this.frame);
+      // set top painter after drawing
       this.setTopPainter();
    }
 
