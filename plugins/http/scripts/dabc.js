@@ -540,7 +540,7 @@
       });
 
       // set DivId after drawing
-      this.SetDivId(this.frame);
+      this.setDom(this.frame);
       this.setTopPainter();
    }
 
@@ -1094,7 +1094,7 @@
       }
 
       var painter = new BasePainter(obj);
-      painter.SetDivId(divid);
+      painter.setDom(divid);
 
       painter.gauge = null;
       painter.min = 0;
@@ -1194,7 +1194,7 @@
 
    DABC.DrawLog = function(divid, obj, opt) {
       var painter = new BasePainter();
-      painter.SetDivId(divid);
+      painter.setDom(divid);
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
 
@@ -1235,8 +1235,8 @@
 
    DABC.DrawCommand = function(divid, obj, opt) {
 
-      painter = new BasePainter;
-      painter.SetDivId(divid);
+      let painter = new BasePainter;
+      painter.setDom(divid);
 
       painter.jsonnode = obj;
       painter.req = null;
