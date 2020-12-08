@@ -2245,7 +2245,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          // cleanup all monitoring loops
          this.enableMonitoring(false);
          // simplify work for javascript and delete all (ok, most of) cross-references
-         this.select_main().html("");
+         this.selectDom().html("");
          plainarr.forEach(d => { delete d._parent; delete d._childs; delete d._obj; delete d._d3cont; });
          delete this.h;
       }
@@ -2349,29 +2349,32 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       let d = JSROOT.decodeUrl(url);
 
-      let GetOption = (opt) => {
+      function GetOption(opt) {
          let res = d.get(opt, null);
-         if (!res && gui_div && !gui_div.empty() && gui_div.node().hasAttribute(opt)) res = gui_div.attr(opt);
+         if ((res===null) && gui_div && !gui_div.empty() && gui_div.node().hasAttribute(opt))
+            res = gui_div.attr(opt);
          return res;
       }
 
-      let GetUrlOptionAsArray = (opt) => {
+      function GetUrlOptionAsArray(opt) {
 
          let res = [];
 
-         while (opt.length>0) {
+         while (opt.length > 0) {
             let separ = opt.indexOf(";");
             let part = (separ>0) ? opt.substr(0, separ) : opt;
 
-            if (separ>0) opt = opt.substr(separ+1); else opt = "";
+            if (separ > 0) opt = opt.substr(separ+1); else opt = "";
 
             let canarray = true;
             if (part[0]=='#') { part = part.substr(1); canarray = false; }
 
             let val = d.get(part,null);
 
-            if (canarray) res = res.concat(parseAsArray(val));
-                     else if (val!==null) res.push(val);
+            if (canarray)
+               res = res.concat(parseAsArray(val));
+            else if (val!==null)
+               res.push(val);
          }
          return res;
       }
@@ -2414,6 +2417,13 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
           browser_configured = !!browser_kind,
           title = GetOption("title");
 
+      if (monitor === null)
+         monitor = 0;
+      else if (monitor === "")
+         monitor = 3000;
+      else
+         monitor = parseInt(monitor);
+
       if (GetOption("float")!==null) { browser_kind = 'float'; browser_configured = true; } else
       if (GetOption("fix")!==null) { browser_kind = 'fix'; browser_configured = true; }
 
@@ -2455,15 +2465,29 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          }
       }
 
-      if (status==="no") status = null; else
-      if (status==="off") { this.status_disabled = true; status = null; } else
-      if (status==="on") status = true; else
-      if (status!==null) { statush = parseInt(status); if (isNaN(statush) || (statush<5)) statush = 0; status = true; }
-      if (this.no_select==="") this.no_select = true;
+      if (status==="no")
+         status = null;
+      else if (status==="off") {
+         this.status_disabled = true;
+         status = null;
+      } else if (status==="on")
+         status = true;
+      else if (status!==null) {
+         statush = parseInt(status);
+         if (isNaN(statush) || (statush < 5)) statush = 0;
+         status = true;
+      }
+      if (this.no_select === "") this.no_select = true;
 
-      if (!browser_kind) browser_kind = "fix"; else
-      if (browser_kind==="no") browser_kind = ""; else
-      if (browser_kind==="off") { browser_kind = ""; status = null; this.exclude_browser = true; }
+      if (!browser_kind)
+         browser_kind = "fix";
+      else if (browser_kind === "no")
+         browser_kind = "";
+      else if (browser_kind==="off") {
+         browser_kind = "";
+         status = null;
+         this.exclude_browser = true;
+      }
       if (GetOption("nofloat")!==null) this.float_browser_disabled = true;
 
       if (this.start_without_browser) browser_kind = "";
@@ -2683,7 +2707,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       painter._streamer_info = true;
       painter.h = createStreamerInfoContent(lst);
 
-      // painter.select_main().style('overflow','auto');
+      // painter.selectDom().style('overflow','auto');
 
       return painter.refreshHtml().then(() => {
          painter.setTopPainter();
@@ -2702,7 +2726,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       // in batch mode HTML drawing is not possible, just keep object reference for a minute
       if (JSROOT.BatchMode) {
-         painter.select_main().property("_json_object_", obj);
+         painter.selectDom().property("_json_object_", obj);
          return Promise.resolve(painter);
       }
 
@@ -2710,9 +2734,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       painter.with_icons = false;
       painter._inspector = true; // keep
 
-      if (painter.select_main().classed("jsroot_inspector"))
+      if (painter.selectDom().classed("jsroot_inspector"))
          painter.removeInspector = function() {
-            this.select_main().remove();
+            this.selectDom().remove();
          }
 
       painter.fill_context = function(menu, hitem) {
@@ -2722,7 +2746,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                if (!hitem || !hitem._obj) return;
                let obj = hitem._obj, divid = this.divid;
                if (this.removeInspector) {
-                  divid = this.select_main().node().parentNode;
+                  divid = this.selectDom().node().parentNode;
                   this.removeInspector();
                   if (arg == "inspect")
                      return this.showInspector(obj);
@@ -2756,7 +2780,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          this.frameid = frameid;
          if (frameid != "$batch$") {
             this.setDom(frameid);
-            this.select_main().property('mdi', this);
+            this.selectDom().property('mdi', this);
          }
          this.cleanupFrame = JSROOT.cleanup; // use standard cleanup function by default
          this.active_frame_title = ""; // keep title of active frame
@@ -2827,7 +2851,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
          this.forEachFrame(this.cleanupFrame);
 
-         this.select_main().html("").property('mdi', null);
+         this.selectDom().html("").property('mdi', null);
       }
 
    } // class MDIDisplay
@@ -2921,7 +2945,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          this.use_separarators = !kind || (kind.indexOf("x")<0);
          this.simple_layout = false;
 
-         this.select_main().style('overflow','hidden');
+         this.selectDom().style('overflow','hidden');
 
          if (kind === "simple") {
             this.simple_layout = true;
@@ -3003,7 +3027,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          if (sizes && (sizes.length!==num)) sizes = undefined;
 
          if (!this.simple_layout)
-            this.createGroup(this, this.select_main(), num, arr, sizes);
+            this.createGroup(this, this.selectDom(), num, arr, sizes);
       }
 
       createGroup(handle, main, num, childs, sizes) {
@@ -3058,7 +3082,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          if (this.simple_layout)
             userfunc(this.getGridFrame());
          else
-            this.select_main().selectAll('.jsroot_newgrid').each(function() {
+            this.selectDom().selectAll('.jsroot_newgrid').each(function() {
                userfunc(d3.select(this).node());
             });
       }
@@ -3081,9 +3105,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       /** @summary Return grid frame by its id */
       getGridFrame(id) {
          if (this.simple_layout)
-            return this.select_main('origin').node();
+            return this.selectDom('origin').node();
          let res = null;
-         this.select_main().selectAll('.jsroot_newgrid').each(function() {
+         this.selectDom().selectAll('.jsroot_newgrid').each(function() {
             if (id-- === 0) res = this;
          });
          return res;

@@ -14,10 +14,7 @@
 
    "use strict";
 
-   if (JSROOT.settings)
-      JSROOT.settings.DragAndDrop = true;
-   else
-      JSROOT.gStyle.DragAndDrop = true;
+   JSROOT.settings.DragAndDrop = true;
 
    DABC = {};
 
@@ -42,25 +39,12 @@
       return "";
    }();
 
-   DABC.httpRequest = JSROOT.httpRequest;
-
-   DABC.hasUrlOption = function(name) {
-      if (typeof JSROOT.decodeUrl == 'function')
-        return JSROOT.decodeUrl().has(name);
-      return JSROOT.GetUrlOption(name) !== null;
-   }
-
-   let BasePainter = JSROOT.BasePainter || JSROOT.TBasePainter;
-   let ObjectPainter = JSROOT.ObjectPainter || JSROOT.TObjectPainter;
-
-
    DABC.InvokeCommand = function(itemname, args) {
       var url = itemname + "/execute";
       if (args && (typeof args == 'string')) url += "?" + args;
 
-      DABC.httpRequest(url,"object");
+      JSROOT.httpRequest(url,"object");
    }
-
 
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script
 
@@ -158,7 +142,7 @@
          }
 
          inforeq = true;
-         DABC.httpRequest(url, "object").then(res => {
+         JSROOT.httpRequest(url, "object").then(res => {
             if (!res) return;
             UpdateDaqStatus(res[0].result);
             res.shift();
@@ -216,7 +200,7 @@
             $(this).find("button").button().click(function(){
                var histname = $(this).attr('hist');
                if ($(this).text() == "Clr") {
-                  DABC.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
+                  JSROOT.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
                   return;
                }
                if ($(this).text() == "Log") {
@@ -311,7 +295,7 @@
          if (inforeq) return;
          inforeq = true;
 
-         DABC.httpRequest(itemname + "/Status/get.json", "object").then(res => {
+         JSROOT.httpRequest(itemname + "/Status/get.json", "object").then(res => {
             if (!res) return;
             UpdateStreamStatus(res);
             DABC.UpdateTRBStatus($(frame).find('.stream_tdc_calibr'), res._childs, hpainter, false);
@@ -332,7 +316,7 @@
    }
 
    DABC.BnetPainter = function(hpainter, itemname) {
-      BasePainter.call(this);
+      JSROOT.BasePainter.call(this);
 
       this.hpainter = hpainter;
       this.itemname = itemname;
@@ -352,10 +336,10 @@
       this.inforeq = null;
    }
 
-   DABC.BnetPainter.prototype = Object.create(BasePainter.prototype);
+   DABC.BnetPainter.prototype = Object.create(JSROOT.BasePainter.prototype);
 
    DABC.BnetPainter.prototype.Cleanup = function(arg) {
-      BasePainter.prototype.Cleanup.call(this, arg);
+      JSROOT.BasePainter.prototype.Cleanup.call(this, arg);
 
       if (this.main_timer) {
          clearInterval(this.main_timer);
@@ -478,7 +462,7 @@
       html += "</div>";
 
       var painter = this, main = d3.select(this.frame).html(html),
-          ctrl_visible = DABC.hasUrlOption("browser") ? "" : "none";
+          ctrl_visible = JSROOT.decodeUrl().has("browser") ? "" : "none";
 
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
@@ -602,7 +586,7 @@
 
           for (var k=0;k<info.calibr.length;++k)
              if (info.calibr[k])
-                DABC.httpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object");
+                JSROOT.httpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object");
        }
 
        setTimeout(() => this.hpainter.updateItems(false), 1000);
@@ -725,11 +709,11 @@
 
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
       for (var n in this.InputItems)
-         DABC.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, false, n));
+         JSROOT.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, false, n));
       for (var n in this.BuilderItems)
-         DABC.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, true, n));
+         JSROOT.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, true, n));
       if (this.CalibrItem)
-         DABC.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(this.ProcessCalibrReq.bind(this));
+         JSROOT.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(this.ProcessCalibrReq.bind(this));
    }
 
    DABC.BnetPainter.prototype.ProcessMainRequest = function(res) {
@@ -831,7 +815,7 @@
    DABC.BnetPainter.prototype.SendMainRequest = function() {
       if (this.mainreq) return;
       this.mainreq = true;
-      DABC.httpRequest(this.itemname + "/get.json", "object")
+      JSROOT.httpRequest(this.itemname + "/get.json", "object")
          .then(res => this.ProcessMainRequest(res))
          .catch(() => this.ProcessMainRequest(null))
          .finally(() => { this.mainreq = false; });
@@ -1093,8 +1077,7 @@
          return null;
       }
 
-      var painter = new BasePainter(obj);
-      painter.setDom(divid);
+      let painter = new JSROOT.BasePainter(divid);
 
       painter.gauge = null;
       painter.min = 0;
@@ -1135,13 +1118,13 @@
       }
 
       painter.DrawValue = function(val, force) {
-         var rect = this.select_main().node().getBoundingClientRect();
+         var rect = this.selectDom().node().getBoundingClientRect();
          var sz = Math.min(rect.height, rect.width);
 
          if ((sz > this.lastsz*1.2) || (sz < this.lastsz*0.9)) force = true;
 
          if (force) {
-            this.select_main().selectAll("*").remove();
+            this.selectDom().selectAll("*").remove();
             this.gauge = null;
          }
 
@@ -1162,7 +1145,7 @@
             if ('units' in obj) config['units'] = obj['units'] + "/s";
 
             if (!this.gauge)
-               this.gauge = new Gauge(this.select_main().attr('id'), config);
+               this.gauge = new Gauge(this.selectDom().attr('id'), config);
             else
                this.gauge.configure(config);
 
@@ -1193,16 +1176,15 @@
    // ==========================================================================================
 
    DABC.DrawLog = function(divid, obj, opt) {
-      var painter = new BasePainter();
-      painter.setDom(divid);
+      let painter = new JSROOT.BasePainter(divid);
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
 
 
       if (painter.history) {
-         painter.select_main().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
+         painter.selectDom().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
       } else {
-         painter.select_main().html("<div></div>");
+         painter.selectDom().html("<div></div>");
       }
       // set divid after child element created - only then we could set painter
       painter.setTopPainter();
@@ -1224,7 +1206,7 @@
             html += obj['fullitemname'] + "<br/>";
             html += "<h5>"+ this.obj.value +"</h5>";
          }
-         this.select_main().select("div").html(html);
+         this.selectDom().select("div").html(html);
       }
 
       painter.Draw();
@@ -1235,8 +1217,7 @@
 
    DABC.DrawCommand = function(divid, obj, opt) {
 
-      let painter = new BasePainter;
-      painter.setDom(divid);
+      let painter = new JSROOT.BasePainter(divid);
 
       painter.jsonnode = obj;
       painter.req = null;
@@ -1268,7 +1249,7 @@
 
       painter.ShowCommand = function() {
 
-         var cmdelemid = this.select_main().attr('id');
+         var cmdelemid = this.selectDom().attr('id');
 
          var frame = $("#" + cmdelemid);
 
@@ -1318,7 +1299,7 @@
       painter.InvokeCommand = function() {
          if (this.req) return;
 
-         var cmdelemid = this.select_main().attr('id');
+         var cmdelemid = this.selectDom().attr('id');
 
          var resdiv = $("#" + cmdelemid + "_res");
          resdiv.html("<h5>Send command to server</h5>");
@@ -1345,7 +1326,7 @@
 
          this.req = true;
 
-         DABC.httpRequest(url, "object")
+         JSROOT.httpRequest(url, "object")
              .then(res => resdiv.html("<h5>Get reply res=" + res['_Result_'] + "</h5>"))
              .catch(() => resdiv.html("<h5>missing reply from server</h5>"))
              .finally(() => { this.req = false; });
