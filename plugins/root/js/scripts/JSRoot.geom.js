@@ -366,7 +366,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
    /** @summary Returns main geometry object */
    TGeoPainter.prototype.GetGeometry = function() {
-      return this.GetObject();
+      return this.getObject();
    }
 
    TGeoPainter.prototype.ModifyVisisbility = function(name, sign) {
@@ -550,7 +550,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
    /** @summary Activate specified items in the browser */
    TGeoPainter.prototype.activateInBrowser = function(names, force) {
-      // if (this.GetItemName() === null) return;
+      // if (this.getItemName() === null) return;
 
       if (typeof names == 'string') names = [ names ];
 
@@ -992,14 +992,14 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
                if (obj.geo_name) {
                   itemname = obj.geo_name;
                   if (itemname.indexOf("<prnt>") == 0)
-                     itemname = (this.GetItemName() || "top") + itemname.substr(6);
+                     itemname = (this.getItemName() || "top") + itemname.substr(6);
                   name = itemname.substr(itemname.lastIndexOf("/")+1);
                   if (!name) name = itemname;
                   hdr = name;
                } else if (obj.stack) {
                   name = this._clones.ResolveStack(obj.stack).name;
                   itemname = this.GetStackFullName(obj.stack);
-                  hdr = this.GetItemName();
+                  hdr = this.getItemName();
                   if (name.indexOf("Nodes/") === 0) hdr = name.substr(6); else
                   if (name.length > 0) hdr = name; else
                   if (!hdr) hdr = "header";
@@ -1158,7 +1158,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    }
 
    TGeoPainter.prototype.GetStackFullName = function(stack) {
-      let mainitemname = this.GetItemName(),
+      let mainitemname = this.getItemName(),
           sub = this.ResolveStack(stack);
       if (!sub || !sub.name) return mainitemname;
       return mainitemname ? (mainitemname + "/" + sub.name) : sub.name;
@@ -1316,7 +1316,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
             if (!info) continue;
 
             if (info.indexOf("<prnt>")==0)
-               info = painter.GetItemName() + info.substr(6);
+               info = painter.getItemName() + info.substr(6);
 
             names.push(info);
 
@@ -3554,7 +3554,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    /** @summary Specify showtop draw options, relevant only for TGeoManager */
    TGeoPainter.prototype.setShowTop = function(on) {
       this.ctrl.showtop = on ? true : false;
-      this.RedrawObject('same');
+      this.redrawObject('same');
    }
 
    /** @summary Should be called when configuration of particular axis is changed */
@@ -3983,7 +3983,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    TGeoPainter.prototype.UpdateObject = function(obj) {
       if (obj === "same") return true;
       if (!obj || !obj._typename) return false;
-      if (obj === this.GetObject()) return true;
+      if (obj === this.getObject()) return true;
 
       if (this.geo_manager && (obj._typename == "TGeoManager")) {
          this.geo_manager = obj;
@@ -3991,7 +3991,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
          return true;
       }
 
-      if (!this.MatchObjectType(obj._typename)) return false;
+      if (!this.matchObjectType(obj._typename)) return false;
 
       this.AssignObject(obj);
       return true;
@@ -4015,7 +4015,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
    }
 
    /** @summary Redraw TGeo object */
-   TGeoPainter.prototype.RedrawObject = function(obj) {
+   TGeoPainter.prototype.redrawObject = function(obj) {
       if (!this.UpdateObject(obj))
          return false;
 

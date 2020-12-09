@@ -1127,20 +1127,6 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       return Promise.resolve(result);
    }
 
-   /** @summary Just envelope, one should be able to redefine it for sub-classes
-     * @desc Redirect to {@link JSROOT.draw} method
-     * @protected */
-   //HierarchyPainter.prototype.draw = function(divid, obj, drawopt) {
-   //   return JSROOT.draw(divid, obj, drawopt);
-   //}
-
-   /** @summary Just envelope, one should be able to redefine it for sub-classes
-     * @desc Redirect to {@link JSROOT.redraw} method
-     * @protected */
-   //HierarchyPainter.prototype.redraw = function(divid, obj, drawopt) {
-   //   return JSROOT.redraw(divid, obj, drawopt);
-   //}
-
    /** @summary Starts player for specified item
      * @returns {Promise} when ready*/
    HierarchyPainter.prototype.player = function(itemname, option) {
@@ -1194,9 +1180,10 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       }
 
       function complete(respainter) {
+         if (updating && item) delete item._doing_update;
          if (!updating) JSROOT.progress();
-         if (respainter && (typeof respainter === 'object') && (typeof respainter.SetItemName === 'function')) {
-            respainter.SetItemName(display_itemname, updating ? null : drawopt, h); // mark painter as created from hierarchy
+         if (respainter && (typeof respainter === 'object') && (typeof respainter.setItemName === 'function')) {
+            respainter.setItemName(display_itemname, updating ? null : drawopt, h); // mark painter as created from hierarchy
             if (item && !item._painter) item._painter = respainter;
          }
 
@@ -1212,7 +1199,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          if (item && ('_player' in item))
             return h.player(display_itemname, drawopt).then(res => complete(res));
 
-         updating = (typeof(drawopt)=='string') && (drawopt.indexOf("update:")==0);
+         updating = (typeof drawopt == 'string') && (drawopt.indexOf("update:")==0);
 
          if (updating) {
             drawopt = drawopt.substr(7);
@@ -1223,7 +1210,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          if (item && !h.canDisplay(item, drawopt)) return complete();
 
          let divid = "";
-         if ((typeof(drawopt)=='string') && (drawopt.indexOf("divid:")>=0)) {
+         if ((typeof drawopt == 'string') && (drawopt.indexOf("divid:") >= 0)) {
             let pos = drawopt.indexOf("divid:");
             divid = drawopt.slice(pos+6);
             drawopt = drawopt.slice(0, pos);
@@ -1237,7 +1224,6 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             if (!item) item = result.item;
             let obj = result.obj;
 
-            if (updating && item) delete item._doing_update;
             if (!obj) return complete();
 
             if (!updating) JSROOT.progress("Drawing " + display_itemname);
@@ -1248,9 +1234,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             }
 
             mdi.forEachPainter((p, frame) => {
-               if (p.GetItemName() != display_itemname) return;
+               if (p.getItemName() != display_itemname) return;
                // verify that object was drawn with same option as specified now (if any)
-               if (!updating && (drawopt!=null) && (p.GetItemDrawOpt()!=drawopt)) return;
+               if (!updating && drawopt && (p.getItemDrawOpt() != drawopt)) return;
                mdi.activateFrame(frame);
 
                let handle = null;
@@ -1258,7 +1244,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                if (handle && handle.draw_field && obj[handle.draw_field])
                   obj = obj[handle.draw_field];
 
-               if (p.RedrawObject(obj)) painter = p;
+               if ((typeof p.redrawObject == 'function') && p.redrawObject(obj, drawopt)) painter = p;
             });
 
             if (painter) return complete();
@@ -1298,7 +1284,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       if (opt===undefined) opt = "";
 
       let drop_complete = drop_painter => {
-         if (drop_painter && (typeof drop_painter === 'object')) drop_painter.SetItemName(itemname, null, this);
+         if (drop_painter && (typeof drop_painter === 'object') && (typeof drop_painter.setItemName == 'function'))
+            drop_painter.setItemName(itemname, null, this);
          return drop_painter;
       }
 
@@ -1346,7 +1333,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       // first collect items
       this.disp.forEachPainter(p => {
-         let itemname = p.GetItemName();
+         let itemname = p.getItemName();
 
          if ((typeof itemname != 'string') || (allitems.indexOf(itemname) >= 0)) return;
 
@@ -1366,7 +1353,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          }
 
          allitems.push(itemname);
-         options.push("update:" + p.GetItemDrawOpt());
+         options.push("update:" + p.getItemDrawOpt());
       }, true); // only visible panels are considered
 
       // force all files to read again (normally in non-browser mode)
@@ -2220,7 +2207,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Remove painter reference from hierarhcy */
    HierarchyPainter.prototype.removePainter = function(obj_painter) {
       this.forEachItem(item => {
-         if (item._painter === obj_painter) delete item._painter;
+         if (item._painter === obj_painter) {
+            // delete painter reference
+            delete item._painter;
+            // also clear data which could be associated with item
+            if (typeof item.clear == 'function') item.clear();
+         }
       });
    }
 
@@ -2236,7 +2228,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       this.forEachItem(item => {
          delete item._painter; // remove reference on the painter
          // when only display cleared, try to clear all browser items
-         if (!withbrowser && (typeof item.clear=='function')) item.clear();
+         if (!withbrowser && (typeof item.clear == 'function')) item.clear();
          if (withbrowser) plainarr.push(item);
       });
 
@@ -2329,9 +2321,9 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          obj = obj[handle.draw_field];
 
       mdi.forEachPainter((p, frame) => {
-         if ((p===painter) || (p.GetItemName() != painter.GetItemName())) return;
+         if ((p === painter) || (p.getItemName() != painter.getItemName())) return;
          mdi.activateFrame(frame);
-         if (p.RedrawObject(obj)) isany = true;
+         if ((typeof p.redrawObject == 'function') && p.redrawObject(obj)) isany = true;
       });
       return isany;
    }
@@ -2624,7 +2616,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
    /** @summary Redraw hierarchy
      * @desc works only when inspector or streamer info is displayed */
-   HierarchyPainter.prototype.RedrawObject = function(obj) {
+   HierarchyPainter.prototype.redrawObject = function(obj) {
       if (!this._inspector && !this._streamer_info) return false;
       if (this._streamer_info)
          this.h = createStreamerInfoContent(obj)
@@ -2836,7 +2828,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
             if (only_frame_id && (d3.select(frame).attr('id') != only_frame_id)) return;
 
-            if ((painter.GetItemName()!==null) && (typeof painter.checkResize == 'function')) {
+            if ((painter.getItemName()!==null) && (typeof painter.checkResize == 'function')) {
                // do not call resize for many painters on the same frame
                if (resized_frame === frame) return;
                painter.checkResize(size);

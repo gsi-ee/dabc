@@ -1163,7 +1163,7 @@
          this.DrawValue(this.lastval);
       }
 
-      painter.RedrawObject = function(obj) {
+      painter.redrawObject = function(obj) {
          this.Draw(obj);
          return true;
       }
@@ -1189,7 +1189,7 @@
       // set divid after child element created - only then we could set painter
       painter.setTopPainter();
 
-      painter.RedrawObject = function(obj) {
+      painter.redrawObject = function(obj) {
          this.obj = obj;
          this.Draw();
          return true;
