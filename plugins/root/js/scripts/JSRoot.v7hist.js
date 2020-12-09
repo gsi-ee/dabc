@@ -169,13 +169,13 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
       this.mode3d = false;
    }
 
-   RHistPainter.prototype.Cleanup = function() {
+   RHistPainter.prototype.cleanup = function() {
       // clear all 3D buffers
       this.Clear3DScene();
 
       delete this.options;
 
-      JSROOT.ObjectPainter.prototype.Cleanup.call(this);
+      JSROOT.ObjectPainter.prototype.cleanup.call(this);
    }
 
    RHistPainter.prototype.Dimension = function() {
@@ -199,7 +199,7 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
       if (!this.is_main_painter() || !this.draw_content)
         return Promise.resolve(true);
 
-      main.CleanupAxes();
+      main.cleanupAxes();
       main.xmin = main.xmax = 0;
       main.ymin = main.ymax = 0;
       main.zmin = main.zmax = 0;
@@ -228,7 +228,7 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
       return true;
    }
 
-   RHistPainter.prototype.UpdateObject = function(obj /*, opt*/) {
+   RHistPainter.prototype.updateObject = function(obj /*, opt*/) {
 
       let origin = this.getObject();
 
@@ -585,7 +585,7 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
          if (this.draw_content) {
             menu.addchk(!this.options.Zero, 'Suppress zeros', function() {
                this.options.Zero = !this.options.Zero;
-               this.RedrawPad();
+               this.redrawPad();
             });
 
             if ((this.options.Lego==12) || (this.options.Lego==14)) {
@@ -1864,10 +1864,10 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
 
    RH2Painter.prototype = Object.create(RHistPainter.prototype);
 
-   RH2Painter.prototype.Cleanup = function() {
+   RH2Painter.prototype.cleanup = function() {
       delete this.tt_handle;
 
-      RHistPainter.prototype.Cleanup.call(this);
+      RHistPainter.prototype.cleanup.call(this);
    }
 
    RH2Painter.prototype.Dimension = function() {

@@ -1399,7 +1399,7 @@ JSROOT.define(['d3'], (d3) => {
    }
 
    /** @summary Generic method to cleanup painter */
-   BasePainter.prototype.Cleanup = function(keep_origin) {
+   BasePainter.prototype.cleanup = function(keep_origin) {
       this.clearTopPainter();
       let origin = this.selectDom('origin');
       if (!origin.empty() && !keep_origin) origin.html("");
@@ -1416,16 +1416,6 @@ JSROOT.define(['d3'], (d3) => {
       delete this._hdrawopt;
       delete this._hpainter;
    }
-
-   /** @summary Called to update drawn object content
-     * @returns {boolean} true if update was performed
-     * @abstract */
-   BasePainter.prototype.UpdateObject = function(/* obj */) {}
-
-   /** @summary Redraw all objects in current pad
-     * @param {string} reason - why redraw performed, can be "zoom" or empty ]
-     * @abstract */
-   BasePainter.prototype.RedrawPad = function(/* reason */) {}
 
    /** @summary Checks if draw elements were resized and drawing should be updated
      * @returns {boolean} true if resize was detected
@@ -1627,8 +1617,8 @@ JSROOT.define(['d3'], (d3) => {
    ObjectPainter.prototype.AssignSnapId = function(id) { this.snapid = id; }
 
    /** @summary Generic method to cleanup painter.
-    * @desc Remove object drawing and in case of main painter - also main HTML components */
-   ObjectPainter.prototype.Cleanup = function() {
+     * @desc Remove object drawing and in case of main painter - also main HTML components */
+   ObjectPainter.prototype.cleanup = function() {
 
       this.RemoveDrawG();
 
@@ -1658,7 +1648,7 @@ JSROOT.define(['d3'], (d3) => {
       delete this.rstyle;
       delete this.csstype;
 
-      BasePainter.prototype.Cleanup.call(this, keep_origin);
+      BasePainter.prototype.cleanup.call(this, keep_origin);
    }
 
    /** @summary Returns drawn object */
@@ -1725,23 +1715,28 @@ JSROOT.define(['d3'], (d3) => {
       return this.options.original || ""; // nothing better, return original draw option
    }
 
-   /** @summary Updates object and readraw it
+   /** @summary Central place to update objects drawing
      * @param {object} obj - new version of object, values will be updated in original object
      * @param {string} [opt] - when specified, new draw options
-     * @returns {boolean} true if object updated and redrawn */
+     * @returns {boolean|Promise} for object redraw
+     * @desc Two actions typically done by redraw - update object content via {@link ObjectPainter.prototype.updateObject} and
+      * then redraw correspondent pad via {@link ObjectPainter.prototype.redrawPad}. If possible one should redefine
+      * only updateObject function and keep this function unchanged. But for some special painters this function it is the
+      * only way to control how object can be update while requested from the server */
    ObjectPainter.prototype.redrawObject = function(obj, opt) {
-      if (!this.UpdateObject(obj,opt)) return false;
+      if (!this.updateObject(obj,opt)) return false;
       let current = document.body.style.cursor;
       document.body.style.cursor = 'wait';
-      let res = this.RedrawPad();
+      let res = this.redrawPad();
       document.body.style.cursor = current;
       return res || true;
    }
 
    /** @summary Generic method to update object content.
-    * @desc Just copy all members from source object
-    * @param {object} obj - object with new data */
-   ObjectPainter.prototype.UpdateObject = function(obj) {
+     * @desc Default implementation just copies first-level members to current object
+     * @param {object} obj - object with new data
+     * @param {string} [opt] - option which will be used for redrawing */
+   ObjectPainter.prototype.updateObject = function(obj /*, opt */) {
       if (!this.matchObjectType(obj)) return false;
       JSROOT.extend(this.getObject(), obj);
       return true;
@@ -2298,13 +2293,13 @@ JSROOT.define(['d3'], (d3) => {
       if ((typeof info == "string") && (info.indexOf("exec:") != 0)) reason = info;
 
       if (arg == "pad") {
-         this.RedrawPad(reason);
+         this.redrawPad(reason);
       } else if (arg == "axes") {
          let main = this.main_painter(true); // works for pad and any object drawn in the pad
          if (main && (typeof main.DrawAxes == 'function'))
             main.DrawAxes();
          else
-            this.RedrawPad(reason);
+            this.redrawPad(reason);
       } else if (arg !== false) {
          this.Redraw(reason);
       }
@@ -2321,7 +2316,7 @@ JSROOT.define(['d3'], (d3) => {
    }
 
    /** @summary Redraw all objects in correspondent pad */
-   ObjectPainter.prototype.RedrawPad = function(reason) {
+   ObjectPainter.prototype.redrawPad = function(reason) {
       let pad_painter = this.pad_painter();
       if (pad_painter) pad_painter.Redraw(reason);
    }
@@ -2506,7 +2501,7 @@ JSROOT.define(['d3'], (d3) => {
          if (k >= 0) pp.painters.splice(k, 1);
       }
 
-      this.Cleanup();
+      this.cleanup();
    }
 
    /** @summary Redraw object
@@ -3069,7 +3064,7 @@ JSROOT.define(['d3'], (d3) => {
 
    AxisBasePainter.prototype = Object.create(ObjectPainter.prototype);
 
-   AxisBasePainter.prototype.Cleanup = function() {
+   AxisBasePainter.prototype.cleanup = function() {
       this.ticks = [];
       delete this.format;
       delete this.func;
@@ -3081,7 +3076,7 @@ JSROOT.define(['d3'], (d3) => {
       delete this.axis;
       delete this.axis_g;
 
-      ObjectPainter.prototype.Cleanup.call(this);
+      ObjectPainter.prototype.cleanup.call(this);
    }
 
    /** @summary Assign often used members of frame painter
@@ -4015,7 +4010,7 @@ JSROOT.define(['d3'], (d3) => {
       let dummy = new ObjectPainter(), lst = [];
       dummy.setCanvDom(divid, "");
       dummy.forEachPainter(p => { if (lst.indexOf(p) < 0) lst.push(p); });
-      lst.forEach(p => p.Cleanup());
+      lst.forEach(p => p.cleanup());
       dummy.selectDom().html("");
       return lst;
    }

@@ -339,8 +339,8 @@
 
    DABC.BnetPainter.prototype = Object.create(JSROOT.BasePainter.prototype);
 
-   DABC.BnetPainter.prototype.Cleanup = function(arg) {
-      JSROOT.BasePainter.prototype.Cleanup.call(this, arg);
+   DABC.BnetPainter.prototype.cleanup = function(arg) {
+      JSROOT.BasePainter.prototype.cleanup.call(this, arg);
 
       if (this.main_timer) {
          clearInterval(this.main_timer);

@@ -510,13 +510,6 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
       return this.getObject().evalPar(x);
    }
 
-   //TF1Painter.prototype.UpdateObject = function(obj, opt) {
-   //   if (!this.matchObjectType(obj)) return false;
-   //   let tf1 = this.getObject();
-   //   tf1.fSave = obj.fSave;
-   //   return true;
-   //}
-
    TF1Painter.prototype.CreateBins = function(ignore_zoom) {
       let main = this.frame_painter(),
           gxmin = 0, gxmax = 0, tf1 = this.getObject();
@@ -795,10 +788,10 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
       this.DrawGraph();
    }
 
-   TGraphPainter.prototype.Cleanup = function() {
+   TGraphPainter.prototype.cleanup = function() {
       delete this.interactive_bin; // break mouse handling
       delete this.bins;
-      JSROOT.ObjectPainter.prototype.Cleanup.call(this);
+      JSROOT.ObjectPainter.prototype.cleanup.call(this);
    }
 
    TGraphPainter.prototype.DecodeOptions = function(opt) {
@@ -1817,7 +1810,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
    }
 
    /** @summary Update TGraph object */
-   TGraphPainter.prototype.UpdateObject = function(obj, opt) {
+   TGraphPainter.prototype.updateObject = function(obj, opt) {
       if (!this.matchObjectType(obj)) return false;
 
       if ((opt !== undefined) && (opt != this.options.original))
@@ -1838,7 +1831,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
          histo.fTitle = graph.fTitle; // copy title
 
          let main = this.main_painter();
-         main.UpdateObject(histo, this.options.HOptions);
+         main.updateObject(histo, this.options.HOptions);
       }
 
       return true;
@@ -2128,7 +2121,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
       if ((this.zoom_rmin != rmin) || (this.zoom_rmax != rmax)) {
          this.zoom_rmin = rmin;
          this.zoom_rmax = rmax;
-         this.RedrawPad();
+         this.redrawPad();
       }
    }
 
@@ -2551,7 +2544,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
 
    TSplinePainter.prototype = Object.create(JSROOT.ObjectPainter.prototype);
 
-   TSplinePainter.prototype.UpdateObject = function(obj, opt) {
+   TSplinePainter.prototype.updateObject = function(obj, opt) {
       let spline = this.getObject();
 
       if (spline._typename != obj._typename) return false;
@@ -3099,12 +3092,12 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
 
    TMultiGraphPainter.prototype = Object.create(JSROOT.ObjectPainter.prototype);
 
-   TMultiGraphPainter.prototype.Cleanup = function() {
+   TMultiGraphPainter.prototype.cleanup = function() {
       this.painters = [];
-      JSROOT.ObjectPainter.prototype.Cleanup.call(this);
+      JSROOT.ObjectPainter.prototype.cleanup.call(this);
    }
 
-   TMultiGraphPainter.prototype.UpdateObject = function(obj) {
+   TMultiGraphPainter.prototype.updateObject = function(obj) {
       if (!this.matchObjectType(obj)) return false;
 
       let mgraph = this.getObject(),
@@ -3118,12 +3111,12 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
          if (this.autorange && !histo)
             histo = this.ScanGraphsRange(graphs);
 
-         if (this.firstpainter.UpdateObject(histo)) isany = true;
+         if (this.firstpainter.updateObject(histo)) isany = true;
       }
 
       for (let i = 0; i < graphs.arr.length; ++i) {
          if (i<this.painters.length)
-            if (this.painters[i].UpdateObject(graphs.arr[i])) isany = true;
+            if (this.painters[i].updateObject(graphs.arr[i])) isany = true;
       }
 
       if (obj.fFunctions)
@@ -3131,7 +3124,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
             let func = obj.fFunctions.arr[i];
             if (!func || !func._typename || !func.fName) continue;
             let funcpainter = this.FindPainterFor(null, func.fName, func._typename);
-            if (funcpainter) funcpainter.UpdateObject(func);
+            if (funcpainter) funcpainter.updateObject(func);
          }
 
       return isany;
@@ -3334,7 +3327,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
 
       let painter = new JSROOT.ObjectPainter(obj, opt);
 
-      painter.UpdateObject = function(obj) {
+      painter.updateObject = function(obj) {
          if (!this.matchObjectType(obj)) return false;
          this.draw_object = obj;
          return true;
