@@ -847,7 +847,7 @@
       for (var k in res) delete obj[k];   // then delete them from source
 
       if (res._kind == 'ROOT.TH1D') {
-         JSROOT.Create("TH1D", obj);
+         JSROOT.create("TH1D", obj);
          JSROOT.extend(obj, { fName: res._name, fTitle: res._title, fFillStyle: 1001 });
 
          JSROOT.extend(obj.fXaxis, { fNbins: res.nbins, fXmin: res.left,  fXmax: res.right });
@@ -855,7 +855,7 @@
          obj.fArray = res.bins;
          obj.fNcells = res.nbins + 2;
       } else if (res._kind == 'ROOT.TH2D') {
-         JSROOT.Create("TH2D", obj);
+         JSROOT.create("TH2D", obj);
          JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
 
          JSROOT.extend(obj.fXaxis, { fNbins: res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
@@ -864,7 +864,7 @@
          obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
          obj.fArray = res.bins;
       } else if (res._kind == 'ROOT.TH2Poly') {
-         JSROOT.Create("TH2D", obj);
+         JSROOT.create("TH2D", obj);
          JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
          JSROOT.extend(obj.fXaxis, { fNbins: res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
          JSROOT.extend(obj.fYaxis, { fNbins: res.nbins2, fXmin: res.left2,  fXmax: res.right2 });
@@ -873,7 +873,7 @@
          obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
          obj.fArray = res.bins;
 
-         obj.fBins = JSROOT.Create("TList");
+         obj.fBins = JSROOT.create("TList");
 
          var npoly = 0, h2poly = JSON.parse(res.h2poly);
          for (var n2 = 0; n2 < res.nbins2; ++n2)
@@ -926,20 +926,20 @@
       if (res.hmin !== undefined) obj.fMinimum = res.hmin;
       if (res.hmax !== undefined) obj.fMaximum = res.hmax;
       if ('xlabels' in res) {
-         obj.fXaxis.fLabels = JSROOT.Create('THashList');
+         obj.fXaxis.fLabels = JSROOT.create('THashList');
          var lbls = res.xlabels.split(",");
          for (var n in lbls) {
-            var lbl = JSROOT.Create('TObjString');
+            var lbl = JSROOT.create('TObjString');
             lbl.fUniqueID = parseInt(n)+1;
             lbl.fString = lbls[n];
             obj.fXaxis.fLabels.Add(lbl);
          }
       }
       if ('ylabels' in res) {
-         obj.fYaxis.fLabels = JSROOT.Create('THashList');
+         obj.fYaxis.fLabels = JSROOT.create('THashList');
          var lbls = res.ylabels.split(",");
          for (var n in lbls) {
-            var lbl = JSROOT.Create('TObjString');
+            var lbl = JSROOT.create('TObjString');
             lbl.fUniqueID = parseInt(n)+1;
             lbl.fString = lbls[n];
             obj.fYaxis.fLabels.Add(lbl);
@@ -1043,7 +1043,7 @@
       if (!y) y = [];
 
       obj._typename = 'TGraph';
-      JSROOT.Create('TGraph', obj);
+      JSROOT.create('TGraph', obj);
       obj.fHistogram = JSROOT.createHistogram('TH1F', x.length);
 
       var _title = item._title || item.fullitemname;
