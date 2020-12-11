@@ -1113,7 +1113,7 @@
          }
 
          this._title = obj._name || "gauge"
-         val = JSROOT.FFormat(val,"5.3g");
+         val = JSROOT.Painter.floatToString(val,"5.3g");
          this.DrawValue(val, redo);
       }
 

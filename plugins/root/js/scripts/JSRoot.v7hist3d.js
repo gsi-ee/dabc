@@ -80,7 +80,7 @@ JSROOT.define(['d3', 'base3d', 'painter', 'v7hist'], (d3, THREE, jsrp) => {
          return;
       }
 
-      jsrp.Assign3DHandler(this);
+      jsrp.assign3DHandler(this);
 
       render3d = jsrp.getRender3DKind(render3d);
       let sz = this.size_for_3d(undefined, render3d);
@@ -208,7 +208,7 @@ JSROOT.define(['d3', 'base3d', 'painter', 'v7hist'], (d3, THREE, jsrp) => {
          // special handling for direct SVG renderer
          // probably, here one can use canvas renderer - after modifications
          // let rrr = new THREE.SVGRenderer({ precision: 0, astext: true });
-         let doc = JSROOT.get_document(),
+         let doc = JSROOT._.get_document(),
              rrr = THREE.CreateSVGRenderer(false, 0, doc);
          rrr.setSize(this.scene_width, this.scene_height);
          rrr.render(this.scene, this.camera);
@@ -2427,7 +2427,7 @@ JSROOT.define(['d3', 'base3d', 'painter', 'v7hist'], (d3, THREE, jsrp) => {
       if (binz === Math.round(binz))
          lines.push(lbl + binz);
       else
-         lines.push(lbl + JSROOT.FFormat(binz, JSROOT.gStyle.fStatFormat));
+         lines.push(lbl + jsrp.floatToString(binz, JSROOT.gStyle.fStatFormat));
 
       return lines;
    }
