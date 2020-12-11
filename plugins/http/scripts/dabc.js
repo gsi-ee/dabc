@@ -889,7 +889,7 @@
                   _typename: "TH2PolyBin",
                   fNumber: 1,
                   fContent: obj.getBinContent(n1+1, n2+1),
-                  fPoly: JSROOT.CreateTGraph(xx.length, xx, yy),
+                  fPoly: JSROOT.createTGraph(xx.length, xx, yy),
                   fXmin: Math.min.apply(null, xx),
                   fXmax: Math.max.apply(null, xx),
                   fYmin: Math.min.apply(null, yy),
@@ -1044,7 +1044,7 @@
 
       obj._typename = 'TGraph';
       JSROOT.Create('TGraph', obj);
-      obj.fHistogram = JSROOT.CreateHistogram('TH1F', x.length);
+      obj.fHistogram = JSROOT.createHistogram('TH1F', x.length);
 
       var _title = item._title || item.fullitemname;
 
