@@ -1,24 +1,12 @@
-(function(){
-
-   if (typeof DABC == "object") {
-      var e1 = new Error("DABC is already defined");
-      e1.source = "dabc.js";
-      throw e1;
-   }
-
-   if (typeof JSROOT != "object") {
-      var e1 = new Error("dabc.js requires JSROOT to be already loaded");
-      e1.source = "dabc.js";
-      throw e1;
-   }
+JSROOT.require("painter").then(jsrp => {
 
    "use strict";
 
    JSROOT.settings.DragAndDrop = true;
 
-   DABC = {};
+   let DABC = {};
 
-   DABC.version = "2.10.1 23/05/2019";
+   DABC.version = "2.11.0 11/12/2020";
 
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
@@ -981,7 +969,7 @@
       return arr;
    }
 
-   DABC.MakeItemRequest = function(h, item, fullpath, option) {
+   function MakeItemRequest(h, item, fullpath, option) {
       item.fullitemname = fullpath;
       if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0";
       if (!('hlimit' in item)) item.hlimit = 100;
@@ -991,7 +979,7 @@
       return url;
    }
 
-   DABC.AfterItemRequest = function(h, item, obj, option) {
+   function AfterItemRequest(h, item, obj, option) {
       if (!obj) return;
 
       if (!('_history' in item) || (option=="gauge") || (option=='last')) {
@@ -1005,7 +993,7 @@
 
       var modified = (item.request_version != new_version);
 
-      this.request_version = new_version;
+      item.request_version = new_version;
 
       // this is array with history entries
       var arr = obj.history;
@@ -1021,7 +1009,7 @@
             modified = true;
             var total = item.history.length + arr.length;
             if (total > item['hlimit'])
-               this.history.splice(0, total - item['hlimit']);
+               item.history.splice(0, total - item['hlimit']);
 
             item.history = item.history.concat(arr);
          }
@@ -1342,31 +1330,31 @@
 
    // =============================================================
 
-   JSROOT.addDrawFunc({
+   jsrp.addDrawFunc({
       name: "kind:rate",
       icon: DABC.source_dir + "../img/gauge.png",
       func: "<dummy>",
       opt: "line;gauge",
       monitor: 'always',
-      make_request: DABC.MakeItemRequest,
-      after_request: DABC.AfterItemRequest
+      make_request: MakeItemRequest,
+      after_request: AfterItemRequest
    });
 
-   JSROOT.addDrawFunc({
+   jsrp.addDrawFunc({
       name: "kind:log",
       icon: "img_text",
       func: DABC.DrawLog,
       opt: "log;last",
       monitor: 'always',
-      make_request: DABC.MakeItemRequest,
-      after_request: DABC.AfterItemRequest
+      make_request: MakeItemRequest,
+      after_request: AfterItemRequest
    });
 
-   JSROOT.addDrawFunc({
+   jsrp.addDrawFunc({
       name: "kind:DABC.Command",
       icon: DABC.source_dir + "../img/dabc.png",
-      make_request: DABC.MakeItemRequest,
-      after_request: DABC.AfterItemRequest,
+      make_request: MakeItemRequest,
+      after_request: AfterItemRequest,
       opt: "command",
       prereq: 'jq',
       monitor: 'never',
@@ -1374,19 +1362,20 @@
    });
 
    // only indicate that item with such kind can be opened as direct link
-   JSROOT.addDrawFunc({
+   jsrp.addDrawFunc({
       name: "kind:DABC.HTML",
       icon: DABC.source_dir + "../img/dabc.png",
       aslink: true
    });
 
    // example of external scripts loading
-   JSROOT.addDrawFunc({
+   jsrp.addDrawFunc({
       name: "DABC_RateGauge",
       func: "DABC.DrawGauage",
       opt: "gauge",
       script: DABC.source_dir + 'gauge.js'
    });
 
+   globalThis.DABC = DABC; // maybe used outside
 
-})();
+})

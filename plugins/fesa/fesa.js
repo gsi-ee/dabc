@@ -1,28 +1,16 @@
 // example file for custom web output
+JSROOT.require("painter").then(jsrp => {
 
-(function(){
+   let FESA = {};
 
-   if (typeof JSROOT != "object") {
-      var e1 = new Error("fesa.js requires JSROOT to be already loaded");
-      e1.source = "fesa.js";
-      throw e1;
-   }
-   if (typeof DABC != "object") {
-      var e1 = new Error("fesa.js requires dabc.js to be already loaded");
-      e1.source = "fesa.js";
-      throw e1;
+   function MakeItemRequest(h, item, fullpath, option) {
+      return { req: "dabc.bin", kind: "bin" }; // use binary request to receive data
    }
 
-   FESA = {};
-
-   FESA.MakeItemRequest = function(h, item, fullpath, option) {
-      return { req: "dabc.bin", kind:"bin" }; // use binary request to receive data
-   }
-
-   FESA.AfterItemRequest = function(h, item, data, option) {
+   function AfterItemRequest(h, item, data, option) {
       if (!data) return null;
 
-      var hist = JSROOT.CreateHistogram("TH2I", 16, 16);
+      var hist = JSROOT.createHistogram("TH2I", 16, 16);
       hist.fName  = "BeamProfile";
       hist.fTitle = "Beam profile from FESA";
       hist.fOption = "col";
@@ -53,12 +41,14 @@
       return hist;
    }
 
-   JSROOT.addDrawFunc({
+   jsrp.addDrawFunc({
       name: "kind:FESA.2D",
-      make_request: FESA.MakeItemRequest,
-      after_request: FESA.AfterItemRequest,
+      make_request: MakeItemRequest,
+      after_request: AfterItemRequest,
       icon: "img_histo2d",
       opt: "col;colz"
    });
 
-}());
+   globalThis.FESA = FESA;
+
+})

@@ -3453,7 +3453,7 @@ JSROOT.define(['d3'], (d3) => {
      * @param {string} [args.icon] - icon name shown for the class in hierarchy browser
      * @param {string} [args.draw_field] - draw only data member from object, like fHistogram
      * @private */
-   JSROOT.addDrawFunc = function(args) {
+   jsrp.addDrawFunc = function(args) {
       drawFuncs.lst.push(args);
       return args;
    }
@@ -3610,7 +3610,7 @@ JSROOT.define(['d3'], (d3) => {
 
    /** @summary Returns true if provided object class can be drawn
     * @private */
-   JSROOT.canDraw = function(classname) {
+   jsrp.canDraw = function(classname) {
       return JSROOT.getDrawSettings("ROOT." + classname).opts !== null;
    }
 
@@ -3834,10 +3834,8 @@ JSROOT.define(['d3'], (d3) => {
    }
 
    /** @summary Create SVG image for provided object.
-    *
     * @desc Function especially useful in Node.js environment to generate images for
     * supported ROOT classes
-    *
     * @param {object} args - contains different settings
     * @param {object} args.object - object for the drawing
     * @param {string} [args.option] - draw options
@@ -3847,9 +3845,7 @@ JSROOT.define(['d3'], (d3) => {
    JSROOT.makeSVG = function(args) {
 
       if (!args) args = {};
-
       if (!args.object) return Promise.reject(Error("No object specified to generate SVG"));
-
       if (!args.width) args.width = 1200;
       if (!args.height) args.height = 800;
 
@@ -3982,9 +3978,8 @@ JSROOT.define(['d3'], (d3) => {
    /** @summary Converts numeric value to string according to specified format.
      * @param {number} value - value to convert
      * @param {string} [fmt="6.4g"] - format can be like 5.4g or 4.2e or 6.4f
-     * @param {boolean} [ret_fmt=false] - when true returns array with actual format
-     * @returns {string|Array} - converted value or array with value and actual format
-     * @private */
+     * @param {boolean} [ret_fmt] - when true returns array with value and actual format like ["0.1","6.4f"]
+     * @returns {string|Array} - converted value or array with value and actual format */
    jsrp.floatToString = function(value, fmt, ret_fmt) {
       if (!fmt) fmt = "6.4g";
 
