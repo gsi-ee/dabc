@@ -19,6 +19,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          main.select(".jsroot_browser_title").text(title);
    }
 
+   /** @summary Toggle browser kind */
    BrowserLayout.prototype.toggleBrowserKind = function(kind) {
 
       if (!this.gui_div) return;
@@ -59,7 +60,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
               containment: "parent",
               minWidth: 100,
               resize: function(/* event, ui */) {
-                 pthis.SetButtonsPosition();
+                 pthis.setButtonsPosition();
               },
               stop: function( event, ui ) {
                  let bottom = $(this).parent().innerHeight() - ui.position.top - ui.size.height;
@@ -73,14 +74,14 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
              snapMode: "inner",
              snapTolerance: 10,
              drag: function(/* event, ui */) {
-                pthis.SetButtonsPosition();
+                pthis.setButtonsPosition();
              },
              stop: function(/* event, ui */) {
                 let bottom = $(this).parent().innerHeight() - $(this).offset().top - $(this).outerHeight();
                 if (bottom<7) $(this).css('height', "").css('bottom', 0);
              }
           });
-         this.AdjustBrowserSize();
+         this.adjustBrowserSize();
 
      } else {
 
@@ -96,7 +97,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
            containment: "parent",
            helper : function() { return $(this).clone().css('background-color','grey'); },
            drag: function(event,ui) {
-              pthis.SetButtonsPosition();
+              pthis.setButtonsPosition();
               pthis.adjustSeparators(ui.position.left, null);
            },
            stop: function(/* event,ui */) {
@@ -107,10 +108,11 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
         this.adjustSeparators(250, null, true, true);
      }
 
-      this.SetButtonsPosition();
+      this.setButtonsPosition();
    }
 
-   BrowserLayout.prototype.SetButtonsPosition = function() {
+   /** @summary Set buttons position */
+   BrowserLayout.prototype.setButtonsPosition = function() {
       if (!this.gui_div) return;
 
       let jmain = $("#"+this.gui_div+" .jsroot_browser"),
@@ -129,7 +131,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       btns.css('left', left+'px').css('top', top+'px');
    }
 
-   BrowserLayout.prototype.AdjustBrowserSize = function(onlycheckmax) {
+   /** @summary Adjust browser size */
+   BrowserLayout.prototype.adjustBrowserSize = function(onlycheckmax) {
       if (!this.gui_div || (this.browser_kind !== "float")) return;
 
       let jmain = $("#" + this.gui_div + " .jsroot_browser");
@@ -153,7 +156,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if ((h2!==undefined) && (h2<h1*0.7)) area.css('bottom', '');
    }
 
-   BrowserLayout.prototype.ToggleBrowserVisisbility = function(fast_close) {
+   /** @summary Toggle browser visibility */
+   BrowserLayout.prototype.toggleBrowserVisisbility = function(fast_close) {
       if (!this.gui_div || (typeof this.browser_visible==='string')) return;
 
       let main = d3.select("#" + this.gui_div + " .jsroot_browser"),
@@ -192,7 +196,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       area.transition().style('left', tgt).duration(_duration).on("end", () => {
          if (fast_close) return;
          this.browser_visible = visible_at_the_end;
-         if (visible_at_the_end) this.SetButtonsPosition();
+         if (visible_at_the_end) this.setButtonsPosition();
       });
 
       if (!visible_at_the_end)
@@ -211,15 +215,15 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
    /** @summary Toggle browser kind
      * @desc used together with browser buttons */
-   BrowserLayout.prototype.Toggle = function(browser_kind) {
+   BrowserLayout.prototype.toggleKind = function(browser_kind) {
       if (this.browser_visible!=='changing') {
-         if (browser_kind === this.browser_kind) this.ToggleBrowserVisisbility();
+         if (browser_kind === this.browser_kind) this.toggleBrowserVisisbility();
                                             else this.toggleBrowserKind(browser_kind);
       }
    }
 
    /** @summary Delete content */
-   BrowserLayout.prototype.DeleteContent = function() {
+   BrowserLayout.prototype.deleteContent = function() {
       let main = d3.select("#" + this.gui_div + " .jsroot_browser");
       if (main.empty()) return;
 
@@ -228,7 +232,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if (!vsepar.empty())
          $(vsepar.node()).draggable('destroy');
 
-      this.ToggleBrowserVisisbility(true);
+      this.toggleBrowserVisisbility(true);
 
       main.selectAll("*").remove();
       delete this.browser_visible;
@@ -266,8 +270,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          if (this.status_layout !== "app")
             delete this.status_layout;
 
-         if (this.status_handler && (jsrp.ShowStatus === this.status_handler)) {
-            delete jsrp.ShowStatus;
+         if (this.status_handler && (jsrp.showStatus === this.status_handler)) {
+            delete jsrp.showStatus;
             delete this.status_handler;
          }
 
@@ -316,9 +320,9 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          d3.select(this.status_layout.getGridFrame(k)).attr('title', frame_titles[k]).style('overflow','hidden')
            .append("label").attr("class","jsroot_status_label");
 
-      this.status_handler = this.ShowStatus.bind(this);
+      this.status_handler = this.showStatus.bind(this);
 
-      jsrp.ShowStatus = this.status_handler;
+      jsrp.showStatus = this.status_handler;
 
       return Promise.resolve(id);
    }
@@ -368,7 +372,9 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if (redraw) this.checkResize();
    }
 
-   BrowserLayout.prototype.ShowStatus = function(name, title, info, coordinates) {
+   /** @summary Show status information inside special fields of browser layout
+     * @private */
+   BrowserLayout.prototype.showStatus = function(name, title, info, coordinates) {
       if (!this.status_layout) return;
 
       $(this.status_layout.getGridFrame(0)).children('label').text(name || "");
@@ -408,7 +414,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       let isroot = (hitem === this.h),
           has_childs = ('_childs' in hitem),
-          handle = JSROOT.getDrawHandle(hitem._kind),
+          handle = jsrp.getDrawHandle(hitem._kind),
           img1 = "", img2 = "", can_click = false, break_list = false,
           d3cont, itemname = this.itemFullName(hitem);
 
@@ -713,7 +719,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       this.addItemHtml(hitem, d3cont, "update");
 
-      if (this.brlayout) this.brlayout.AdjustBrowserSize(true);
+      if (this.brlayout) this.brlayout.adjustBrowserSize(true);
    }
 
    /** @summary Update item background
@@ -776,7 +782,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
 
       if (!place || (place=="")) place = "item";
 
-      let sett = JSROOT.getDrawSettings(hitem._kind), handle = sett.handle;
+      let sett = jsrp.getDrawSettings(hitem._kind), handle = sett.handle;
 
       if (place == "icon") {
          let func = null;
@@ -872,8 +878,8 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          prnt = prnt._parent;
       }
 
-      if (painter && typeof painter.MouseOverHierarchy === 'function')
-         painter.MouseOverHierarchy(on, itemname, hitem);
+      if (painter && typeof painter.mouseOverHierarchy === 'function')
+         painter.mouseOverHierarchy(on, itemname, hitem);
    }
 
    /** @summary alternative context menu, used in the object inspector
@@ -885,7 +891,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if (!hitem) return;
 
       if (typeof this.fill_context == 'function')
-         jsrp.createMenu(this, evnt).then(menu => {
+         jsrp.createMenu(evnt, this).then(menu => {
             this.fill_context(menu, hitem);
             if (menu.size() > 0) {
                menu.tree_node = elem.parentNode;
@@ -918,7 +924,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          return el.firstChild.href;
       }
 
-      jsrp.createMenu(this, evnt).then(menu => {
+      jsrp.createMenu(evnt, this).then(menu => {
 
          if ((itemname == "") && !('_jsonfile' in hitem)) {
             let files = [], addr = "", cnt = 0,
@@ -960,7 +966,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          } else if (onlineprop) {
             this.fillOnlineMenu(menu, onlineprop, itemname);
          } else {
-            let sett = JSROOT.getDrawSettings(hitem._kind, 'nosame');
+            let sett = jsrp.getDrawSettings(hitem._kind, 'nosame');
 
             // allow to draw item even if draw function is not defined
             if (hitem._can_draw) {
@@ -1086,7 +1092,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
          // this is case when browser created,
          // if update_html specified, hidden state will be toggled
 
-         if (update_html) this.brlayout.Toggle(browser_kind);
+         if (update_html) this.brlayout.toggleKind(browser_kind);
 
          return Promise.resolve(true);
       }
@@ -1221,7 +1227,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
       if (main.empty() || !this.brlayout) return;
       let jmain = $(main.node());
 
-      if (this.brlayout) this.brlayout.AdjustBrowserSize();
+      if (this.brlayout) this.brlayout.adjustBrowserSize();
 
       let selects = main.select(".gui_layout").node();
 
@@ -1570,8 +1576,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'hierarchy', 'jquery-ui', 'jqueryui-mo
             if (div.prop('state') == "minimal") return;
 
             div = div.find(".flex_draw").get(0);
-            let dummy = new JSROOT.ObjectPainter(div);
-            jsrp.selectActivePad({ pp: dummy.canv_painter(), active: true });
+            jsrp.selectActivePad({ pp: jsrp.getElementCanvPainter(div), active: true });
 
             JSROOT.resize(div);
          }

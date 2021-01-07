@@ -7,9 +7,9 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
 
    function drawText() {
       let text      = this.getObject(),
-          pp        = this.pad_painter(),
+          pp        = this.getPadPainter(),
           use_frame = false,
-          p         = pp.GetCoordinate(text.fPos),
+          p         = pp.getCoordinate(text.fPos),
           textFont  = this.v7EvalFont("text", { size: 12, color: "black", align: 22 });
 
       this.createG(use_frame);
@@ -27,9 +27,9 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
    function drawLine() {
 
        let line         = this.getObject(),
-           pp           = this.pad_painter(),
-           p1           = pp.GetCoordinate(line.fP1),
-           p2           = pp.GetCoordinate(line.fP2),
+           pp           = this.getPadPainter(),
+           p1           = pp.getCoordinate(line.fP1),
+           p2           = pp.getCoordinate(line.fP2),
            line_width   = this.v7EvalAttr("line_width", 1),
            line_style   = this.v7EvalAttr("line_style", 1),
            line_color   = this.v7EvalColor("line_color", "black");
@@ -53,9 +53,9 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
    function drawBox() {
 
        let box          = this.getObject(),
-           pp           = this.pad_painter(),
-           p1           = pp.GetCoordinate(box.fP1),
-           p2           = pp.GetCoordinate(box.fP2),
+           pp           = this.getPadPainter(),
+           p1           = pp.getCoordinate(box.fP1),
+           p2           = pp.getCoordinate(box.fP2),
            line_width   = this.v7EvalAttr( "box_border_width", 1),
            line_style   = this.v7EvalAttr( "box_border_style", 1),
            line_color   = this.v7EvalColor( "box_border_color", "black"),
@@ -86,8 +86,8 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
 
    function drawMarker() {
        let marker       = this.getObject(),
-           pp           = this.pad_painter(),
-           p            = pp.GetCoordinate(marker.fP),
+           pp           = this.getPadPainter(),
+           p            = pp.getCoordinate(marker.fP),
            marker_size  = this.v7EvalAttr( "marker_size", 1),
            marker_style = this.v7EvalAttr( "marker_style", 1),
            marker_color = this.v7EvalColor( "marker_color", "black"),
@@ -110,7 +110,7 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
           width      = this.pave_width,
           height     = this.pave_height,
           nlines     = legend.fEntries.length,
-          pp         = this.pad_painter();
+          pp         = this.getPadPainter();
 
       if (legend.fTitle) nlines++;
 
@@ -133,7 +133,7 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
          this.drawText({ latex: 1, width: 0.75*width - 3*margin_x, height: stepy, x: 2*margin_x + width*0.25, y: posy, text: entry.fLabel });
 
          if (entry.fDrawableId != "custom") {
-            objp = pp.FindSnap(entry.fDrawableId, true);
+            objp = pp.findSnap(entry.fDrawableId, true);
          } else if (entry.fDrawable.fIO) {
             objp = new JSROOT.ObjectPainter(this.getDom(), entry.fDrawable.fIO);
             if (entry.fLine) objp.createv7AttLine();
@@ -173,9 +173,9 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
    function drawLegend(divid, legend, opt) {
       let painter = new JSROOT.v7.RPavePainter(divid, legend, opt, "legend");
 
-      painter.DrawContent = drawLegendContent;
+      painter.drawContent = drawLegendContent;
 
-     return jsrp.ensureRCanvas(painter, false).then(() => painter.DrawPave());
+     return jsrp.ensureRCanvas(painter, false).then(() => painter.drawPave());
    }
 
    // =================================================================================
@@ -208,9 +208,9 @@ JSROOT.define(['painter', 'v7gpad'], (jsrp) => {
    function drawPaveText(divid, pave, opt) {
       let painter = new JSROOT.v7.RPavePainter(divid, pave, opt, "pavetext");
 
-      painter.DrawContent = drawPaveTextContent;
+      painter.drawContent = drawPaveTextContent;
 
-      return jsrp.ensureRCanvas(painter, false).then(() => painter.DrawPave());
+      return jsrp.ensureRCanvas(painter, false).then(() => painter.drawPave());
    }
 
 
