@@ -1,9 +1,9 @@
 /** \page ezca_plugin EPICS plugin for DABC (libDabcEzca.so)
- 
+
   \subpage ezca_plugin_doc
- 
+
   \ingroup dabc_plugins
- 
+
  */
 
 
@@ -16,11 +16,11 @@ EPICS_EXTENSIONS variables are defined.
 
 EPICS_BASE should contain path to top of your EPICS installation.
 EPICS_EXTENSIONS to top of your EPICS extensions installation
-which must contain the ezca extension. 
+which must contain the ezca extension.
 
 To disable compilation of EPICS plugin, call
 
-   [shell] make noepics=1 
+   [shell] make noepics=1
 
 
 
@@ -56,13 +56,8 @@ Subdirectory plugins/ezca/go4 contains simple analysis,
 which could monitor data, provided by EPICS plugin.
 Just configure Go4 environment (via  '. go4login') and call make in the directory
 
-
-
-4) optionally, start go4 monitoring of DABC in subfolder go4:
+Optionally, start go4 monitoring of DABC in subfolder go4:
 "go4analysis -stream hostname"
 (with hostname the name of the machine that runs the DABC process with MbsServerKind "Stream")
 
-
 */
-
-	

@@ -1,23 +1,23 @@
 /** \page root_plugin ROOT plugin for DABC (libDabcRoot.so)
- 
+
  \subpage root_plugin_doc
- 
+
  \n
- 
+
  \subpage root_plugin_usage
- 
- 
+
+
  \ingroup dabc_plugins
- 
+
  */
 
 
 
 /** \page root_plugin_doc Short description of ROOT plugin
- 
+
 Plugin provides:
 - [JavaScript ROOT](\ref jsrootmain)
-- [Implementation of DABC-based THttpEngine](\ref root_plugin_usage) 
+- [Implementation of DABC-based THttpEngine](\ref root_plugin_usage)
 */
 
 
@@ -27,51 +27,51 @@ Plugin provides:
 Introduction
 ============
 
-Oroginal motivation for writing of libDabcRoot plugin was 
-providing web interface to the arbitrary ROOT-based analysis. 
+Original motivation for writing of libDabcRoot plugin was
+providing web interface to the arbitrary ROOT-based analysis.
 Current THttpServer class in ROOT fully solving such tasks.
 
 Now idea of this plugin - access to ROOT application with DABC methods.
 Any ROOT application which runs THttpServer can create TDabcEngine and
 be attached to master DABC application. It could be many of such ROOT process and
-all of them could be access seamless via central http server, implemented in DABC.   
+all of them could be access seamless via central http server, implemented in DABC.
 
 Plugin also provides root::TreeStore class, which let use TTree storage in DABC
 without direct linking of ROOT functionality to DABC plugins.
 
-There is also dabc_root utility, which let convert DABC internal histograms 
-into ROOT representation.  
+There is also dabc_root utility, which let convert DABC internal histograms
+into ROOT representation.
 
 Also this plugin was a place where JavaScript ROOT was developed for a while.
-Now it is just copy of central JSROOT repository from https://github.com/linev/jsroot 
+Now it is just copy of central JSROOT repository from https://github.com/linev/jsroot
 
 
-DABC Compilation
+DABC compilation
 ================
 
 First of all, ROOT itself should be compiled and configured.
 DABC uses ROOTSYS shell variable, therefore it should be defined before DABC compilation starts.
 One could use ". your_root_path/bin/thisroot.sh" script.
 
-Normal DABC compilation procedure should be performed, 
-[details can be found here](\ref dabc_getting_started). 
-At the end of the DABC compilation libDabcRoot.so library will be created in $DABCSYS/lib subdirectory.  
+Normal DABC compilation procedure should be performed,
+[details can be found here](\ref dabc_getting_started).
+At the end of the DABC compilation libDabcRoot.so library will be created in $DABCSYS/lib subdirectory.
 
 
 Running of web server
 =====================
 
 After DABC compiled and ". dabclogin" initialization script is called,
-one just starts root session and creates \ref THttpServer instance at 
+one just starts root session and creates \ref THttpServer instance at
 any moment of macro execution. For instance:
 
     [shell] root -b -l
-    
+
     root [0] new THttpServer("http:8095");
     root [1] .x $ROOTSYS/tutorials/hsimple.C
     hsimple   : Real Time =   0.14 seconds Cpu Time =   0.15 seconds
     (class TFile*)0x2b74510
-    root [2] 
+    root [2]
 
 
 After http server is started, one should be able to access it
@@ -80,7 +80,7 @@ with the address `http://your_host_name:8095/`
 One could continue root usage, creating or deleting histograms or any other objects -
 it will not disturb running server.
 
-More information about ROOT http server one could find in [ROOT documentation](\ref httpserver) 
+More information about ROOT http server one could find in [ROOT documentation](\ref httpserver)
 
 
 Running of DABC server
@@ -107,22 +107,22 @@ DABC master socket
 ==================
 
     root [0] new THttpServer("dabc:1237");
-    
-This is DABC command socket. Go4 can connect with this socket and request 
-all objects in binary form.  
-    
+
+This is DABC command socket. Go4 can connect with this socket and request
+all objects in binary form.
+
 
 DABC slave socket
 ==================
 
     root [0] new THttpServer("dabc:master_node:1237");
 
-This is possibility to attach slave to some running master and export all 
-objects via master. This gives possibility to merge many slave jobs together. 
+This is possibility to attach slave to some running master and export all
+objects via master. This gives possibility to merge many slave jobs together.
 
- 
 
-For any comments and wishes contact \n 
+
+For any comments and wishes contact \n
 Sergey Linev   S.Linev(at)gsi.de
 
 */
