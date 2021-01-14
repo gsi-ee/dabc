@@ -2408,10 +2408,10 @@ JSROOT.define(['d3'], (d3) => {
    ObjectPainter.prototype.startTextDrawing = function(font_face, font_size, draw_g, max_font_size) {
 
       if (!draw_g) draw_g = this.draw_g;
+      if (!draw_g || draw_g.empty()) return;
 
-      let font = (font_size === 'font') ? font_face : new FontHandler(font_face, font_size);
-
-      let pp = this.getPadPainter();
+      let font = (font_size === 'font') ? font_face : new FontHandler(font_face, font_size),
+          pp = this.getPadPainter();
 
       draw_g.call(font.func);
 
@@ -2421,7 +2421,7 @@ JSROOT.define(['d3'], (d3) => {
             .property('text_factor', 0.)
             .property('max_text_width', 0) // keep maximal text width, use it later
             .property('max_font_size', max_font_size)
-            .property("_fast_drawing", pp && pp._fast_drawing);
+            .property("_fast_drawing", pp ? pp._fast_drawing : false);
 
       if (draw_g.property("_fast_drawing"))
          draw_g.property("_font_too_small", (max_font_size && (max_font_size < 5)) || (font.size < 4));
@@ -2434,6 +2434,7 @@ JSROOT.define(['d3'], (d3) => {
      * @protected */
    ObjectPainter.prototype.scaleTextDrawing = function(factor, draw_g) {
       if (!draw_g) draw_g = this.draw_g;
+      if (!draw_g || draw_g.empty()) return;
       if (factor && (factor > draw_g.property('text_factor')))
          draw_g.property('text_factor', factor);
    }
@@ -2594,6 +2595,7 @@ JSROOT.define(['d3'], (d3) => {
       if (!arg.text) arg.text = "";
 
       arg.draw_g = arg.draw_g || this.draw_g;
+      if (!arg.draw_g || arg.draw_g.empty()) return;
 
       let font = arg.draw_g.property('text_font');
       arg.font = font; // use in latex conversion
@@ -2711,6 +2713,9 @@ JSROOT.define(['d3'], (d3) => {
      * @protected */
    ObjectPainter.prototype.finishTextDrawing = function(draw_g) {
       if (!draw_g) draw_g = this.draw_g;
+      if (!draw_g || draw_g.empty())
+         return Promise.resolve(false);
+
       draw_g.property('draw_text_completed', true); // mark that text drawing is completed
 
       return new Promise(resolveFunc => {
@@ -3663,7 +3668,7 @@ JSROOT.define(['d3'], (d3) => {
      * @param {string|object} dom - id of div element to draw or directly DOMElement
      * @param {object} obj - object to draw, object type should be registered before in JSROOT
      * @param {string} opt - draw options separated by space, comma or semicolon
-     * @param {function} [callback] - deprecated, function called when drawing is completed, first argument is object painter instance
+     * @param {function} [callback] - deprecated, will be removed in 6.2.0, called with painter object
      * @returns {Promise} with painter object only if callback parameter is not specified
      * @requires painter
      * @desc An extensive list of support draw options can be found on [JSROOT examples page]{@link https://root.cern/js/latest/examples.htm}
@@ -3682,7 +3687,7 @@ JSROOT.define(['d3'], (d3) => {
      * @param {string|object} dom - id of div element to draw or directly DOMElement
      * @param {object} obj - object to draw, object type should be registered before in JSROOT
      * @param {string} opt - draw options
-     * @param {function} [callback] - function called when redrawing is completed, first argument will be object painter instance
+     * @param {function} [callback] - deprecated, will be removed in 6.2.0, called with painter object
      * @returns {Promise} with painter used only when callback parameter is not specified
      * @requires painter
      * @desc If drawing was not done before, it will be performed with {@link JSROOT.draw}.

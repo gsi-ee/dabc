@@ -1462,7 +1462,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
    RFramePainter.prototype = Object.create(JSROOT.ObjectPainter.prototype);
 
+   /** @summary Returns frame painter - object itself */
    RFramePainter.prototype.getFramePainter = function() { return this; }
+
+   /** @summary Returns true if it is ROOT6 frame
+    * @private */
+   RFramePainter.prototype.is_root6 = function() { return false; }
 
    /** @summary Set active flag for frame - can block some events
     * @private */
@@ -1893,6 +1898,10 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       delete this._click_handler;
       delete this._dblclick_handler;
+
+      let pp = this.getPadPainter();
+      if (pp && (pp.frame_painter_ref === this))
+         delete pp.frame_painter_ref;
 
       JSROOT.ObjectPainter.prototype.cleanup.call(this);
    }
@@ -3239,6 +3248,16 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          if (this.batch_mode && this.iscan)
              this._fixed_size = true;
 
+         if (JSROOT.BrowserLayout && !this.batch_mode && !this.use_openui && !this.brlayout) {
+            let mainid = this.selectDom().attr("id");
+            if (mainid && (typeof mainid == "string")) {
+               this.brlayout = new JSROOT.BrowserLayout(mainid, null, this);
+               this.brlayout.create(mainid, true);
+               this.setDom(this.brlayout.drawing_divid()); // need to create canvas
+               jsrp.registerForResize(this.brlayout);
+            }
+         }
+
          this.createCanvasSvg(0);
          this.addPadButtons(true);
 
@@ -3262,8 +3281,11 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          let sub = this.painters[k];
          if (sub.snapid===undefined) continue; // look only for painters with snapid
 
-         for (let i=0;i<snap.fPrimitives.length;++i)
-            if (snap.fPrimitives[i].fObjectID === sub.snapid) { sub = null; isanyfound = true; break; }
+         snap.fPrimitives.forEach(prim => {
+            if (sub && (prim.fObjectID === sub.snapid)) {
+               sub = null; isanyfound = true;
+            }
+         });
 
          if (sub) {
             // remove painter which does not found in the list of snaps
@@ -3279,14 +3301,17 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       if (!isanyfound) {
          let fp = this.getFramePainter();
+         // cannot preserve ROOT6 frame - it must be recreated
+         if (fp && fp.is_root6()) fp = null;
          for (let k = 0; k < this.painters.length; ++k)
-            if (fp !== this.painters[k])
+             if (fp !== this.painters[k])
                this.painters[k].cleanup();
          this.painters = [];
          delete this.main_painter_ref;
          if (fp) {
             this.painters.push(fp);
             fp.cleanFrameDrawings();
+            fp.redraw(); // need to create all layers again
          }
          if (this.removePadButtons) this.removePadButtons();
          this.addPadButtons(true);
@@ -3619,7 +3644,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
    /** @summary Add buttons for pad or canvas
      * @private */
-   RPadPainter.prototype.addPadButtons = function(/* is_online */) {
+   RPadPainter.prototype.addPadButtons = function(is_online) {
 
       this.addPadButton("camera", "Create PNG", this.iscan ? "CanvasSnapShot" : "PadSnapShot", "Ctrl PrintScreen");
 
@@ -3630,6 +3655,12 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
       if (add_enlarge || this.enlargeMain('verify'))
          this.addPadButton("circle", "Enlarge canvas", "enlargePad");
+
+      if (is_online && this.brlayout) {
+         this.addPadButton("diamand", "Toggle Ged", "ToggleGed");
+         this.addPadButton("three_circles", "Toggle Status", "ToggleStatus");
+      }
+
    }
 
    /** @summary Show pad buttons
@@ -3953,13 +3984,14 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
    /** @summary Hanler for websocket close event
      * @private */
    RCanvasPainter.prototype.onWebsocketClosed = function(/*handle*/) {
-      jsrp.closeCurrentWindow();
+      if (!this.embed_canvas)
+         jsrp.closeCurrentWindow();
    }
 
    /** @summary Hanler for websocket message
      * @private */
    RCanvasPainter.prototype.onWebsocketMsg = function(handle, msg) {
-      console.log("GET MSG " + msg.substr(0,30));
+      console.log("GET_MSG " + msg.substr(0,30));
 
       if (msg == "CLOSE") {
          this.onWebsocketClosed();
@@ -4198,9 +4230,126 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       }
    }
 
+   /** @summary Handle pad button click event
+     * @private */
+   RCanvasPainter.prototype.clickPadButton = function(funcname, evnt) {
+      if (funcname == "ToggleGed") return this.activateGed(this, null, "toggle");
+      if (funcname == "ToggleStatus") return this.activateStatusBar("toggle");
+      RPadPainter.prototype.clickPadButton.call(this, funcname, evnt);
+   }
+
    /** @summary returns true when event status area exist for the canvas */
    RCanvasPainter.prototype.hasEventStatus = function() {
-      return this.has_event_status;
+      if (this.testUI5()) return false;
+      return this.brlayout ? this.brlayout.hasStatus() : false;
+   }
+
+   /** @summary Show/toggle event status bar
+     * @private */
+   RCanvasPainter.prototype.activateStatusBar = function(state) {
+      if (this.testUI5()) return;
+      if (this.brlayout)
+         this.brlayout.createStatusLine(23, state);
+      this.processChanges("sbits", this);
+   }
+
+   /** @summary Returns true if GED is present on the canvas */
+   RCanvasPainter.prototype.hasGed = function() {
+      if (this.testUI5()) return false;
+      return this.brlayout ? this.brlayout.hasContent() : false;
+   }
+
+   /** @summary Function used to de-activate GED
+     * @private */
+   RCanvasPainter.prototype.removeGed = function() {
+      if (this.testUI5()) return;
+
+      this.registerForPadEvents(null);
+
+      if (this.ged_view) {
+         this.ged_view.getController().cleanupGed();
+         this.ged_view.destroy();
+         delete this.ged_view;
+      }
+      if (this.brlayout)
+         this.brlayout.deleteContent();
+
+      this.processChanges("sbits", this);
+   }
+
+   /** @summary Function used to activate GED
+     * @returns {Promise} when GED is there
+     * @private */
+   RCanvasPainter.prototype.activateGed = function(objpainter, kind, mode) {
+      if (this.testUI5() || !this.brlayout)
+         return Promise.resolve(false);
+
+      if (this.brlayout.hasContent()) {
+         if ((mode === "toggle") || (mode === false)) {
+            this.removeGed();
+         } else {
+            let pp = objpainter ? objpainter.getPadPainter() : null;
+            if (pp) pp.selectObjectPainter(objpainter);
+         }
+
+         return Promise.resolve(true);
+      }
+
+      if (mode === false)
+         return Promise.resolve(false);
+
+      let btns = this.brlayout.createBrowserBtns();
+
+      JSROOT.require('interactive').then(inter => {
+
+         inter.ToolbarIcons.createSVG(btns, inter.ToolbarIcons.diamand, 15, "toggle fix-pos mode")
+                            .style("margin","3px").on("click", () => this.brlayout.toggleKind('fix'));
+
+         inter.ToolbarIcons.createSVG(btns, inter.ToolbarIcons.circle, 15, "toggle float mode")
+                            .style("margin","3px").on("click", () => this.brlayout.toggleKind('float'));
+
+         inter.ToolbarIcons.createSVG(btns, inter.ToolbarIcons.cross, 15, "delete GED")
+                            .style("margin","3px").on("click", () => this.removeGed());
+      });
+
+      // be aware, that jsroot_browser_hierarchy required for flexible layout that element use full browser area
+      this.brlayout.setBrowserContent("<div class='jsroot_browser_hierarchy' id='ged_placeholder'>Loading GED ...</div>");
+      this.brlayout.setBrowserTitle("GED");
+      this.brlayout.toggleBrowserKind(kind || "float");
+
+      return new Promise(resolveFunc => {
+
+         JSROOT.require('openui5').then(() => {
+
+            d3.select("#ged_placeholder").text("");
+
+            sap.ui.define(["sap/ui/model/json/JSONModel", "sap/ui/core/mvc/XMLView"], (JSONModel,XMLView) => {
+
+               let oModel = new JSONModel({ handle: null });
+
+               XMLView.create({
+                  viewName: "rootui5.canv.view.Ged"
+               }).then(oGed => {
+
+                  oGed.setModel(oModel);
+
+                  oGed.placeAt("ged_placeholder");
+
+                  this.ged_view = oGed;
+
+                  // TODO: should be moved into Ged controller - it must be able to detect canvas painter itself
+                  this.registerForPadEvents(oGed.getController().padEventsReceiver.bind(oGed.getController()));
+
+                  let pp = objpainter ? objpainter.getPadPainter() : null;
+                  if (pp) pp.selectObjectPainter(objpainter);
+
+                  this.processChanges("sbits", this);
+
+                  resolveFunc(true);
+               });
+            });
+         });
+      });
    }
 
    /** @summary produce JSON for RCanvas, which can be used to display canvas once again
@@ -4209,7 +4358,6 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       console.error('RCanvasPainter.produceJSON not yet implemented');
       return "";
    }
-
 
    function drawRCanvas(divid, can /*, opt */) {
       let nocanvas = !can;
