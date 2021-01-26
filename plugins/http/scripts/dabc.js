@@ -811,11 +811,11 @@ JSROOT.require("painter").then(jsrp => {
    }
 
    DABC.BnetControl = function(hpainter, itemname) {
-      hpainter.createCustomDisplay(itemname, "vert2").then(() => {
-         var painter = new DABC.BnetPainter(hpainter, itemname);
+      return hpainter.createCustomDisplay(itemname, "vert2").then(() => {
+         let painter = new DABC.BnetPainter(hpainter, itemname);
          if (painter.active()) {
             painter.RefreshHTML();
-            painter.main_timer = setInterval(painter.SendMainRequest.bind(painter), 2000);
+            painter.main_timer = setInterval(() => painter.SendMainRequest(), 2000);
             painter.DisplayItem("/"+painter.itemname+"/EventsRate");
          }
       });
