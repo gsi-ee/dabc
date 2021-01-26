@@ -178,6 +178,7 @@ JSROOT.require("painter").then(jsrp => {
                code += "<button hist='" + makehname("TRB", info.trb) + "'>Log</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "'>MsgPerTDC</button>";
+               code += "<button hist='" + makehname("TRB", info.trb, "ToTPerTDC") + "'>ToTPerTDC</button>";
                for (var j in info.tdc)
                   code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
             }
