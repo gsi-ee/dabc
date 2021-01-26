@@ -82,13 +82,14 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fProcMgr = (stream::DabcProcMgr*) cmd.GetPtr("ProcMgr");
    hadaq::HldProcessor* hld = (hadaq::HldProcessor*) cmd.GetPtr("HLDProc");
 
+   int hfill = Cfg("HistFilling", cmd).AsInt(1);
+
    if (!fProcMgr) {
       fOwnProcMgr = true;
       fProcMgr = new stream::DabcProcMgr();
+      fProcMgr->SetHistFilling(hfill); // set default for newly created processes
       fProcMgr->SetTop(fWorkerHierarchy);
    }
-
-   int hfill = Cfg("HistFilling", cmd).AsInt(1);
 
    fTrbProc = new hadaq::TrbProcessor(fTRB, hld, hfill);
    std::vector<uint64_t> hubid = Cfg("HUB", cmd).AsUIntVect();
@@ -146,7 +147,6 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fCountNormal = Cfg("CountNormal", cmd).AsInt(100000);
 
    fLinearNumPoints = Cfg("LinearNumPoints", cmd).AsInt(2);
-
 
    fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
    if (!fCalibrFile.empty()) {
@@ -547,7 +547,6 @@ bool stream::TdcCalibrationModule::retransmit()
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
                dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
-
 
                SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState);
 
