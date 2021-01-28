@@ -59,6 +59,7 @@ int usage(const char* errstr = nullptr)
    printf("   -auto                   - automatically assign ID for TDCs (0x0zzz or 0x1zzz) and HUBs (0x8zzz) (default false)\n");
    printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff)\n");
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
+   printf("   -onlych chid            - print only specified TDC channel (default off)\n");
    printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
    printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
@@ -163,6 +164,7 @@ struct SubevStat {
 double tot_limit(20.), tot_shift(20.), coarse_tmlen(5.);
 unsigned fine_min(31), fine_max(491), skip_msgs_in_tdc(0);
 bool bubble_mode{false}, only_errors{false}, use_colors{true}, epoch_per_channel{false}, use_calibr{true}, use_400mhz{false};
+int onlych = -1;
 
 const char *getCol(const char *col_name)
 {
@@ -513,7 +515,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             } else
             if (dkind == 0xE) sprintf(sbuf, " %3.1fC", dvalue/16.);
 
-            if (prefix>0)
+            if (prefix > 0)
                printf("tdc debug 0x%02x: 0x%06x %s%s\n", dkind, dvalue, debug_name[dkind], sbuf);
             break;
          case tdckind_Epoch:
@@ -604,13 +606,14 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             else
                snprintf(sfine, sizeof(sfine), "0x%03x", fine);
 
-            if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
-                                 ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
-                                 channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
+            if ((prefix > 0) && ((onlych < 0) || ((unsigned) onlych == channel)))
+               printf("%s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
+                      ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
+                       channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
             if ((channel==0) && (ch0tm==0)) ch0tm = tm;
             break;
          default:
-            if (prefix>0) printf("undefined\n");
+            if (prefix > 0) printf("undefined\n");
             break;
       }
    }
@@ -753,8 +756,8 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 }
 
-bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false), autoid(false);
-unsigned idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, autoid = false;
+unsigned idrange = 0xff, onlytdc = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0;
 std::vector<unsigned> hubs, tdcs, ctsids;
 
 bool is_cts(unsigned id)
@@ -816,6 +819,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
+      if ((strcmp(argv[n],"-onlych")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &onlych); } else
       if ((strcmp(argv[n],"-skipintdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc); } else
       if ((strcmp(argv[n],"-fine-min")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
       if ((strcmp(argv[n],"-fine-max")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
