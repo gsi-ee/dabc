@@ -381,8 +381,13 @@ JSROOT.require("painter").then(jsrp => {
               "<option value='ec'>ECAL file</option>" +
               "<option value='st'>Start file</option>" +
               "<option value='rp'>RPC file</option>" +
+              "<option value='to'>TOF file</option>" +
               "<option value='fw'>FW file</option>" +
               "<option value='pt'>Pion Tracker file</option>" +
+              "<option value='fd'>Forward detector (all) file</option>" +
+              "<option value='fs'>Forward detector (sts only) file</option>" +
+              "<option value='fr'>Forward detector (rpc only) file</option>" +
+              "<option value='it'>Inner TOF file</option>" +
               "<option value='tc'>TDC Calibration file</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
