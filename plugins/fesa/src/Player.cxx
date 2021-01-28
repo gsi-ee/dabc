@@ -142,6 +142,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    if (fCounter == 10) {
       DOUT0("Create BeamProfile2 10 seconds later");
       // this is just emulation, later one need list of real variables
+      dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
       dabc::Hierarchy item2 = fWorkerHierarchy.CreateHChild("BeamProfile2");
       item2.SetField(dabc::prop_kind, "FESA.2D");
       item2.SetField("_autoload", "dabcsys/plugins/fesa/fesa.js");
@@ -153,7 +154,6 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
       fesa::BeamProfile *rec2 = (fesa::BeamProfile*) buf2.SegmentPtr();
       rec2->fill((fCounter+4) % 7);
    }
-
 
 
 #ifdef WITH_FESA

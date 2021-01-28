@@ -170,6 +170,8 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    bins[2] = right;
    h.SetField("bins", bins);
 
+   fTop.MarkChangedItems();
+
    return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
 }
 
@@ -253,6 +255,8 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    bins[4] = left2;
    bins[5] = right2;
    h.SetField("bins", bins);
+
+   fTop.MarkChangedItems();
 
    return (base::H2handle) h.GetFieldPtr("bins")->GetDoubleArr();
 }
