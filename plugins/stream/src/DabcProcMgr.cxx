@@ -192,8 +192,10 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    }
 
    dabc::Hierarchy h = fTop.GetHChild(name);
-   if (!h.null() && reuse && h.GetFieldPtr("bins"))
+   if (!h.null() && reuse && h.GetFieldPtr("bins")) {
+      DOUT0("Resuse histogram %s", name);
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
+   }
 
    if (!h) {
       std::string sname = name;
@@ -203,7 +205,12 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
       else
          h = fTop.CreateHChild(name);
    }
-   if (!h) return nullptr;
+   if (!h) {
+      DOUT0("Fail to create histogram %s", name);
+      return nullptr;
+   }
+
+   DOUT0("Create H2 %s  %d x %d", name, nbins1, nbins2);
 
    h.SetField("_kind", h2poly.empty() ? "ROOT.TH2D" : "ROOT.TH2Poly");
    h.SetField("_title", title);

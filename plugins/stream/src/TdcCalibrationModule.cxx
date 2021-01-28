@@ -163,8 +163,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    // set ids and create more histograms
    if (fOwnProcMgr) {
-      DOUT0("%s USER PRELLOP NUMCHILDS %u", GetName(), fWorkerHierarchy.NumChilds());
       fProcMgr->UserPreLoop();
+      DOUT0("%s USER PRELLOP NUMCHILDS %u HASHISTOS %s", GetName(), fWorkerHierarchy.NumChilds(), DBOOL(fTrbProc->HasPerTDCHistos()));
       Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
       // remove pointer, let other modules to create and use it
       base::ProcMgr::ClearInstancePointer();
@@ -440,7 +440,11 @@ bool stream::TdcCalibrationModule::retransmit()
                   }
                }
 
-               if (numtdc > 0) fTrbProc->CreatePerTDCHistos();
+               if (numtdc > 0) {
+                  DOUT0("Creating per-TDC histos for TRB %s total new_tdc %u has_histos %s hist_level %d", fTrbProc->GetName(), numtdc, DBOOL(fTrbProc->HasPerTDCHistos()), fTrbProc->HistFillLevel());
+                  fTrbProc->CreatePerTDCHistos();
+                  DOUT0("Did create per-TDC histos for TRB %s", fTrbProc->GetName());
+               }
 
                // set field with TDCs
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
