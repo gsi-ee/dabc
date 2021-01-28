@@ -527,7 +527,8 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             calibr[0] = msg & 0x3fff;
             calibr[1] = (msg >> 14) & 0x3fff;
             if (use_calibr) ncalibr = 0;
-            if (prefix > 0) printf("%s tdc calibr v1 0x%04x v2 0x%04x\n", sbeg, calibr[0], calibr[1]);
+            if ((prefix > 0) && (onlych < 0))
+               printf("%s tdc calibr v1 0x%04x v2 0x%04x\n", sbeg, calibr[0], calibr[1]);
             break;
          case tdckind_Hit:
          case tdckind_Hit1:
