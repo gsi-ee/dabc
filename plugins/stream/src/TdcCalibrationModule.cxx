@@ -199,6 +199,7 @@ stream::TdcCalibrationModule::~TdcCalibrationModule()
 void stream::TdcCalibrationModule::ProcessTimerEvent(unsigned)
 {
    fRecheckTdcs = (fAutoTdcMode > 0);
+   if (fWarningCnt >= 0) fWarningCnt--;
 }
 
 void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hierarchy &logitem, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state)
@@ -449,7 +450,12 @@ bool stream::TdcCalibrationModule::retransmit()
                // set field with TDCs
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
 
-               // if (numtdc==0) EOUT("No any TDC found");
+               if (numtdc==0) {
+                  if (fWarningCnt <= 0) {
+                     DOUT0("No any TDC found in %s - please disable Mode in XML file", GetName());
+                     fWarningCnt = 10;
+                  }
+               }
 
                if (fDebug == 2) {
                   // just start explicit calculations

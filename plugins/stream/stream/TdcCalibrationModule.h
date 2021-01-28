@@ -77,6 +77,7 @@ namespace stream {
       int fNumCh{33};                         ///< configured number of channel
       int fEdges{1};                          ///< configured edges
       bool fRecheckTdcs{false};               ///< check for missing tdcs, done once 5 sec
+      int fWarningCnt{0};                     ///< counter for warnings
 
       // dabc::Profiler fProfiler;               ///< profiler of build event performance
 
