@@ -137,6 +137,25 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    fesa::BeamProfile* rec = (fesa::BeamProfile*) buf.SegmentPtr();
    rec->fill(fCounter % 7);
 
+   dabc::Buffer buf2;
+
+   if (fCounter == 10) {
+      DOUT0("Create BeamProfile2 10 seconds later");
+      // this is just emulation, later one need list of real variables
+      dabc::Hierarchy item2 = fWorkerHierarchy.CreateHChild("BeamProfile2");
+      item2.SetField(dabc::prop_kind, "FESA.2D");
+      item2.SetField("_autoload", "dabcsys/plugins/fesa/fesa.js");
+      item2.SetField("_can_draw", true);
+   }
+
+   if (fCounter > 10) {
+      buf2 = dabc::Buffer::CreateBuffer(sizeof(fesa::BeamProfile));
+      fesa::BeamProfile *rec2 = (fesa::BeamProfile*) buf2.SegmentPtr();
+      rec2->fill((fCounter+4) % 7);
+   }
+
+
+
 #ifdef WITH_FESA
    if ((fDevice!=0) && !fService.empty()) {
       double res = doGet(fService, fField);
@@ -154,6 +173,14 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    item()->bindata() = buf;
    item.SetField(dabc::prop_hash, fCounter);
+
+
+   if (fCounter > 10) {
+      // fill also second profile
+      dabc::Hierarchy item2 = fWorkerHierarchy.GetHChild("BeamProfile2");
+      item2()->bindata() = buf2;
+      item2.SetField(dabc::prop_hash, fCounter);
+   }
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
    fWorkerHierarchy.GetHChild("BeamRate").SetField("value", dabc::format("%4.2f", v1));
