@@ -442,7 +442,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    int bubble_len = -1, nbubble = 0;
    unsigned bubble_ix = 0, bubble_ch = 0, bubble_eix = 0;
 
-   char sbuf[100], sfine[100];
+   char sbuf[100], sfine[100], sbeg[100];
    unsigned calibr[2] = { 0xffff, 0xffff };
    unsigned skip = skip_msgs_in_tdc;
    int ncalibr = 2;
@@ -475,11 +475,10 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          bubble_len = -1; // no bubbles
       }
 
-      if (prefix>0) printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
+      if (prefix > 0) sprintf(sbeg, "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
 
       if (skip > 0) {
          skip--;
-         if (prefix>0) printf("skip\n");
          continue;
       }
 
@@ -487,7 +486,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
       switch (msg & tdckind_Mask) {
          case tdckind_Reserved:
-            if (prefix>0) printf("tdc trailer ttyp:0x%01x rnd:0x%02x err:0x%04x\n", (msg >> 24) & 0xF,  (msg >> 16) & 0xFF, msg & 0xFFFF);
+            if (prefix>0) printf("%s tdc trailer ttyp:0x%01x rnd:0x%02x err:0x%04x\n", sbeg, (msg >> 24) & 0xF,  (msg >> 16) & 0xFF, msg & 0xFFFF);
             break;
          case tdckind_Header:
             nheader++;
@@ -497,8 +496,8 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                default: hdrkind = "normal"; break;
             }
 
-            if (prefix>0)
-               printf("tdc header fmt:%x %s\n", ((msg >> 24) & 0x0F), hdrkind);
+            if (prefix > 0)
+               printf("%s tdc header fmt:%x %s\n", sbeg, ((msg >> 24) & 0x0F), hdrkind);
             break;
          case tdckind_Debug:
             ndebug++;
@@ -512,23 +511,23 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                sprintf(sbuf, "  design 0x%08x %s", rawtime, ctime(&t));
                int len = strlen(sbuf);
                if (sbuf[len-1]==10) sbuf[len-1] = 0;
-            } else
-            if (dkind == 0xE) sprintf(sbuf, " %3.1fC", dvalue/16.);
+            } else if (dkind == 0xE)
+               sprintf(sbuf, " %3.1fC", dvalue/16.);
 
             if (prefix > 0)
-               printf("tdc debug 0x%02x: 0x%06x %s%s\n", dkind, dvalue, debug_name[dkind], sbuf);
+               printf("%s tdc debug 0x%02x: 0x%06x %s%s\n", sbeg, dkind, dvalue, debug_name[dkind], sbuf);
             break;
          case tdckind_Epoch:
             epoch = msg & 0xFFFFFFF;
             tm = (epoch << 11) *5.;
             epoch_channel = -1; // indicate that we have new epoch
-            if (prefix>0) printf("epoch %u tm %6.3f ns\n", msg & 0xFFFFFFF, tm);
+            if (prefix > 0) printf("%s epoch %u tm %6.3f ns\n", sbeg, msg & 0xFFFFFFF, tm);
             break;
          case tdckind_Calibr:
             calibr[0] = msg & 0x3fff;
             calibr[1] = (msg >> 14) & 0x3fff;
             if (use_calibr) ncalibr = 0;
-            if (prefix>0) printf("tdc calibr v1 0x%04x v2 0x%04x\n", calibr[0], calibr[1]);
+            if (prefix > 0) printf("%s tdc calibr v1 0x%04x v2 0x%04x\n", sbeg, calibr[0], calibr[1]);
             break;
          case tdckind_Hit:
          case tdckind_Hit1:
@@ -607,18 +606,18 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                snprintf(sfine, sizeof(sfine), "0x%03x", fine);
 
             if ((prefix > 0) && ((onlych < 0) || ((unsigned) onlych == channel)))
-               printf("%s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
-                      ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
-                       channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
+               printf("%s %s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
+                      sbeg, ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
+                      channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
             if ((channel==0) && (ch0tm==0)) ch0tm = tm;
             break;
          default:
-            if (prefix > 0) printf("undefined\n");
+            if (prefix > 0) printf("%s undefined\n", sbeg);
             break;
       }
    }
 
-   if (len<2) { if (nheader!=1) errmask |= tdcerr_NoData; } else
+   if (len < 2) { if (nheader!=1) errmask |= tdcerr_NoData; } else
    if (!haschannel0 && (ndebug==0) && (nbubble==0)) errmask |= tdcerr_MissCh0;
 
    for (unsigned n=1;n<NumCh;n++)
