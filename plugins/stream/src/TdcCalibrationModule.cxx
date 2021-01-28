@@ -449,7 +449,7 @@ bool stream::TdcCalibrationModule::retransmit()
                // set field with TDCs
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
 
-               if (numtdc==0) EOUT("No any TDC found");
+               // if (numtdc==0) EOUT("No any TDC found");
 
                if (fDebug == 2) {
                   // just start explicit calculations
