@@ -167,7 +167,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       DOUT0("%s USER PRELLOP NUMCHILDS %u HASHISTOS %s", GetName(), fWorkerHierarchy.NumChilds(), DBOOL(fTrbProc->HasPerTDCHistos()));
       Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
       // remove pointer, let other modules to create and use it
-      base::ProcMgr::ClearInstancePointer();
+      base::ProcMgr::ClearInstancePointer(fProcMgr);
    }
 
    // in AutoTDCMode==0 no data is changed, but also no new buffer are required
