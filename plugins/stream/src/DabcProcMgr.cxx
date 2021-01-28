@@ -125,8 +125,10 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    }
 
    dabc::Hierarchy h = fTop.GetHChild(name);
-   if (!h.null() && reuse && h.GetFieldPtr("bins"))
+   if (!h.null() && reuse && h.GetFieldPtr("bins")) {
+      DOUT0("Resuse h1 %s", name);
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
+   }
 
    if (!h) {
       std::string sname = name;
@@ -136,7 +138,12 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
       else
          h = fTop.CreateHChild(name);
    }
-   if (!h) return nullptr;
+   if (!h) {
+      DOUT0("Fail to create h1 %s", name);
+      return nullptr;
+   }
+
+   DOUT0("Create H1 %s ndim: %d TOP: %p", name, nbins, fTop.GetObject());
 
    h.SetField("_kind","ROOT.TH1D");
    h.SetField("_title", title);
@@ -193,7 +200,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
 
    dabc::Hierarchy h = fTop.GetHChild(name);
    if (!h.null() && reuse && h.GetFieldPtr("bins")) {
-      DOUT0("Resuse histogram %s", name);
+      DOUT0("Resuse h2 %s", name);
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
    }
 
@@ -206,11 +213,11 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
          h = fTop.CreateHChild(name);
    }
    if (!h) {
-      DOUT0("Fail to create histogram %s", name);
+      DOUT0("Fail to create h2 %s", name);
       return nullptr;
    }
 
-   DOUT0("Create H2 %s  %d x %d", name, nbins1, nbins2);
+   DOUT0("Create H2 %s ndim: %d x %d  TOP: %p", name, nbins1, nbins2, fTop.GetObject());
 
    h.SetField("_kind", h2poly.empty() ? "ROOT.TH2D" : "ROOT.TH2Poly");
    h.SetField("_title", title);
@@ -254,7 +261,8 @@ dabc::Hierarchy stream::DabcProcMgr::FindHistogram(void *handle)
    while (iter.next()) {
       dabc::Hierarchy item = iter.ref();
       if (item.HasField("_dabc_hist"))
-         if (item.GetFieldPtr("bins")->GetDoubleArr()==handle) return item;
+         if (item.GetFieldPtr("bins")->GetDoubleArr() == handle)
+            return item;
    }
    return nullptr;
 }
