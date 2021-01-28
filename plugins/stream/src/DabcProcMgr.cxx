@@ -124,6 +124,8 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
       if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
 
+   dabc::LockGuard lock(fTop.GetHMutex());
+
    dabc::Hierarchy h = fTop.GetHChild(name);
    if (!h.null() && reuse && h.GetFieldPtr("bins")) {
       DOUT0("Resuse h1 %s", name);
@@ -197,6 +199,8 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
       if (part.find("reuse")==0) { reuse = true; } else
       if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
+
+   dabc::LockGuard lock(fTop.GetHMutex());
 
    dabc::Hierarchy h = fTop.GetHChild(name);
    if (!h.null() && reuse && h.GetFieldPtr("bins")) {
