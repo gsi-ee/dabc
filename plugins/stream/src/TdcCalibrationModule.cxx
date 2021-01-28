@@ -164,7 +164,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    // set ids and create more histograms
    if (fOwnProcMgr) {
       fProcMgr->UserPreLoop();
-      DOUT0("%s USER PRELLOP NUMCHILDS %u HASHISTOS %s", GetName(), fWorkerHierarchy.NumChilds(), DBOOL(fTrbProc->HasPerTDCHistos()));
+      DOUT2("%s USER PRELLOP NUMCHILDS %u HASHISTOS %s", GetName(), fWorkerHierarchy.NumChilds(), DBOOL(fTrbProc->HasPerTDCHistos()));
       Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
       // remove pointer, let other modules to create and use it
       base::ProcMgr::ClearInstancePointer(fProcMgr);
@@ -441,20 +441,15 @@ bool stream::TdcCalibrationModule::retransmit()
                   }
                }
 
-               if (numtdc > 0) {
-                  DOUT0("Creating per-TDC histos for TRB %s total new_tdc %u has_histos %s hist_level %d", fTrbProc->GetName(), numtdc, DBOOL(fTrbProc->HasPerTDCHistos()), fTrbProc->HistFillLevel());
+               if (numtdc > 0)
                   fTrbProc->CreatePerTDCHistos();
-                  DOUT0("Did create per-TDC histos for TRB %s", fTrbProc->GetName());
-               }
 
                // set field with TDCs
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
 
-               if (numtdc==0) {
-                  if (fWarningCnt <= 0) {
-                     DOUT0("No any TDC found in %s - please disable Mode in XML file", GetName());
-                     fWarningCnt = 10;
-                  }
+               if ((numtdc==0) && (fWarningCnt <= 0)) {
+                  DOUT0("No any TDC found in %s - please disable Mode in XML file", GetName());
+                  fWarningCnt = 10;
                }
 
                if (fDebug == 2) {

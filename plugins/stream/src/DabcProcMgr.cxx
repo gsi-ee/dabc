@@ -127,10 +127,8 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    dabc::LockGuard lock(fTop.GetHMutex());
 
    dabc::Hierarchy h = fTop.GetHChild(name);
-   if (!h.null() && reuse && h.GetFieldPtr("bins")) {
-      DOUT0("Resuse h1 %s", name);
+   if (!h.null() && reuse && h.GetFieldPtr("bins"))
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
-   }
 
    if (!h) {
       std::string sname = name;
@@ -140,12 +138,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
       else
          h = fTop.CreateHChild(name);
    }
-   if (!h) {
-      DOUT0("Fail to create h1 %s", name);
-      return nullptr;
-   }
-
-   DOUT0("Create H1 %s ndim: %d TOP: %p", name, nbins, fTop.GetObject());
+   if (!h) return nullptr;
 
    h.SetField("_kind","ROOT.TH1D");
    h.SetField("_title", title);
@@ -205,10 +198,8 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    dabc::LockGuard lock(fTop.GetHMutex());
 
    dabc::Hierarchy h = fTop.GetHChild(name);
-   if (!h.null() && reuse && h.GetFieldPtr("bins")) {
-      DOUT0("Resuse h2 %s", name);
+   if (!h.null() && reuse && h.GetFieldPtr("bins"))
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
-   }
 
    if (!h) {
       std::string sname = name;
@@ -218,12 +209,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
       else
          h = fTop.CreateHChild(name);
    }
-   if (!h) {
-      DOUT0("Fail to create h2 %s", name);
-      return nullptr;
-   }
-
-   DOUT0("Create H2 %s ndim: %d x %d  TOP: %p", name, nbins1, nbins2, fTop.GetObject());
+   if (!h) return nullptr;
 
    h.SetField("_kind", h2poly.empty() ? "ROOT.TH2D" : "ROOT.TH2Poly");
    h.SetField("_title", title);
