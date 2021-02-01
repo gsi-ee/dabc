@@ -228,10 +228,9 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
          int mode = tdc->GetExplicitCalibrationMode();
 
          if (!logitem.null()) {
-            std::vector<std::string> errlog;
-            tdc->AppendCalibrLog(errlog);
-            for (unsigned n = 0; n < errlog.size(); ++n) {
-               logitem.SetField("value", errlog[n]);
+            auto errlog = tdc->TakeCalibrLog();
+            for (auto &item : errlog) {
+               logitem.SetField("value", item);
                logitem.MarkChangedItems();
             }
          }
