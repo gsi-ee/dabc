@@ -78,6 +78,8 @@ namespace stream {
       int fEdges{1};                          ///< configured edges
       bool fRecheckTdcs{false};               ///< check for missing tdcs, done once 5 sec
       int fWarningCnt{0};                     ///< counter for warnings
+      int fTotStatLimit{0};                   ///< limit for ToT statistic
+      double fTotRMSLimit{0};                 ///< limit for ToT RMS calibration
 
       // dabc::Profiler fProfiler;               ///< profiler of build event performance
 

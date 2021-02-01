@@ -56,6 +56,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fEdges = Cfg("EdgeMask", cmd).AsUInt(1);
    fTdcMin = Cfg("TdcMin", cmd).AsUIntVect();
    fTdcMax = Cfg("TdcMax", cmd).AsUIntVect();
+   fTotStatLimit = Cfg("TotStat", cmd).AsInt(0);
+   fTotRMSLimit = Cfg("TotRMS", cmd).AsDouble(0.);
 
    // window for hits
    double dlow = Cfg("TrigDWindowLow", cmd).AsDouble();
@@ -112,10 +114,12 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
          if (fAutoTdcMode == 1) tdc->SetUseLinear(); // force linear
          if (fAutoToTRange > 0) tdc->SetToTRange(10., 30., 60.);
          tdc->UseExplicitCalibration();
+         if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
+         if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
       }
       item.SetField("tdc", fTDCs);
    } else {
-      if (fAutoTdcMode>=10) {
+      if (fAutoTdcMode >= 10) {
          fAutoToTRange = fAutoTdcMode / 10;
          fAutoTdcMode = fAutoTdcMode % 10;
       }
@@ -320,6 +324,8 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
    if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
    if (fAutoToTRange==1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
 
+   if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
+   if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
 
    tdc->UseExplicitCalibration();
 
