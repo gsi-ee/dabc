@@ -110,7 +110,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
       <!-- special configuration for iTOF HUBs -->
      <Module name="TRB8d0*_TdcCal">
        <!-- number of TDC channels -->
-       <NumChannels value="49"/>
+       <NumChannels value="33"/>
     </Module>
 
     <!-- these are default parameters for TDC calibration modules -->
@@ -170,7 +170,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
 
        <!-- Statistic amnd RMS required to calibrate ToT based on 0xD trigger -->
        <TotStat value="100"/>
-       <TotRMS value="0.15"/>
+       <TotRMS value="0.2"/>
 
        <!-- Should calibrated value replace old message (true, set by default) or
             new calibration data should be inserted before hit messages (false)
