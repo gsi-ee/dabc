@@ -103,13 +103,15 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- number of TDC channels -->
        <NumChannels value="53"/>
        <TotRMS value="0.4"/>
-        <DisableCalibrationFor value="40">
-    </Module>
+        <DisableCalibrationFor value="40"/>
+	</Module>
+	
      <Module name="TRB8b0*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
        <TotRMS value="0.4"/>
-       <DisableCalibrationFor value="25,36">
+       <DisableCalibrationFor value="25,36"/>
+	 
      </Module>
       <!-- special configuration for iTOF HUBs -->
      <Module name="TRB8d0*_TdcCal">
