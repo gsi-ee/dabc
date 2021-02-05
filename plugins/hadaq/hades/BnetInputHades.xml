@@ -84,7 +84,9 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
 <!-- special configuration for VETO detector -->
     <Module name="TRB889*_TdcCal">
        <!-- number of TDC channels -->
-       <NumChannels value="49"/>
+       <NumChannels value="33"/>
+       <TdcMin value="0x5010"/>
+       <TdcMax value="0x5011"/>
     </Module>
     
 
@@ -98,14 +100,25 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     <Module name="TRB84c*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
+        <TotRMS value="0.3"/>
   </Module>
 
   <!-- special configuration for TOF TRB3 HUBs -->
     <Module name="TRB86c*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="33"/>
+        <TotRMS value="0.3"/>
     </Module>
     <!-- special configuration for STS HUBs -->
+
+    <Module name="TRB8b15_TdcCal">
+       <!-- number of TDC channels -->
+       <NumChannels value="53"/>
+       <TotRMS value="0.4"/>
+       <TdcMin value="0x6464"/>
+       <TdcMax value="0x6465"/>
+	</Module>
+    
     <Module name="TRB8b1*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="53"/>
@@ -117,7 +130,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
        <TotRMS value="0.4"/>
-       <DisableCalibrationFor value="25,36"/>
+       <DisableCalibrationFor value="[25,36]"/>
 	 
      </Module>
       <!-- special configuration for iTOF HUBs -->
