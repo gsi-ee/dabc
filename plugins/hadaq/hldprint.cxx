@@ -1200,6 +1200,8 @@ int main(int argc, char* argv[])
       }
    }
 
+   if (dabc::CtrlCPressed()) break;
+
    } // ngain--
 
    return 0;
