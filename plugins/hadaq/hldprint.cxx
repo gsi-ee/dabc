@@ -73,7 +73,8 @@ int usage(const char* errstr = nullptr)
    printf("   -mhz value              - new design with arbitrary MHz, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31)\n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491)\n");
-   printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n\n");
+   printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n");
+   printf("   -again [N=1]            - repeat same printout N times, only for debug purposes\n\n");
    printf("Example - display only data from TDC 0x1226:\n\n");
    printf("   hldprint localhost:6789 -num 1 -auto -onlytdc 0x1226\n\n");
    printf("Show statistic over all events in HLD file:\n\n");
@@ -803,14 +804,14 @@ int main(int argc, char* argv[])
 {
    if ((argc<2) || !strcmp(argv[1],"-help") || !strcmp(argv[1],"?")) return usage();
 
-   long number(10), skip(0);
+   long number{10}, skip{0}, nagain{0};
    unsigned findid(0);
    double tmout(-1.), maxage(-1.), debug_delay(-1), mhz(400.);
    bool dofind = false;
    unsigned tdcmask(0), ctsid(0);
 
    int n = 1;
-   while (++n<argc) {
+   while (++n < argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if (strcmp(argv[n],"-all")==0) { number = 0; } else
       if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
@@ -851,6 +852,10 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-340")==0) { use_400mhz = true; coarse_tmlen = 1000./340.; fine_min = 0x5; fine_max = 0xc0; } else
       if (strcmp(argv[n],"-400")==0) { use_400mhz = true; coarse_tmlen = 1000./400.; fine_min = 0x5; fine_max = 0xc0; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
+      if (strcmp(argv[n],"-again")==0) {
+         if ((n+1 < argc) && (argv[n+1][0] != '-')) dabc::str_to_lint(argv[++n], &nagain);
+                                               else nagain++;
+      } else
       return usage("Unknown option");
    }
 
@@ -867,7 +872,7 @@ int main(int argc, char* argv[])
 
    if ((src.find("hld://") == 0) || (src.find(".hld") != std::string::npos)) ishld = true;
 
-   if (tmout<0) tmout = ishld ? 0.5 : 5.;
+   if (tmout < 0) tmout = ishld ? 0.5 : 5.;
 
    if (!ishld) {
 
@@ -886,9 +891,6 @@ int main(int argc, char* argv[])
       }
    }
 
-   hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect(src.c_str());
-
-   if (ref.null()) return 1;
 
    hadaq::RawEvent *evnt = nullptr;
 
@@ -897,11 +899,24 @@ int main(int argc, char* argv[])
    std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
    long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
    uint64_t lastsz{0}, currsz{0};
-   dabc::TimeStamp last = dabc::Now();
-   dabc::TimeStamp first = last;
-   dabc::TimeStamp lastevtm = last;
+   dabc::TimeStamp last, first, lastevtm;
+
+   hadaq::ReadoutHandle ref;
 
    dabc::InstallSignalHandlers();
+
+   while (nagain-- >= 0) {
+
+   ref = hadaq::ReadoutHandle::Connect(src.c_str());
+
+   if (ref.null()) return 1;
+
+   idstat.clear();
+   substat.clear();
+   subsubstat.clear();
+   cnt = cnt0 = lastcnt = printcnt = 0;
+   lastsz = currsz = 0;
+   last = first = lastevtm = dabc::Now();
 
    while (!dabc::CtrlCPressed()) {
 
@@ -1183,8 +1198,9 @@ int main(int argc, char* argv[])
 
          printf("\n");
       }
-
    }
+
+   } // ngain--
 
    return 0;
 }
