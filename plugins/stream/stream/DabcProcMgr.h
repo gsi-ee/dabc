@@ -69,6 +69,7 @@ namespace stream {
          void AddRunLog(const char *msg) override;
          void AddErrLog(const char *msg) override;
          bool DoLog()  override { return true; }
+         void PrintLog(const char *msg) override;
 
          bool CallFunc(const char* funcname, void* arg) override;
 

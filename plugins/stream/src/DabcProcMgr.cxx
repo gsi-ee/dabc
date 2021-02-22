@@ -99,6 +99,11 @@ void stream::DabcProcMgr::AddErrLog(const char *msg)
    h.MarkChangedItems();
 }
 
+void stream::DabcProcMgr::PrintLog(const char *msg)
+{
+   DOUT0(msg);
+}
+
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
    std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
