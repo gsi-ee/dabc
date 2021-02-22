@@ -498,7 +498,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             }
 
             if (prefix > 0)
-               printf("%s tdc header fmt:%x %s\n", sbeg, ((msg >> 24) & 0x0F), hdrkind);
+               printf("%s tdc header fmt:0x01%x hwtyp:0x%02x %s\n", sbeg, ((msg >> 24) & 0x0F), ((msg >> 8) & 0xFF), hdrkind);
             break;
          case tdckind_Debug:
             ndebug++;
