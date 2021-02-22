@@ -112,7 +112,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
          hadaq::TdcProcessor *tdc = fTrbProc->GetTDC(fTDCs[n], true);
          if (fAutoTdcMode == 1) tdc->SetUseLinear(); // force linear
-         if (fAutoToTRange > 0) tdc->SetToTRange(10., 30., 60.);
+         if (fAutoToTRange > 0) tdc->SetToTRange(20., 30., 60.);
          tdc->UseExplicitCalibration();
          if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
          if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
