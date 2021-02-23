@@ -874,8 +874,8 @@ void dabc::Module::ProcessEvent(const EventId& evid)
             ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
             // if reconnect is specified and port is not declared as non-automatic
-            // if port was connected with connect manager, let do work by connetion manager
-            if (req.null() && port->TryNextReconnect(iserror)) {
+            // if port was connected with connect manager, let do work by connection manager
+            if (req.null() && port->TryNextReconnect(iserror, fAutoStop)) {
                std::string timername = dabc::format("ConnTimer_%s", port->GetName());
 
                ConnTimer* timer = dynamic_cast<ConnTimer*> (FindChild(timername.c_str()));

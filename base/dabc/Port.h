@@ -137,7 +137,7 @@ namespace dabc {
          }
 
          /** Returns true when reconnection should be attempted */
-         bool TryNextReconnect(bool caused_by_error);
+         bool TryNextReconnect(bool caused_by_error, bool can_disconnect = true);
 
          double GetReconnectPeriod() const { return fReconnectPeriod; }
 

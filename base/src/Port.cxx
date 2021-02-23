@@ -191,7 +191,7 @@ bool dabc::Port::SubmitCommandToTransport(Command cmd)
    return false;
 }
 
-bool dabc::Port::TryNextReconnect(bool caused_by_error)
+bool dabc::Port::TryNextReconnect(bool caused_by_error, bool can_disconnect)
 {
 //   if (!caused_by_error) return false;
 
@@ -210,7 +210,7 @@ bool dabc::Port::TryNextReconnect(bool caused_by_error)
    } else if (fOnError == "abort") {
       DOUT0("Abort application due to error on port %s", ItemName().c_str());
       abort();
-   } else {
+   } else if (can_disconnect) {
       Disconnect();
    }
 
