@@ -143,7 +143,7 @@ JSROOT.require("painter").then(jsrp => {
 
       function makehname(prefix, code, name) {
          var str = code.toString(16).toUpperCase();
-         while (str.length<4) str = "0"+str;
+         while (str.length < 4) str = "0"+str;
          str = prefix+"_"+str;
          if (name) str += "_"+name;
          var hitem = null;
@@ -152,6 +152,18 @@ JSROOT.require("painter").then(jsrp => {
          console.log("did not found histogram " + str);
          return str;
       }
+
+      function makecalname(code) {
+         var str = code.toString(16);
+         while (str.length < 4) str = "0"+str;
+         str = "TRB" + str + "_TdcCal";
+         var hitem = null;
+         hpainter.forEachItem(item => { if ((item._name == str) && !hitem) hitem = item; });
+         if (hitem) return hpainter.itemFullName(hitem);
+         console.log("did not found element " + str);
+         return str;
+      }
+
 
       function get_status_color(status) {
          if (status.indexOf('Ready')==0) return 'green';
@@ -175,7 +187,8 @@ JSROOT.require("painter").then(jsrp => {
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>"+info.trb.toString(16)+"_TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "'>"+info.trb.toString(16)+"_SubevSize</button>";
             } else {
-               code += "<button hist='" + makehname("TRB", info.trb) + "'>Log</button>";
+               code += "<button title='show calibration log' hist='" + makehname("TRB", info.trb) + "'>Log</button>";
+               code += "<button title='acknowledge calibration quality' hist='" + makecalname(info.trb) + "'>Ackn</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "'>MsgPerTDC</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "ToTPerTDC") + "'>ToTPerTDC</button>";
@@ -190,6 +203,10 @@ JSROOT.require("painter").then(jsrp => {
                var histname = $(this).attr('hist');
                if ($(this).text() == "Clr") {
                   JSROOT.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
+                  return;
+               }
+               if ($(this).text() == "Ackn") {
+                  JSROOT.httpRequest(histname+"/cmd.json?command=AcknowledgeQuality", "object");
                   return;
                }
                if ($(this).text() == "Log") {
@@ -590,6 +607,7 @@ JSROOT.require("painter").then(jsrp => {
       if (quality <= 0.3) return "red";
       if (quality < 0.7) return "yellow";
       if (quality < 0.8) return "lightblue";
+      if (quality <= 0.9) return "green";
       return "lightgreen";
    }
 

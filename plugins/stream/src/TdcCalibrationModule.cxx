@@ -206,7 +206,7 @@ void stream::TdcCalibrationModule::ProcessTimerEvent(unsigned)
    if (fWarningCnt >= 0) fWarningCnt--;
 }
 
-void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hierarchy &logitem, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state)
+void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hierarchy &logitem, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state, bool acknowledge_quality)
 {
    if (item.null() || (trb==0)) return;
 
@@ -225,6 +225,10 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
       hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
 
       if (tdc) {
+
+         // ensure that all calibrations has quality level 0.9 disregard of any errors
+         if (acknowledge_quality)
+            tdc->AcknowledgeCalibrQuality(0.9);
 
          double progr = tdc->GetCalibrProgress();
          std::string sname = tdc->GetCalibrStatus();
@@ -590,6 +594,16 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       if (SubmitCommandToTransport(InputName(), cmd))
          return dabc::cmd_postponed;
       return dabc::cmd_false;
+   }
+
+   if (cmd.IsName("HCMD_AcknowledgeQuality")) {
+      dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+
+      dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
+
+      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, true);
+
+      return dabc::cmd_true;
    }
 
    if (cmd.IsName("GetCalibrState")) {
