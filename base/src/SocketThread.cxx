@@ -1087,7 +1087,8 @@ dabc::SocketThread::SocketThread(Reference parent, const std::string &name, Comm
 
    fPipe[0] = 0;
    fPipe[1] = 0;
-   pipe(fPipe);
+   auto res = pipe(fPipe);
+   (void) res; // ignore compiler warnings
 
    // by this call we rebuild ufds array, for now only for the pipe
    WorkersSetChanged();
@@ -1461,7 +1462,8 @@ void dabc::SocketThread::_Fire(const dabc::EventId& arg, int nq)
    _PushEvent(arg, nq);
 
    if (fWaitFire && !fPipeFired) {
-      write(fPipe[1], "w", 1);
+      auto res = write(fPipe[1], "w", 1);
+      (void) res; // suppress compiler warnings
       fPipeFired = true;
 
       #ifdef SOCKET_PROFILING
@@ -1571,7 +1573,8 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
    // cleanup pipe in bigger steps
    if (fPipeFired) {
       char sbuf;
-      read(fPipe[0], &sbuf, 1);
+      auto res = read(fPipe[0], &sbuf, 1);
+      (void) res; // suppress compiler warnings
       fPipeFired = false;
    }
 

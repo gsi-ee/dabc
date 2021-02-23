@@ -89,7 +89,8 @@ uint32_t hadaq::MonitorModule::DoRead(uint32_t addr0, uint32_t addr)
    cmd.append(dabc::format(" >%s 2<&1", tmpfile.c_str()));
 
    // execute command
-   std::system(cmd.c_str());
+   auto res = std::system(cmd.c_str());
+   (void) res; // suppress compiler warnings
 
    std::ifstream t(tmpfile);
    std::string str((std::istreambuf_iterator<char>(t)),
