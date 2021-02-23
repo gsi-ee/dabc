@@ -109,7 +109,10 @@ void hadaq::TerminalModule::BeforeModuleStart()
 {
    if (fDoShow) {
       dabc::SetDebugLevel(-1);
-      if (fDoClear) system("clear");
+      if (fDoClear) {
+         auto res = system("clear");
+         (void) res; // just avoid compiler warnings
+      }
    }
 }
 
@@ -143,7 +146,8 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          for (unsigned n=0;n<nlines;n++)
             fputs("\033[A\033[2K",stdout);
          rewind(stdout);
-         ftruncate(1,0);
+         auto res = ftruncate(1,0);
+         (void) res; // just avoid compiler warnings
       } else {
          fprintf(stdout,"HADAQ terminal info:\n"
                         "  disc  - all discarded packets in the UDP receiver\n"

@@ -149,10 +149,10 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, 
       fprintf(f,"%u\n", runid);
    } else {
       long unsigned tm_js = 0;
-      fscanf(f,"%lu", &tm_js);
+      if (fscanf(f,"%lu", &tm_js) != 1) EOUT("Fail to get time from lastcalibr.txt");
       tm.SetJSDate(tm_js);
-      fscanf(f,"%lf", &quality);
-      fscanf(f,"%u", &runid);
+      if (fscanf(f,"%lf", &quality) != 1) EOUT("Fail to get quality from lastcalibr.txt");
+      if (fscanf(f,"%u", &runid) != 1) EOUT("Fail to get runid from lastcalibr.txt");
    }
    fclose(f);
 

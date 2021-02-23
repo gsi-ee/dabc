@@ -1372,7 +1372,8 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
          rundir.append(hadaq::FormatFilename(runid));
          std::string mkdir = "mkdir -p ";
          mkdir.append(rundir);
-         system(mkdir.c_str());
+         auto res = system(mkdir.c_str());
+         (void) res; // avoid compiler warnings
          fBnetCalibrCmd.SetStr("#rundir", rundir);
          rundir.append("/");
       }
