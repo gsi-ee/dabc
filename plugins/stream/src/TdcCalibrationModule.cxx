@@ -165,6 +165,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    logitem.SetField(dabc::prop_kind, "log");
    logitem.EnableHistory(5000);
 
+   RecordTRBStatus(false, logitem);
+
    // set ids and create more histograms
    if (fOwnProcMgr) {
       fProcMgr->UserPreLoop();
@@ -206,7 +208,10 @@ void stream::TdcCalibrationModule::ProcessTimerEvent(unsigned)
    if (fWarningCnt >= 0) fWarningCnt--;
 }
 
-void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hierarchy &logitem, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state, bool acknowledge_quality)
+void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hierarchy &logitem, hadaq::TrbProcessor* trb,
+                                                int *res_progress, double *res_quality,
+                                                std::string *res_state, std::vector<std::string> *res_msgs,
+                                                bool acknowledge_quality)
 {
    if (item.null() || (trb==0)) return;
 
@@ -240,6 +245,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
             for (auto &item : errlog) {
                logitem.SetField("value", item);
                logitem.MarkChangedItems();
+               if (res_msgs) res_msgs->push_back(item);
             }
          }
 
@@ -562,7 +568,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
                dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
 
-               SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState);
+               SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, &fLogMessages);
 
                // DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
 
@@ -601,7 +607,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
       dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
 
-      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, true);
+      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, &fLogMessages, true);
 
       return dabc::cmd_true;
    }
@@ -663,7 +669,9 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       logitem.SetField("value", std::string("Performing calibration: ") + dabc::DateTime().GetNow().AsJSString());
       logitem.MarkChangedItems();
 
-      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState);
+      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, &fLogMessages);
+
+      RecordTRBStatus(true, logitem);
 
       cmd.SetDouble("quality", fQuality);
 
@@ -674,6 +682,48 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
+
+void stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarchy &logitem)
+{
+   std::string fname = GetName();
+   fname.append(".txt");
+
+   FILE *f = fopen(fname.c_str(), do_write ? "w" : "r");
+   if (!f) {
+      EOUT("FAIL to open file %s for %s", fname.c_str(), do_write ? "writing" : "reading");
+      return;
+   }
+
+   dabc::DateTime tm;
+
+   if (do_write) {
+      tm.GetNow();
+      fprintf(f,"%lu\n", (long unsigned) tm.AsJSDate());
+      fprintf(f,"%s\n", fState.c_str());
+      fprintf(f,"%f\n", fQuality);
+      fprintf(f,"%d\n", fProgress);
+      for (auto &item: fLogMessages)
+         fprintf(f,"%s\n", item.c_str());
+   } else {
+      long unsigned tm_js = 0;
+      if (fscanf(f,"%lu", &tm_js) != 1) EOUT("Fail to get time from %s file", fname.c_str());
+      tm.SetJSDate(tm_js);
+      char sbuf[1000];
+      fgets(sbuf, sizeof(sbuf), f);
+      fState = sbuf;
+      if (fscanf(f,"%lf", &fQuality) != 1) EOUT("Fail to get quality from %s file", fname.c_str());
+      if (fscanf(f,"%d", &fProgress) != 1) EOUT("Fail to get progress from %s file", fname.c_str());
+      int cnt = 1000;
+      while (fgets(sbuf, sizeof(sbuf), f) && (cnt-- > 0)) {
+         fLogMessages.push_back(sbuf);
+         logitem.SetField("value", sbuf);
+         logitem.MarkChangedItems();
+      }
+   }
+
+   fclose(f);
+}
+
 
 
 void stream::TdcCalibrationModule::BeforeModuleStart()

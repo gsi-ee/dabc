@@ -70,6 +70,7 @@ namespace stream {
       int fProgress;                          ///< total calibration progress
       std::string fState;                     ///< current state
       double fQuality;                        ///< current calibration quality
+      std::vector<std::string> fLogMessages;  ///< log messages
       int fFineMin{0};                        ///< configure min value
       int fFineMax{0};                        ///< configure max value
       std::vector<uint64_t> fTdcMin;          ///< configured min TDC id
@@ -91,6 +92,8 @@ namespace stream {
 
       bool MatchTdcId(uint32_t tdcid);
 
+      void RecordTRBStatus(bool do_store, dabc::Hierarchy &logitem);
+
    public:
 
       TdcCalibrationModule(const std::string &name, dabc::Command cmd = nullptr);
@@ -107,7 +110,10 @@ namespace stream {
       void BeforeModuleStart() override;
       void AfterModuleStop() override;
 
-      static void SetTRBStatus(dabc::Hierarchy &item, dabc::Hierarchy &logitem, hadaq::TrbProcessor *trb, int *res_progress = nullptr, double *res_quality = nullptr, std::string *res_state = nullptr, bool acknowledge_quality = false);
+      static void SetTRBStatus(dabc::Hierarchy &item, dabc::Hierarchy &logitem, hadaq::TrbProcessor *trb,
+                               int *res_progress = nullptr, double *res_quality = nullptr,
+                               std::string *res_state = nullptr, std::vector<std::string> *res_msgs = nullptr,
+                               bool acknowledge_quality = false);
 
    };
 
