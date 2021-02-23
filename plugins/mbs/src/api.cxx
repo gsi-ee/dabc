@@ -31,6 +31,8 @@ mbs::ReadoutModule::ReadoutModule(const std::string &name, dabc::Command cmd) :
    SetPortSignaling(InputName(), dabc::Port::SignalEvery);
 
    CreateTimer("SysTimer");
+
+   SetAutoStop(false);
 }
 
 int mbs::ReadoutModule::ExecuteCommand(dabc::Command cmd)
