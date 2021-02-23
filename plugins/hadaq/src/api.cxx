@@ -23,7 +23,8 @@ hadaq::ReadoutModule::ReadoutModule(const std::string &name, dabc::Command cmd) 
 
 int hadaq::ReadoutModule::AcceptBuffer(dabc::Buffer& buf)
 {
-   if (fIter2.Reset(buf)) return dabc::cmd_true;
+   if (fIter2.Reset(buf))
+      return dabc::cmd_true;
 
    return dabc::cmd_false;
 }
@@ -43,9 +44,9 @@ hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string &src)
 }
 
 
-hadaq::RawEvent* hadaq::ReadoutHandle::NextEvent(double tmout, double maxage)
+hadaq::RawEvent *hadaq::ReadoutHandle::NextEvent(double tmout, double maxage)
 {
-   if (null()) return 0;
+   if (null()) return nullptr;
 
    bool intime = GetObject()->GetEventInTime(maxage);
 
@@ -55,32 +56,32 @@ hadaq::RawEvent* hadaq::ReadoutHandle::NextEvent(double tmout, double maxage)
       return GetObject()->fIter2.evnt();
 
    // this is a case, when hadaq event packed into MBS event
-   if (mbs::ReadoutHandle::NextEvent(tmout, maxage)!=0)
+   if (mbs::ReadoutHandle::NextEvent(tmout, maxage))
       return hadaq::ReadoutHandle::GetEvent();
 
    // check again that HADAQ event can be produced
    if (GetObject()->fIter2.NextEvent())
       return GetObject()->fIter2.evnt();
 
-   return 0;
+   return nullptr;
 }
 
-hadaq::RawEvent* hadaq::ReadoutHandle::GetEvent()
+hadaq::RawEvent *hadaq::ReadoutHandle::GetEvent()
 {
-   if (null()) return 0;
+   if (null()) return nullptr;
 
    if (GetObject()->fIter2.evnt()) return GetObject()->fIter2.evnt();
 
-   mbs::EventHeader* mbsev = mbs::ReadoutHandle::GetEvent();
+   mbs::EventHeader *mbsev = mbs::ReadoutHandle::GetEvent();
 
-   if (mbsev==0) return 0;
+   if (!mbsev) return nullptr;
 
-   mbs::SubeventHeader* mbssub = mbsev->NextSubEvent(0);
+   mbs::SubeventHeader *mbssub = mbsev->NextSubEvent(0);
 
-   if ((mbssub!=0) && (mbssub->FullSize() == mbsev->SubEventsSize())) {
-      hadaq::RawEvent* raw = (hadaq::RawEvent*) mbssub->RawData();
+   if (mbssub && (mbssub->FullSize() == mbsev->SubEventsSize())) {
+      hadaq::RawEvent *raw = (hadaq::RawEvent*) mbssub->RawData();
 
       if (raw && (raw->GetSize() == mbssub->RawDataSize())) return raw;
    }
-   return 0;
+   return nullptr;
 }
