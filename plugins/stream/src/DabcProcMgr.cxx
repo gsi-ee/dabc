@@ -161,7 +161,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
-   if (clear_protect) h.SetField("_clear_protect", "true");
+   if (clear_protect) h.SetField("_no_reset", "true");
 
    std::vector<double> bins;
    bins.resize(nbins+5, 0.);
@@ -239,7 +239,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
    if (!h2poly.empty()) h.SetField("h2poly", h2poly);
-   if (clear_protect) h.SetField("_clear_protect", "true");
+   if (clear_protect) h.SetField("_no_reset", "true");
 
    std::vector<double> bins;
    bins.resize(6+(nbins1+2)*(nbins2+2), 0.);
@@ -309,7 +309,7 @@ bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
 {
    if (!item.HasField("_dabc_hist") || (item.GetFieldPtr("bins") == nullptr)) return false;
 
-   if (item.HasField("_clear_protect")) return true;
+   if (item.HasField("_no_reset")) return true;
 
    int indx = item.GetField("_kind").AsStr()=="ROOT.TH1D" ? 3 : 6;
 
