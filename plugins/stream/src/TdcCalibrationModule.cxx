@@ -654,6 +654,8 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
       fDoingTdcCalibr = (cmd.GetStr("mode") == "start");
 
+      if (fDoingTdcCalibr) fLogMessages.clear(); // reset previous log messages
+
       fEnableProgressUpdate = true;
 
       std::string subdir = cmd.GetStr("rundir");
@@ -725,6 +727,8 @@ bool stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarch
       fprintf(f,"%s\n", fState.c_str());
       fprintf(f,"%f\n", fQuality);
       fprintf(f,"%d\n", fProgress);
+      if (fLogMessages.size() > 1000)
+         fLogMessages.erase(fLogMessages.begin(), fLogMessages.end() - 1000);
       for (auto &item: fLogMessages)
          fprintf(f,"%s\n", item.c_str());
    } else {
