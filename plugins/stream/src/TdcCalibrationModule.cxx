@@ -165,7 +165,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    logitem.SetField(dabc::prop_kind, "log");
    logitem.EnableHistory(5000);
 
-   RecordTRBStatus(false, logitem);
+   if (!RecordTRBStatus(false, logitem))
+      fEnableProgressUpdate = true; // if not read from file, enable life update
 
    // set ids and create more histograms
    if (fOwnProcMgr) {
@@ -209,6 +210,7 @@ void stream::TdcCalibrationModule::ProcessTimerEvent(unsigned)
 }
 
 void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hierarchy &logitem, hadaq::TrbProcessor* trb,
+                                                bool change_progress,
                                                 int *res_progress, double *res_quality,
                                                 std::string *res_state, std::vector<std::string> *res_msgs,
                                                 bool acknowledge_quality)
@@ -295,8 +297,21 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
       }
    }
 
+   if (!logitem.null() && acknowledge_quality) {
+      std::string item = "Acknowledge quality";
+      logitem.SetField("value", item);
+      logitem.MarkChangedItems();
+      if (res_msgs) res_msgs->push_back(item);
+   }
+
    if (!is_any_progress) worse_progress = 0;
    if (worse_progress > 1.) worse_progress = 1.;
+
+   if (!change_progress) {
+      if (res_progress) worse_progress = *res_progress / 100.;
+      if (res_quality) worse_quality = *res_quality;
+      if (res_state) worse_status = *res_state;
+   }
 
    item.SetField("value", worse_status);
    item.SetField("progress", (int)(fabs(worse_progress)*100));
@@ -308,9 +323,11 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
 
 //   DOUT0("Calibr Quality %5.4f Progress %5.4f", progress, worse_quality);
 
-   if (res_progress) *res_progress = (int) (fabs(worse_progress)*100);
-   if (res_quality) *res_quality = worse_quality;
-   if (res_state) *res_state = worse_status;
+   if (change_progress) {
+      if (res_progress) *res_progress = (int) (fabs(worse_progress)*100);
+      if (res_quality) *res_quality = worse_quality;
+      if (res_state) *res_state = worse_status;
+   }
 }
 
 
@@ -568,7 +585,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
                dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
 
-               SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, &fLogMessages);
+               SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages);
 
                // DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
 
@@ -607,7 +624,11 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
       dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
 
-      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, &fLogMessages, true);
+      fEnableProgressUpdate = true;
+
+      SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages, true);
+
+      RecordTRBStatus(true, logitem);
 
       return dabc::cmd_true;
    }
@@ -632,6 +653,8 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       fDummyCounter = 0; // only for debugging
 
       fDoingTdcCalibr = (cmd.GetStr("mode") == "start");
+
+      fEnableProgressUpdate = true;
 
       std::string subdir = cmd.GetStr("rundir");
 
@@ -669,7 +692,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       logitem.SetField("value", std::string("Performing calibration: ") + dabc::DateTime().GetNow().AsJSString());
       logitem.MarkChangedItems();
 
-      SetTRBStatus(item, logitem, fTrbProc, &fProgress, &fQuality, &fState, &fLogMessages);
+      SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages);
 
       RecordTRBStatus(true, logitem);
 
@@ -683,7 +706,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
-void stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarchy &logitem)
+bool stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarchy &logitem)
 {
    std::string fname = GetName();
    fname.append(".txt");
@@ -691,7 +714,7 @@ void stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarch
    FILE *f = fopen(fname.c_str(), do_write ? "w" : "r");
    if (!f) {
       EOUT("FAIL to open file %s for %s", fname.c_str(), do_write ? "writing" : "reading");
-      return;
+      return false;
    }
 
    dabc::DateTime tm;
@@ -722,6 +745,8 @@ void stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarch
    }
 
    fclose(f);
+
+   return true;
 }
 
 

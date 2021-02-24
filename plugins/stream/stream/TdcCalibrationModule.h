@@ -59,6 +59,7 @@ namespace stream {
       std::string fCalibrFile;                ///< names to load/store calibrations
       unsigned fCalibrMask{0};                ///< mask to used for triggers
       bool fDoingTdcCalibr{false};            ///< indicates if module doing explicit TDC calibrations
+      bool fEnableProgressUpdate{false};      ///< set true to enable trb progress update
       std::vector<int64_t> fDisabledCh;       ///< disabled for calibrations channels
       int fDummyCounter{0};                   ///< used in dummy
       dabc::TimeStamp fLastCalibr;            ///< use not to check for calibration very often
@@ -92,7 +93,7 @@ namespace stream {
 
       bool MatchTdcId(uint32_t tdcid);
 
-      void RecordTRBStatus(bool do_store, dabc::Hierarchy &logitem);
+      bool RecordTRBStatus(bool do_store, dabc::Hierarchy &logitem);
 
    public:
 
@@ -111,6 +112,7 @@ namespace stream {
       void AfterModuleStop() override;
 
       static void SetTRBStatus(dabc::Hierarchy &item, dabc::Hierarchy &logitem, hadaq::TrbProcessor *trb,
+                               bool change_progress = true,
                                int *res_progress = nullptr, double *res_quality = nullptr,
                                std::string *res_state = nullptr, std::vector<std::string> *res_msgs = nullptr,
                                bool acknowledge_quality = false);
