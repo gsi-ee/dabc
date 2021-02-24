@@ -107,7 +107,7 @@ void stream::DabcProcMgr::PrintLog(const char *msg)
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
    std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
-   bool reuse(false);
+   bool reuse{false}, clear_protect{false};
 
    while (options) {
       const char* separ = strchr(options,';');
@@ -126,6 +126,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
       if (part.find("hmax:")==0) { hmax = part; hmax.erase(0,5); } else
       if (part.find("kind:")==0) { } else
       if (part.find("reuse")==0) { reuse = true; } else
+      if (part.find("clear_protect")==0) { clear_protect = true; } else
       if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
 
@@ -160,6 +161,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
+   if (clear_protect) h.SetField("_clear_protect", "true");
 
    std::vector<double> bins;
    bins.resize(nbins+5, 0.);
@@ -176,7 +178,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
 base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
    std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax, h2poly;
-   bool reuse(false);
+   bool reuse{false}, clear_protect{false};
 
    while (options != nullptr) {
       const char* separ = strchr(options,';');
@@ -197,6 +199,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
       if (part.find("kind:")==0) { } else
       if (part.find("h2poly:")==0) { h2poly = part; h2poly.erase(0,7); } else
       if (part.find("reuse")==0) { reuse = true; } else
+      if (part.find("clear_protect")==0) { clear_protect = true; } else
       if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
 
@@ -236,6 +239,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
    if (!h2poly.empty()) h.SetField("h2poly", h2poly);
+   if (clear_protect) h.SetField("_clear_protect", "true");
 
    std::vector<double> bins;
    bins.resize(6+(nbins1+2)*(nbins2+2), 0.);
@@ -303,7 +307,9 @@ void stream::DabcProcMgr::TagH2Time(base::H2handle h2)
 
 bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
 {
-   if (!item.HasField("_dabc_hist") || (item.GetFieldPtr("bins")==nullptr)) return false;
+   if (!item.HasField("_dabc_hist") || (item.GetFieldPtr("bins") == nullptr)) return false;
+
+   if (item.HasField("_clear_protect")) return true;
 
    int indx = item.GetField("_kind").AsStr()=="ROOT.TH1D" ? 3 : 6;
 
