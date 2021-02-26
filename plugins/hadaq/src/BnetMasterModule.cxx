@@ -35,6 +35,9 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    fCmdReplies = 0;
    fCmdQuality = 1.;
 
+   fRefreshCnt = 1;
+   fRefreshReplies = 0;
+
    fCtrlId = 1;
    fNewRunTm.GetNow();
    fCtrlTm.GetNow();
@@ -99,6 +102,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
       CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run")
                               .AddArg("oninit", "int", false, "0");
       CreateCmdDef("StopRun");
+      CreateCmdDef("RefreshRun");
       CreateCmdDef("ResetDAQ");
    }
 
@@ -153,6 +157,8 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, 
       tm.SetJSDate(tm_js);
       if (fscanf(f,"%lf", &quality) != 1) EOUT("Fail to get quality from lastcalibr.txt");
       if (fscanf(f,"%u", &runid) != 1) EOUT("Fail to get runid from lastcalibr.txt");
+
+      if (!do_write) fCalibrRunId = runid;
    }
    fclose(f);
 
@@ -297,19 +303,35 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          if (--fCmdReplies <= 0) {
 
-            unsigned rid = fCurrentFileCmd.GetUInt("#calibr_runid");
+            fCalibrRunId = fCurrentFileCmd.GetUInt("#calibr_runid");
 
             fCurrentFileCmd.Reply(dabc::cmd_true);
 
             fWorkerHierarchy.GetHChild("RunningCmd").SetField("value","");
 
-            if (stop_calibr) PreserveLastCalibr(true, fCmdQuality, rid);
+            if (stop_calibr) PreserveLastCalibr(true, fCmdQuality, fCalibrRunId);
+         }
+      }
+
+   } else if (cmd.HasField("#refresh_cnt")) {
+
+      if (!fCurrentRefreshCmd.null() && (cmd.GetInt("#refresh_cnt") == fRefreshCnt)) {
+         double q = cmd.GetDouble("quality", 1.),
+                q0 = fCurrentRefreshCmd.GetDouble("quality", 1.);
+         if (q < q0) {
+            q0 = q;
+            fCurrentRefreshCmd.SetDouble("quality", q0);
+         }
+
+         if (--fRefreshReplies <= 0) {
+            fCurrentRefreshCmd.Reply(dabc::cmd_true);
+            PreserveLastCalibr(true, q0, fCalibrRunId);
          }
       }
 
       return true;
 
-   } if (cmd.GetInt("#bnet_ctrl_id") == fCtrlId) {
+   } else if (cmd.GetInt("#bnet_ctrl_id") == fCtrlId) {
       // this commands used to send control requests
 
       fCtrlCnt--;
@@ -600,6 +622,35 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
             publ.Submit(Assign(subcmd));
             DOUT0("Submit input cmd %s %s %f", subcmd.GetName(), DBOOL(subcmd.IsTimeoutSet()), subcmd.TimeTillTimeout());
          }
+      }
+
+      return dabc::cmd_postponed;
+
+   } else if (cmd.IsName("RefreshRun")) {
+
+      if (!fCurrentRefreshCmd.null()) {
+         EOUT("Ignore run command - previous %s not completed", fCurrentRefreshCmd.GetName());
+         return dabc::cmd_false;
+      }
+
+      dabc::WorkerRef publ = GetPublisher();
+      if (publ.null()) return dabc::cmd_false;
+
+      fCurrentRefreshCmd = cmd;
+      fRefreshCnt++;
+      fRefreshReplies = 0;
+
+      fCurrentRefreshCmd.SetDouble("quality", 1.0);
+
+      // trigger calibration start for all TDCs
+      std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
+
+      for (unsigned n = 0; n < inputs.size(); ++n) {
+         dabc::CmdGetBinary subcmd(inputs[n] + "/BnetCalibrRefresh", "execute", "");
+         subcmd.SetInt("#refresh_cnt", fRefreshCnt);
+         subcmd.SetTimeout(10.);
+         fRefreshReplies++;
+         publ.Submit(Assign(subcmd));
       }
 
       return dabc::cmd_postponed;

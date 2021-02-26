@@ -223,6 +223,7 @@ namespace hadaq {
 
          double             fFlushTimeout;
          dabc::Command      fBnetFileCmd;  ///< current running bnet file command
+         dabc::Command      fBnetRefreshCmd; ///< current running refresh command
 
          std::string        fDataRateName;
          std::string        fDataDroppedRateName;

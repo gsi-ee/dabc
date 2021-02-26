@@ -146,6 +146,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       CreateCmdDef("BnetFileControl").SetField("_hidden", true);
    } else if (fBNETsend) {
       CreateCmdDef("BnetCalibrControl").SetField("_hidden", true);
+      CreateCmdDef("BnetCalibrRefresh").SetField("_hidden", true);
    } else {
       CreateCmdDef("StartHldFile")
          .AddArg("filename", "string", true, "file.hld")
@@ -1388,6 +1389,27 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       }
 
       return dabc::cmd_postponed;
+   } else if (cmd.IsName("BnetCalibrRefresh")) {
+
+      if (!fBNETsend || fIsTerminating || (NumInputs()==0))
+         return dabc::cmd_true;
+
+      if (!fBnetRefreshCmd.null()) {
+         EOUT("Still calibration command running");
+         fBnetRefreshCmd.Reply(dabc::cmd_false);
+      }
+
+      fBnetRefreshCmd = cmd;
+      fBnetRefreshCmd.SetInt("#replies", NumInputs());
+      fBnetRefreshCmd.SetDouble("quality", 1.0);
+
+      for (unsigned n = 0; n < NumInputs(); n++) {
+         dabc::Command subcmd("CalibrRefresh");
+         SubmitCommandToTransport(InputName(n), Assign(subcmd));
+      }
+
+      return dabc::cmd_postponed;
+
    } else {
       return dabc::ModuleAsync::ExecuteCommand(cmd);
    }
@@ -1609,6 +1631,14 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
          fBnetCalibrCmd.SetInt("#replies", num-1);
       }
       return true;
+   } else if (cmd.IsName("CalibrRefresh")) {
+      int num = fBnetCalibrCmd.GetInt("#replies");
+      double q = cmd.GetDouble("quality");
+      if (q < fBnetRefreshCmd.GetDouble("quality"))
+         fBnetRefreshCmd.SetDouble("quality", q);
+      fBnetRefreshCmd.SetInt("#replies", num-1);
+      if (num == 1)
+         fBnetRefreshCmd.Reply(dabc::cmd_true);
    }
 
    return dabc::ModuleAsync::ReplyCommand(cmd);

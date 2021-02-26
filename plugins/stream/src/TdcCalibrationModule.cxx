@@ -705,6 +705,11 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    }
 
+   if (cmd.IsName("CalibrRefresh")) {
+      cmd.SetDouble("quality", fQuality);
+      return dabc::cmd_true;
+   }
+
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 

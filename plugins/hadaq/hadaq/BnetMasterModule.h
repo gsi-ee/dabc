@@ -40,6 +40,12 @@ namespace hadaq {
          int           fCmdCnt;     ///< just counter to avoid mismatch
          int           fCmdReplies; ///< number of replies for current command
          double        fCmdQuality;  ///< current command quality, used when creating calibration
+         unsigned      fCalibrRunId;  ///< last calibration runid
+
+         dabc::Command fCurrentRefreshCmd; ///< currently running cmd to refresh nodes qualities
+         int           fRefreshCnt{0};   ///< currently running refresh command
+         int           fRefreshReplies{0}; ///< number of replies for current command
+
          int           fCtrlId;     ///< counter for control requests
          dabc::TimeStamp fCtrlTm;   ///< time when last control count was send
          dabc::TimeStamp fNewRunTm;   ///< time when last control count was send

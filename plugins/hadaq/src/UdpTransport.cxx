@@ -332,7 +332,7 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    }
 
-   if (cmd.IsName("TdcCalibrations")) {
+   if (cmd.IsName("TdcCalibrations") || cmd.IsName("CalibrRefresh")) {
       // ignore this command
       return dabc::cmd_true;
    }

@@ -507,6 +507,7 @@ JSROOT.require("painter").then(jsrp => {
       });
 
       jnode.find(".bnet_lastcalibr").button().click(function() {
+         DABC.InvokeCommand(itemname+"/RefreshRun", "tmout=60");
       });
 
       jnode.find(".bnet_resetdaq").button().css("display", ctrl_visible).click(function() {
