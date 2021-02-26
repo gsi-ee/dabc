@@ -732,14 +732,22 @@ bool stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarch
       for (auto &item: fLogMessages)
          fprintf(f,"%s\n", item.c_str());
    } else {
-      long unsigned tm_js = 0;
-      if (fscanf(f,"%lu", &tm_js) != 1) EOUT("Fail to get time from %s file", fname.c_str());
-      tm.SetJSDate(tm_js);
       char sbuf[1000];
+
+      long unsigned tm_js = 0;
+      fgets(sbuf, sizeof(sbuf), f);
+      if (sscanf(sbuf,"%lu", &tm_js) != 1) EOUT("Fail to get time from %s file", fname.c_str());
+      tm.SetJSDate(tm_js);
+
       fgets(sbuf, sizeof(sbuf), f);
       fState = sbuf;
-      if (fscanf(f,"%lf", &fQuality) != 1) EOUT("Fail to get quality from %s file", fname.c_str());
-      if (fscanf(f,"%d", &fProgress) != 1) EOUT("Fail to get progress from %s file", fname.c_str());
+
+      fgets(sbuf, sizeof(sbuf), f);
+      if (sscanf(sbuf,"%lf", &fQuality) != 1) EOUT("Fail to get quality from %s file", fname.c_str());
+
+      fgets(sbuf, sizeof(sbuf), f);
+      if (sscanf(sbuf,"%d", &fProgress) != 1) EOUT("Fail to get progress from %s file", fname.c_str());
+
       int cnt = 1000;
       while (fgets(sbuf, sizeof(sbuf), f) && (cnt-- > 0)) {
          fLogMessages.push_back(sbuf);
