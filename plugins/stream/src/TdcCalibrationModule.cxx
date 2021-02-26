@@ -670,7 +670,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       else
          DOUT0("%s STORE CALIBRATIONS IN %s %s NumTDC %u", GetName(), fCalibrFile.c_str(), subdir.c_str(), numtdc);
 
-      for (unsigned indx=0;indx<numtdc;++indx) {
+      for (unsigned indx = 0; indx < numtdc; ++indx) {
          hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
          if (cmd.GetStr("mode") == "start") {
@@ -691,8 +691,16 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
       dabc::Hierarchy logitem = fWorkerHierarchy.GetHChild("CalibrLog");
 
-      logitem.SetField("value", std::string("Performing calibration: ") + dabc::DateTime().GetNow().AsJSString());
+
+      std::string msg = fDoingTdcCalibr ? "Performing calibration: " : "Complete calibration: ";
+      msg += dabc::DateTime().GetNow().AsJSString();
+      logitem.SetField("value", msg);
       logitem.MarkChangedItems();
+      if (fDoingTdcCalibr) {
+         msg += " quality = ";
+         msg += std::to_string(fQuality);
+      }
+      fLogMessages.push_back(msg);
 
       SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages);
 
