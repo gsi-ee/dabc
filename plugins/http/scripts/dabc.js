@@ -978,7 +978,7 @@ JSROOT.require("painter").then(jsrp => {
       var val = ExtractField(obj);
       if (val==null) return null;
 
-      var arr = new Array();
+      var arr = [];
       arr.push(val);
 
       if (history!=null)

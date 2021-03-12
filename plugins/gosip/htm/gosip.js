@@ -16,7 +16,7 @@ var POLAND_TS_NUM = 3,
     POLAND_REG_TIME_TS3         = 0x200028,
 
     POLAND_REG_QFW_MODE         = 0x200004,
-    
+
     POLAND_REG_DAC_MODE         = 0x20002C,
     POLAND_REG_DAC_PROGRAM      = 0x200030,
     POLAND_REG_DAC_BASE_WRITE   = 0x200050,
@@ -34,7 +34,7 @@ var POLAND_TS_NUM = 3,
     POLAND_REG_MASTERMODE       = 0x200048,
     POLAND_REG_ERRCOUNT_BASE    = 0x200,
     POLAND_REG_TRIG_ON          = 0x20004C;
-    
+
 function PolandSetup(cmdurl) {
 
 	// address used to access gosip command
@@ -45,8 +45,8 @@ function PolandSetup(cmdurl) {
 	this.fLogging = false;
 	this.fLogData = null;
 
-	this.fSteps = new Array;
-	this.fTimes = new Array;
+	this.fSteps = [];
+	this.fTimes = [];
 	for ( var i = 0; i < POLAND_TS_NUM; i++) {
 		this.fSteps.push(0);
 		this.fTimes.push(0);
@@ -57,13 +57,13 @@ function PolandSetup(cmdurl) {
 	this.fQFWMode = 0;
 
 	this.fEventCounter = 0;
-	this.fErrorCounter = new Array;
+	this.fErrorCounter = [];
 	for ( var i = 0; i < POLAND_ERRCOUNT_NUM; i++)
 		this.fErrorCounter.push(0);
 
 	/* DAC values and settings:*/
 	this.fDACMode = 0;
-	this.fDACValue = new Array;
+	this.fDACValue = [];
 	for ( var i = 0; i < POLAND_DAC_NUM; i++)
 		this.fDACValue.push(i);
 
@@ -176,7 +176,7 @@ PolandSetup.prototype.RefreshDAC = function(base) {
 	$("#DacModeCombo").selectmenu('refresh', true);
 
 	switch (this.fDACMode) {
-	// enable/disable input elements depending on mode:	
+	// enable/disable input elements depending on mode:
 	case 1:
 		// manual settings:
 		$("#DAC-Edit-table").find("input").prop('disabled', false);
@@ -293,11 +293,11 @@ PolandSetup.prototype.RefreshCounters = function(base) {
 	for ( var i = 0; i < this.fErrorCounter.length; i++)
 		txt += "<div align=\"center\" ;style=\"font-size:200%\" title=\"QFW "+(i+1).toString()+" Error counter\" <p>" + pre + this.fErrorCounter[i].toString(base) + "</p>  </div>";
 // TODO: find out how to manipulate inner font size/weight correctly here!
-		
+
     //	txt += "<div align=\"center\" ;style=\"width: 100% ; font-size:200%\" title=\"QFW "+(i+1).toString()+" Error counter\" <h2>" + pre + this.fErrorCounter[i].toString(base) + "</h2>  </div>";
 	//	txt += "\<div  title=\"QFW "+(i+1).toString()+" Error counter\" \<b\>" + pre + this.fErrorCounter[i].toString(base) + "\</b\> \</div\>";
 
-		
+
 	//(document.getElementById("ErrorsLbl").outerHTML = txt;
 	$("#ErrorsLbl").html(txt);
 }
@@ -337,7 +337,7 @@ PolandSetup.prototype.GosipCommand = function(cmd, command_callback) {
 	var pthis = this;
 
 	xmlHttp.onreadystatechange = function() {
-		// console.log("onready change " + xmlHttp.readyState); 
+		// console.log("onready change " + xmlHttp.readyState);
 		if (xmlHttp.readyState == 4) {
 			var reply = JSON.parse(xmlHttp.responseText);
 
@@ -348,7 +348,7 @@ PolandSetup.prototype.GosipCommand = function(cmd, command_callback) {
 
 			if (reply['log'] != null) {
 				var ddd = "";
-				// console.log("log length = " + Setup.fLogData.length); 
+				// console.log("log length = " + Setup.fLogData.length);
 				for ( var i in reply['log']) {
 
 					if (reply['log'][i].search("\n") >= 0)
@@ -375,7 +375,7 @@ PolandSetup.prototype.GosipCommand = function(cmd, command_callback) {
 }
 
 PolandSetup.prototype.ReadRegisters = function(callback) {
-	var regs = new Array();
+	var regs = [];
 	regs.push(POLAND_REG_INTERNAL_TRIGGER, POLAND_REG_MASTERMODE,
 			POLAND_REG_TRIGCOUNT, POLAND_REG_QFW_MODE, POLAND_REG_TRIG_ON);
 
@@ -441,11 +441,11 @@ PolandSetup.prototype.ReadRegisters = function(callback) {
 }
 
 PolandSetup.prototype.SetRegisters = function(kind, callback) {
-	// one could set "QFW", "DAC" or all registers 
+	// one could set "QFW", "DAC" or all registers
 
 	// write register values from strucure with gosipcmd
 
-	var regs = new Array();
+	var regs = [];
 	var sfpsave, devsave;
 	if (kind == "QFW") {
 		// writing of registers on QFW page
@@ -478,7 +478,7 @@ PolandSetup.prototype.SetRegisters = function(kind, callback) {
 			}
 			break;
 		case 2:
-			// test structure: 
+			// test structure:
 			// no more actions needed
 			break;
 		case 3:
@@ -538,7 +538,7 @@ PolandSetup.prototype.SetRegisters = function(kind, callback) {
 		// change trigger acceptance on all frontends:
 		this.fSFP = sfpsave;
 		this.fDEV = devsave;
-		// must restore original sfp and dev after broadcasting trigger acceptance state   
+		// must restore original sfp and dev after broadcasting trigger acceptance state
 	}
 
 }
@@ -546,7 +546,7 @@ PolandSetup.prototype.SetRegisters = function(kind, callback) {
 PolandSetup.prototype.DumpData = function(callback) {
 
 }
-//////  polandsetup class end 
+//////  polandsetup class end
 ////////////////////////////////////////////////////////////////77
 ///// begin functions:
 
@@ -576,7 +576,7 @@ function SetStatusMessage(info) {
 }
 
 function updateElementsSize() {
-	
+
 	$("#content_log").scrollTop($("#content_log")[0].scrollHeight - $("#content_log").height());
 
 	$("#QFWModeCombo").selectmenu("option", "width", $('#QFW-table').width());
@@ -590,7 +590,7 @@ function RefreshView(res) {
 
 	if (Setup.fLogData != null) {
 		var ddd = "";
-		// console.log("log length = " + Setup.fLogData.length); 
+		// console.log("log length = " + Setup.fLogData.length);
 		for ( var i in Setup.fLogData) {
 			ddd += "<pre>";
 			ddd += Setup.fLogData[i];
@@ -625,7 +625,7 @@ function CompleteCommand(res) {
 
 	if (Setup.fLogData != null) {
 		var ddd = "";
-		//console.log("log length = " + Setup.fLogData.length); 
+		//console.log("log length = " + Setup.fLogData.length);
 		for ( var i in Setup.fLogData) {
 			ddd += "<pre>";
 			ddd += Setup.fLogData[i];
@@ -690,22 +690,22 @@ $(function() {
 				var cmd = "[\"-w adr " + POLAND_REG_DO_OFFSET + " 1\", \"-w adr "
 						+ POLAND_REG_DO_OFFSET + " 0 ," +
 								" \"]";
-				
+
 				// read consecutively 32 offset registers and dump:
 				var dumpcmd ="-d -r -x -- "+Setup.fSFP.toString()+" "+Setup.fDEV.toString() +" 0x"+POLAND_REG_OFFSET_BASE.toString(16) + " 0x20 ";
-				
+
 				Setup.GosipCommand(cmd, function(res) {
 					SetStatusMessage("Scan offset " + (res ? "OK" : "Fail"));
 					if (!res)
 						return;
-					
+
 					});
 				Setup.fLogging = true;
    			    Setup.GosipCommand(dumpcmd, function(res) {
 						SetStatusMessage("Dump data after scan "
 								+ (res ? "OK" : "Fail"));
 						Setup.fLogging = false;
-					});   			    
+					});
 			});
 
 	$("#buttonInitChain").button().click(
@@ -820,7 +820,7 @@ $(function() {
 
 	$("#buttonConfigure").button().click(function() {
 		//ButtonAction();
-		
+
 		var configfilename = prompt(
 				"Please type name of configuration file (*.gos) on server"
 						, "initqfw.gos");
@@ -869,10 +869,10 @@ $(function() {
 						document.getElementById("logging").innerHTML = "Welcome to POLAND Web GUI!<br/>  -    v0.5, 6-November 2014 by S. Linev/ J. Adamzewski-Musch (JAM)<br/>";
 						updateElementsSize();
 					});
-	
-	
+
+
 	$( document ).tooltip();
-	
+
 });
 
 function initGUI() {
