@@ -172,7 +172,7 @@ function Gauge(placeholderName, configuration)
                      .style("stroke", "#666")
                      .style("opacity", 1);
 
-      var fontSize = Math.round(this.config.size / 10);
+      fontSize = Math.round(this.config.size / 10);
       pointerContainer.selectAll("text")
                      .data([midValue])
                      .enter()
