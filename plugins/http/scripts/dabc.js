@@ -1334,7 +1334,7 @@ JSROOT.require("painter").then(jsrp => {
             if ((argkind=="int") && (argmin!=null) && (argmax!=null))
                url += arginp.spinner("value");
             else
-               url += new String(arginp.val());
+               url += arginp.val();
          }
 
          this.req = true;
