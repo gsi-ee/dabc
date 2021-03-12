@@ -1207,6 +1207,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
 
    int sendbufindx = GetExclusiveIndx();
    IbTestTymeSyncMessage* msg = (IbTestTymeSyncMessage*) GetPoolBuffer(sendbufindx);
+   if (!msg) return false;
 
 //   DOUT0("Send buffer index = %d buf %p", sendbufindx, msg);
 
@@ -1359,14 +1360,17 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
       if (debug_output) {
          std::string fname1 = dabc::format("m_to_s%d.txt", nremote);
          std::ofstream f1(fname1.c_str());
-         for (unsigned n=0;n<m_to_s.size();n++)
-            f1 << m_to_s[n]*1e6 << std::endl;
+
+         if (f1.is_open())
+            for (unsigned n=0;n<m_to_s.size();n++)
+               f1 << m_to_s[n]*1e6 << std::endl;
 
          std::string fname2 = dabc::format("s%d_to_m.txt", nremote);
          std::ofstream f2(fname2.c_str());
 
-         for (unsigned n=0;n<s_to_m.size();n++)
-            f2 << s_to_m[n]*1e6 << std::endl;
+         if (f2.is_open())
+            for (unsigned n=0;n<s_to_m.size();n++)
+               f2 << s_to_m[n]*1e6 << std::endl;
       }
 
 
@@ -2078,7 +2082,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    if (fIndividualRates!=0) {
 
       char fname[100];
-      sprintf(fname,"recv_rates_%d.txt",Node());
+      snprintf(fname, sizeof(fname), "recv_rates_%d.txt",Node());
 
       dabc::Ratemeter::SaveRatesInFile(fname, fIndividualRates, NumNodes(), true);
 
@@ -2426,14 +2430,14 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
 
    for (int n=0;n<NumNodes();n++) {
        if (allres[n*setsize+12]>=0.099)
-          sprintf(sbuf1,"%4.0f%s",allres[n*setsize+12]*100.,"%");
+          snprintf(sbuf1, sizeof(sbuf1), "%4.0f%s",allres[n*setsize+12]*100.,"%");
        else
-          sprintf(sbuf1,"%4.1f%s",allres[n*setsize+12]*100.,"%");
+          snprintf(sbuf1, sizeof(sbuf1), "%4.1f%s",allres[n*setsize+12]*100.,"%");
 
        if (allres[n*setsize+9]>=0.099)
-          sprintf(cpuinfobuf,"%4.0f%s",allres[n*setsize+9]*100.,"%");
+          snprintf(cpuinfobuf, sizeof(cpuinfobuf), "%4.0f%s",allres[n*setsize+9]*100.,"%");
        else
-          sprintf(cpuinfobuf,"%4.1f%s",allres[n*setsize+9]*100.,"%");
+          snprintf(cpuinfobuf, sizeof(cpuinfobuf), "%4.1f%s",allres[n*setsize+9]*100.,"%");
 
        DOUT0("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s |%5.1f (%5.0f)",
              n, dabc::mgr()->GetNodeAddress(n).c_str(),

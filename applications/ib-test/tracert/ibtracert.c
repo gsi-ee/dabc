@@ -105,9 +105,9 @@ static char* fnodes_list = NULL;
 void init_cache()
 {
    int id, lid;
-   
+
    if (!use_cache) return;
-   
+
    for (id=0;id<NUM_SWITCHES;id++) {
       switches_lids[id] = 0;
       switches_cache[id] = (int8_t*) malloc(MAX_LID*sizeof(int8_t));
@@ -120,11 +120,11 @@ void init_cache()
       route_cache[id] = (char*) malloc(3*64);
    }
 
-   
+
    route_cache_skiplen = 0;
-   
+
    node_lid_cache = (char**) malloc(MAX_LID*sizeof(char*));
-   
+
    for (id=0;id<MAX_LID;id++)
       node_lid_cache[id] = 0;
 }
@@ -143,15 +143,15 @@ void reset_route_cache(int source_len)
 void add_route_to_cache(int node_lid, ib_dr_path_t* path, char* desc, char* info, char* portinfo)
 {
   int id = 0;
- 
+
   char* cache = 0;
-  
+
   int in_cache = 0;
-  
+
   if (!use_cache) return;
-  
+
   if (node_lid==0) {
-  
+
      switch (path->cnt - route_cache_skiplen) {
         case 1:
            id = 0;
@@ -165,33 +165,33 @@ void add_route_to_cache(int node_lid, ib_dr_path_t* path, char* desc, char* info
         default:
            return;
      }
-     
+
      if (id >= MAX_ROUTE) {
-        fprintf(stderr,"Route id is too big %d  p0 %d p1 %d p2 %d \n", 
+        fprintf(stderr,"Route id is too big %d  p0 %d p1 %d p2 %d \n",
                         id, path->p[route_cache_skiplen + 1], path->p[route_cache_skiplen + 2], path->p[route_cache_skiplen + 3]);
         return;
      }
-     
+
      cache = route_cache[id];
-     
+
      in_cache = route_cached[id];
-     
+
      route_cached[id] = 1;
 
   } else {
-    
+
      if (node_lid>=MAX_LID) return;
-     
+
      if (node_lid_cache[node_lid] != 0) {
         in_cache = 1;
      } else {
         node_lid_cache[node_lid] = (char*) malloc(3*64);
      }
      cache = node_lid_cache[node_lid];
-     
+
   }
-  
-  
+
+
   if (in_cache) {
 //     printf("\nid = %d len %d already in cash ",id, path->cnt - route_cache_skiplen );
      if (memcmp(cache, desc, 64)!=0) fprintf(stderr, "desc mismatch\n");
@@ -212,9 +212,9 @@ int get_cached_route(int node_lid, ib_dr_path_t* path, char* desc, char* info, c
   char* cache = 0;
 
   if (!use_cache) return;
-  
+
   if (node_lid==0) {
-   
+
      switch (path->cnt - route_cache_skiplen) {
         case 1:
            id = 0;
@@ -228,20 +228,20 @@ int get_cached_route(int node_lid, ib_dr_path_t* path, char* desc, char* info, c
         default:
            return 0;
      }
-  
+
      if ((id >= MAX_ROUTE) || !route_cached[id]) return 0;
-     
+
      cache = route_cache[id];
   } else {
      if (node_lid>=MAX_LID) return 0;
-     
+
      cache = node_lid_cache[node_lid];
   }
-  
+
   if (cache==0) return 0;
 
 //  fprintf(stderr,"Extract route id %d  len %d  p0 %d p1 %d p2 %d from cache\n", id, path->cnt, path->p[0], path->p[1], path->p[2]);
-  
+
   memcpy(desc, cache, 64);
   memcpy(info, cache+64, 64);
   memcpy(portinfo, cache+128, 64);
@@ -250,10 +250,10 @@ int get_cached_route(int node_lid, ib_dr_path_t* path, char* desc, char* info, c
 
 
 
-void add_cache(int sw_lid, int lid, int8_t* map) 
+void add_cache(int sw_lid, int lid, int8_t* map)
 {
    int id;
-   
+
    if ((lid >= MAX_LID) || !use_cache) return;
 
    for (id=0; id<NUM_SWITCHES; id++)
@@ -261,21 +261,21 @@ void add_cache(int sw_lid, int lid, int8_t* map)
    if (id==NUM_SWITCHES) return;
 
    switches_lids[id] = sw_lid;
-   
+
 //   fprintf(stderr,"add cache for sw %d lid %d\n", sw_lid, lid);
-   
+
    memcpy(switches_cache[id] + (lid/64)*64, map, 64*sizeof(int8_t));
 }
 
-int get_cache(int sw_lid, int lid) 
+int get_cache(int sw_lid, int lid)
 {
    int id;
-   
+
    if ((lid >= MAX_LID) || !use_cache) return -1;
 
    for (id=0; id<NUM_SWITCHES; id++) {
       if (switches_lids[id]==0) return -1;
-      if (switches_lids[id]==sw_lid) 
+      if (switches_lids[id]==sw_lid)
          return switches_cache[id][lid];
    }
    return -1;
@@ -334,16 +334,16 @@ static int get_node(Node * node, Port * port, ib_portid_t * portid, int with_cac
 
 	void *pi = port->portinfo, *ni = node->nodeinfo, *nd = node->nodedesc;
 	char *s, *e;
-	
+
 	int i, find_cache = 0;
 
     if (with_cache) {
        //printf("\n callid %d portid lid %d cnt %d ", with_cache, portid->lid, portid->drpath.cnt);
        //for (i=0;i<=portid->drpath.cnt;i++) printf("  [%d]=%d", i, portid->drpath.p[i]);
-       
+
        find_cache = get_cached_route(portid->lid, &portid->drpath, nd, ni, pi);
     }
-	
+
 	if (!find_cache) {
 
   	   if (!smp_query_via(ni, portid, IB_ATTR_NODE_INFO, 0, timeout, srcport))
@@ -360,19 +360,19 @@ static int get_node(Node * node, Port * port, ib_portid_t * portid, int with_cac
 	   if (!smp_query_via(pi, portid, IB_ATTR_PORT_INFO, 0, timeout, srcport))
 		return -1;
         }
-		
+
 
 	mad_decode_field(ni, IB_NODE_GUID_F, &node->nodeguid);
 	mad_decode_field(ni, IB_NODE_TYPE_F, &node->type);
 	mad_decode_field(ni, IB_NODE_NPORTS_F, &node->numports);
-	
+
 	mad_decode_field(ni, IB_NODE_PORT_GUID_F, &port->portguid);
 	mad_decode_field(ni, IB_NODE_LOCAL_PORT_F, &port->portnum);
 	mad_decode_field(pi, IB_PORT_LID_F, &port->lid);
 	mad_decode_field(pi, IB_PORT_LMC_F, &port->lmc);
 	mad_decode_field(pi, IB_PORT_STATE_F, &port->state);
 
-	if ((node->type == IB_NODE_SWITCH) && with_cache && !find_cache) 
+	if ((node->type == IB_NODE_SWITCH) && with_cache && !find_cache)
             add_route_to_cache(portid->lid, &portid->drpath, nd, ni, pi);
 
 	DEBUG("portid %s: got node %" PRIx64 " '%s'", portid2str(portid),
@@ -385,12 +385,12 @@ static int switch_lookup(Switch * sw, ib_portid_t * portid, int lid, int sw_lid)
         // printf("switch lid = %d tgt_lid = %d\n", sw_lid, lid);
 
 	void *si = sw->switchinfo, *fdb = sw->fdb;
-	
+
 	int cached = get_cache(sw_lid, lid);
 
-//      when commented out, cached value will be compared with real value	
+//      when commented out, cached value will be compared with real value
 	if (cached>=0) return cached;
-	
+
 	if (!smp_query_via(si, portid, IB_ATTR_SWITCH_INFO, 0, timeout,
 			   srcport))
 		return -1;
@@ -409,11 +409,11 @@ static int switch_lookup(Switch * sw, ib_portid_t * portid, int lid, int sw_lid)
 	      portid2str(portid), lid, sw->fdb[lid % 64]);
 
         add_cache(sw_lid, lid, sw->fdb);
-        
+
         if (cached>=0)
-           if (sw->fdb[lid % 64] != cached) 
+           if (sw->fdb[lid % 64] != cached)
               fprintf(stderr, "cache mismatch %d %d \n", sw->fdb[lid % 64], cached);
-        	      
+
 	return sw->fdb[lid % 64];
 }
 
@@ -964,14 +964,14 @@ static int process_opt(void *context, int ch, char *optarg)
       break;
    case 't':
 		maxnumlids = strtoul(optarg, 0, 0);
-		break;    
+		break;
    case 'o':
 		optimize_routes = 1;
 		break;
    case 'c':
                 use_cache = 1;
                 break;
-		
+
 	case 'm':
 		multicast++;
 		mlid = strtoul(optarg, 0, 0);
@@ -1003,7 +1003,7 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
    char names[1000][30];
    int lmcs[1000];
    ib_portid_t all_ports[1000];
-   
+
    int numnodes, n1, n2, n3, nn, cnt, lll, percent, lastpercent, spine_mask;
    int numlids;
    int skip_node;
@@ -1034,9 +1034,9 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
    fclose(f);
 
    memset(all_ports, 0, sizeof(all_ports));
-   
+
    fprintf(stderr, "Total number of nodes = %d\n", numnodes);
-   
+
    for (n1=0;n1<numnodes;n1++) {
      if (ib_resolve_portid_str_via(all_ports+n1, lids[n1], ibd_dest_type, ibd_sm_id, srcport) < 0)
        IBERROR("can't resolve source port %s on node %s", lids[n1], names[n1]);
@@ -1054,7 +1054,7 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
 
       if (find_route(&my_portid, &src_portid, 0, 0) < 0)
          IBERROR("can't find a route to the src port");
-         
+
       reset_route_cache(my_portid.drpath.cnt);
 
       // if optimize enabled, one can skip node from switch where routes from other node were measured already
@@ -1072,8 +1072,8 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
 
 
          numlids = 1 << lmcs[n2];
-         
-         spine_mask = 0; 
+
+         spine_mask = 0;
 
          if (numlids > maxnumlids) {
             numlids = maxnumlids;
@@ -1086,7 +1086,7 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
 
             printf("%s\n", matrix[n1][n2]);
 
-         } else 
+         } else
 
             // we make loop over all lids of target node
             for (lll=0; lll<numlids; lll++) {
@@ -1140,12 +1140,12 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
 
                   }
                }
-               
+
                // we add artificially last node - we believe it works correctly
                if ((cnt==4) && optimize_routes && use_cache) {
                   mybuf = (char*) malloc(30);
-                  strcpy(mybuf, names[n2]);
-                  route[cnt] = mybuf;  
+                  strncpy(mybuf, names[n2], 30);
+                  route[cnt] = mybuf;
                   cnt++;
                }
 
@@ -1177,7 +1177,7 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
                }  else {
                   // thid is longest route with 3 switches in between
                   printf("%s %s %s\n", route[1], route[2], route[3]);
-                  
+
                   if (strstr(route[2],"ibspine")==route[2]) {
                      spine_mask |= 1 << (atoi(route[2] + 7) - 1);
                      if ((spine_mask == 0xfff) && optimize) lll = numlids; // all spines are detected - no need to scan further lids
@@ -1272,8 +1272,8 @@ int main(int argc, char **argv)
 		IBERROR("Failed to open '%s' port '%d'", ibd_ca, ibd_ca_port);
 
 	node_name_map = open_node_name_map(node_name_map_file);
-	
-   init_cache();	
+
+   init_cache();
 
    if (fnodes_list!=0) {
       fprintf(stderr, "Processing special file %s, numlids %d, optimize %d, cache %d  to extract complete routing\n", fnodes_list, maxnumlids, optimize_routes, use_cache);

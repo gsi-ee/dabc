@@ -1062,7 +1062,7 @@ bool IbTestClusterRouting::SelectNodes(const std::string &all_args, IbTestIntCol
    std::vector<std::string> args;
    Tokanize(all_args, args);
 
-   if (args.size()==0) { ids.SetSize(0); return false; }
+   if (args.empty()) { ids.SetSize(0); return false; }
 
    int cnt(0), find(-1);
 
