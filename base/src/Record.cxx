@@ -296,6 +296,7 @@ dabc::RecordField::RecordField() :
    fTouched(false),
    fProtected(false)
 {
+   valueStr = nullptr; // reset all pointers if any
 }
 
 bool dabc::RecordField::cannot_modify()
@@ -461,13 +462,13 @@ void dabc::RecordField::release()
       case kind_datime: break;
       case kind_uint: break;
       case kind_double: break;
-      case kind_arrint: delete [] arrInt; break;
-      case kind_arruint: delete [] arrUInt; break;
-      case kind_arrdouble: delete [] arrDouble; break;
+      case kind_arrint: delete [] arrInt; arrInt = nullptr; break;
+      case kind_arruint: delete [] arrUInt; arrUInt = nullptr; break;
+      case kind_arrdouble: delete [] arrDouble; arrDouble = nullptr; break;
       case kind_string:
-      case kind_arrstr: free(valueStr); break;
-      case kind_buffer: delete valueBuf; break;
-      case kind_reference: delete valueRef; break;
+      case kind_arrstr: free(valueStr); valueStr = nullptr; break;
+      case kind_buffer: delete valueBuf; valueBuf = nullptr; break;
+      case kind_reference: delete valueRef; valueRef = nullptr; break;
    }
 
    fKind = kind_none;
