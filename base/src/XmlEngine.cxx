@@ -1222,6 +1222,7 @@ dabc::XMLNodePointer_t dabc::Xml::AllocateNode(int namelen, XMLNodePointer_t par
    //fNumNodes++;
 
    SXmlNode_t* node = (SXmlNode_t*) malloc(sizeof(SXmlNode_t) + namelen + 1);
+   if (!node) return nullptr;
 
    node->fType = kXML_NODE;
    node->fParent = 0;
@@ -1245,6 +1246,7 @@ dabc::XMLAttrPointer_t dabc::Xml::AllocateAttr(int namelen, int valuelen, XMLNod
    //fNumNodes++;
 
    SXmlAttr_t* attr = (SXmlAttr_t*) malloc(sizeof(SXmlAttr_t) + namelen + 1 + valuelen + 1);
+   if (!attr) return nullptr;
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
