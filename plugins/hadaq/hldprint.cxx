@@ -154,7 +154,7 @@ struct SubevStat {
 
    void IncTdcError(unsigned id)
    {
-      if (tdcerr.size() == 0)
+      if (tdcerr.empty())
          tdcerr.assign(NumTdcErr, 0);
       if (id < tdcerr.size()) tdcerr[id]++;
    }
@@ -859,7 +859,7 @@ int main(int argc, char* argv[])
       return usage("Unknown option");
    }
 
-   if ((adcmask!=0) || (tdcs.size()!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; }
+   if ((adcmask!=0) || !tdcs.empty() || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; }
 
    printf("Try to open %s\n", argv[1]);
 

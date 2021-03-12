@@ -579,7 +579,7 @@ dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::
                continue;
             }
 
-            if (vect.size()==0) {
+            if (vect.empty()) {
                res.SetField(parname, parvalue);
                continue;
             }

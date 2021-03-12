@@ -44,7 +44,12 @@ int main(int argc, char *argv[])
     {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
 
-        if (connfd <= 0) { printf("Fail to accept connection\n"); close(listenfd); return 0; }
+        if (connfd <= 0) {
+           printf("Fail to accept connection\n");
+           close(listenfd);
+           free(recvBuff);
+           return 0;
+        }
 
         printf("Client connected\n");
 
