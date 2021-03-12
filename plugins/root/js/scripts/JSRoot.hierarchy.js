@@ -146,7 +146,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
            switch(obj._typename) {
               case 'TColor': item._value = jsrp.getRGBfromTColor(obj); break;
-              case 'TText': item._value = obj.fTitle; break;
+              case 'TText':
               case 'TLatex': item._value = obj.fTitle; break;
               case 'TObjString': item._value = obj.fString; break;
               default: if (lst.opt && lst.opt[i] && lst.opt[i].length) item._value = lst.opt[i];
@@ -187,13 +187,13 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          let key = keys[i];
 
          let item = {
-            _name : key.fName + ";" + key.fCycle,
-            _cycle : key.fCycle,
-            _kind : "ROOT." + key.fClassName,
-            _title : key.fTitle,
-            _keyname : key.fName,
-            _readobj : null,
-            _parent : folder
+            _name: key.fName + ";" + key.fCycle,
+            _cycle: key.fCycle,
+            _kind: "ROOT." + key.fClassName,
+            _title: key.fTitle,
+            _keyname: key.fName,
+            _readobj: null,
+            _parent: folder
          };
 
          if (key.fObjlen > 1e5) item._title += ' (size: ' + (key.fObjlen/1e6).toFixed(1) + 'MB)';
@@ -215,8 +215,8 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                item._name = key.fName;
                keysHierarchy(item, dir.fKeys, file, dirname + key.fName + "/");
             }
-         } else
-         if ((key.fClassName == 'TList') && (key.fName == 'StreamerInfo')) {
+         } else if ((key.fClassName == 'TList') && (key.fName == 'StreamerInfo')) {
+            if (JSROOT.settings.SkipStreamerInfos) continue;
             item._name = 'StreamerInfo';
             item._kind = "ROOT.TStreamerInfoList";
             item._title = "List of streamer infos for binary I/O";
@@ -428,7 +428,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
 
                   switch(fld._typename) {
                      case 'TColor': item._value = jsrp.getRGBfromTColor(fld); break;
-                     case 'TText': item._value = fld.fTitle; break;
+                     case 'TText':
                      case 'TLatex': item._value = fld.fTitle; break;
                      case 'TObjString': item._value = fld.fString; break;
                      default:
@@ -1626,7 +1626,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                prnt = prnt._parent;
             }
 
-            hitem._background = 'grey';
+            hitem._background = 'LightSteelBlue';
             if (active.indexOf(hitem)<0) active.push(hitem);
          }
 
@@ -1727,7 +1727,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             return Promise.resolve();
          }
 
-         if (hitem._obj) promise = DoExpandItem(hitem, hitem._obj, itemname);
+         if (hitem._obj) promise = DoExpandItem(hitem, hitem._obj);
       }
 
       return promise.then(res => {

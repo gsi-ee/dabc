@@ -105,7 +105,7 @@
 
    /** @summary JSROOT version date
      * @desc Release date in format day/month/year like "14/01/2021"*/
-   JSROOT.version_date = "2/02/2021";
+   JSROOT.version_date = "12/03/2021";
 
    /** @summary JSROOT version id and date
      * @desc Produced by concatenation of {@link JSROOT.version_id} and {@link JSROOT.version_date}
@@ -351,7 +351,9 @@
        * @desc When specified, extra URL parameter like ```?stamp=unique_value``` append to each JSROOT script loaded
        * In such case browser will be forced to load JSROOT functionality disregards of server cache settings
        * @default false */
-      NoCache: false
+      NoCache: false,
+      /** @summary Skip streamer infos from the GUI */
+      SkipStreamerInfos: false
    };
 
    /** @namespace
@@ -626,6 +628,9 @@
       }
 
       function load_module(req, m) {
+         if (m.extract && !m.dep && globalThis[m.extract])
+            return finish_loading(m, globalThis[m.extract])
+
          let element = document.createElement("script");
          element.setAttribute('type', "text/javascript");
          element.setAttribute('src', m.src);
@@ -1048,7 +1053,8 @@
 
          for (let k = 0; k < len; ++k) {
             let name = ks[k];
-            tgt[name] = copy_value(value[name]);
+            if (name && (name[0] != '$'))
+               tgt[name] = copy_value(value[name]);
          }
 
          return tgt;
@@ -1711,7 +1717,7 @@
             case "S": histo.fArray = new Int16Array(histo.fNcells); break;
             case "I": histo.fArray = new Int32Array(histo.fNcells); break;
             case "F": histo.fArray = new Float32Array(histo.fNcells); break;
-            case "L": histo.fArray = new Float64Array(histo.fNcells); break;
+            case "L":
             case "D": histo.fArray = new Float64Array(histo.fNcells); break;
             default: histo.fArray = new Array(histo.fNcells); break;
          }
