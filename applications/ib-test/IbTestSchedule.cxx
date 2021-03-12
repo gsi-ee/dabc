@@ -604,7 +604,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
 
 
    for (int n=0;n<NumSwitches();n++)
-      if (spines(n)>0)
+      if ((spines(n)>0) && (total > 0))
          DOUT0("Name: %s cnt: %d rel : %5.3f", SwitchName(n), spines(n), 1.*spines(n)/total);
 
    DOUT0("Printout of complete matrix between switches");
@@ -828,19 +828,19 @@ void IbTestClusterRouting::PrintDifferecne(IbTestClusterRouting& other)
 void IbTestClusterRouting::FindSameRouteTwice(bool bothlanes, const IbTestRoute& route0, bool rnd)
 {
    std::map<IbTestRoute, int> routes;
-   
+
    if (rnd) srand48(345);
-   
+
    int random_shift = rnd ? lrint(rand_0_1() * (NumNodes()-1)) : 0;
-   
+
    DOUT0("random_shift = %d rnd = %s", random_shift, DBOOL(rnd));
 
    for (int in1=0;in1<NumNodes();in1++)
       for (int in2=0;in2<NumNodes();in2++) {
-      
+
          int n1 = (in1 + random_shift) % NumNodes();
          int n2 = (in2 + random_shift) % NumNodes();
-      
+
          if (n1==n2) continue;
 
          IbTestRoute route1 = GetRoute(n1, n2);
@@ -1109,7 +1109,7 @@ bool IbTestClusterRouting::SelectNodes(const std::string &all_args, IbTestIntCol
             if ((GetNodeSwitch(node)==swid) && !ids.Find(node))
                ids(cnt++) = node;
 
-      } else 
+      } else
       if (args[n].compare(0, 10, "noibswitch")==0) {
          // exclude all nodes, connected to specified switch
          int swid = FindSwitch(args[n].c_str()+2);
@@ -1122,10 +1122,10 @@ bool IbTestClusterRouting::SelectNodes(const std::string &all_args, IbTestIntCol
                ids.Remove(indx);
                cnt--;
             }
-      } else 
+      } else
 
       if ((find = FindNode(args[n])) >= 0) {
-         if (!ids.Find(find)) 
+         if (!ids.Find(find))
             ids(cnt++) = find;
 
       } else {
@@ -2721,7 +2721,7 @@ extern "C" void SelectCSCNodes()
       if (!routing.LoadNodesList(nodeslistfile, ids)) {
          EOUT("Cannot read nodes list from the file");
          return;
-         
+
       }
       DOUT0("Nodes list has %d nodes", ids.size());
 

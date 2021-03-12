@@ -2456,13 +2456,13 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    }
    DOUT0("          Total |%7.1f |%7.1f | Skip: %4.0f/%4.0f = %3.1f percent",
           sum1send, sum2recv, totallost, totalrecv, 100*(totalrecv>0. ? totallost/(totalrecv+totallost) : 0.));
-   if (totalmulti>0)
+   if ((totalmulti > 0) && (sumcnt > 0))
       DOUT0("Multicast %4.0f/%4.0f = %7.6f%s  Rate = %4.1f",
          totalmultilost, totalmulti, totalmultilost/totalmulti*100., "%", sum3multi/sumcnt);
 
    MasterCleanup(0);
 
-   totalskipped = totalskipped / sumcnt;
+   totalskipped = sumcnt > 0 ? totalskipped / sumcnt : 0.;
    if (totalskipped > 0.01) isskipok = false;
 
    if (needmulticast && !fromperfmtest)

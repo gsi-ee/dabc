@@ -1161,7 +1161,7 @@ class DBuffer {
       {
          close();
          fRec = (DBufferRec*) malloc(sizeof(DBufferRec) + extrasz);
-         fRec->fRefCnt = 1;
+         if (fRec) fRec->fRefCnt = 1;
       }
 
       DBuffer& operator=(const DBuffer& src)
@@ -1178,7 +1178,7 @@ class DBuffer {
          DOUT0("operator<<(DBuffer& src)");
          close();
          fRec = src.fRec;
-         src.fRec = 0;
+         src.fRec = nullptr;
          return *this;
       }
 
@@ -1351,7 +1351,6 @@ extern "C" void RunAllTests()
 
 extern "C" void RunLockTest()
 {
-
    long cnt = 0;
 
    dabc::Mutex m(true);
@@ -1368,5 +1367,6 @@ extern "C" void RunLockTest()
 
    double spent= tm1.SpentTillNow();
 
-   DOUT0("Time for 1000000 locks is %7.6f  per lock %7.6f ns", spent, spent/cnt*1e6);
+   if (cnt > 0)
+      DOUT0("Time for 1000000 locks is %7.6f  per lock %7.6f ns", spent, spent/cnt*1e6);
 }
