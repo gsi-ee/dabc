@@ -218,11 +218,11 @@ void dabc::Ratemeter::Reset()
   numoper = 0;
   totalpacketsize = 0;
 
-  if (fPoints!=0) {
+  if (fPoints) {
      delete[] fPoints;
+     fPoints = nullptr;
      fMeasureInterval = 0;
      fMeasurePoints = 0;
-     fPoints = 0;
   }
 }
 

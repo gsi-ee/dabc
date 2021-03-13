@@ -2200,7 +2200,7 @@ int rawGetFilelistEntries( char *pcFileName,
          if ( (iEntries == iMaxEntries) &&             /* reallocate */
               (iEntries > 0) )
          {
-            iMaxEntries += iMaxEntries;
+            iMaxEntries *= 2;
             if (iDebug) fprintf(fLogFile,
                "    entry buffer full, reallocate: max %d entries\n",
                iMaxEntries);
