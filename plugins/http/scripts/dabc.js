@@ -782,7 +782,9 @@ JSROOT.require("painter").then(jsrp => {
              diff = (now.getTime() - dt.getTime())*1e-3, // seconds
              info = "CALIBR", title = "Calibration ";
          if (diff < 0) { info = "CHECK CALIBR"; if (quality>0.6) quality = 0.6; } else {
-            var h = Math.floor(diff/3600).toString(), m = Math.round((diff - h*3600)/60).toString();
+            var hv = Math.floor(diff/3600),
+                h = hv.toString(),
+                m = Math.round((diff - hv)/60).toString();
             if (m.length==1) m = "0"+m;
             info = h+"h"+m+"m";
             if (h>720) { if (quality>0.1) quality = 0.1; title = "To long time without calibration, "; } else
