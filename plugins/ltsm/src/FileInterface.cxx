@@ -29,7 +29,7 @@ ltsm::FileInterface::~FileInterface()
 }
 
 dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
-						       const char* mode, const char* opt)
+                         const char* mode, const char* opt)
 {
 
   DOUT0("ltsm::FileInterface::fopen with options %s",opt);
@@ -83,7 +83,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 
   size_t slash = fileName.rfind("/");
       if (slash == std::string::npos)
-	slash=0;
+   slash=0;
       fileName.insert(slash+1,insertpath);
 
       DOUT0("ltsm::FileInterface uses new filename %s",fileName.c_str());
@@ -94,15 +94,15 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
   if (fUseFileSystemDemon)
     {
       if (fSessionFSD == 0)
-	{
-	  if(!OpenTSMSession(opt)) return 0;
-	} // if fSesssion==0
+   {
+     if(!OpenTSMSession(opt)) return 0;
+   } // if fSesssion==0
     }
   else
 #endif
     {
       if (fSession == 0)
-	{
+   {
            if(!OpenTSMSession(opt)) return 0;
         } // if fSesssion==0
     }
@@ -110,8 +110,8 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
   // default description is per file, not per session:
   dabc::DateTime dt;
   fDescription = dabc::format(
-			      "This file was created by DABC ltsm interface at %s",
-			      dt.GetNow().AsJSString().c_str());
+               "This file was created by DABC ltsm interface at %s",
+               dt.GetNow().AsJSString().c_str());
 
 
   if (url.HasOption("ltsmDescription"))
@@ -124,54 +124,54 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
       int rc;
 #ifdef LTSM_USE_FSD
       if (fUseFileSystemDemon)
-	{
-	  rc = fsd_fopen(fFsname.c_str(), (char*) fileName.c_str(),
-			 (char*) fDescription.c_str(), fSessionFSD);
-	  if (rc)
-	    {
-	      EOUT(
-		   "Fail to open LTSM file for writing to FSD (returncode:%d), using following arguments"
-		   "File=%s, FSD Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",rc,
-		   fileName.c_str(), fServernameFSD.c_str(), fNode.c_str(),
-		   fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
-		   fDescription.c_str());
+   {
+     rc = fsd_fopen(fFsname.c_str(), (char*) fileName.c_str(),
+          (char*) fDescription.c_str(), fSessionFSD);
+     if (rc)
+       {
+         EOUT(
+         "Fail to open LTSM file for writing to FSD (returncode:%d), using following arguments"
+         "File=%s, FSD Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",rc,
+         fileName.c_str(), fServernameFSD.c_str(), fNode.c_str(),
+         fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
+         fDescription.c_str());
 
-	      free(fSessionFSD);
-	      fSessionFSD = 0; // on failure we retry open the session. Or keep it?
-	      return 0;
-	    }
-	    fCurrentFile = fileName.c_str();
-	    fSessionFileCount++;
-	    DOUT0("Opened LTSM file (session count %d) for writing to FSD: "
-	    "File=%s, FSD Servername=%s,  Description=%s", fSessionFileCount, fname,
-	    fServernameFSD.c_str(), fDescription.c_str());
-	    return fSessionFSD; // no file structure here, use current session as handle
-	}
+         free(fSessionFSD);
+         fSessionFSD = 0; // on failure we retry open the session. Or keep it?
+         return 0;
+       }
+       fCurrentFile = fileName.c_str();
+       fSessionFileCount++;
+       DOUT0("Opened LTSM file (session count %d) for writing to FSD: "
+       "File=%s, FSD Servername=%s,  Description=%s", fSessionFileCount, fname,
+       fServernameFSD.c_str(), fDescription.c_str());
+       return fSessionFSD; // no file structure here, use current session as handle
+   }
       else
 #endif
-	{
-	  rc = tsm_fopen(fFsname.c_str(), (char*) fileName.c_str(),
-			 (char*) fDescription.c_str(), fSession);
-	  if (rc)
-	    {
-	      EOUT(
-		   "Fail to open LTSM file for writing (returncode:%d), using following arguments"
-		   "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",rc,
-		   fileName.c_str(), fServername.c_str(), fNode.c_str(),
-		   fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
-		   fDescription.c_str());
+   {
+     rc = tsm_fopen(fFsname.c_str(), (char*) fileName.c_str(),
+          (char*) fDescription.c_str(), fSession);
+     if (rc)
+       {
+         EOUT(
+         "Fail to open LTSM file for writing (returncode:%d), using following arguments"
+         "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",rc,
+         fileName.c_str(), fServername.c_str(), fNode.c_str(),
+         fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
+         fDescription.c_str());
 
-	      free(fSession);
-	      fSession = 0; // on failure we retry open the session. Or keep it?
-	      return 0;
-	    }
-	  fCurrentFile = fileName.c_str();
-	    fSessionFileCount++;
-	    DOUT0("Opened LTSM file (session count %d) for writing: "
-		  "File=%s, Servername=%s,  Description=%s", fSessionFileCount, fileName.c_str(),
-	    fServername.c_str(), fDescription.c_str());
-	   return fSession->tsm_file; // pointer to file structure is the handle
-	}
+         free(fSession);
+         fSession = 0; // on failure we retry open the session. Or keep it?
+         return 0;
+       }
+     fCurrentFile = fileName.c_str();
+       fSessionFileCount++;
+       DOUT0("Opened LTSM file (session count %d) for writing: "
+        "File=%s, Servername=%s,  Description=%s", fSessionFileCount, fileName.c_str(),
+       fServername.c_str(), fDescription.c_str());
+      return fSession->tsm_file; // pointer to file structure is the handle
+   }
 
     }
   else if (strstr(mode, "r") != 0)
@@ -223,7 +223,7 @@ void ltsm::FileInterface::fclose(Handle f)
   if (fIsClosing)
     {
       DOUT0(
-	    "ltsm::FileInterface::fclose is called during closing - ignored!");
+       "ltsm::FileInterface::fclose is called during closing - ignored!");
       return;
     }
   fIsClosing = true;
@@ -234,49 +234,49 @@ void ltsm::FileInterface::fclose(Handle f)
     {
        struct fsd_session_t* theHandleFSD = (struct fsd_session_t*) f;
        if (theHandleFSD != fSessionFSD)
-	 {
+    {
 
-	   EOUT(
-		"Inconsistent file  handles (0x%x != 0x%x) when closing LTSM file: "
-		"File=%s, FSD Servername=%s, Node=%s, Fsname=%s .... try to close most recent file in session",
-		theHandleFSD, fSessionFSD, fCurrentFile.c_str(),
-		fServernameFSD.c_str(), fNode.c_str(), fFsname.c_str());
-	 }
+      EOUT(
+      "Inconsistent file  handles (0x%x != 0x%x) when closing LTSM file: "
+      "File=%s, FSD Servername=%s, Node=%s, Fsname=%s .... try to close most recent file in session",
+      theHandleFSD, fSessionFSD, fCurrentFile.c_str(),
+      fServernameFSD.c_str(), fNode.c_str(), fFsname.c_str());
+    }
       rc = fsd_fclose(fSessionFSD);
       if (rc)
-	{
-	  EOUT("Failedto close LTSM file on FSD server: "
-	       "File=%s, FSD Servername=%s, Node=%s, Fsname=%s",
-	       fCurrentFile.c_str(), fServernameFSD.c_str(), fNode.c_str(),
-	       fFsname.c_str());
-	  return;
-	}
+   {
+     EOUT("Failedto close LTSM file on FSD server: "
+          "File=%s, FSD Servername=%s, Node=%s, Fsname=%s",
+          fCurrentFile.c_str(), fServernameFSD.c_str(), fNode.c_str(),
+          fFsname.c_str());
+     return;
+   }
     }
   else
 #endif
     {
       struct tsm_file_t* theHandle = (struct tsm_file_t*) f;
       if (theHandle != fSession->tsm_file)
-	{
+   {
 
-	  EOUT(
-	       "Inconsistent file  handles (0x%x != 0x%x) when closing LTSM file: "
-	       "File=%s, Servername=%s, Node=%s, Fsname=%s .... try to close most recent file in session",
-	       theHandle, fSession->tsm_file, fCurrentFile.c_str(),
-	       fServername.c_str(), fNode.c_str(), fFsname.c_str());
-	}
+     EOUT(
+          "Inconsistent file  handles (0x%x != 0x%x) when closing LTSM file: "
+          "File=%s, Servername=%s, Node=%s, Fsname=%s .... try to close most recent file in session",
+          theHandle, fSession->tsm_file, fCurrentFile.c_str(),
+          fServername.c_str(), fNode.c_str(), fFsname.c_str());
+   }
 
 
       rc = tsm_fclose(fSession);
 
       if (rc)
-	{
-	  EOUT("Failedto close LTSM file: "
-	       "File=%s, Servername=%s, Node=%s, Fsname=%s",
-	       fCurrentFile.c_str(), fServername.c_str(), fNode.c_str(),
-	       fFsname.c_str());
-	  return;
-	}
+   {
+     EOUT("Failedto close LTSM file: "
+          "File=%s, Servername=%s, Node=%s, Fsname=%s",
+          fCurrentFile.c_str(), fServername.c_str(), fNode.c_str(),
+          fFsname.c_str());
+     return;
+   }
     }
   DOUT0("ltsm::FileInterface has closed file %s", fCurrentFile.c_str());
   fIsClosing = false; // do we need such protection anymore? keep it for signalhandler tests maybe.
@@ -292,27 +292,27 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
 
     if (fIsClosing)
       {
-	DOUT0(
-	      "ltsm::FileInterface::fwrite is called during closing - ignored!");
-	//tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
-	return 0;
+   DOUT0(
+         "ltsm::FileInterface::fwrite is called during closing - ignored!");
+   //tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
+   return 0;
       }
 
     int rc;
  #ifdef LTSM_USE_FSD
     if (fUseFileSystemDemon)
       {
-	struct fsd_session_t* theHandleFSD = (struct fsd_session_t*) f;
-	if (theHandleFSD != fSessionFSD)
-	  {
+   struct fsd_session_t* theHandleFSD = (struct fsd_session_t*) f;
+   if (theHandleFSD != fSessionFSD)
+     {
 
-	    EOUT(
-		 "Inconsistent file  handles (0x%x != 0x%x) when writing to LTSM: "
-		 "File=%s, FSD Servername=%s, Node=%s, Fsname=%s .... something is wrong!",
-		 theHandleFSD, fSessionFSD, fCurrentFile.c_str(),
-		 fServernameFSD.c_str(), fNode.c_str(), fFsname.c_str());
-	    return 0;
-	  }
+       EOUT(
+       "Inconsistent file  handles (0x%x != 0x%x) when writing to LTSM: "
+       "File=%s, FSD Servername=%s, Node=%s, Fsname=%s .... something is wrong!",
+       theHandleFSD, fSessionFSD, fCurrentFile.c_str(),
+       fServernameFSD.c_str(), fNode.c_str(), fFsname.c_str());
+       return 0;
+     }
       rc = fsd_fwrite(ptr, sz, nmemb, fSessionFSD);
     }
  else
@@ -322,12 +322,12 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
      if (theHandle != fSession->tsm_file)
        {
 
-	 EOUT(
-	      "Inconsistent tsm_file_t handles (0x%x != 0x%x) when writing to LTSM: "
-	      "File=%s, Servername=%s, Node=%s, Fsname=%s .... something is wrong!",
-	      theHandle, fSession->tsm_file, fCurrentFile.c_str(),
-	      fServername.c_str(), fNode.c_str(), fFsname.c_str());
-	 return 0;
+    EOUT(
+         "Inconsistent tsm_file_t handles (0x%x != 0x%x) when writing to LTSM: "
+         "File=%s, Servername=%s, Node=%s, Fsname=%s .... something is wrong!",
+         theHandle, fSession->tsm_file, fCurrentFile.c_str(),
+         fServername.c_str(), fNode.c_str(), fFsname.c_str());
+    return 0;
        }
      rc = tsm_fwrite(ptr, sz, nmemb, fSession);
    }
@@ -437,7 +437,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
     if (url.HasOption("ltsmUseFSD"))
         {
           fUseFileSystemDemon = url.GetOptionBool("ltsmUseFSD", fUseFileSystemDemon);
-	  DOUT0("tsm::FileInterface::OpenTSMSession will use %s  from url options.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
+     DOUT0("tsm::FileInterface::OpenTSMSession will use %s  from url options.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
         }
      else
        {
@@ -449,21 +449,21 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
       if (url.HasOption("ltsmFSDServerName"))
         {
           fServernameFSD = url.GetOptionStr("ltsmFSDServerName", fServernameFSD);
-	  DOUT0("tsm::FileInterface::OpenTSMSession with FSD server %s  from url options.",fServernameFSD.c_str());
+     DOUT0("tsm::FileInterface::OpenTSMSession with FSD server %s  from url options.",fServernameFSD.c_str());
         }
       else
-	{
+   {
           DOUT0("tsm::FileInterface::OpenTSMSession with FSD server %s  from defaults.",fServernameFSD.c_str());
-	}
+   }
       if (url.HasOption("ltsmFSDServerPort"))
         {
           fPortFSD = url.GetOptionInt("ltsmFSDServerPort", fPortFSD);
-	  DOUT0("tsm::FileInterface::OpenTSMSession with FSD server port %d  from url options.",fPortFSD);
+     DOUT0("tsm::FileInterface::OpenTSMSession with FSD server port %d  from url options.",fPortFSD);
         }
       else
-	{
+   {
           DOUT0("tsm::FileInterface::OpenTSMSession with FSD server port %d  from defaults.",fPortFSD);
-	}
+   }
 
     } //  if (fUseFileSystemDemon)
 #endif
@@ -486,60 +486,63 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
     fSessionFSD = (struct fsd_session_t*) malloc(sizeof(struct fsd_session_t));
 #endif
     struct login_t tsmlogin;
-   login_init(&tsmlogin, fServername.c_str(), fNode.c_str(),
-      fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
-      fFsname.c_str(), DEFAULT_FSTYPE);
-     fSession = (struct session_t*) malloc(sizeof(struct session_t));
+    login_init(&tsmlogin, fServername.c_str(), fNode.c_str(),
+               fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
+               fFsname.c_str(), DEFAULT_FSTYPE);
+    fSession = (struct session_t*) malloc(sizeof(struct session_t));
+    if (!fSession) {
+       EOUT("Memory allocation error");
+       return false;
+    }
 
-
-   int connectcount=0;
-   int rc=0;
-   while (connectcount++ <fSessionConnectRetries)
+    int connectcount=0;
+    int rc=0;
+    while (connectcount++ <fSessionConnectRetries)
    {
 #ifdef LTSM_USE_FSD
      if (fUseFileSystemDemon)
        {
-	 memset(fSessionFSD, 0, sizeof(struct fsd_session_t));
-	 rc = fsd_fconnect(&fsdlogin, fSessionFSD);
+    memset(fSessionFSD, 0, sizeof(struct fsd_session_t));
+    rc = fsd_fconnect(&fsdlogin, fSessionFSD);
        }
      else
 #endif
        {
-	 memset(fSession, 0, sizeof(struct session_t));
-	 rc = tsm_fconnect(&tsmlogin, fSession);
+    memset(fSession, 0, sizeof(struct session_t));
+    rc = tsm_fconnect(&tsmlogin, fSession);
        }
      if (rc==0)
        {
-	 break;
+    break;
        }
      else
        {
-	 EOUT("Fail to connect LTSM session (returncode:%d) using following arguments"
-	      "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s , retry again %d time...",rc,
-	      fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-	      fOwner.c_str(), fFsname.c_str(), connectcount);
-	 dabc::mgr.Sleep(1);
+    EOUT("Fail to connect LTSM session (returncode:%d) using following arguments"
+         "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s , retry again %d time...",rc,
+         fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+         fOwner.c_str(), fFsname.c_str(), connectcount);
+    dabc::mgr.Sleep(1);
        }
    } // while
 
    if (rc)
        {
        EOUT("Finally FAILED to connect LTSM session (returncode%d))after %d retries!! -  using following arguments"
-	    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s", rc, connectcount,
+       "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s", rc, connectcount,
           fServername.c_str(), fNode.c_str(), fPassword.c_str(),
           fOwner.c_str(), fFsname.c_str());
 #ifdef LTSM_USE_FSD
        if (fUseFileSystemDemon)
-	 {
-	   free(fSessionFSD);
-	   fSessionFSD=0;
-	 }
+    {
+      free(fSessionFSD);
+      fSessionFSD=0;
+    }
        else
 #endif
-	 {
-	   free(fSession);
-	   fSession=0;
-	 }
+    {
+      free(fSession);
+      fSession=0;
+    }
        return false;
        } // if(rc)
 
@@ -548,11 +551,10 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
           fServername.c_str(), fNode.c_str(), fPassword.c_str(),
           fOwner.c_str(), fFsname.c_str());
 
-     #ifdef LTSM_USE_FSD
-       if (fUseFileSystemDemon)
-	DOUT0("Using FSD at server %s ,port %d",
-          fServernameFSD.c_str(), fPortFSD);
-       #endif
+   #ifdef LTSM_USE_FSD
+     if (fUseFileSystemDemon)
+        DOUT0("Using FSD at server %s ,port %d", fServernameFSD.c_str(), fPortFSD);
+   #endif
 
  return true;
 }

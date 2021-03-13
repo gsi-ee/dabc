@@ -492,6 +492,7 @@ int dabc::Module::PreviewCommand(Command cmd)
       info.SetField("OutputQueueCapacity", outq);
       info.SetField("NumCanSend", cansend);
       info.SetField("NumCanRecv", canrecv);
+      info.SetField("NumCanTake", cantake);
 
       cmd.SetStr("StringReply", info.SaveToJson());
 
