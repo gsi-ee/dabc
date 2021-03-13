@@ -82,7 +82,7 @@ bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
    }
 
    std::string val = Find1(fSelected, "", xmlRunNode, xmlDebuglevel);
-   if (!val.empty()) dabc::SetDebugLevel(atoi(val.c_str()));
+   if (!val.empty()) dabc::SetDebugLevel(std::stoi(val));
 
    val = Find1(fSelected, "", xmlRunNode, xmlNoDebugPrefix);
    if (!val.empty()) {
@@ -91,13 +91,13 @@ bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
    }
 
    val = Find1(fSelected, "", xmlRunNode, xmlLoglevel);
-   if (!val.empty()) dabc::SetFileLevel(atoi(val.c_str()));
+   if (!val.empty()) dabc::SetFileLevel(std::stoi(val));
 
    std::string syslog = "";
    val = Find1(fSelected, "", xmlRunNode, xmlSysloglevel);
    if (!val.empty()) {
       syslog = "DABC";
-      dabc::Logger::Instance()->SetSyslogLevel(atoi(val.c_str()));
+      dabc::Logger::Instance()->SetSyslogLevel(std::stoi(val));
    }
 
    std::string log = Find1(fSelected, "", xmlRunNode, xmlLogfile);
@@ -111,7 +111,7 @@ bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
 
    log = Find1(fSelected, "", xmlRunNode, xmlLoglimit);
    if (log.length()>0)
-      dabc::Logger::Instance()->SetLogLimit(atoi(log.c_str()));
+      dabc::Logger::Instance()->SetLogLimit(std::stoi(log));
 
    fLocalHost = Find1(fSelected, "", xmlRunNode, xmlSocketHost);
 

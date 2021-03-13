@@ -60,7 +60,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
     }
 
 
-  
+
 
   if(fSessionFileCount >= fMaxFilesPerSession)
     {
@@ -68,7 +68,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
     }
 
   // here optionally modify file path to contain year/day paths:
-  std::string fileName=fname;  
+  std::string fileName=fname;
   // TODO 2020
   if(fUseDaysubfolders)
     {
@@ -80,7 +80,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
       strftime(buf, 128, "%y/%j/", localtime_r(&tv.tv_sec, &tm_res));
       DOUT0("ltsm::FileInterface uses year day path %s",buf);
       std::string insertpath(buf);
-      
+
   size_t slash = fileName.rfind("/");
       if (slash == std::string::npos)
 	slash=0;
@@ -90,13 +90,13 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 
      }
   // open session before first file is written, or if we have closed previous session to start tape migration on server
-#ifdef LTSM_USE_FSD   
+#ifdef LTSM_USE_FSD
   if (fUseFileSystemDemon)
     {
       if (fSessionFSD == 0)
 	{
 	  if(!OpenTSMSession(opt)) return 0;
-	} // if fSesssion==0	  
+	} // if fSesssion==0
     }
   else
 #endif
@@ -105,7 +105,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	{
            if(!OpenTSMSession(opt)) return 0;
         } // if fSesssion==0
-    }  
+    }
 
   // default description is per file, not per session:
   dabc::DateTime dt;
@@ -119,14 +119,14 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
       fDescription = url.GetOptionStr("ltsmDescription", fDescription);
     }
 
-  if (strstr(mode, "w") != 0) 
+  if (strstr(mode, "w") != 0)
     {
       int rc;
-#ifdef LTSM_USE_FSD   
+#ifdef LTSM_USE_FSD
       if (fUseFileSystemDemon)
-	{ 
+	{
 	  rc = fsd_fopen(fFsname.c_str(), (char*) fileName.c_str(),
-			 (char*) fDescription.c_str(), fSessionFSD);	
+			 (char*) fDescription.c_str(), fSessionFSD);
 	  if (rc)
 	    {
 	      EOUT(
@@ -145,13 +145,13 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	    DOUT0("Opened LTSM file (session count %d) for writing to FSD: "
 	    "File=%s, FSD Servername=%s,  Description=%s", fSessionFileCount, fname,
 	    fServernameFSD.c_str(), fDescription.c_str());
-	    return fSessionFSD; // no file structure here, use current session as handle 
+	    return fSessionFSD; // no file structure here, use current session as handle
 	}
       else
 #endif
 	{
 	  rc = tsm_fopen(fFsname.c_str(), (char*) fileName.c_str(),
-			 (char*) fDescription.c_str(), fSession);   
+			 (char*) fDescription.c_str(), fSession);
 	  if (rc)
 	    {
 	      EOUT(
@@ -170,9 +170,9 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	    DOUT0("Opened LTSM file (session count %d) for writing: "
 		  "File=%s, Servername=%s,  Description=%s", fSessionFileCount, fileName.c_str(),
 	    fServername.c_str(), fDescription.c_str());
-	   return fSession->tsm_file; // pointer to file structure is the handle    
+	   return fSession->tsm_file; // pointer to file structure is the handle
 	}
-     
+
     }
   else if (strstr(mode, "r") != 0)
     {
@@ -190,10 +190,8 @@ int ltsm::FileInterface::GetFileIntPar(Handle, const char* parname)
       return -1; // return RFIO version number
    if (strcmp(parname, "DataMoverIndx") == 0)
    {
-      int index = 42;
       std::string suffix = fNode.substr(fNode.size() - 2);
-      index = atoi(suffix.c_str());
-      return index; //take first number from node name.
+      return std::stoi(suffix); //take first number from node name.
       // this works for LTSM_TEST01, but not for lxbkhebe.
    }
    return 0;
@@ -231,7 +229,7 @@ void ltsm::FileInterface::fclose(Handle f)
   fIsClosing = true;
   int rc=0;
 
-#ifdef LTSM_USE_FSD   
+#ifdef LTSM_USE_FSD
   if (fUseFileSystemDemon)
     {
        struct fsd_session_t* theHandleFSD = (struct fsd_session_t*) f;
@@ -268,7 +266,7 @@ void ltsm::FileInterface::fclose(Handle f)
 	       fServername.c_str(), fNode.c_str(), fFsname.c_str());
 	}
 
-      
+
       rc = tsm_fclose(fSession);
 
       if (rc)
@@ -299,9 +297,9 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
 	//tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
 	return 0;
       }
-   
+
     int rc;
- #ifdef LTSM_USE_FSD   
+ #ifdef LTSM_USE_FSD
     if (fUseFileSystemDemon)
       {
 	struct fsd_session_t* theHandleFSD = (struct fsd_session_t*) f;
@@ -468,7 +466,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 	}
 
     } //  if (fUseFileSystemDemon)
-#endif    
+#endif
 
    DOUT2(
       "Prepare open LTSM file for writing -  "
@@ -476,29 +474,29 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
       fServername.c_str(), fNode.c_str(), fPassword.c_str(),
       fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
 
-  
-#ifdef LTSM_USE_FSD   
-    struct fsd_login_t fsdlogin;    
+
+#ifdef LTSM_USE_FSD
+    struct fsd_login_t fsdlogin;
     // TODO: function fsd_login_init
     strncpy(fsdlogin.node,  fNode.c_str(), DSM_MAX_NODE_LENGTH);
     strncpy(fsdlogin.password,  fPassword.c_str(), DSM_MAX_VERIFIER_LENGTH);
     strncpy(fsdlogin.hostname,  fServernameFSD.c_str(), DSM_MAX_NODE_LENGTH);
     fsdlogin.port=fPortFSD;
 
-    fSessionFSD = (struct fsd_session_t*) malloc(sizeof(struct fsd_session_t)); 
+    fSessionFSD = (struct fsd_session_t*) malloc(sizeof(struct fsd_session_t));
 #endif
     struct login_t tsmlogin;
    login_init(&tsmlogin, fServername.c_str(), fNode.c_str(),
       fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
       fFsname.c_str(), DEFAULT_FSTYPE);
      fSession = (struct session_t*) malloc(sizeof(struct session_t));
-     
- 
+
+
    int connectcount=0;
    int rc=0;
    while (connectcount++ <fSessionConnectRetries)
    {
-#ifdef LTSM_USE_FSD   
+#ifdef LTSM_USE_FSD
      if (fUseFileSystemDemon)
        {
 	 memset(fSessionFSD, 0, sizeof(struct fsd_session_t));
@@ -550,7 +548,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
           fServername.c_str(), fNode.c_str(), fPassword.c_str(),
           fOwner.c_str(), fFsname.c_str());
 
-     #ifdef LTSM_USE_FSD   
+     #ifdef LTSM_USE_FSD
        if (fUseFileSystemDemon)
 	DOUT0("Using FSD at server %s ,port %d",
           fServernameFSD.c_str(), fPortFSD);
@@ -562,7 +560,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 
 bool ltsm::FileInterface::CloseTSMSession()
 {
-#ifdef LTSM_USE_FSD   
+#ifdef LTSM_USE_FSD
   if (fUseFileSystemDemon)
     {
       if(fSessionFSD==0) return false;
@@ -571,7 +569,7 @@ bool ltsm::FileInterface::CloseTSMSession()
       fSessionFSD = 0;
     }
   else
-#endif     
+#endif
     {
       if(fSession==0) return false;
       tsm_fdisconnect(fSession);

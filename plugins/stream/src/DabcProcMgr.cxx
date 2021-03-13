@@ -157,7 +157,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    if (!xtitle.empty()) h.SetField("xtitle", xtitle);
    if (!ytitle.empty()) h.SetField("ytitle", ytitle);
    if (xlbls.length()>0) h.SetField("xlabels", xlbls);
-   h.SetField("fillcolor", fillcolor.empty() ? fDefaultFill : std::atoi(fillcolor.c_str()));
+   h.SetField("fillcolor", fillcolor.empty() ? fDefaultFill : std::stoi(fillcolor));
    if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
@@ -234,7 +234,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    if (!ytitle.empty()) h.SetField("ytitle", ytitle);
    if (xlbls.length() > 0) h.SetField("xlabels", xlbls);
    if (ylbls.length() > 0) h.SetField("ylabels", ylbls);
-   if (!fillcolor.empty()) h.SetField("fillcolor", std::atoi(fillcolor.c_str()));
+   if (!fillcolor.empty()) h.SetField("fillcolor", std::stoi(fillcolor));
    h.SetField("drawopt", drawopt.empty() ? std::string("colz") : drawopt);
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
