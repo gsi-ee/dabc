@@ -1029,14 +1029,17 @@ extern "C" void RunPoolTest()
 
 
       char* newbuf = (char*) malloc(256);
-      strcpy(newbuf,"This is own buffer");
+      if (newbuf) {
+         strncpy(newbuf,"This is own buffer", 256);
 
-      DOUT0("Create memory %p", newbuf);
+         DOUT0("Create memory %p", newbuf);
 
+         buf2 = dabc::Buffer::CreateBuffer(newbuf, strlen(newbuf), true);
 
-      buf2 = dabc::Buffer::CreateBuffer(newbuf, strlen(newbuf), true);
-
-      DOUT0("Ext buffer: %s", buf2.AsStdString().c_str());
+         DOUT0("Ext buffer: %s", buf2.AsStdString().c_str());
+      } else {
+         EOUT("Fail to create 256 bytes buffer");
+      }
 
 
       /*

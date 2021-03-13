@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr;
 
     char* recvBuff = malloc(512*1024);
+    if (!recvBuff) return 1;
 
     int64_t header[2];
     int64_t totalsz, totalbuf, totallost, lastcnt;
@@ -56,10 +57,20 @@ int main(int argc, char *argv[])
         while (1) {
            sz = recv(connfd, header, sizeof(header), MSG_WAITALL);
            if (sz == 0) continue;
-           if (sz != sizeof(header)) { printf("Error when receive header %lu res %ld\n", (long unsigned) sizeof(header), (long) sz); close(listenfd); return 0; }
+           if (sz != sizeof(header)) {
+              printf("Error when receive header %lu res %ld\n", (long unsigned) sizeof(header), (long) sz);
+              close(listenfd);
+              free(recvBuff);
+              return 0;
+           }
 
            sz = recv(connfd, recvBuff, header[1], MSG_WAITALL);
-           if (sz != header[1]) { printf("Error when receive buffer %ld res %ld\n", (long) header[1], (long) sz); close(listenfd); return 0; }
+           if (sz != header[1]) {
+              printf("Error when receive buffer %ld res %ld\n", (long) header[1], (long) sz);
+              close(listenfd);
+              free(recvBuff);
+              return 0;
+           }
 
            // printf("get buffer %ld\n", header[1]);
 
@@ -78,5 +89,6 @@ int main(int argc, char *argv[])
 
      }
 
+    free(recvBuff);
     return 0;
 }

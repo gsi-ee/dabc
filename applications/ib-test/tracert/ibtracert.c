@@ -1123,17 +1123,25 @@ void process_nodes_list(const char* fname, int maxnumlids, int optimize)
 
                      if (strstr(route[nn],"ibswitch")==route[nn]+4) {
                         mybuf = (char*) malloc(11);
-                        memcpy(mybuf, route[nn]+4, 10);
-                        mybuf[10] = 0;
-                        free(route[nn]);
-                        route[nn] = mybuf;
+                        if (mybuf) {
+                           memcpy(mybuf, route[nn]+4, 10);
+                           mybuf[10] = 0;
+                           free(route[nn]);
+                           route[nn] = mybuf;
+                        } else {
+                           printf("Memory allocation failure\n");
+                        }
                      } else
                      if (strstr(route[nn],"ibspine")==route[nn]+4) {
                         mybuf = (char*) malloc(10);
-                        memcpy(mybuf, route[nn]+4, 9);
-                        mybuf[9] = 0;
-                        free(route[nn]);
-                        route[nn] = mybuf;
+                        if (mybuf) {
+                           memcpy(mybuf, route[nn]+4, 9);
+                           mybuf[9] = 0;
+                           free(route[nn]);
+                           route[nn] = mybuf;
+                        } else {
+                           printf("Memory allocation failure\n");
+                        }
                      }
 
                      //               printf("   item %d = %s\n", nn, route[nn]);
