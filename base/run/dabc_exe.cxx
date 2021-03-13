@@ -14,6 +14,7 @@
  ************************************************************/
 
 #include <cstdlib>
+#include <string>
 #include <clocale>
 
 #include "dabc/Manager.h"
@@ -106,11 +107,11 @@ int main(int numc, char* args[])
       } else
       if (strcmp(arg,"-nodeid")==0) {
          if (cnt < numc)
-            nodeid = (unsigned) atoi(args[cnt++]);
+            nodeid = std::stoul(args[cnt++]);
       } else
       if (strcmp(arg,"-numnodes")==0) {
          if (cnt < numc)
-            numnodes = (unsigned) atoi(args[cnt++]);
+            numnodes = std::stoul(args[cnt++]);
       } else
       if (strcmp(arg,"-run")==0) {
          //dorun = true;

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <string>
 
 int main(int numc, char* args[])
 {
@@ -37,7 +38,7 @@ int main(int numc, char* args[])
 
       if (strcmp(arg,"-id")==0) {
          if (cnt < numc)
-            configid = (unsigned) atoi(args[cnt++]);
+            configid = std::stoul(args[cnt++]);
       } else
       if (strcmp(arg,"-workdir")==0) {
          if (cnt < numc)

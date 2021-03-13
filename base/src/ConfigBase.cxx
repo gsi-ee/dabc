@@ -18,6 +18,7 @@
 #include <fnmatch.h>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 #include "dabc/logging.h"
 
@@ -174,7 +175,7 @@ const char* dabc::ConfigBase::GetAttr(XMLNodePointer_t node, const char* attr, c
 int dabc::ConfigBase::GetIntAttr(XMLNodePointer_t node, const char* attr, int defvalue)
 {
    const char* res = GetAttr(node, attr, 0);
-   return res ? atoi(res) : defvalue;
+   return res ? std::stoi(res) : defvalue;
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const char* name)
