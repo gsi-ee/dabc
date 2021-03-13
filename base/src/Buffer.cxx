@@ -429,9 +429,12 @@ dabc::Buffer dabc::Buffer::CreateBuffer(const void* ptr, unsigned size, bool own
 
    if (owner) {
       res.GetObject()->fPool = new MemoryContainer((void*)ptr);
-   } else
-   if (makecopy) {
-      void* newptr = malloc(size);
+   } else if (makecopy) {
+      void *newptr = malloc(size);
+      if (!newptr) {
+         EOUT("Failed to allocate buffer of size %u", size);
+         return res;
+      }
       memcpy(newptr, ptr, size);
       res.GetObject()->fPool = new MemoryContainer((void*)newptr);
       ptr = newptr;

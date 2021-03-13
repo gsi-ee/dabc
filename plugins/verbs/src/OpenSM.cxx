@@ -97,6 +97,11 @@ bool verbs::OpenSM::Init()
    ib_api_status_t status;
 
    f_log = (osm_log_t*) malloc (sizeof(osm_log_t));
+   if (!f_log) {
+      EOUT("Problem with memory allocation");
+      return false;
+   }
+
    memset(f_log, 0, sizeof(osm_log_t));
    osm_log_construct(f_log);
 
@@ -121,8 +126,8 @@ bool verbs::OpenSM::Init()
    }
 
 
-// the only change from OFED 1.2 to 1.4 
-//   status = osm_mad_pool_init( &f_mad_pool, f_log ); 
+// the only change from OFED 1.2 to 1.4
+//   status = osm_mad_pool_init( &f_mad_pool, f_log );
 
    osm_mad_pool_construct( &f_mad_pool);
    status = osm_mad_pool_init( &f_mad_pool);
