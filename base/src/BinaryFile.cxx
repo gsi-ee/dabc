@@ -59,10 +59,10 @@ bool dabc::FileInterface::mkdir(const char* path)
 
 dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
 {
-   if ((fmask==0) || (*fmask==0)) return 0;
+   if (!fmask || (*fmask==0)) return nullptr;
 
    std::string pathname;
-   const char* fname(0);
+   const char* fname = nullptr;
 
    const char* slash = strrchr(fmask, '/');
 
@@ -76,9 +76,9 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
 
    struct dirent **namelist;
    int len = scandir(pathname.c_str(), &namelist, 0, alphasort);
-   if (len < 0) return 0;
+   if (len < 0) return nullptr;
 
-   Object* res = 0;
+   Object* res = nullptr;
    struct stat buf;
 
    for (int n=0;n<len;n++) {
@@ -95,7 +95,7 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
 
          if ((select_files && !S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK)==0)) ||
             (!select_files && S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK | X_OK)==0))) {
-            if (res==0) res = new dabc::Object(0, "FilesList");
+            if (!res) res = new dabc::Object(0, "FilesList");
             new dabc::Object(res, fullitemname);
          }
       }

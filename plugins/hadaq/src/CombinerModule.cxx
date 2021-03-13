@@ -1449,14 +1449,15 @@ void hadaq::CombinerModule::StoreRunInfoStart()
     */
    if(!fRunToOracle || fRunNumber==0) return;
    time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
-   FILE *fp;
    char ltime[20];            /* local time */
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
    std::string filename=GenerateFileName(fRunNumber); // new run number defines filename
-   fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
-   fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
-   fclose(fp);
+   FILE *fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
+   if (fp) {
+      fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
+      fclose(fp);
+   }
    DOUT1("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime);
 
 }
@@ -1478,15 +1479,16 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
       t = time(NULL);
    else
       t = newrunid + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
-   FILE *fp;
    char ltime[20];            /* local time */
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
-   fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
    std::string filename = GenerateFileName(fRunNumber); // old run number defines old filename
-   fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fRunBuildEvents));
-   fprintf(fp, "%s\n", Unit(fRunRecvBytes));
-   fclose(fp);
+   FILE *fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
+   if (fp) {
+      fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fRunBuildEvents));
+      fprintf(fp, "%s\n", Unit(fRunRecvBytes));
+      fclose(fp);
+   }
    DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fRunBuildEvents),Unit(fRunRecvBytes));
 
 }

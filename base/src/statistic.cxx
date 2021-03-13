@@ -273,6 +273,7 @@ void dabc::Ratemeter::SaveRatesInFile(const char* fname, Ratemeter** rates, int 
    if ((npoints<=0) || (interval<=0)) return;
 
    FILE* f = fopen(fname,"w");
+   if (!f) return;
 
    for (int n=0;n<npoints;n++) {
       fprintf(f, "%7.1f", n*interval*1e3); // time in millisec
