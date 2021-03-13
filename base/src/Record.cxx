@@ -1131,9 +1131,12 @@ bool dabc::RecordField::SetStr(const std::string &v)
    if ((fKind == kind_string) && (v==valueStr)) return modified(false);
 
    release();
+   size_t len = v.length();
+   valueStr = (char*) malloc(len+1);
+   if (!valueStr) return false;
+
    fKind = kind_string;
-   valueStr = (char*) malloc(v.length()+1);
-   strcpy(valueStr, v.c_str());
+   strncpy(valueStr, v.c_str(), len+1);
 
    return modified();
 }
@@ -1142,19 +1145,21 @@ bool dabc::RecordField::SetStr(const char* v)
 {
    if (cannot_modify()) return false;
 
-   if ((fKind == kind_string) && (v!=0) && (strcmp(v,valueStr)==0)) return modified(false);
+   if ((fKind == kind_string) && v && (strcmp(v,valueStr)==0)) return modified(false);
 
    release();
-   fKind = kind_string;
-   size_t len = v==0 ? 0 : strlen(v);
+   size_t len = !v ? 0 : strlen(v);
    valueStr = (char*) malloc(len+1);
-   if (v!=0) strcpy(valueStr, v);
-        else *valueStr = 0;
+   if (!valueStr) return false;
+
+   fKind = kind_string;
+   if (v) strncpy(valueStr, v, len+1);
+     else *valueStr = 0;
 
    return modified();
 }
 
-bool dabc::RecordField::SetStrVect(const std::vector<std::string>& vect)
+bool dabc::RecordField::SetStrVect(const std::vector<std::string> &vect)
 {
    if (cannot_modify()) return false;
 
@@ -1169,19 +1174,21 @@ bool dabc::RecordField::SetStrVect(const std::vector<std::string>& vect)
    }
 
    release();
-   fKind = kind_arrstr;
-
-   valueInt = (int64_t) vect.size();
 
    size_t len = 0;
    for (unsigned n=0;n<vect.size();n++)
-      len+=vect[n].length()+1;
-   valueStr = (char*) malloc(len);
-   char* p = valueStr;
+      len += vect[n].length()+1;
+   valueStr = (char *) malloc(len);
+   if (!valueStr) return false;
+
+   fKind = kind_arrstr;
+   valueInt = (int64_t) vect.size();
+
+   char *p = valueStr;
 
    for (unsigned n=0;n<vect.size();n++) {
-      strcpy(p, vect[n].c_str());
-      p+=vect[n].length()+1;
+      strncpy(p, vect[n].c_str(), vect[n].length()+1);
+      p += vect[n].length()+1;
    }
 
    return modified();
@@ -1352,7 +1359,10 @@ void dabc::RecordField::SetArrStrDirect(int64_t size, char* arr, bool owner)
          p+=len+1;
       }
       valueStr = (char*) malloc(fullsize);
-      memcpy(valueStr, arr, fullsize);
+      if (valueStr)
+         memcpy(valueStr, arr, fullsize);
+      else
+         fKind = kind_none;
    }
 }
 
