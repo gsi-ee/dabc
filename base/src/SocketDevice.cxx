@@ -384,8 +384,6 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
          rec->fLocalCmd = cmd;
 
          return cmd_postponed;
-
-         break;
       }
 
       default:

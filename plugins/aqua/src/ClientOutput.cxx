@@ -136,7 +136,6 @@ unsigned aqua::ClientOutput::Write_Check()
       default:
          EOUT("Write_Check at wrong state %d", fState);
          return dabc::do_Error;
-         break;
    }
 
    return dabc::do_RepeatTimeOut;

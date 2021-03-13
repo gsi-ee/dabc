@@ -449,11 +449,9 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
          return dabc::cmd_false;
       }
 
-
       default:
          EOUT("Request from connection manager in undefined situation progress = %d ???", req.progress());
          return dabc::cmd_false;
-         break;
    }
 
    return dabc::cmd_true;

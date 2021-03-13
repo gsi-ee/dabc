@@ -84,7 +84,7 @@ namespace mbs {
             fprintf(stderr, "%s is original LMD file, which is not supported by DABC\n", fname);
             Close();
             return false;
-
+/*
             if ((fFileHdr.FullSize() > 0x8000) || (fFileHdr.FullSize() < sizeof(fFileHdr))) {
                fprintf(stderr, "File header %u too large in file %s\n", (unsigned) fFileHdr.FullSize(), fname);
                Close();
@@ -99,9 +99,10 @@ namespace mbs {
             fReadingMode = true;
             // fMbsFormat = true;
             return true;
+*/
          }
 
-         bool OpenWriting(const char* fname, const char* opt = 0)
+         bool OpenWriting(const char* fname, const char* opt = nullptr)
          {
             if (isOpened()) return false;
 

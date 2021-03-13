@@ -778,8 +778,6 @@ std::string dabc::RecordField::AsStr(const std::string &dflt) const
          }
          res.append("]");
          return res;
-
-         break;
       }
       case kind_string: {
          if (valueStr!=0) return valueStr;

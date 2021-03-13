@@ -140,7 +140,7 @@ unsigned saftdabc::Input::Read_Size ()
 #ifdef  DABC_SAFT_USE_2_0
    saftlib::wait_for_signal();
 #endif
-  
+
   if(fUseCallbackMode) return dabc::di_DfltBufSize;
 
   // here may do forwarding to callback or poll with timeout if no data in queues
@@ -162,7 +162,7 @@ unsigned saftdabc::Input::Read_Size ()
     EOUT(" saftdabc::Input::Read_Size with std exception %s ", ex.what());
     return dabc::di_Error;
   }
-#ifdef  DABC_SAFT_USE_2_0 
+#ifdef  DABC_SAFT_USE_2_0
  catch (const saftbus::Error& error)
  {
    /* Catch error(s) */
@@ -170,7 +170,7 @@ unsigned saftdabc::Input::Read_Size ()
    return false;
 
  }
-#endif  
+#endif
   return dabc::di_Error;
 }
 
@@ -216,20 +216,17 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
     switch (fEventFormat)
     {
       case saft_Format_Raw:
-        return (Write_Raw (buf));
-        break;
+        return Write_Raw (buf);
       case saft_Format_Hadaq:
-        return (Write_Hadaq (buf));
-        break;
+        return Write_Hadaq (buf);
       case saft_Format_Mbs:
       default:
-        return (Write_Mbs (buf));
-        break;
+        return Write_Mbs (buf);
     };
     return dabc::di_Error;
   }    // try
 
-  
+
   #ifdef DABC_SAFT_USE_2_0
 catch (const saftbus::Error& error)
   {
@@ -465,14 +462,14 @@ bool saftdabc::Input::SetupConditions ()
     return true;
 
   }    // end try
-  
-  
+
+
   #ifdef DABC_SAFT_USE_2_0
 catch (const saftbus::Error& error)
   {
     EOUT("SAFTbus error %s in SetupConditions", error.what().c_str());
   }
-#else  
+#else
   catch (const Glib::Error& error)
   {
     EOUT("Glib error %s in SetupConditions", error.what().c_str());
@@ -507,7 +504,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
       {
         deadline -= IO_CONDITION_OFFSET; // like in saft-io-ctl
       }
- 
+
 
     if (fVerbose)
     {
@@ -558,7 +555,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
     }    //  if (fUseCallbackMode &
 
   }    // try
-  
+
 #ifdef DABC_SAFT_USE_2_0
 catch (const saftbus::Error& error)
   {
@@ -569,8 +566,8 @@ catch (const Glib::Error& error)
   {
     EOUT("saftdabc::Input::EventHandler with Glib error %s", error.what().c_str());
   }
-#endif  
-  
+#endif
+
   catch (std::exception& ex)
   {
     EOUT(" saftdabc::Input::EventHandler with std exception %s ", ex.what());

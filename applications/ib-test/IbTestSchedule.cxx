@@ -10,8 +10,6 @@
 
 typedef std::vector<std::string> StringsVector;
 
-
-
 void Tokanize(std::string str, StringsVector& arr)
 {
    while (str.length()>0) {
@@ -2624,8 +2622,6 @@ extern "C" void TestSchedule()
 {
    std::string filename = dabc::mgr()->cfg()->GetUserPar("FileName");
 
-   bool optimize = dabc::mgr()->cfg()->GetUserPar("Optimize") == "true";
-
    if (filename.length()==0) {
       EOUT("File name not specified - exit");
       return;
@@ -2644,6 +2640,9 @@ extern "C" void TestSchedule()
 
    return;
 
+/*
+
+   bool optimize = dabc::mgr()->cfg()->GetUserPar("Optimize") == "true";
 
    DOUT0("Reading file done");
 
@@ -2685,7 +2684,7 @@ extern "C" void TestSchedule()
    }
 
    BuildConjunctionCurve(routing);
-
+*/
 }
 
 
