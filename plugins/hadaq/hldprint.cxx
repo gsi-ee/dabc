@@ -718,23 +718,37 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             unsigned minor = (msg >> 20) & 0xF;
             ttype = (msg >> 16) & 0xF;
             unsigned trigger = msg & 0xFFFF;
-            snprintf(sdata, sizeof(sdata), "major:%u minor:%u typ:0x%x  trigger:%u", major, minor, ttype, trigger);
+            snprintf(sdata, sizeof(sdata), "version:%u.%u typ:0x%x  trigger:%u", major, minor, ttype, trigger);
          } else
          if (hdr3 == newkind_TRL) {
 
             switch (ttype) {
-            case 0x4:
-            case 0x6:
-            case 0x7:
-            case 0x8:
-            case 0x9:
-            case 0xE: kind = "TRLB"; break;
-            case 0xC: kind = "TRLC"; break;
-            case 0x0:
-            case 0x1:
-            case 0x2:
-            case 0xf:
-            default: kind = "TRLA";
+               case 0x4:
+               case 0x6:
+               case 0x7:
+               case 0x8:
+               case 0x9:
+               case 0xE: {
+                  kind = "TRLB";
+                  break;
+               }
+               case 0xC: {
+                  kind = "TRLC";
+                  break;
+               }
+               case 0x0:
+               case 0x1:
+               case 0x2:
+               case 0xf:
+               default: {
+                  kind = "TRLA";
+                  unsigned platformid = (msg >> 20) & 0xff;
+                  unsigned major = (msg >> 16) & 0xf;
+                  unsigned minor = (msg >> 12) & 0xf;
+                  unsigned sub = (msg >> 8) & 0xf;
+                  unsigned numch = (msg & 0x7F) + 1;
+                  snprintf(sdata, sizeof(sdata), "platform:0x%x version:%u.%u.%u numch:%u", platformid, major, minor, sub, numch);
+               }
             }
 
          } else
