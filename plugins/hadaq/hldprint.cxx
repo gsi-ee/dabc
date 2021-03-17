@@ -693,9 +693,7 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       const char *kind = "unckn";
 
       if (prefix > 0) snprintf(sbeg, sizeof(sbeg), "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
-      if (cnt == 0) {
-         kind = "?id?";
-      } else if ((msg & newkind_TMDT) == newkind_TMDT) {
+      if ((msg & newkind_TMDT) == newkind_TMDT) {
          kind = "TMDT";
       } else {
          unsigned hdr3 = msg & newkind_Mask3;
