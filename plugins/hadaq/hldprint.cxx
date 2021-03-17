@@ -730,10 +730,20 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                case 0x9:
                case 0xE: {
                   kind = "TRLB";
+                  unsigned eflags = (msg >> 24) & 0xF;
+                  unsigned maxdc = (msg >> 20) & 0xF;
+                  unsigned tptime = (msg >> 16) & 0xF;
+                  unsigned freq = msg & 0xFFFF;
+                  snprintf(sdata, sizeof(sdata), "eflags:0x%x maxdc:%u tptime:%u freq:%u", eflags, maxdc, tptime, freq);
                   break;
                }
                case 0xC: {
                   kind = "TRLC";
+                  unsigned cpc = (msg >> 24) & 0x7;
+                  unsigned ccs = (msg >> 20) & 0xF;
+                  unsigned ccdiv = (msg >> 16) & 0xF;
+                  unsigned freq = msg & 0xFFFF;
+                  snprintf(sdata, sizeof(sdata), "cpc:%u ccs:%u ccdiv:%u freq:%u", cpc, ccs, ccdiv, freq);
                   break;
                }
                case 0x0:
@@ -771,7 +781,13 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          if (hdr9 == newkind_TTRL) kind = "TTRL"; else
          if (hdr9 == newkind_TTCM) kind = "TTCM"; else
          if (hdr9 == newkind_TTCL) kind = "TTCL"; else
-         if (hdr7 == newkind_TMDR) kind = "TMDR";
+         if (hdr7 == newkind_TMDR) {
+            kind = "TMDR";
+            unsigned mode = (msg >> 21) & 0xF;
+            unsigned coarse = (msg >> 9) & 0xFFF;
+            unsigned fine = msg & 0x1FF;
+            snprintf(sdata, sizeof(sdata), "mode:0x%x coarse:%u fine:%u", mode, coarse, fine);
+         }
       }
 
       if (prefix > 0) printf("%s%s %s\n", sbeg, kind, sdata);
