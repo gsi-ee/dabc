@@ -53,6 +53,7 @@ int usage(const char* errstr = nullptr)
    printf("   -onlyerr                - printout only TDC data with errors\n");
    printf("   -cts id                 - printout raw data as CTS subsubevent (default none)\n");
    printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
+   printf("   -new id                 - printout raw data as new TDC subsubevent (default none)\n");
    printf("   -adc id                 - printout raw data as ADC subsubevent (default none)\n");
    printf("   -hub id                 - identify hub inside subevent (default none) \n");
    printf("   -auto                   - automatically assign ID for TDCs (0x0zzz or 0x1zzz) and HUBs (0x8zzz) (default false)\n");
@@ -854,7 +855,7 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, autoid = false;
 unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0;
-std::vector<unsigned> hubs, tdcs, ctsids;
+std::vector<unsigned> hubs, tdcs, ctsids, newtdcs;
 
 bool is_cts(unsigned id)
 {
@@ -890,6 +891,19 @@ bool is_tdc(unsigned id)
    return false;
 }
 
+bool is_newtdc(unsigned id)
+{
+   if (std::find(newtdcs.begin(), newtdcs.end(), id) != newtdcs.end()) return true;
+
+   for (unsigned n=0;n<newtdcs.size();n++)
+      if (((id & idrange) <= (newtdcs[n] & idrange)) && ((id & ~idrange) == (newtdcs[n] & ~idrange)))
+         return true;
+
+   return false;
+
+}
+
+
 bool is_adc(unsigned id)
 {
    return ((adcmask!=0) && ((id & idrange) <= (adcmask & idrange)) && ((id & ~idrange) == (adcmask & ~idrange)));
@@ -913,6 +927,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-find")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &findid); dofind = true; } else
       if ((strcmp(argv[n],"-cts")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.push_back(ctsid); } else
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
+      if ((strcmp(argv[n],"-new")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); newtdcs.push_back(tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
       if ((strcmp(argv[n],"-onlych")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &onlych); } else
@@ -1144,6 +1159,8 @@ int main(int argc, char* argv[])
             }
 
             if (is_tdc(datakind)) as_tdc = !onlytdc && !onlynew;
+
+            if (is_newtdc(datakind)) as_new = !onlytdc && !onlynew;
 
             if (!as_tdc) {
                if ((onlytdc!=0) && (datakind == onlytdc)) {
