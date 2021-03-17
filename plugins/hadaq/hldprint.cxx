@@ -633,6 +633,43 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 }
 
+enum {
+   // with mask 1
+   newkind_TMDT     = 0x80000000,
+   // with mask 3
+   newkind_Mask3    = 0xE0000000,
+   newkind_HDR      = 0x20000000,
+   newkind_TRL      = 0x00000000,
+   newkind_EPOC     = 0x60000000,
+   // with mask 4
+   newkind_Mask4    = 0xF0000000,
+   newkind_TMDS     = 0x40000000,
+   // with mask 6
+   newkind_Mask6    = 0xFC000000,
+   newkind_TBD      = 0x50000000,
+   // with mask 8
+   newkind_Mask8    = 0xFF000000,
+   newkind_HSTM     = 0x54000000,
+   newkind_HSTL     = 0x55000000,
+   newkind_HSDA     = 0x56000000,
+   newkind_HSDB     = 0x57000000,
+   newkind_CTA      = 0x58000000,
+   newkind_CTB      = 0x59000000,
+   newkind_TEMP     = 0x5A000000,
+   newkind_BAD      = 0x5B000000,
+   // with mask 9
+   newkind_Mask9    = 0xFF800000,
+   newkind_TTRM     = 0x5C000000,
+   newkind_TTRL     = 0x5C800000,
+   newkind_TTCM     = 0x5D000000,
+   newkind_TTCL     = 0x5D800000,
+   // with mask 7
+   newkind_Mask7    = 0xFE000000,
+   newkind_TMDR     = 0x5E000000
+};
+
+
+
 
 void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
 {
@@ -653,9 +690,41 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
 
-      if (prefix > 0) snprintf(sbeg, sizeof(sbeg), "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
+      const char *kind = "unckn";
 
-      if (prefix > 0) printf("%s\n", sbeg);
+      if (prefix > 0) snprintf(sbeg, sizeof(sbeg), "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
+      if (cnt == 0) {
+         kind = "?id?";
+      } else if ((msg & newkind_TMDT) == newkind_TMDT) {
+         kind = "TMDT";
+      } else {
+         unsigned hdr3 = msg & newkind_Mask3;
+         unsigned hdr4 = msg & newkind_Mask4;
+         unsigned hdr6 = msg & newkind_Mask6;
+         unsigned hdr7 = msg & newkind_Mask7;
+         unsigned hdr8 = msg & newkind_Mask8;
+         unsigned hdr9 = msg & newkind_Mask9;
+         if (hdr3 == newkind_HDR) kind = "HDR"; else
+         if (hdr3 == newkind_TRL) kind = "TRL"; else
+         if (hdr3 == newkind_EPOC) kind = "EPOC"; else
+         if (hdr4 == newkind_TMDS) kind = "TMDS"; else
+         if (hdr6 == newkind_TBD) kind = "TBD"; else
+         if (hdr8 == newkind_HSTM) kind = "HSTM"; else
+         if (hdr8 == newkind_HSTL) kind = "HSTL"; else
+         if (hdr8 == newkind_HSDA) kind = "HSDA"; else
+         if (hdr8 == newkind_HSDB) kind = "HSDB"; else
+         if (hdr8 == newkind_CTA) kind = "CTA"; else
+         if (hdr8 == newkind_CTB) kind = "CTB"; else
+         if (hdr8 == newkind_TEMP) kind = "TEMP"; else
+         if (hdr8 == newkind_BAD) kind = "BAD"; else
+         if (hdr9 == newkind_TTRM) kind = "TTRM"; else
+         if (hdr9 == newkind_TTRL) kind = "TTRL"; else
+         if (hdr9 == newkind_TTCM) kind = "TTCM"; else
+         if (hdr9 == newkind_TTCL) kind = "TTCL"; else
+         if (hdr7 == newkind_TMDR) kind = "TMDR";
+      }
+
+      if (prefix > 0) printf("%s%s\n", sbeg, kind);
    }
 }
 
