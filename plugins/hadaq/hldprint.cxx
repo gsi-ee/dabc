@@ -700,11 +700,11 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       if (prefix > 0) snprintf(sbeg, sizeof(sbeg), "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
       if ((msg & newkind_TMDT) == newkind_TMDT) {
          kind = "TMDT";
-         unsigned mode = (msg >> 23) & 0xFF;
-         unsigned channel = (msg >> 16) & 0x7F;
-         unsigned coarse = (msg >> 8) & 0xFF;
-         unsigned fine = msg & 0xFF;
-         snprintf(sdata, sizeof(sdata), "mode:0x%02x ch:%u coarse:%u fine:%u", mode, channel, coarse, fine);
+         unsigned mode = (msg >> 27) & 0xF;
+         unsigned channel = (msg >> 21) & 0x3F;
+         unsigned coarse = (msg >> 9) & 0xFFF;
+         unsigned fine = msg & 0x1FF;
+         snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u", mode, channel, coarse, fine);
       } else {
          unsigned hdr3 = msg & newkind_Mask3;
          unsigned hdr4 = msg & newkind_Mask4;
