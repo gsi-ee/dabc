@@ -61,7 +61,7 @@ int usage(const char* errstr = nullptr)
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
    printf("   -onlych chid            - print only specified TDC channel (default off)\n");
-   printf("   -onlynew subsubid       - printout raw data only for of specified new TDC subsubevent\n");
+   printf("   -onlynew subsubid       - printout raw data only for specified TDC4 subsubevent\n");
    printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
    printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
