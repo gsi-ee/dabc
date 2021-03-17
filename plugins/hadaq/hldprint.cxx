@@ -686,16 +686,25 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if (sz>99) wlen = 3; else
    if (sz>999) wlen = 4;
 
-   char sbeg[1000];
+   unsigned ttype = 0;
+
+   char sbeg[1000], sdata[1000];
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
 
       const char *kind = "unckn";
 
+      sdata[0] = 0;
+
       if (prefix > 0) snprintf(sbeg, sizeof(sbeg), "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
       if ((msg & newkind_TMDT) == newkind_TMDT) {
          kind = "TMDT";
+         unsigned mode = (msg >> 23) & 0xFF;
+         unsigned channel = (msg >> 16) & 0x7F;
+         unsigned coarse = (msg >> 8) & 0xFF;
+         unsigned fine = msg & 0xFF;
+         snprintf(sdata, sizeof(sdata), "mode:0x%02x ch:%u coarse:%u fine:%u", mode, channel, coarse, fine);
       } else {
          unsigned hdr3 = msg & newkind_Mask3;
          unsigned hdr4 = msg & newkind_Mask4;
@@ -703,9 +712,37 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          unsigned hdr7 = msg & newkind_Mask7;
          unsigned hdr8 = msg & newkind_Mask8;
          unsigned hdr9 = msg & newkind_Mask9;
-         if (hdr3 == newkind_HDR) kind = "HDR"; else
-         if (hdr3 == newkind_TRL) kind = "TRL"; else
-         if (hdr3 == newkind_EPOC) kind = "EPOC"; else
+         if (hdr3 == newkind_HDR) {
+            kind = "HDR";
+            unsigned major = (msg >> 24) & 0xF;
+            unsigned minor = (msg >> 20) & 0xF;
+            ttype = (msg >> 16) & 0xF;
+            unsigned trigger = msg & 0xFFFF;
+            snprintf(sdata, sizeof(sdata), "major:%u minor:%u typ:0x%x  trigger:%u", major, minor, ttype, trigger);
+         } else
+         if (hdr3 == newkind_TRL) {
+
+            switch (ttype) {
+            case 0x4:
+            case 0x6:
+            case 0x7:
+            case 0x8:
+            case 0x9:
+            case 0xE: kind = "TRLB"; break;
+            case 0xC: kind = "TRLC"; break;
+            case 0x0:
+            case 0x1:
+            case 0x2:
+            case 0xf:
+            default: kind = "TRLA";
+            }
+
+         } else
+         if (hdr3 == newkind_EPOC) {
+            kind = "EPOC";
+            unsigned epoch = msg & 0xFFFFFF;
+            snprintf(sdata, sizeof(sdata), "%6x", epoch);
+         } else
          if (hdr4 == newkind_TMDS) kind = "TMDS"; else
          if (hdr6 == newkind_TBD) kind = "TBD"; else
          if (hdr8 == newkind_HSTM) kind = "HSTM"; else
@@ -723,7 +760,7 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          if (hdr7 == newkind_TMDR) kind = "TMDR";
       }
 
-      if (prefix > 0) printf("%s%s\n", sbeg, kind);
+      if (prefix > 0) printf("%s%s %s\n", sbeg, kind, sdata);
    }
 }
 
