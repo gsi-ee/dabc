@@ -743,7 +743,7 @@ void PrintNewData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                   unsigned ccs = (msg >> 20) & 0xF;
                   unsigned ccdiv = (msg >> 16) & 0xF;
                   unsigned freq = msg & 0xFFFF;
-                  snprintf(sdata, sizeof(sdata), "cpc:%u ccs:%u ccdiv:%u freq:%u", cpc, ccs, ccdiv, freq);
+                  snprintf(sdata, sizeof(sdata), "cpc:0x%x ccs:0x%x ccdiv:%u freq:%5.3fMHz", cpc, ccs, ccdiv, freq*1e-2);
                   break;
                }
                case 0x0:
