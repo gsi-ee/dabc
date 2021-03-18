@@ -529,8 +529,8 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
          } else
          if (hdr3 == newkind_EPOC) {
             kind = "EPOC";
-            unsigned epoch = msg & 0xFFFFFF;
-            snprintf(sdata, sizeof(sdata), "%6x", epoch);
+            unsigned epoch = msg & 0xFFFFFFF;
+            snprintf(sdata, sizeof(sdata), "%7x", epoch);
          } else
          if (hdr4 == newkind_TMDS) kind = "TMDS"; else
          if (hdr6 == newkind_TBD) kind = "TBD"; else
