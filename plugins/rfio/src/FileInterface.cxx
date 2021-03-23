@@ -80,16 +80,16 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 
          char rfioBase[1024];
 
-         strcpy(rfioBase, fname);
+         strncpy(rfioBase, fname, sizeof(rfioBase)-1);
 
          char* pcc = (char*) strrchr(rfioBase, ':');
 
-         if (pcc!=0) {
+         if (pcc) {
             pcc++;
-            strncpy(pcc, "\0", 1);  /* terminates after node name */
+            *pcc = 0;  /* terminates after node name */
          }
 
-         strcpy(fDataMoverName,"");
+         strncpy(fDataMoverName, "", sizeof(fDataMoverName)-1);
          fDataMoverIndx = 0;
 
          DOUT1("Try to connect to RFIO mover rfioBase=%s rfioOptions=%s rfioLustrePath=%s rfioCopyMode=%d rfioCopyFrac=%d rfioMaxFile=%d rfioPathConv=%d",
@@ -143,7 +143,7 @@ bool rfio::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
 {
    if (fRemote && strcmp(parname, "DataMoverName")==0)
       if (strlen(fDataMoverName) < (unsigned) sbuflen) {
-         strcpy(sbuf, fDataMoverName);
+         strncpy(sbuf, fDataMoverName, sbuflen);
          return true;
       }
 

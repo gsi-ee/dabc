@@ -310,11 +310,11 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
 
    char c_head0[1000];
    char c_head[1000];
-   char c_out[1000];
+   char c_out[1100];
 
    char c_line[1000];
 
-   strcpy(c_line, options.c_str());
+   strncpy(c_line, options.c_str(), sizeof(c_line)-1);
 
    if (strstr (c_line, "-nst") != NULL )
      bStreams_n = 1;
@@ -451,50 +451,50 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
    bl_streams = bStreamsFree + bStreamsFilled + bStreamsSrv;
    bl_file = bFileData + bFileFilled + bFileData_r + bFilename + bFileIndex;
 
-   strcpy(c_head0,"");
-   strcpy(c_head,"");
+   memset(c_head0, 0, sizeof(c_head0));
+   memset(c_head, 0, sizeof(c_head));
    if (bl_mbs)
    {
-     strcat (c_head0, " Event building");
+     strncat (c_head0, " Event building", sizeof(c_head0)-1);
      if (bData_n)
      {
-       strcat (c_head, "   MB      ");
-       strcat (c_head0, "           ");
+       strncat (c_head, "   MB      ", sizeof(c_head)-1);
+       strncat (c_head0, "           ", sizeof(c_head0)-1);
      }
      if (bEvents_n)
      {
-       strcat (c_head, "   Events  ");
-       strcat (c_head0, "           ");
+       strncat (c_head, "   Events  ", sizeof(c_head)-1);
+       strncat (c_head0, "           ", sizeof(c_head0)-1);
      }
      if (bBuffers_n)
      {
-       strcat (c_head, "   Buffers ");
-       strcat (c_head0, "           ");
+       strncat (c_head, "   Buffers ", sizeof(c_head)-1);
+       strncat (c_head0, "           ", sizeof(c_head0)-1);
      }
      if (bStreams_n)
      {
-       strcat (c_head, "Streams ");
-       strcat (c_head0, "        ");
+       strncat (c_head, "Streams ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bData_r)
      {
-       strcat (c_head, " Kb/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, " Kb/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bEvents_r)
      {
-       strcat (c_head, " Ev/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, " Ev/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bBuffers_r)
      {
-       strcat (c_head, "Buf/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, "Buf/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bStreams_r)
      {
-       strcat (c_head, "Str/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, "Str/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      c_head0[strlen (c_head0) - 15] = 0;
    }
@@ -502,89 +502,89 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
        + bSrvStreams_r;
    if (bl_server)
    {
-     strcat (c_head0, "| Server ");
-     strcat (c_head, "|");
+     strncat (c_head0, "| Server ", sizeof(c_head0)-1);
+     strncat (c_head, "|", sizeof(c_head)-1);
      if (bSrvData_n)
      {
-       strcat (c_head, "   MB      ");
-       strcat (c_head0, "           ");
+       strncat (c_head, "   MB      ", sizeof(c_head)-1);
+       strncat (c_head0, "           ", sizeof(c_head0)-1);
      }
      if (bSrvEvents_n)
      {
-       strcat (c_head, "  Events   ");
-       strcat (c_head0, "           ");
+       strncat (c_head, "  Events   ", sizeof(c_head)-1);
+       strncat (c_head0, "           ", sizeof(c_head0)-1);
      }
      if (bSrvBuffers_n)
      {
-       strcat (c_head, "  Buffers  ");
-       strcat (c_head0, "           ");
+       strncat (c_head, "  Buffers  ", sizeof(c_head)-1);
+       strncat (c_head0, "           ", sizeof(c_head0)-1);
      }
      if (bSrvStreams_n)
      {
-       strcat (c_head, "Streams ");
-       strcat (c_head0, "        ");
+       strncat (c_head, "Streams ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bSrvData_r)
      {
-       strcat (c_head, " Kb/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, " Kb/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bSrvEvents_r)
      {
-       strcat (c_head, " Ev/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, " Ev/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bSrvBuffers_r)
      {
-       strcat (c_head, "Buf/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, "Buf/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      if (bSrvStreams_r)
      {
-       strcat (c_head, "Str/sec ");
-       strcat (c_head0, "        ");
+       strncat (c_head, "Str/sec ", sizeof(c_head)-1);
+       strncat (c_head0, "        ", sizeof(c_head0)-1);
      }
      c_head0[strlen (c_head0) - 8] = 0;
    }
    bl_streams = bStreamsFree + bStreamsFilled + bStreamsSrv;
    if (bl_streams)
    {
-     strcat (c_head0, "| Streams ");
-     strcat (c_head, "|");
+     strncat (c_head0, "| Streams ", sizeof(c_head0)-1);
+     strncat (c_head, "|", sizeof(c_head)-1);
      if (bStreamsFree)
      {
-       strcat (c_head, "Empty ");
-       strcat (c_head0, "      ");
+       strncat (c_head, "Empty ", sizeof(c_head)-1);
+       strncat (c_head0, "      ", sizeof(c_head0)-1);
      }
      if (bStreamsFilled)
      {
-       strcat (c_head, "Full ");
-       strcat (c_head0, "     ");
+       strncat (c_head, "Full ", sizeof(c_head)-1);
+       strncat (c_head0, "     ", sizeof(c_head0)-1);
      }
      if (bStreamsSrv)
      {
-       strcat (c_head, "Hold ");
-       strcat (c_head0, "     ");
+       strncat (c_head, "Hold ", sizeof(c_head)-1);
+       strncat (c_head0, "     ", sizeof(c_head0)-1);
      }
      c_head0[strlen (c_head0) - 9] = 0;
    }
    bl_file = bFileData + bFileFilled + bFileData_r + bFilename + bFileIndex;
    if (bl_file)
    {
-     strcat (c_head0, "| File output ");
+     strncat (c_head0, "| File output ", sizeof(c_head0)-1);
      if (bFilename)
-       strcat (c_head0, "                ");
-     strcat (c_head, "|");
+       strncat (c_head0, "                ", sizeof(c_head0)-1);
+     strncat (c_head, "|", sizeof(c_head)-1);
      if (bFileData)
-       strcat (c_head, "    MB   ");
+       strncat (c_head, "    MB   ", sizeof(c_head)-1);
      if (bFileFilled)
-       strcat (c_head, "Filled  ");
+       strncat (c_head, "Filled  ", sizeof(c_head)-1);
      if (bFileData_r)
-       strcat (c_head, "  Kb/sec ");
+       strncat (c_head, "  Kb/sec ", sizeof(c_head)-1);
      if (bFileIndex)
-       strcat (c_head, "Index ");
+       strncat (c_head, "Index ", sizeof(c_head)-1);
      if (bFilename)
-       strcat (c_head, "Filename");
+       strncat (c_head, "Filename", sizeof(c_head)-1);
    }
 
    uint32_t bl_ev_buf_len = new_daqst->l_block_size;
@@ -629,145 +629,146 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
    double r_rate_strsrv_buf = (r_new_strsrv_buf - r_old_strsrv_buf) / diff_time;
    double r_rate_strsrv_kb = (r_new_strsrv_kb - r_old_strsrv_kb) / diff_time;
 
-   strcpy (c_out, "");
+   memset(c_out, 0, sizeof(c_out));
+   memset(c_line, 0, sizeof(c_line));
    if (bl_mbs)
    {
      if (bData_n)
      {
-       sprintf (c_line, "%10.0f ", r_new_buf / 1000000. * bl_ev_buf_len);
-       strcat (c_out, c_line);
+       snprintf (c_line, sizeof(c_line), "%10.0f ", r_new_buf / 1000000. * bl_ev_buf_len);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bEvents_n)
      {
-       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_events);
-       strcat (c_out, c_line);
+       snprintf (c_line, sizeof(c_line), "%10u ", (unsigned) new_daqst->bl_n_events);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bBuffers_n)
      {
        sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_buffers);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreams_n)
      {
        sprintf (c_line, "%7u ", (unsigned) new_daqst->bl_n_bufstream);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bData_r)
      {
        sprintf (c_line, "%7.1f ", r_rate_kb);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bEvents_r)
      {
        sprintf (c_line, "%7.0f ", r_rate_evt);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bBuffers_r)
      {
        sprintf (c_line, "%7.0f ", r_rate_buf);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreams_r)
      {
        sprintf (c_line, "%7.0f ", r_rate_stream);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
    }
    if (bl_server)
    {
-     strcat (c_out, "|");
+     strncat (c_out, "|", sizeof(c_out)-1);
      if (bSrvData_n)
      {
        sprintf (c_line, "%10.0f ", r_new_strsrv_kb / 1000.);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvEvents_n)
      {
        sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_evserv_events);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvBuffers_n)
      {
        sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_strserv_bufs);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvStreams_n)
      {
        sprintf (c_line, "%7u ", (unsigned) new_daqst->bl_n_strserv_bufs / bl_n_ev_buf);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvData_r)
      {
        sprintf (c_line, "%7.1f ", r_rate_strsrv_kb);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvEvents_r)
      {
        sprintf (c_line, "%7.0f ", r_rate_evsrv_evt);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvBuffers_r)
      {
        sprintf (c_line, "%7.0f ", r_rate_strsrv_buf);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvStreams_r)
      {
        sprintf (c_line, "%7.0f ", r_rate_strsrv_str);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
    }
    if (bl_streams)
    {
-     strcat (c_out, "|");
+     strncat (c_out, "|", sizeof(c_out)-1);
      if (bStreamsFree)
      {
        sprintf (c_line, "%5d ", l_free_stream);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreamsFilled)
      {
        sprintf (c_line, "%4d ", l_trans_stream);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreamsSrv)
      {
        sprintf (c_line, "%4d ", l_serv_stream);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
    }
    if (bl_file)
    {
-     strcat (c_out, "|");
+     strncat (c_out, "|", sizeof(c_out)-1);
      if (bFileData)
      {
        sprintf (c_line, "%8.0f ", r_new_file_kb / 1000.);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFileFilled)
      {
        sprintf (c_line, "%5.1f %% ", new_daqst->l_file_size > 0 ? r_new_file_kb / new_daqst->l_file_size * 0.1  : 0.);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFileData_r)
      {
        sprintf (c_line, "%8.1f ", r_rate_file_kb);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFileIndex)
      {
        sprintf (c_line, " %04u ", (unsigned) new_daqst->l_file_cur);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFilename)
      {
        sprintf (c_line, "%s", new_daqst->c_file_name);
-       strcat (c_out, c_line);
+       strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (new_daqst->l_open_file)
-       strcat (c_out, " op");
+       strncat (c_out, " op", sizeof(c_out)-1);
      else
-       strcat (c_out, " cl");
+       strncat (c_out, " cl", sizeof(c_out)-1);
    }
 
    dabc::Hierarchy item = fHierarchy.GetHChild(itemname);

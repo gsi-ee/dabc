@@ -130,8 +130,8 @@ namespace dabc {
                   // while buffer will be received only when server answer on request
 
                   memcpy(fOutBuf, &header, sizeof(header));
-                  strcpy(fOutBuf + sizeof(header), fRec->ConnId());
-                  strcpy(fInBuf, "denied");
+                  strncpy(fOutBuf + sizeof(header), fRec->ConnId(), sizeof(fOutBuf) - sizeof(header) - 1);
+                  strncpy(fInBuf, "denied", sizeof(fInBuf)-1);
 
                   StartSend(fOutBuf, SocketDevice::ProtocolMsgSize);
                   StartRecv(fInBuf, SocketDevice::ProtocolMsgSize);
