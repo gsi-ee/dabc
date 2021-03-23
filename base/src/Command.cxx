@@ -151,7 +151,7 @@ int dabc::Command::GetPriority() const
 void dabc::Command::SetPtr(const std::string &name, void* p)
 {
    char buf[100];
-   sprintf(buf,"%p",p);
+   snprintf(buf, sizeof(buf), "%p", p);
    SetStr(name, buf);
 }
 
@@ -160,7 +160,7 @@ void* dabc::Command::GetPtr(const std::string &name, void* deflt) const
    std::string val = GetStr(name);
    if (val.empty()) return deflt;
 
-   void* p = 0;
+   void* p = nullptr;
    int res = sscanf(val.c_str(),"%p", &p);
    return res>0 ? p : deflt;
 }
