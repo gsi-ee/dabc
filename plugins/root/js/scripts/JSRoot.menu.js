@@ -20,7 +20,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'jquery-ui'], (d3, $, jsrp) => {
             for (let k = 1; k < arr.length; ++k)
                if (arr[k] == col) { id = k; break; }
          if ((id < 0) && (col.indexOf("rgb") == 0)) id = 9999;
-      } else if (!isNaN(col) && arr[col]) {
+      } else if (Number.isInteger(col) && arr[col]) {
          id = col;
          col = arr[id];
       }
@@ -169,7 +169,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'jquery-ui'], (d3, $, jsrp) => {
             let col = prompt("Enter color " + (useid ? "(only id number)" : "(name or id)"), value);
             if (col === null) return;
             let id = parseInt(col);
-            if (!isNaN(id) && jsrp.getColor(id)) {
+            if (Number.isInteger(id) && jsrp.getColor(id)) {
                col = jsrp.getColor(id);
             } else {
                if (useid) return;
@@ -190,25 +190,25 @@ JSROOT.define(['d3', 'jquery', 'painter', 'jquery-ui'], (d3, $, jsrp) => {
 
       /** @summary Add size selection menu entries
         * @protected */
-      addSizeMenu(name, min, max, step, value, set_func) {
-         if (value === undefined) return;
+      addSizeMenu(name, min, max, step, size_value, set_func) {
+         if (size_value === undefined) return;
 
          this.add("sub:" + name, function() {
             // todo - use jqury dialog here
-            let entry = value.toFixed(4);
-            if (step >= 0.1) entry = value.toFixed(2);
-            if (step >= 1) entry = value.toFixed(0);
-            let val = prompt("Enter value of " + name, entry);
-            if (!val) return;
-            val = parseFloat(val);
-            if (!isNaN(val)) set_func((step >= 1) ? Math.round(val) : val);
+            let entry = size_value.toFixed(4);
+            if (step >= 0.1) entry = size_value.toFixed(2);
+            if (step >= 1) entry = size_value.toFixed(0);
+            let sz = prompt("Enter value of " + name, entry);
+            if (!sz) return;
+            sz = parseFloat(sz);
+            if (Number.isFinite(sz)) set_func((step >= 1) ? Math.round(sz) : sz);
          });
-         for (let val = min; val <= max; val += step) {
-            let entry = val.toFixed(2);
-            if (step >= 0.1) entry = val.toFixed(1);
-            if (step >= 1) entry = val.toFixed(0);
-            this.addchk((Math.abs(value - val) < step / 2), entry,
-                        val, res => set_func((step >= 1) ? parseInt(res) : parseFloat(res)));
+         for (let sz = min; sz <= max; sz += step) {
+            let entry = sz.toFixed(2);
+            if (step >= 0.1) entry = sz.toFixed(1);
+            if (step >= 1) entry = sz.toFixed(0);
+            this.addchk((Math.abs(size_value - sz) < step / 2), entry,
+                        sz, res => set_func((step >= 1) ? parseInt(res) : parseFloat(res)));
          }
          this.add("endsub:");
       }
@@ -320,7 +320,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'jquery-ui'], (d3, $, jsrp) => {
                let id = prompt("Enter line style id (1-solid)", 1);
                if (id === null) return;
                id = parseInt(id);
-               if (isNaN(id) || !jsrp.root_line_styles[id]) return;
+               if (!Number.isInteger(id) || !jsrp.root_line_styles[id]) return;
                this.lineatt.change(undefined, undefined, id);
                this.interactiveRedraw(true, "exec:SetLineStyle(" + id + ")");
             }.bind(painter));
@@ -358,7 +358,7 @@ JSROOT.define(['d3', 'jquery', 'painter', 'jquery-ui'], (d3, $, jsrp) => {
                let id = prompt("Enter fill style id (1001-solid, 3000..3010)", this.fillatt.pattern);
                if (id === null) return;
                id = parseInt(id);
-               if (isNaN(id)) return;
+               if (!Number.isInteger(id)) return;
                this.fillatt.change(undefined, id, this.getCanvSvg());
                this.interactiveRedraw(true, "exec:SetFillStyle(" + id + ")");
             }.bind(painter));

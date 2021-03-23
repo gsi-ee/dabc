@@ -660,7 +660,7 @@ JSROOT.define(['rawinflate'], () => {
 
       if (!(bcnt & jsrio.kByteCountMask) || (bcnt == jsrio.kNewClassTag)) {
          tag = bcnt;
-         bcnt = 0;
+         // bcnt = 0;
       } else {
          tag = this.ntou4();
       }
@@ -1028,7 +1028,7 @@ JSROOT.define(['rawinflate'], () => {
                if (parts.length === 3) {
                   segm_start = parseInt(parts[0]);
                   segm_last = parseInt(parts[1]);
-                  if (isNaN(segm_start) || isNaN(segm_last) || (segm_start > segm_last)) {
+                  if (!Number.isInteger(segm_start) || !Number.isInteger(segm_last) || (segm_start > segm_last)) {
                      segm_start = 0; segm_last = -1;
                   }
                }
@@ -1084,7 +1084,7 @@ JSROOT.define(['rawinflate'], () => {
                      if (parts.length === 3) {
                         segm_start = parseInt(parts[0]);
                         segm_last = parseInt(parts[1]);
-                        if (isNaN(segm_start) || isNaN(segm_last) || (segm_start > segm_last)) {
+                        if (!Number.isInteger(segm_start) || !Number.isInteger(segm_last) || (segm_start > segm_last)) {
                            segm_start = 0; segm_last = -1;
                         }
                      } else {
@@ -1257,7 +1257,7 @@ JSROOT.define(['rawinflate'], () => {
          }
 
          if (!isdir && only_dir)
-            return Promise.reject(Error("Key ${obj_name} is not directory}"));
+            return Promise.reject(Error(`Key ${obj_name} is not directory}`));
 
          read_key = key;
 
@@ -1772,7 +1772,7 @@ JSROOT.define(['rawinflate'], () => {
             streamer[nn].pair_name = (nn == 0) ? "first" : "second";
             streamer[nn].func = function(buf, obj) {
                obj[this.pair_name] = this.readelem(buf);
-            }
+            };
          }
 
       return streamer;
@@ -2712,9 +2712,9 @@ JSROOT.define(['rawinflate'], () => {
                   throw new Error(`Problem to decode range setting from streamer element title ${element.fTitle}`);
 
                if (arr.length === 3) nbits = parseInt(arr[2]);
-               if (isNaN(nbits) || (nbits < 2) || (nbits > 32)) nbits = 32;
+               if (!Number.isInteger(nbits) || (nbits < 2) || (nbits > 32)) nbits = 32;
 
-               function parse_range(val) {
+               let parse_range = val => {
                   if (!val) return 0;
                   if (val.indexOf("pi") < 0) return parseFloat(val);
                   val = val.trim();
@@ -2728,14 +2728,17 @@ JSROOT.define(['rawinflate'], () => {
                      case "pi/4": return sign * Math.PI / 4;
                   }
                   return sign * Math.PI;
-               }
+               };
 
                element.fXmin = parse_range(arr[0]);
                element.fXmax = parse_range(arr[1]);
 
-               const bigint = (nbits < 32) ? (1 << nbits) : 0xffffffff;
-               if (element.fXmin < element.fXmax) element.fFactor = bigint / (element.fXmax - element.fXmin);
-               else if (nbits < 15) element.fXmin = nbits;
+               // avoid usage of 1 << nbits, while only works up to 32 bits
+               let bigint = ((nbits >= 0) && (nbits < 32)) ? Math.pow(2, nbits) : 0xffffffff;
+               if (element.fXmin < element.fXmax)
+                  element.fFactor = bigint / (element.fXmax - element.fXmin);
+               else if (nbits < 15)
+                  element.fXmin = nbits;
             }
          }
       }
