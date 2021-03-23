@@ -448,6 +448,7 @@ int verbs::ContextRef::GetGidIndex(ibv_gid* lookgid)
             be64toh(gid.global.subnet_prefix),
             be64toh(gid.global.interface_id));
 
+      //  deepcode ignore RiskyMemoryManipulation: false positive
       if (!ret && !memcmp(lookgid, &gid, sizeof(ibv_gid))) return i;
    }
    return 0;
