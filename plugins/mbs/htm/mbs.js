@@ -601,76 +601,68 @@ $(function() {
                  .click(function() { MyDisplay.RefreshView();} );
 
    $("#lmd_file_form").submit(
-            function(event) {
+      function(event) {
 
-               var checked=MBS.fFileOpen;
+         var checked = MBS.fFileOpen;
 
-               if(checked)
-                  {
-                  var requestmsg = "Really Stop writing output file "
-                     + MBS.fFileName + " ?";
-               var response = MyDisplay.Confirm(requestmsg);
-               if (!response)
-                  {
-                     event.preventDefault();
-                     return;
-                  }
-               MBS.DabcCommand("CmdMbs","cmd=clo fi",function(result) {
-                  MyDisplay.SetStatusMessage(result ? "Stop File command sent."
-                        : "Stop File FAILED.");
-                  MyDisplay.RefreshMonitor();
-               });
-
-
-                  }
-               else
-                  {
-                  var datafilename=document.getElementById("Filename").value;
-                  var datafilelimit=document.getElementById("Filesize").value;
-                  var options = "cmd= open file " + datafilename
-                   + " size=" + datafilelimit;
-                  if($("#FileRFIO").is(':checked'))
-                     options += " -RFIO";
-                  else
-                     options += " -DISK";
-
-                  if($("#FileAutoMode").is(':checked'))
-                     options += " -AUTO";
-               var requestmsg = "Really Start writing output file with "
-               + options+" ?";
+         if (checked) {
+            var requestmsg = "Really Stop writing output file "
+               + MBS.fFileName + " ?";
             var response = MyDisplay.Confirm(requestmsg);
-            if (!response)
-               {
-                  event.preventDefault();
-                  return;
-               }
-
-               var options = "cmd= open file " + datafilename
-                + " size=" + datafilelimit;
-               if($("#FileRFIO").is(':checked'))
-                  options += " -RFIO";
-               else
-                  options += " -DISK";
-
-               if($("#FileAutoMode").is(':checked'))
-                  options += " -AUTO";
-
-               MBS.DabcCommand("CmdMbs", options,function(
-                     result) {
-                  MyDisplay.SetStatusMessage(result ? "Start File command sent: "+options
-                        : "Start File FAILED.");
-                  if (result)
-                     {
-                     MBS.fFileName = datafilename;
-                     }
-                  MyDisplay.RefreshMonitor();
-
-
-               });
-                  }
+            if (!response) {
                event.preventDefault();
+               return;
             }
-               );
+            MBS.DabcCommand("CmdMbs", "cmd=clo fi", function(result) {
+               MyDisplay.SetStatusMessage(result ? "Stop File command sent."
+                  : "Stop File FAILED.");
+               MyDisplay.RefreshMonitor();
+            });
+
+
+         }
+         else {
+            var datafilename = document.getElementById("Filename").value;
+            var datafilelimit = document.getElementById("Filesize").value;
+            var options = "cmd= open file " + datafilename
+               + " size=" + datafilelimit;
+            if ($("#FileRFIO").is(':checked'))
+               options += " -RFIO";
+            else
+               options += " -DISK";
+
+            if ($("#FileAutoMode").is(':checked'))
+               options += " -AUTO";
+            var requestmsg = "Really Start writing output file with "  + options + " ?";
+            var response = MyDisplay.Confirm(requestmsg);
+            if (!response) {
+               event.preventDefault();
+               return;
+            }
+
+            options = "cmd= open file " + datafilename + " size=" + datafilelimit;
+            if ($("#FileRFIO").is(':checked'))
+               options += " -RFIO";
+            else
+               options += " -DISK";
+
+            if ($("#FileAutoMode").is(':checked'))
+               options += " -AUTO";
+
+            MBS.DabcCommand("CmdMbs", options, function(
+               result) {
+               MyDisplay.SetStatusMessage(result ? "Start File command sent: " + options
+                  : "Start File FAILED.");
+               if (result) {
+                  MBS.fFileName = datafilename;
+               }
+               MyDisplay.RefreshMonitor();
+
+            });
+         }
+         event.preventDefault();
+      }
+   );
 
 
 
