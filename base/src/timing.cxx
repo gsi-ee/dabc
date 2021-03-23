@@ -195,7 +195,9 @@ std::string dabc::DateTime::AsString(int ndecimal, bool localtime) const
 
    if (frac>0) {
       int rlen = strlen(sbuf);
-      if ((int)sizeof(sbuf) - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
+      int remain = (int)sizeof(sbuf) - rlen;
+      if (remain > ndecimal + 1)
+         snprintf(sbuf+rlen, remain, ".%0*d", ndecimal, frac);
    }
 
    return std::string(sbuf);

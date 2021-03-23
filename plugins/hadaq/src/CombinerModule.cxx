@@ -1518,13 +1518,13 @@ char* hadaq::CombinerModule::Unit(unsigned long v)
 {
 
   // JAM stolen from old hadaq eventbuilders to keep precisely same format
-   static char retVal[6];
+   static char retVal[16];
    static char u[] = " kM";
    unsigned int i;
 
    for (i = 0; v >= 10000 && i < sizeof(u) - 2; v /= 1000, i++) {
    }
-   sprintf(retVal, "%4lu%c", v, u[i]);
+   snprintf(retVal, sizeof(retVal), "%4lu%c", v, u[i]);
 
    return retVal;
 }

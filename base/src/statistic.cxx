@@ -41,7 +41,7 @@ dabc::CpuStatistic::CpuStatistic(bool withmem) :
       pid_t id = getpid();
 
       char fname[100];
-      sprintf(fname,"/proc/%d/status", id);
+      snprintf(fname, sizeof(fname), "/proc/%d/status", id);
 
       fProcStatFp = fopen(fname,"r");
       if (fProcStatFp==0)
@@ -153,7 +153,7 @@ long dabc::CpuStatistic::GetProcVirtMem()
    pid_t id = getpid();
 
    char fname[100];
-   sprintf(fname,"/proc/%d/status", id);
+   snprintf(fname, sizeof(fname), "/proc/%d/status", id);
 
    FILE* f = fopen(fname,"r");
    if (f==0) return 0;

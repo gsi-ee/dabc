@@ -645,32 +645,32 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      }
      if (bBuffers_n)
      {
-       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_buffers);
+       snprintf (c_line, sizeof(c_line), "%10u ", (unsigned) new_daqst->bl_n_buffers);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreams_n)
      {
-       sprintf (c_line, "%7u ", (unsigned) new_daqst->bl_n_bufstream);
+       snprintf (c_line, sizeof(c_line), "%7u ", (unsigned) new_daqst->bl_n_bufstream);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bData_r)
      {
-       sprintf (c_line, "%7.1f ", r_rate_kb);
+       snprintf (c_line, sizeof(c_line), "%7.1f ", r_rate_kb);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bEvents_r)
      {
-       sprintf (c_line, "%7.0f ", r_rate_evt);
+       snprintf (c_line, sizeof(c_line), "%7.0f ", r_rate_evt);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bBuffers_r)
      {
-       sprintf (c_line, "%7.0f ", r_rate_buf);
+       snprintf (c_line, sizeof(c_line), "%7.0f ", r_rate_buf);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreams_r)
      {
-       sprintf (c_line, "%7.0f ", r_rate_stream);
+       snprintf (c_line, sizeof(c_line), "%7.0f ", r_rate_stream);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
    }
@@ -679,42 +679,42 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      strncat (c_out, "|", sizeof(c_out)-1);
      if (bSrvData_n)
      {
-       sprintf (c_line, "%10.0f ", r_new_strsrv_kb / 1000.);
+       snprintf (c_line, sizeof(c_line), "%10.0f ", r_new_strsrv_kb / 1000.);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvEvents_n)
      {
-       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_evserv_events);
+       snprintf (c_line, sizeof(c_line), "%10u ", (unsigned) new_daqst->bl_n_evserv_events);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvBuffers_n)
      {
-       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_strserv_bufs);
+       snprintf (c_line, sizeof(c_line), "%10u ", (unsigned) new_daqst->bl_n_strserv_bufs);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvStreams_n)
      {
-       sprintf (c_line, "%7u ", (unsigned) new_daqst->bl_n_strserv_bufs / bl_n_ev_buf);
+       snprintf (c_line, sizeof(c_line), "%7u ", (unsigned) new_daqst->bl_n_strserv_bufs / bl_n_ev_buf);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvData_r)
      {
-       sprintf (c_line, "%7.1f ", r_rate_strsrv_kb);
+       snprintf (c_line, sizeof(c_line), "%7.1f ", r_rate_strsrv_kb);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvEvents_r)
      {
-       sprintf (c_line, "%7.0f ", r_rate_evsrv_evt);
+       snprintf (c_line, sizeof(c_line), "%7.0f ", r_rate_evsrv_evt);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvBuffers_r)
      {
-       sprintf (c_line, "%7.0f ", r_rate_strsrv_buf);
+       snprintf (c_line, sizeof(c_line), "%7.0f ", r_rate_strsrv_buf);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bSrvStreams_r)
      {
-       sprintf (c_line, "%7.0f ", r_rate_strsrv_str);
+       snprintf (c_line, sizeof(c_line), "%7.0f ", r_rate_strsrv_str);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
    }
@@ -723,17 +723,17 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      strncat (c_out, "|", sizeof(c_out)-1);
      if (bStreamsFree)
      {
-       sprintf (c_line, "%5d ", l_free_stream);
+       snprintf (c_line, sizeof(c_line), "%5d ", l_free_stream);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreamsFilled)
      {
-       sprintf (c_line, "%4d ", l_trans_stream);
+       snprintf (c_line, sizeof(c_line), "%4d ", l_trans_stream);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bStreamsSrv)
      {
-       sprintf (c_line, "%4d ", l_serv_stream);
+       snprintf (c_line, sizeof(c_line), "%4d ", l_serv_stream);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
    }
@@ -742,27 +742,27 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      strncat (c_out, "|", sizeof(c_out)-1);
      if (bFileData)
      {
-       sprintf (c_line, "%8.0f ", r_new_file_kb / 1000.);
+       snprintf (c_line, sizeof(c_line), "%8.0f ", r_new_file_kb / 1000.);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFileFilled)
      {
-       sprintf (c_line, "%5.1f %% ", new_daqst->l_file_size > 0 ? r_new_file_kb / new_daqst->l_file_size * 0.1  : 0.);
+       snprintf (c_line, sizeof(c_line), "%5.1f %% ", new_daqst->l_file_size > 0 ? r_new_file_kb / new_daqst->l_file_size * 0.1  : 0.);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFileData_r)
      {
-       sprintf (c_line, "%8.1f ", r_rate_file_kb);
+       snprintf (c_line, sizeof(c_line), "%8.1f ", r_rate_file_kb);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFileIndex)
      {
-       sprintf (c_line, " %04u ", (unsigned) new_daqst->l_file_cur);
+       snprintf (c_line, sizeof(c_line), " %04u ", (unsigned) new_daqst->l_file_cur);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (bFilename)
      {
-       sprintf (c_line, "%s", new_daqst->c_file_name);
+       snprintf (c_line, sizeof(c_line), "%s", new_daqst->c_file_name);
        strncat (c_out, c_line, sizeof(c_out)-1);
      }
      if (new_daqst->l_open_file)
