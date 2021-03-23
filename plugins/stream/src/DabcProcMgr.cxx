@@ -159,8 +159,8 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    if (xlbls.length()>0) h.SetField("xlabels", xlbls);
    h.SetField("fillcolor", fillcolor.empty() ? fDefaultFill : std::stoi(fillcolor));
    if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
-   if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
-   if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
+   if (!hmin.empty()) h.SetField("hmin", std::stof(hmin));
+   if (!hmax.empty()) h.SetField("hmax", std::stof(hmax));
    if (clear_protect) h.SetField("_no_reset", "true");
 
    std::vector<double> bins;
