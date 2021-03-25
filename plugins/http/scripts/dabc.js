@@ -1107,13 +1107,13 @@ JSROOT.require("painter").then(jsrp => {
          var val = Number(obj["value"]);
 
          if ('low' in obj) {
-            var min = Number(obj["low"]);
-            if (!isNaN(min) && (min<this.min)) this.min = min;
+            let min = Number(obj["low"]);
+            if (Number.isFinite(min) && (min < this.min)) this.min = min;
          }
 
          if ('up' in obj) {
-            var max = Number(obj["up"]);
-            if (!isNaN(max) && (max>this.max)) this.max = max;
+            let max = Number(obj["up"]);
+            if (Number.isFinite(max) && (max > this.max)) this.max = max;
          }
 
          var redo = false;
