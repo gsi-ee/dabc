@@ -1313,7 +1313,7 @@ void mbs::DaqRemCmdWorker::ProcessNextMbsCommand()
    fSendBuf.l_order = 1;
    fSendBuf.l_cmdid = fSendCmdId;
    fSendBuf.l_status = 0;
-   strcpy(fSendBuf.c_cmd, mbscmd.c_str());
+   strncpy(fSendBuf.c_cmd, mbscmd.c_str(), sizeof(fSendBuf.c_cmd)-1);
    addon->StartSend(&fSendBuf, sizeof(fSendBuf));
 }
 

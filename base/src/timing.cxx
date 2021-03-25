@@ -237,9 +237,11 @@ std::string dabc::DateTime::AsJSString(int ndecimal) const
 
    strftime(sbuf, sizeof(sbuf), "%Y-%m-%dT%H:%M:%S", &res);
 
-   if (frac>0) {
+   if (frac > 0) {
       int rlen = strlen(sbuf);
-      if ((int)sizeof(sbuf) - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
+      int remains = (int)sizeof(sbuf) - rlen;
+      if (remains - rlen > ndecimal + 1)
+         snprintf(sbuf+rlen, remains-1, ".%0*d", ndecimal, frac);
    }
 
    int rlen = strlen(sbuf);
