@@ -236,8 +236,8 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    if (ylbls.length() > 0) h.SetField("ylabels", ylbls);
    if (!fillcolor.empty()) h.SetField("fillcolor", std::stoi(fillcolor));
    h.SetField("drawopt", drawopt.empty() ? std::string("colz") : drawopt);
-   if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
-   if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
+   if (!hmin.empty()) h.SetField("hmin", std::stof(hmin));
+   if (!hmax.empty()) h.SetField("hmax", std::stof(hmax));
    if (!h2poly.empty()) h.SetField("h2poly", h2poly);
    if (clear_protect) h.SetField("_no_reset", "true");
 
