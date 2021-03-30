@@ -62,6 +62,7 @@ int usage(const char* errstr = nullptr)
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
    printf("   -onlych chid            - print only specified TDC channel (default off)\n");
    printf("   -onlynew subsubid       - printout raw data only for specified TDC4 subsubevent\n");
+   printf("   -onlymonitor id         - printout only event/subevent created by hadaq::Monitor module (default off) \n");
    printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
    printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
@@ -929,8 +930,25 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 }
 
+void PrintMonitorData(hadaq::RawSubevent *sub)
+{
+
+   unsigned trbSubEvSize = sub->GetSize() / 4 - 4, ix = 0;
+
+   int cnt = 0;
+   while (ix < trbSubEvSize) {
+      unsigned addr1 = sub->Data(ix++);
+      unsigned addr2 = sub->Data(ix++);
+      unsigned value = sub->Data(ix++);
+
+      printf("       %3d: %04x %04x = %08x\n", cnt++, addr1, addr2, value);
+
+   }
+
+}
+
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, autoid = false;
-unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0;
+unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 std::vector<unsigned> hubs, tdcs, ctsids, newtdcs;
 
 bool is_cts(unsigned id)
@@ -1017,6 +1035,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
       if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.push_back(hubmask); } else
+      if ((strcmp(argv[n],"-onlymonitor")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlymonitor); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
       if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
@@ -1161,7 +1180,7 @@ int main(int argc, char* argv[])
 
       bool print_header(false);
 
-      if (!showrate && !dostat && !only_errors) {
+      if (!showrate && !dostat && !only_errors && (onlymonitor==0)) {
          print_header = true;
          evnt->Dump();
       }
@@ -1172,7 +1191,7 @@ int main(int argc, char* argv[])
       while ((sub = evnt->NextSubevent(sub)) != nullptr) {
 
          bool print_sub_header(false);
-         if ((onlytdc==0) && (onlynew==0) && (onlyraw==0) && !showrate && !dostat && !only_errors) {
+         if ((onlytdc==0) && (onlynew==0) && (onlyraw==0) && (onlymonitor==0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
          }
@@ -1186,6 +1205,16 @@ int main(int argc, char* argv[])
 
          if (dostat)
             substat[sub->GetId()].accumulate(sub->GetSize());
+
+         if (onlymonitor != 0) {
+            if (sub->GetId() == onlymonitor) {
+               evnt->Dump();
+               sub->Dump(printraw);
+               if (!printraw)
+                  PrintMonitorData(sub);
+            }
+            break;
+         }
 
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
 
