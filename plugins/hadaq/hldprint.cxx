@@ -76,6 +76,8 @@ int usage(const char* errstr = nullptr)
    printf("   -mhz value              - new design with arbitrary MHz, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31)\n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491)\n");
+   printf("   -fine-min4 value        - minimal fine counter value TDC v4, used for liner time calibration (default 28)\n");
+   printf("   -fine-max4 value        - maximal fine counter value TDC v4, used for liner time calibration (default 350)\n");
    printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n");
    printf("   -again [N=1]            - repeat same printout N times, only for debug purposes\n\n");
    printf("Example - display only data from TDC 0x1226:\n\n");
@@ -166,7 +168,7 @@ struct SubevStat {
 
 
 double tot_limit(20.), tot_shift(20.), coarse_tmlen(5.);
-unsigned fine_min(31), fine_max(491), skip_msgs_in_tdc(0);
+unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0;
 bool bubble_mode{false}, only_errors{false}, use_colors{true}, epoch_per_channel{false}, use_calibr{true}, use_400mhz{false};
 int onlych = -1;
 
@@ -455,7 +457,6 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
    unsigned ttype = 0;
    uint64_t lastepoch = 0;
    double coarse_unit = 1./2.8e8;
-   unsigned fmin = 28, fmax = 350;
    double localtm0 = 0.;
 
    char sbeg[1000], sdata[1000];
@@ -476,10 +477,10 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
          unsigned fine = msg & 0x1FF;
 
          double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
-         if (fine > fmax)
+         if (fine > fine_max4)
             localtm -= coarse_unit;
-         else if (fine > fmin)
-            localtm -= (fine - fmin) / (0. + fmax - fmin) * coarse_unit;
+         else if (fine > fine_min4)
+            localtm -= (fine - fine_min4) / (0. + fine_max4 - fine_min4) * coarse_unit;
 
          snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u tm0:%6.3fns", mode, channel, coarse, fine, (localtm - localtm0)*1e9);
       } else {
@@ -568,10 +569,10 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             bool isrising = (mode == 0) || (mode == 2);
 
             double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
-            if (fine > fmax)
+            if (fine > fine_max4)
                localtm -= coarse_unit;
-            else if (fine > fmin)
-               localtm -= (fine - fmin) / (0. + fmax - fmin) * coarse_unit;
+            else if (fine > fine_min4)
+               localtm -= (fine - fine_min4) / (0. + fine_max4 - fine_min4) * coarse_unit;
 
             if (isrising) localtm0 = localtm;
 
@@ -1052,6 +1053,8 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-skipintdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc); } else
       if ((strcmp(argv[n],"-fine-min")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
       if ((strcmp(argv[n],"-fine-max")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
+      if ((strcmp(argv[n],"-fine-min4")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min4); } else
+      if ((strcmp(argv[n],"-fine-max4")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max4); } else
       if ((strcmp(argv[n],"-tot")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
       if ((strcmp(argv[n],"-stretcher")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_shift); } else
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
