@@ -453,6 +453,10 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
    if (sz>999) wlen = 4;
 
    unsigned ttype = 0;
+   uint64_t lastepoch = 0;
+   double coarse_unit = 1./2.8e8;
+   unsigned fmin = 28, fmax = 350;
+   double localtm0 = 0.;
 
    char sbeg[1000], sdata[1000];
 
@@ -470,7 +474,14 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
          unsigned channel = (msg >> 21) & 0x3F;
          unsigned coarse = (msg >> 9) & 0xFFF;
          unsigned fine = msg & 0x1FF;
-         snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u", mode, channel, coarse, fine);
+
+         double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
+         if (fine > fmax)
+            localtm -= coarse_unit;
+         else if (fine > fmin)
+            localtm -= (fine - fmin) / (0. + fmax - fmin) * coarse_unit;
+
+         snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u tm0:%6.3fns", mode, channel, coarse, fine, (localtm - localtm0)*1e9);
       } else {
          unsigned hdr3 = msg & newkind_Mask3;
          unsigned hdr4 = msg & newkind_Mask4;
@@ -533,6 +544,7 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             unsigned epoch = msg & 0xFFFFFFF;
             bool err = (msg & 0x10000000) != 0;
             snprintf(sdata, sizeof(sdata), "0x%07x%s", epoch, (err ? " errflag" : ""));
+            lastepoch = epoch;
          } else
          if (hdr4 == newkind_TMDS) kind = "TMDS"; else
          if (hdr6 == newkind_TBD) kind = "TBD"; else
@@ -553,7 +565,17 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             unsigned mode = (msg >> 21) & 0xF;
             unsigned coarse = (msg >> 9) & 0xFFF;
             unsigned fine = msg & 0x1FF;
-            snprintf(sdata, sizeof(sdata), "mode:0x%x coarse:%u fine:%u", mode, coarse, fine);
+            bool isrising = (mode == 0) || (mode == 2);
+
+            double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
+            if (fine > fmax)
+               localtm -= coarse_unit;
+            else if (fine > fmin)
+               localtm -= (fine - fmin) / (0. + fmax - fmin) * coarse_unit;
+
+            if (isrising) localtm0 = localtm;
+
+            snprintf(sdata, sizeof(sdata), "mode:0x%x coarse:%u fine:%u tm:%6.3fns", mode, coarse, fine, isrising ? localtm*1e9 : (localtm - localtm0)*1e9);
          }
       }
 
