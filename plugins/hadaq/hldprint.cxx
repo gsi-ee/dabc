@@ -46,7 +46,8 @@ int usage(const char* errstr = nullptr)
    printf("   -num number             - number of events to print, 0 - all events (default 10)\n");
    printf("   -all                    - print all events (equivalent to -num 0)\n");
    printf("   -skip number            - number of events to skip before start printing\n");
-   printf("   -find id                - search for given event id before start analysis\n");
+   printf("   -event id               - search for given event id before start printing\n");
+   printf("   -find id                - search for given trigger id before start printing\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
    printf("   -stat                   - accumulate different kinds of statistics (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
@@ -1031,8 +1032,8 @@ int main(int argc, char* argv[])
 {
    if ((argc<2) || !strcmp(argv[1],"-help") || !strcmp(argv[1],"?")) return usage();
 
-   long number{10}, skip{0}, nagain{0};
-   unsigned findid(0);
+   long number = 10, skip = 0, nagain = 0;
+   unsigned find_trigid = 0, find_eventid = 0;
    double tmout(-1.), maxage(-1.), debug_delay(-1), mhz(400.);
    bool dofind = false;
    unsigned tdcmask(0), ctsid(0);
@@ -1042,7 +1043,8 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if (strcmp(argv[n],"-all")==0) { number = 0; } else
       if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
-      if ((strcmp(argv[n],"-find")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &findid); dofind = true; } else
+      if ((strcmp(argv[n],"-event")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_eventid); dofind = true; } else
+      if ((strcmp(argv[n],"-find")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_trigid); dofind = true; } else
       if ((strcmp(argv[n],"-cts")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.push_back(ctsid); } else
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
       if ((strcmp(argv[n],"-new")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); newtdcs.push_back(tdcmask); } else
@@ -1197,9 +1199,13 @@ int main(int argc, char* argv[])
       if (skip>0) { skip--; continue; }
 
       if (dofind) {
-         auto *sub = evnt->NextSubevent(nullptr);
-         if (!sub || (sub->GetTrigNr() != findid)) continue;
-         dofind = false; // disable
+         if (find_eventid) {
+            if (evnt->GetSeqNr() != find_eventid) continue;
+         } else {
+            auto *sub = evnt->NextSubevent(nullptr);
+            if (!sub || (sub->GetTrigNr() != find_trigid)) continue;
+         }
+         dofind = false; // disable finding
       }
 
       printcnt++;
