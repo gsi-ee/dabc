@@ -477,6 +477,8 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
          unsigned coarse = (msg >> 9) & 0xFFF;
          unsigned fine = msg & 0x1FF;
 
+         if ((onlych >= 0) && (channel != onlych)) continue;
+
          double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
          if (fine > fine_max4)
             localtm -= coarse_unit;
@@ -576,6 +578,8 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
                localtm -= (fine - fine_min4) / (0. + fine_max4 - fine_min4) * coarse_unit;
 
             if (isrising) localtm0 = localtm;
+
+            if (onlych > 0) continue;
 
             snprintf(sdata, sizeof(sdata), "mode:0x%x coarse:%u fine:%u tm:%6.3fns", mode, coarse, fine, isrising ? localtm*1e9 : (localtm - localtm0)*1e9);
          }
