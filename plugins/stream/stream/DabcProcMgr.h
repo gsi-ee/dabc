@@ -39,7 +39,7 @@ namespace stream {
 
          dabc::Hierarchy FindHistogram(void *handle);
 
-         bool ClearAllHistograms(dabc::Hierarchy &folder);
+         bool ClearAllDabcHistograms(dabc::Hierarchy &folder);
          bool SaveAllHistograms(dabc::Hierarchy &folder);
 
       public:
@@ -62,6 +62,8 @@ namespace stream {
 
          void SetH2Title(base::H2handle h2, const char* title) override;
          void TagH2Time(base::H2handle h2) override;
+
+         virtual void ClearAllHistograms();
 
          void SetSortedOrder(bool on = true)  override { fSortOrder = on; }
          bool IsSortedOrder() override { return fSortOrder; }

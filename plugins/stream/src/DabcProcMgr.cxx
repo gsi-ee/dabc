@@ -305,6 +305,7 @@ void stream::DabcProcMgr::TagH2Time(base::H2handle h2)
    }
 }
 
+
 bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
 {
    if (!item.HasField("_dabc_hist") || (item.GetFieldPtr("bins") == nullptr)) return false;
@@ -319,7 +320,12 @@ bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
    return true;
 }
 
-bool stream::DabcProcMgr::ClearAllHistograms(dabc::Hierarchy &folder)
+void stream::DabcProcMgr::ClearAllHistograms()
+{
+   ClearAllDabcHistograms(fTop);
+}
+
+bool stream::DabcProcMgr::ClearAllDabcHistograms(dabc::Hierarchy &folder)
 {
    dabc::Iterator iter(folder);
    bool isany = true;
@@ -381,7 +387,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
    if (name == "ROOTCMD") {
       if (item.IsName("Clear")) {
          DOUT0("Call CLEAR");
-         ClearAllHistograms(fTop);
+         ClearAllDabcHistograms(fTop);
          res = "true";
       } else if (item.IsName("Save")) {
          DOUT0("Call SAVE");
@@ -401,7 +407,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
 
    } else if (name == "HCMD_ClearHistos") {
 
-      res = ClearAllHistograms(item) ? "true" : "false";
+      res = ClearAllDabcHistograms(item) ? "true" : "false";
 
    } else {
       std::string kind = item.GetField("_kind").AsStr();
