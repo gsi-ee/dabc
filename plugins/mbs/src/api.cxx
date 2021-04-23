@@ -249,6 +249,8 @@ bool mbs::MonitorHandle::Disconnect()
 {
    if (null()) return false;
 
+   Execute("DeleteWorkers");
+
    Stop();
 
    std::string name = GetName();

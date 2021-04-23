@@ -1060,6 +1060,11 @@ int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
       } else {
          return dabc::cmd_false;
       }
+   } else if (cmd.IsName("DeleteWorkers")) {
+      dabc::WorkerRef wrk = FindChildRef("DaqCmd");
+      wrk.Destroy();
+      wrk = FindChildRef("DaqLogger");
+      wrk.Destroy();
    }
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
