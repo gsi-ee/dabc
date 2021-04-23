@@ -696,7 +696,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
    if (cmd.IsName("DeleteAddon")) {
      // this is way to delete addon
-     AssignAddon(0);
+     AssignAddon(nullptr);
      cmd_res = cmd_true;
    } else
 

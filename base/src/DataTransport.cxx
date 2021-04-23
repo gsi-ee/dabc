@@ -143,10 +143,10 @@ void dabc::InputTransport::CloseInput()
    if ((fInput!=0) && fInputOwner) {
       delete fInput;
    }
-   fInput = 0;
+   fInput = nullptr;
    fInputOwner = false;
 
-   AssignAddon(0);
+   AssignAddon(nullptr);
 }
 
 void dabc::InputTransport::TransportCleanup()

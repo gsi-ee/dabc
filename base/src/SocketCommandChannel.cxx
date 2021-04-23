@@ -116,7 +116,7 @@ void dabc::SocketCommandClient::CloseClient(bool iserr, const char* msg)
    }
 
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0)) {
-      AssignAddon(0); // we destroy current addon
+      AssignAddon(nullptr); // we destroy current addon
       DOUT2("Try to reconnect worker %s to remote node %s", ItemName().c_str(), fRemoteHostName.c_str());
       fState = stConnecting;
       ActivateTimeout(fReconnectPeriod);
