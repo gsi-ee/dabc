@@ -245,6 +245,8 @@ namespace mbs {
 
          void FillStatistic(const std::string &options, const std::string &itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
+         void CreateCommandWorker();
+
          virtual void OnThreadAssigned();
 
          virtual int ExecuteCommand(dabc::Command cmd);
@@ -278,6 +280,9 @@ namespace mbs {
            {  return dabc::typeSocketThread; }
 
          std::string MbsNodeName() const { return fMbsNode; }
+
+         /** Called by LogWorker to inform that connection is established */
+         void LoggerAddonCreated();
 
          /** Called by LogWorker to inform about new message */
          void NewMessage(const std::string &msg);

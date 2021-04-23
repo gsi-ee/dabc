@@ -281,18 +281,27 @@ void mbs::Monitor::OnThreadAssigned()
    if (fLoggerPort > 0) {
       DaqLogWorker* logger = new DaqLogWorker(this, "DaqLogger", fMbsNode, fLoggerPort);
       logger->AssignToThread(thread());
+   } else {
+      // if logger not used, can created command worker directly
+      // otherwise wait log addon connected
+      CreateCommandWorker();
    }
 
-   dabc::Worker* remcmd = 0;
+   mbs::MonitorSlowControl::OnThreadAssigned();
+}
+
+void mbs::Monitor::CreateCommandWorker()
+{
+   dabc::WorkerRef wrk = FindChildRef("DaqCmd");
+   if (!wrk.null()) return;
+
+   dabc::Worker* remcmd = nullptr;
    if (IsPrompter()) {
       remcmd = new PrompterWorker(this, "DaqCmd", fMbsNode, fCmdPort);
-   } else
-   if (fCmdPort>0) {
+   } else if (fCmdPort > 0) {
       remcmd = new DaqRemCmdWorker(this, "DaqCmd", fMbsNode, fCmdPort);
    }
    if (remcmd) remcmd->AssignToThread(thread());
-
-   mbs::MonitorSlowControl::OnThreadAssigned();
 }
 
 void mbs::Monitor::FillStatistic(const std::string &options, const std::string &itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
@@ -841,6 +850,14 @@ void mbs::Monitor::ProcessTimerEvent(unsigned timer)
       AssignAddon(new DaqStatusAddon(fd));
 }
 
+
+void mbs::Monitor::LoggerAddonCreated()
+{
+   // if logger addon connected,
+   // one can create command worker then
+   CreateCommandWorker();
+}
+
 void mbs::Monitor::NewMessage(const std::string &msg)
 {
    dabc::Hierarchy item = fHierarchy.GetHChild("logger");
@@ -1011,7 +1028,7 @@ int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
       if (tr)
          NewStatus(tr->GetStatus());
 
-      AssignAddon(0);
+      AssignAddon(nullptr);
 
       return dabc::cmd_true;
    } else if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
@@ -1086,6 +1103,9 @@ bool mbs::DaqLogWorker::CreateAddon()
    memset(&fRec, 0, sizeof(fRec));
    add->StartRecv(&fRec, sizeof(fRec));
 
+   mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
+   if (pl) pl->LoggerAddonCreated();
+
    return true;
 }
 
@@ -1135,7 +1155,7 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
       case dabc::SocketAddon::evntSocketErrorInfo:
       case dabc::SocketAddon::evntSocketCloseInfo:
          EOUT("Problem with logger - reconnect");
-         AssignAddon(0);
+         AssignAddon(nullptr);
          ActivateTimeout(1);
          break;
       default:
@@ -1247,7 +1267,7 @@ void mbs::DaqRemCmdWorker::ProcessEvent(const dabc::EventId& evnt)
       case dabc::SocketAddon::evntSocketErrorInfo:
       case dabc::SocketAddon::evntSocketCloseInfo:
          // error, we cancel command execution and issue timeout to try again
-         AssignAddon(0);
+         AssignAddon(nullptr);
          if ((fState==ioWaitReply) && (fCmds.Size()>0)) {
             fCmds.Pop().Reply(dabc::cmd_false);
             fState = ioInit;
@@ -1420,7 +1440,7 @@ void mbs::PrompterWorker::ProcessEvent(const dabc::EventId& evnt)
       case dabc::SocketAddon::evntSocketErrorInfo:
       case dabc::SocketAddon::evntSocketCloseInfo:
          // error, we cancel command execution and issue timeout to try again
-         AssignAddon(0);
+         AssignAddon(nullptr);
          if ((fState==ioWaitReply) && (fCmds.Size()>0)) {
             fCmds.Pop().Reply(dabc::cmd_false);
             fState = ioInit;
