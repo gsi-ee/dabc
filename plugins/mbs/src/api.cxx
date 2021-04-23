@@ -180,6 +180,9 @@ bool mbs::ReadoutHandle::Disconnect()
    Release();
    dabc::mgr.DeleteModule(name);
 
+   // add timeout to let cleanup DABC sockets
+   dabc::Sleep(0.2);
+
    return true;
 }
 
@@ -253,6 +256,9 @@ bool mbs::MonitorHandle::Disconnect()
    Release();
 
    dabc::mgr.DeleteModule(name);
+
+   // add timeout to let cleanup DABC sockets
+   dabc::Sleep(0.2);
 
    return true;
 }
