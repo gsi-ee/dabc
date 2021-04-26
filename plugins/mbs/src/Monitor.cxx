@@ -295,6 +295,8 @@ void mbs::Monitor::CreateCommandWorker()
    dabc::WorkerRef wrk = FindChildRef("DaqCmd");
    if (!wrk.null()) return;
 
+   DOUT0("Create command worker");
+
    dabc::Worker* remcmd = nullptr;
    if (IsPrompter()) {
       remcmd = new PrompterWorker(this, "DaqCmd", fMbsNode, fCmdPort);
@@ -1082,7 +1084,8 @@ unsigned mbs::Monitor::WriteRecRawData(void* ptr, unsigned maxsize)
 mbs::DaqLogWorker::DaqLogWorker(const dabc::Reference& parent, const std::string &name, const std::string &mbsnode, int port) :
    dabc::Worker(parent, name),
    fMbsNode(mbsnode),
-   fPort(port)
+   fPort(port),
+   fFirstRecv(true)
 {
 }
 
@@ -1107,9 +1110,6 @@ bool mbs::DaqLogWorker::CreateAddon()
 
    memset(&fRec, 0, sizeof(fRec));
    add->StartRecv(&fRec, sizeof(fRec));
-
-   mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
-   if (pl) pl->LoggerAddonCreated();
 
    return true;
 }
@@ -1155,6 +1155,13 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
 
          dabc::SocketIOAddon* add = dynamic_cast<dabc::SocketIOAddon*>(fAddon());
          if (add) add->StartRecv(&fRec, sizeof(fRec));
+
+         if (fFirstRecv) {
+            fFirstRecv = false;
+            mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
+            if (pl) pl->LoggerAddonCreated();
+         }
+
          break;
       }
       case dabc::SocketAddon::evntSocketErrorInfo:

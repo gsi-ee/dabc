@@ -84,6 +84,7 @@ namespace mbs {
          std::string fMbsNode;
          int         fPort;
          MbsLogRec   fRec;
+         bool        fFirstRecv;
 
          bool CreateAddon();
 
