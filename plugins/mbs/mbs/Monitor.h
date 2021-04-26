@@ -235,6 +235,8 @@ namespace mbs {
          int               fStatPort;   ///< port, providing stat information (normally 6008)
          int               fLoggerPort; ///< port, providing log information
          int               fCmdPort;    ///< port, providing remote command access
+         bool              fWaitingLogger; ///< waiting logger to create cmd port
+         dabc::Command     fWaitingCmd;    ///< command waiting when logger channel is ready
          mbs::DaqStatus    fStatus;     ///< current DAQ status
          dabc::TimeStamp   fStatStamp;  ///< time when last status was obtained
          bool              fPrintf;     ///< use printf for major debug output

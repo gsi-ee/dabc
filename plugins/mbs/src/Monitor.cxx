@@ -140,6 +140,7 @@ mbs::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    fStatPort(0),
    fLoggerPort(0),
    fCmdPort(0),
+   fWaitingLogger(true),
    fStatus(),
    fStatStamp(),
    fPrintf(false)
@@ -292,6 +293,8 @@ void mbs::Monitor::OnThreadAssigned()
 
 void mbs::Monitor::CreateCommandWorker()
 {
+   fWaitingLogger = false;
+
    dabc::WorkerRef wrk = FindChildRef("DaqCmd");
    if (!wrk.null()) return;
 
@@ -303,7 +306,11 @@ void mbs::Monitor::CreateCommandWorker()
    } else if (fCmdPort > 0) {
       remcmd = new DaqRemCmdWorker(this, "DaqCmd", fMbsNode, fCmdPort);
    }
-   if (remcmd) remcmd->AssignToThread(thread());
+   if (remcmd) {
+      remcmd->AssignToThread(thread());
+      if (!fWaitingCmd.null())
+         remcmd->Submit(fWaitingCmd);
+   }
 }
 
 void mbs::Monitor::FillStatistic(const std::string &options, const std::string &itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
@@ -1040,6 +1047,13 @@ int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
       // if (cmdpath != "CmdMbs") return dabc::cmd_false;
 
       if (cmdpath == "CmdMbs") {
+
+         if (fWaitingLogger) {
+            if (!fWaitingCmd.null()) fWaitingCmd.Reply(dabc::cmd_false);
+            fWaitingCmd = cmd;
+            return dabc::cmd_postponed;
+         }
+
          dabc::WorkerRef wrk = FindChildRef("DaqCmd");
 
          if ((fCmdPort <= 0) || wrk.null())
