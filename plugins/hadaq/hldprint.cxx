@@ -550,7 +550,13 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             snprintf(sdata, sizeof(sdata), "0x%07x%s", epoch, (err ? " errflag" : ""));
             lastepoch = epoch;
          } else
-         if (hdr4 == newkind_TMDS) kind = "TMDS"; else
+         if (hdr4 == newkind_TMDS) {
+            kind = "TMDS";
+            unsigned channel = (msg >> 21) & 0x7F;
+            unsigned coarse = (msg >> 9) & 0xFFF;
+            unsigned pattern = msg & 0x1FF;
+            snprintf(sdata, sizeof(sdata), "ch:%u coarse:%u pattern:0x%03x", channel, coarse, pattern);
+         } else
          if (hdr6 == newkind_TBD) kind = "TBD"; else
          if (hdr8 == newkind_HSTM) kind = "HSTM"; else
          if (hdr8 == newkind_HSTL) kind = "HSTL"; else
