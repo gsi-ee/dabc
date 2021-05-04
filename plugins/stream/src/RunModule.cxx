@@ -603,7 +603,7 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
    dabc::Hierarchy folder = fWorkerHierarchy.FindChild("Status");
 
    folder.SetField("EventsRate", Par("EventsRate").GetField("value").AsDouble());
-   folder.SetField("EventsCount", fTotalEvnts);
+   folder.SetField("EventsCount", (int64_t) fTotalEvnts);
    folder.SetField("StoreInfo", fProcMgr->GetStoreInfo());
 
    for (unsigned n=0;n<hld->NumberOfTRB();n++) {
