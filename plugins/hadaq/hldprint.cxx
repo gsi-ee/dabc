@@ -555,7 +555,16 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             unsigned channel = (msg >> 21) & 0x7F;
             unsigned coarse = (msg >> 9) & 0xFFF;
             unsigned pattern = msg & 0x1FF;
-            snprintf(sdata, sizeof(sdata), "ch:%u coarse:%u pattern:0x%03x", channel, coarse, pattern);
+
+            double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
+            unsigned mask = 0x100, cnt = 8;
+            while (((pattern & mask) == 0) && (cnt > 0)) {
+               mask = mask >> 1;
+               cnt--;
+            }
+            localtm -= coarse_unit/8*cnt;
+
+            snprintf(sdata, sizeof(sdata), "ch:%u coarse:%u pattern:0x%03x tm0:%5.1f", channel, coarse, pattern, (localtm - localtm0)*1e9);
          } else
          if (hdr6 == newkind_TBD) kind = "TBD"; else
          if (hdr8 == newkind_HSTM) kind = "HSTM"; else
