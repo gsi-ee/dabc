@@ -1077,10 +1077,13 @@ int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
          return dabc::cmd_false;
       }
    } else if (cmd.IsName("DeleteWorkers")) {
+      // command use to delete workers in api.cxx
       dabc::WorkerRef wrk = FindChildRef("DaqCmd");
       wrk.Destroy();
       wrk = FindChildRef("DaqLogger");
       wrk.Destroy();
+      // also delete addon
+      AssignAddon(nullptr);
    }
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
