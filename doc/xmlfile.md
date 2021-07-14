@@ -1,15 +1,13 @@
-/*! \page  dabc_xmlfile_format  XML files format
+# XML files format {#dabc_xmlfile_format}
 
-\brief Sctructure and content of DABC xml files 
- 
-# Introduction
+## Introduction
 
 XML file in DABC provide way to configure most components of user application.
-This include generic application parameters, memory pool configuration, transport creation, 
+This include generic application parameters, memory pool configuration, transport creation,
 modules parameters and so on.
 
 
-# Simple example
+## Simple example
 
 Lets consider simple Example.xml file.
 
@@ -36,10 +34,10 @@ This is example of configuration file, were repeater module translate generated 
 into mbs stream-server. To start example:
 
     [shell] dabc_exe Example.xml
-    
-    
 
-# XML file structure
+
+
+## XML file structure
 
 Any dabc xml file should have top-level `<dabc>` node like:
 
@@ -50,13 +48,13 @@ Any dabc xml file should have top-level `<dabc>` node like:
 </dabc>
 ~~~~~~~~~~~~~~~~~~~~~
 
-Inside dabc node one or several `<Context>` nodes can be placed. 
+Inside dabc node one or several `<Context>` nodes can be placed.
 Each context corresponds to separate process, started via `dabc_exe` executable.
 For the context node following attributes can be set:
 
    - "name"  - name of the context
-   - "host"  - (optional) host where process should run 
-   - "port"  - (optional) socket port number for communiction with process 
+   - "host"  - (optional) host where process should run
+   - "port"  - (optional) socket port number for communiction with process
 
 Example:
 
@@ -78,11 +76,11 @@ Inside context following nodes can be presented:
    - `<Module>` module
    - `<Connection>` connection
 
-## Run parameters
+### Run parameters
 
-In `<Run>` section different global parameters defined, which are normally set 
-in the beginning, when dabc_exe process is started. Here is table of parameters, 
-which can be specified in `<Run>` section. 
+In `<Run>` section different global parameters defined, which are normally set
+in the beginning, when dabc_exe process is started. Here is table of parameters,
+which can be specified in `<Run>` section.
 
 | Name       | Description |
 | --------:  | :---------- |
@@ -112,9 +110,9 @@ which can be specified in `<Run>` section.
 | errout     | redirection for error output, for instance file name |
 | nullout    | if true, all output will be redirected ro /dev/null |
 | slow-time  | which methods used for time measuremens, default is true |
- 
 
-## Memory pool
+
+### Memory pool
 
 The typical configuration for memory pool look like this.
 
@@ -124,7 +122,7 @@ The typical configuration for memory pool look like this.
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-...    
+...
 ~~~~~~~~~~~~~~~~~~~~~
 
 Following parameters could be specified:
@@ -138,7 +136,7 @@ Following parameters could be specified:
 | Alignment | Alignment of memory buffer in bytes (default 16) |
 
 
-## Thread
+### Thread
 
 Following parameters can be specified for each thread separately:
 
@@ -148,12 +146,12 @@ Following parameters can be specified for each thread separately:
 | affinity  | thread affinity, see appropriate section in introduction |
 
 
-## Module
+### Module
 
 Typical configuration for module could look like this:
 
 ~~~~~~~~~~~~~~~~~~~~~{.xml}
-...    
+...
  <Module name="Repeat" class="dabc::RepeaterModule">
     <NumInputs value="1"/>
     <NumOutputs value="1"/>
@@ -162,7 +160,7 @@ Typical configuration for module could look like this:
     <InputPort name="Input0" url="lmd://Generator"/>
     <OutputPort name="Output0" url="mbs://Stream"/>
  </Module>
-...    
+...
 ~~~~~~~~~~~~~~~~~~~~~
 
 Following attributes can be specified:
@@ -183,20 +181,20 @@ Following parameter can be specified
 | PoolName   | name of memory pool, used as source of buffers (default empty) |
 
 
-## Port
+### Port
 
 Typical configuration for input and output ports look like:
 
 ~~~~~~~~~~~~~~~~~~~~~{.xml}
-...    
+...
  <Module name="Repeat" class="dabc::RepeaterModule">
-     
+
     <InputPort name="Input0" url="lmd://Generator"/>
     <OutputPort name="Output0" url="mbs://Stream"/>
  </Module>
-...    
+...
 ~~~~~~~~~~~~~~~~~~~~~
- 
+
 Following parameters of attributes could be specified:
 
 | Parameter  | Description |
@@ -205,17 +203,17 @@ Following parameters of attributes could be specified:
 | url        | used to create transport for the port |
 | urlopt     | extra options for url string, can be specified in other places |
 | queue      | queue size, used for the port |
-| thread     | thread name, used to create transport | 
+| thread     | thread name, used to create transport |
 | loop       | maximumal event loop length for port before it will be interrupted (default 0 - endless) |
 | bind       | name of bind port |
 | rate       | name of rate parameter |
 | signal     | which events delivered to user. Can be "none", "every", "confirm" (default) |
-| reconnect  | period of automatic reconnect (default -1 - disabled) | 
-| numreconn  | number of reconnect attempts (default - 10) | 
-| onerror    | action done in case of error "close", "none", "stop", "exit", "abort" | 
- 
- 
-## Connections 
+| reconnect  | period of automatic reconnect (default -1 - disabled) |
+| numreconn  | number of reconnect attempts (default - 10) |
+| onerror    | action done in case of error "close", "none", "stop", "exit", "abort" |
+
+
+### Connections
 
 Connection used during automatic creation and look like this:
 
@@ -230,20 +228,20 @@ Connection used during automatic creation and look like this:
 ~~~~~~~~~~~~~~~~~~~~~
 
 As __output__ and __input__ names of output and input port must be specified.
-Port name can contains also node identifier, therefore connection with remote node can be 
+Port name can contains also node identifier, therefore connection with remote node can be
 stablished as well. In this case syntax will looke like:
 
 ~~~~~~~~~~~~~~~~~~~~~{.xml}
 ...
      <Connection output="dabc://node1/Module0/Output1" input="Module1/Input0"/>
-...     
+...
 ~~~~~~~~~~~~~~~~~~~~~
- 
+
 It is required, that at least one port (or both) situated in local node.
 
 
 It is also possible to specify multiple connections with single `<Connectionin>` node.
-There are typical situations, when connections between all application nodes must be established - 
+There are typical situations, when connections between all application nodes must be established -
 so calles "all-to-all" pattern. In this on each node module with __N__ outputs and
 module with __N__ inputs should be present, where __N__ is number of nodes. To establish connections between
 them, one should specify:
@@ -251,7 +249,7 @@ them, one should specify:
 ~~~~~~~~~~~~~~~~~~~~~{.xml}
 ...
      <Connection kind="all-to-all" output="OutputModule" input="InputModule"/>
-...     
+...
 ~~~~~~~~~~~~~~~~~~~~~
 
 In such case  __output__ and __input__ should be modules names; it can be the same module.
@@ -270,8 +268,8 @@ Here is complete list of attributes:
 | device     | device name, which should be used to create connection  |
 | timeout    | timeout to establish connection  |
 
-## Application
 
+### Application
 
 Example:
 
@@ -289,12 +287,12 @@ Example:
 ~~~~~~~~~~~~~~~~~~~~~
 
 Inside application node one can put any user-specific parameters.
-Also memory pools, devices, thread, modules  and others objects configuration, 
-created by application, can be placed inside application node. 
+Also memory pools, devices, thread, modules  and others objects configuration,
+created by application, can be placed inside application node.
 
 
 
-# Environment variables
+## Environment variables
 
 It is allowed to used all shell variables with the syntax:
 
@@ -321,25 +319,25 @@ Following variables defined inside dabc itself.
 | DABCUSERDIR  | user-specified directory |
 | DABCWORKDIR  | current working directory |
 | DABCNUMNODES | number of `<Context>` nodes in configuration file |
-| DABCNODEID   | sequence number of current `<Context>` node in configuration file | 
+| DABCNODEID   | sequence number of current `<Context>` node in configuration file |
 
 
-# Automatic creation
+## Automatic creation
 
 If no init function and no application class was set, dabc will try to create objects,
-based on the content of xml file. These objects are: 
+based on the content of xml file. These objects are:
 
    - Device
    - Thread
    - MemoryPool
    - Module
    - Ports connections
-   
+
 For every of these items one can specify attribute auto="false" to disable automatic creation of such object,
 even it is present in xml file.
-    
 
-# Wildcard rules
+
+## Wildcard rules
 
 For most objects one can specify name with wildcards like:
 
@@ -364,13 +362,13 @@ For most objects one can specify name with wildcards like:
 </dabc>
 ~~~~~~~~~~~~~~~~~~~~~
 
-In this example two modules are created. 
+In this example two modules are created.
 And for both of them same configuration parameters will be used.
 
-One could have many such multicast definitions, first matching will be used.  
+One could have many such multicast definitions, first matching will be used.
 
 
-# Multi-node application
+## Multi-node application
 
 XMl file can contain several Context nodes like:
 
@@ -418,5 +416,3 @@ One can use wildcard rules to set common parameters for some contextes:
   </Context>
 </dabc>
 ~~~~~~~~~~~~~~~~~~~~~
-
-*/
