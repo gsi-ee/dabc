@@ -1,31 +1,7 @@
-/** \page root_plugin ROOT plugin for DABC (libDabcRoot.so)
-
- \subpage root_plugin_doc
-
- \n
-
- \subpage root_plugin_usage
+# Use of ROOT plugin {#root_readme}
 
 
- \ingroup dabc_plugins
-
- */
-
-
-
-/** \page root_plugin_doc Short description of ROOT plugin
-
-Plugin provides:
-- [JavaScript ROOT](\ref jsrootmain)
-- [Implementation of DABC-based THttpEngine](\ref root_plugin_usage)
-*/
-
-
-
-/** \page root_plugin_usage  Usage of DABC with ROOT
-
-Introduction
-============
+## Introduction
 
 Original motivation for writing of libDabcRoot plugin was
 providing web interface to the arbitrary ROOT-based analysis.
@@ -43,26 +19,23 @@ There is also dabc_root utility, which let convert DABC internal histograms
 into ROOT representation.
 
 Also this plugin was a place where JavaScript ROOT was developed for a while.
-Now it is just copy of central JSROOT repository from https://github.com/linev/jsroot
+Now it is just copy of central JSROOT repository from https://github.com/linev/jsroot/
 
 
-DABC compilation
-================
+## DABC compilation
 
 First of all, ROOT itself should be compiled and configured.
 DABC uses ROOTSYS shell variable, therefore it should be defined before DABC compilation starts.
 One could use ". your_root_path/bin/thisroot.sh" script.
 
-Normal DABC compilation procedure should be performed,
-[details can be found here](\ref dabc_getting_started).
+Normal [DABC compilation procedure](\ref dabc_getting_started) should be performed.
 At the end of the DABC compilation libDabcRoot.so library will be created in $DABCSYS/lib subdirectory.
 
 
-Running of web server
-=====================
+## Running of web server
 
 After DABC compiled and ". dabclogin" initialization script is called,
-one just starts root session and creates \ref THttpServer instance at
+one just starts root session and creates [THttpServer]( https://root.cern/doc/master/classTHttpServer.html) instance at
 any moment of macro execution. For instance:
 
     [shell] root -b -l
@@ -80,11 +53,10 @@ with the address `http://your_host_name:8095/`
 One could continue root usage, creating or deleting histograms or any other objects -
 it will not disturb running server.
 
-More information about ROOT http server one could find in [ROOT documentation](\ref httpserver)
+More information about ROOT http server one could find in [ROOT documentation](https://github.com/root-project/jsroot/blob/master/docs/HttpServer.md)
 
 
-Running of DABC server
-======================
+## Running of DABC server
 
 In addition to ROOT-based http and fastcgi server, one could use following servers:
 * DABC-based http server
@@ -92,19 +64,16 @@ In addition to ROOT-based http and fastcgi server, one could use following serve
 * DABC master socket
 * DABC slave socket
 
-DABC-based http server
-======================
+### DABC-based http server
 
     root [0] new THttpServer("dabc:http:8095");
 
-DABC-based fastcgi server
-=========================
+### DABC-based fastcgi server
 
     root [0] new THttpServer("dabc:fastcgi:9000");
 
 
-DABC master socket
-==================
+### DABC master socket
 
     root [0] new THttpServer("dabc:1237");
 
@@ -112,8 +81,7 @@ This is DABC command socket. Go4 can connect with this socket and request
 all objects in binary form.
 
 
-DABC slave socket
-==================
+### DABC slave socket
 
     root [0] new THttpServer("dabc:master_node:1237");
 
@@ -121,8 +89,5 @@ This is possibility to attach slave to some running master and export all
 objects via master. This gives possibility to merge many slave jobs together.
 
 
-
 For any comments and wishes contact \n
 Sergey Linev   S.Linev(at)gsi.de
-
-*/
