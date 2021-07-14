@@ -1,11 +1,8 @@
-// This is main doxygen file for whole DABC
+# DABC documentation {#mainpage}
 
-/*! \mainpage DABC documentation
-
-<br>
 [Getting started with DABC](\ref dabc_getting_started)<br>
 <br>
-[Introduction](\ref dabc_introduction)<br> 
+[Introduction](\ref dabc_introduction)<br>
 <br>
 [XML file format](\ref dabc_xmlfile_format)<br>
 <br>
@@ -15,8 +12,7 @@
 <br>
 [All classes](\ref dabc_all_classes)<br>
 <br>
-[DABC plugins](\ref dabc_plugins)<br> 
-
+[DABC plugins](\ref dabc_plugins)<br>
 
 
 \defgroup dabc_core_classes DABC core classes
@@ -37,5 +33,3 @@ This should be complete list of DABC classes
 \defgroup dabc_plugins DABC plugins
 
 This is list of DABC plugins
-
-*/
