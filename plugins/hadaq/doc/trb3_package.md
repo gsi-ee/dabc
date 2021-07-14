@@ -1,4 +1,4 @@
-# Software collection for TRB3 {#hadaq_trb3_package}  
+# Software collection for TRB3 {#hadaq_trb3_package}
 
 ## Table of content
 
@@ -7,8 +7,8 @@
 - [hldprint](@ref trb3_hldprint)
 - [Running analysis](@ref trb3_stream_go4)
 - [Running analysis with DABC](@ref trb3_stream_dabc)
-- [TDC calibration](@ref hadaq_tdc_calibr)
-- [API for data access](@ref trb3_api) 
+- [TDC calibration](https://web-docs.gsi.de/~dabc/doc/stream/hadaq_tdc_calibr.html)
+- [API for data access](@ref trb3_api)
 
 
 ## Introduction
@@ -36,28 +36,28 @@ Following packages should be installed:
 * xorg-devel
 * g++
 
-[Here is full list of prerequisites for ROOT](http://root.cern.ch/drupal/content/build-prerequisites) 
+[Here is full list of prerequisites for ROOT](http://root.cern.ch/drupal/content/build-prerequisites)
 
 It is recommended to use bash (at least, during compilation)
 
 ## gcc version
 
 Currently ROOT6 is used, which requires at least gcc 4.8. All following gcc version should work as well.
-ROOT compiled with system default compiler. If there is a strong reson (other software requires older/newer gcc version), 
+ROOT compiled with system default compiler. If there is a strong reson (other software requires older/newer gcc version),
 one could change default compiler with following commands:
 
     $ update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
     $ update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
     $ update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-5 20
- 
+
 
 ## Reuse existing ROOT installation
 
 Most of the time is consumed by ROOT compilation, therefore if ROOT already installed on your machine, it can be reused. Just configure ROOTSYS, PATH and LD_LIBRARY_PATH variables before starting. For instance, call thisroot.sh script:
 
     [shell] . your_root_path/bin/thisroot.sh
-    
-Be aware that at least ROOT 5-34-32 version should be used and compiled with '--enable-http' flag.      
+
+Be aware that at least ROOT 5-34-32 version should be used and compiled with '--enable-http' flag.
 
 
 ## Compilation
@@ -135,14 +135,14 @@ Following URL parameters can be used for UDP transport:
 |       hub |  value of HUB ID(s), to correctly unpack data for TDC calibration |
 |      trig |  trigger type used for calibration (default all or 0xFFFFF), can be 0xD |
 |    resort |  when specified, resorting of packets order done with trigger number order |
-| udp_queue |  buffers queue size, used by UDP transport (use together with *tdc* or *resort* parameter) | 
+| udp_queue |  buffers queue size, used by UDP transport (use together with *tdc* or *resort* parameter) |
 
 If parameter (like resort) should be specified only for particular port, one could write:
 
        <InputPort name="Input2" url="hadaq://host:10101" urlopt2="resort&udp_queue=20"/>
- 
+
  Or to activate TDC calibration
- 
+
        <InputPort name="Input3" url="hadaq://host:10101" urlopt2="tdc=[0xC001,0xC002]&trb=0x8010"/>
 
 Events, produced by combiner module, can be stored in hld file or (and) delivered
@@ -162,26 +162,26 @@ Typically second output port (name Output1) used for HLD file storage, but sever
 In case of any I/O error file is closed, but DAQ continues to run. One could change such default behavior. For instance, application will be immediately stopped if `onerror="exit"` property specified:
 
      <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30" onerror="exit"/>
-     
+
 Or one could try to reestablish file transport, providing following parameters:
 
      <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30" reconnect="3" onerror="exit"/>
-     
+
 Here `reconnect="3"` means that transport will be try to reconnected after 3 seconds pause.
 If 10 attempts fail, application will exit as specified with `onerror` parameter. One could specify
-number of attempts with `numreconn="5"` parameter. While reconnecting, buffers will be skipped.        
+number of attempts with `numreconn="5"` parameter. While reconnecting, buffers will be skipped.
 
 Different approach is - keep transport running in any case, just retrying to open new file with some time period. Like:
 
     <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/>
 
-With such configuration file transport after error will try to start writing new file after 5 second wait time. Parameter `blocking="never"` says DABC, that transport should not block event building. 
-If file writing hangs (or too slow), buffers could be skipped and not block main building process. Special thread is assigned, while write operation on full disk can hang for many seconds, blocking other transports running by default in the same thread. Such configuration good to produce files for debugging purposes - if possible such file is written, if not - this not disturb main DAQ process.   
+With such configuration file transport after error will try to start writing new file after 5 second wait time. Parameter `blocking="never"` says DABC, that transport should not block event building.
+If file writing hangs (or too slow), buffers could be skipped and not block main building process. Special thread is assigned, while write operation on full disk can hang for many seconds, blocking other transports running by default in the same thread. Such configuration good to produce files for debugging purposes - if possible such file is written, if not - this not disturb main DAQ process.
 
-    
+
 
 ### Configure online server
- 
+
 First output of combiner module used for online server.
 It is MBS stream server, which simply adds MBS-specific header to
 each HLD events. Configuration for online server looks like:
@@ -193,7 +193,7 @@ For instance, online server can be used to printout raw data with `hldprint` com
     [shell] hldprint localhost:6002
 
 Very often default port for online server [6002] used by VNC. Select any other port, use it in **hldprint** or **go4analysis** to connect with the server.
- 
+
 
 
 ### Running DABC
@@ -209,7 +209,7 @@ All opened files will be closed normally.
 ### Usage of web-server ###
 
 One able to observe and control running DAQ application via web browser.
-After DAQ is started, one could open in web browser address like 
+After DAQ is started, one could open in web browser address like
 http://localhost:8090. Port number 8090 can be changed in configuration
 of _HttpServer_.
 
@@ -217,7 +217,7 @@ In browser one should be able to see hierarchy with "EventBuilder/Combiner" fold
 for parameters and commands of main combiner module.
 
 One of the reason for web-server usage - possibility to interactively start/stop file writings.
-For this two commands can be used: `StartHldFile` for starting file and `StopHldFile` for stopping.   
+For this two commands can be used: `StartHldFile` for starting file and `StopHldFile` for stopping.
 
 
 ---------------------------
@@ -225,13 +225,13 @@ For this two commands can be used: `StartHldFile` for starting file and `StopHld
 
 # Running hldprint #   {#trb3_hldprint}
 
-hldprint is small utility to printout HLD data from different sources: 
+hldprint is small utility to printout HLD data from different sources:
 local hld files, remote hld files and running dabc application.
 It also supports printout of TDC messages.
 For instance, printing of messages from TDC with mask 0xC003 can be done with command:
 
     [shell] hldprint file_0000.hld -tdc 0xc003 -hub 0x9000 -num 1
- 
+
 Result is:
 
 ~~~~~~~~~~~~~~~~
@@ -318,8 +318,8 @@ Result is:
       *** Subsubevent size   1 id 0x5555 full 00015555
            [92] 00000001
 ~~~~~~~~~~~~~~~~
- 
-All options can be obtain when running "hldprint -help". 
+
+All options can be obtain when running "hldprint -help".
 
 ---------------------------
 
@@ -329,12 +329,12 @@ All options can be obtain when running "hldprint -help".
 Analysis code is provided with [stream framework](https://subversion.gsi.de/go4/app/stream).
 It is dedicated for synchronization and
 processing of different kinds of time-stamped data streams. Classes,
-relevant for TRB3/FPGA-TDC processing located in 
-[$STREAMSYS/include/hadaq](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and 
-[$STREAMSYS/framework/hadaq](https://subversion.gsi.de/go4/app/stream/framework/hadaq/) directories. 
- 
+relevant for TRB3/FPGA-TDC processing located in
+[$STREAMSYS/include/hadaq](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and
+[$STREAMSYS/framework/hadaq](https://subversion.gsi.de/go4/app/stream/framework/hadaq/) directories.
+
 In principle, in most cases it is not required to change these classes -
-all user-specific configurations provided in ROOT script, which can be found in 
+all user-specific configurations provided in ROOT script, which can be found in
 [$STREAMSYS/applications/trb3tdc/](https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/) directory. It shows how to process data from several TDCs. Please read comments in scripts for more details. One can always copy such script to any other location and modify it to specific needs.
 
 
@@ -386,29 +386,29 @@ For more details about go4 see introduction on http://go4.gsi.de.
 # Running analysis with DABC # {#trb3_stream_dabc}
 
 Core functionality of stream framework written without ROOT usage and
-can be run with different engines. Such run engine is now provided in DABC. 
+can be run with different engines. Such run engine is now provided in DABC.
 Main difference between Go4/ROOT and DABC engines - with DABC special histogram
 format is used, which makes code ~10-30% faster. Histograms, filled in DABC processes,
-can be displayed with normal ROOT graphics in web browser or in Go4 GUI. 
-Such histograms can be stored in normal ROOT files as TH1/TH2 objects.   
- 
+can be displayed with normal ROOT graphics in web browser or in Go4 GUI.
+Such histograms can be stored in normal ROOT files as TH1/TH2 objects.
+
 
 ### Batch job with multiple threads
 
 DABC provides possibility to run code in parallel in several threads, merging produced histograms
-at the end and storing them in ROOT file. Existing _first.C_ and _second.C_ files can be used as it is, only ROOT-specific parts should be removed (if exists). 
+at the end and storing them in ROOT file. Existing _first.C_ and _second.C_ files can be used as it is, only ROOT-specific parts should be removed (if exists).
 
-To run analysis, one requires configuration file like 
+To run analysis, one requires configuration file like
 [$DABCSYS/plugins/stream/app/stream.xml](https://subversion.gsi.de/dabc/trunk/plugins/stream/app/stream.xml). Just copy it in directory where scripts are and run with the command:
 
     dabc_exe stream.xml file="pilas_1517816245*.hld" asf=test.root parallel=4
-    
-Here one specifies input HLD **file(s)** (one could use wildcard symbol), auto-save ROOT file **asf** 
-where histograms will be stored and number of **parallel** threads used for analysis (default 0). 
+
+Here one specifies input HLD **file(s)** (one could use wildcard symbol), auto-save ROOT file **asf**
+where histograms will be stored and number of **parallel** threads used for analysis (default 0).
 During analysis run histogram content can be monitored via http channel, using web browser or Go4 GUI.
 
-With single process one achieve ~10-30% gain compare with ROOT histograms filling. If running parallel  on 15 cores (on lxhadeb06 machine), performance increased on 800% compare with single-thread analysis.    
- 
+With single process one achieve ~10-30% gain compare with ROOT histograms filling. If running parallel  on 15 cores (on lxhadeb06 machine), performance increased on 800% compare with single-thread analysis.
+
 
 ### Online analysis in DAQ task
 
@@ -421,11 +421,11 @@ file can be found in [$DABCSYS/plugins/hadaq/app/EventBuilderStream.xml](https:/
 
 Scripts _first.C_ and (optional) _second.C_ should be copied into directory where DABC will be started.
 When DAQ is running, one could always open web browser with address `http://localhost:8090` or
-directly `http://localhost:8090/EventBuilder/Analysis/`. 
+directly `http://localhost:8090/EventBuilder/Analysis/`.
 
 Interested histograms can be shown directly, opening address like:
 
-    http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/draw.htm 
+    http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/draw.htm
 
 One also could produce 1-D histogram statistic, submitting requests like:
 
@@ -433,7 +433,7 @@ One also could produce 1-D histogram statistic, submitting requests like:
     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetMean -O mean.txt
     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetRMS -O rms.txt
 
-   
+
 ---------------------------
 
 # TDC calibration #  {#trb3_tdc}
@@ -442,15 +442,15 @@ Now DABC application can be also used to calibrate data, provided by FPGA TDCs.
 For this functionality code from [stream framework](https://subversion.gsi.de/go4/app/stream) is used.
 Therefore DABC should be compiled together with stream - at best as [trb3 package](https://subversion.gsi.de/dabc/trb3) as described in very beginning.
 
-All details about TDC calibration in DABC or in Go4 can be found on [TDC calibration](@ref hadaq_tdc_calibr) page.
+All details about TDC calibration in DABC or in Go4 can be found on [TDC calibration](https://web-docs.gsi.de/~dabc/doc/stream/hadaq_tdc_calibr.html) page of stream framework.
 
 
 ---------------------------
 
-# Usage of hadaq API in other applications #     {#trb3_api} 
+# Usage of hadaq API in other applications #     {#trb3_api}
 
 hldprint is just program with originally about 150 lines of code (now it is ~1000 due to many extra options).
-Source code located in [$DABCSYS/plugins/hadaq/hldprint.cxx](https://github.com/linev/dabc/blob/master/plugins/hadaq/hldprint.cxx). 
+Source code located in [$DABCSYS/plugins/hadaq/hldprint.cxx](https://github.com/linev/dabc/blob/master/plugins/hadaq/hldprint.cxx).
 There is also example in [$DABCSYS/applications/hadaq/](https://github.com/linev/dabc/tree/master/applications/hadaq) directory, which can be copied and modified for the user needs.
 
 In simplified form access to any data source (local file, remote file or online server) looks like:
