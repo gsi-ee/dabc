@@ -2,12 +2,12 @@
 
 @ingroup dabc_plugins
 
-Support of MBS in DABC <br>
+Support of MBS in DABC
 
-@ref mbs_readme <br>
+@ref mbs_readme
 
-@ref mbs_api <br>
+@ref mbs_api
 
-@ref mbs_util <br>
+@ref mbs_util
 
-@ref mbs_web_interface 
+@ref mbs_web_interface
