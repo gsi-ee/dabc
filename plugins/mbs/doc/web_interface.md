@@ -52,13 +52,13 @@ are created, which reproduce output of **rate** command of MBS.
 
 ## MBS remote command channel (port 6019)
 
-To enable it, one should call 'sta cmdrem' in normal MBS processs. This functionality available 
+To enable it, one should call 'sta cmdrem' in normal MBS processs. This functionality available
 starting from MBS version 6.3. If XML file contains line `<cmd value="6019"/>`,
 module will try to connect with MBS and will publish **CmdMbs** command.
 Via web interface user can than submit commands like
-"start acq", "stop acq", "@startup", "show rate" to MBS process.  
+`start acq`, `stop acq`, `@startup`, `show rate` to MBS process.
 
- 
+
 ## MBS prompter (port 6006)
 
 MBS prompter also allows to submit MBS commands remotely (but only remotely).
@@ -84,7 +84,7 @@ If enabled, module will readout log information and put into log record.
 Two possibilities:
 
 1) Start mbs dispatcher as normal ("mbs"). Invoke mbs commands "start cmdrem" (port 6019) and "start logrem" (port 6007).
-Then run dabc process with web server that connects to these ports: "dabc_exe web-mbs-gui.xml" 
+Then run dabc process with web server that connects to these ports: "dabc_exe web-mbs-gui.xml"
 (Please specify correct mbs node name in example xml configuration!)
 
 2) start mbs dispatcher with option: "mbs -dabc". This will open command and log sockets at startup. Then
@@ -100,9 +100,9 @@ To start specialized web gui, select in hierarchy treeview of the generic dabc w
 entry "MBS/<nodename>/ControlGUI". This will open control gui in separate window/tab.
 
 ### Main Sections of Control gui:
-#### MBS: 
+#### MBS:
 - may send any mbs command to the dispatcher by command line
-- shortcut buttons for start acquisition, stop acquisition, @startup, @shutdown commands
+- shortcut buttons for `start acquisition`, `stop acquisition`, `@startup`, `@shutdown` commands
 - shows output of logger, specifies history length
 - shows/hides gosip panel
 - background color indicates acquisition state of mbs (green: running, red: stopped)
