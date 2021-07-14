@@ -33,7 +33,9 @@ namespace dabc {
     *
     *  Used when some transport-independent entity should be create and managed in the application.
     *  Device can be used to create transports for the port. One should specify in xml
+    *  ~~~{.xml}
     *    <InputPort name="Input0" url="device://device_name"/>
+    *  ~~~
     *  In such case transport will be created by Device::CreateTransport() method
     *  When device will be created, all related transports will be created as well
     */

@@ -25,8 +25,9 @@ namespace mbs {
    /** \brief Input object for MBS-events generator
     *
     * It can generate MBS events for testing. Configuration in xml file look like:
-    *
+    * ~~~{.xml}
     * <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&tmout=10" queue="5"/>
+    * ~~~
     *
     * Following parameters are supported:
     *   numsub  - number of subevents

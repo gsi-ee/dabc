@@ -66,7 +66,7 @@ namespace dabc {
     *  Commands can be triggered via web interface.
     *
     *  By default, application will be brought to the 'Running' state by the dabc.
-    *  Only if self='false' specified in <Context> node attributes, application will be created and remain as is
+    *  Only if self='false' specified in `<Context>` node attributes, application will be created and remain as is
     *
     */
 
