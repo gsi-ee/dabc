@@ -1,35 +1,32 @@
-/** \page user_plugin user readout plugin for DABC (libDabcUser.so)
+\page user_plugin
+## User readout plugin for DABC (libDabcUser.so)
 
-   \subpage user_plugin_doc
+\subpage user_plugin_doc
 
-   \ingroup dabc_plugins
-
- */
-
-
-/** \page user_plugin_doc Example of a user defined readout plugin
+\ingroup dabc_plugins
 
 
- Introduction
- ============
- This Plugin provides an example implementation of a user Input transport.
- The data is formatted as MBS events and can be provided at a stream server for monitoring
- software like Go4, or stored into an lmd file. By default, the example fills one subevent with 
- random gauss data that can be used for the standard Go4 example unpackers.
+\page user_plugin_doc
+# Example of a user defined readout plugin {#user_plugin_doc}
 
 
+## Introduction
 
- Compilation
- ============
- The plugin will be automatically compiled inside DABC and the library libDabcUser.so is
- placed under $DABCSYS/lib. If copied to another location, after ". dabclogin" the libraries can be build locally under
- subdirectory x86_64/lib.
+This Plugin provides an example implementation of a user Input transport.
+The data is formatted as MBS events and can be provided at a stream server for monitoring
+software like Go4, or stored into an lmd file. By default, the example fills one subevent with
+random gauss data that can be used for the standard Go4 example unpackers.
 
 
 
+## Compilation
 
- Usage
- =====
+The plugin will be automatically compiled inside DABC and the library `libDabcUser.so` is
+placed under $DABCSYS/lib. If copied to another location, after ". dabclogin" the libraries can be build locally under
+subdirectory x86_64/lib.
+
+
+##  Usage
  To run the example, use dabc with the corresponding configuration file
 
      dabc_exe UserReadout.xml
@@ -38,7 +35,9 @@
 All parameters of the user input can be passed as url options in the port definition of the first
  (and only) data input:
 
+~~~~{.xml}
      <InputPort name="Input0" url="user://host:12345" urlopt1="size=2000&cratid=1&procid=9&ctrlid=3&debug"/>
+~~~~~
 
 Following options are implemented for the default example:
 - bufsize      : allocated readout buffer size (bytes)
@@ -51,13 +50,21 @@ Following options are implemented for the default example:
 
 By default, the data is just send to an mbs stream server socket with specified port number:
 
+~~~~{.xml}
      <OutputPort name="Output0" url="mbs://Stream:6900"/>
+~~~~
 
 To activate writing an additional lmd file, the number of ouputs must be set to 2:
+
+~~~~{.xml}
      <NumOutputs value="2"/>
+~~~~
 
 File name can be defined with
-     <OutputPort name="Output1" url="lmd://myfile.lmd?maxsize=1500&log=2"/>
+
+~~~~{.xml}
+    <OutputPort name="Output1" url="lmd://myfile.lmd?maxsize=1500&log=2"/>
+~~~~
 
 
 
@@ -105,7 +112,7 @@ Additionally, constructor and destructor of this class and the member variables 
  However, to run several readout variants with the same DABC installation, it is recommended to copy the directory
  plugins/user to another location and compile it locally.
  PLEASE NOTE that this case the full (relative) path to the local library  libDabcUser.so must be specified
- in the <Run> section of the configuration file UserReadout.xml, e.g.
+ in the `<Run>` section of the configuration file UserReadout.xml, e.g.
 
       <lib value="x86_64/lib/libDabcUser.so"/>
 

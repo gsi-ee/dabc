@@ -1,5 +1,6 @@
 \page mbs_plugin
-# MBS plugin for DABC (libDabcMbs.so)
+
+## MBS plugin for DABC (libDabcMbs.so)
 
 \ingroup dabc_plugins
 

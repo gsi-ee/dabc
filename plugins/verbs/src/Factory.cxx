@@ -44,19 +44,3 @@ dabc::Reference verbs::Factory::CreateThread(dabc::Reference parent, const std::
 
    return dabc::Reference(thrd);
 }
-
-
-/** \page verbs_plugin VERBS plugin for DABC (libDabcVerbs.so)
- *
- *  \subpage verbs_plugin_doc
- *
- *  \ingroup dabc_plugins
- *
- */
-
-
-/** \page verbs_plugin_doc Short description of VERBS plugin
- *
- * This should be description of VERBS plugin for DABC.
- *
- */
