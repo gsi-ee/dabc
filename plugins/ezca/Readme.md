@@ -1,16 +1,15 @@
-/** \page ezca_plugin EPICS plugin for DABC (libDabcEzca.so)
+\page ezca_plugin
+## EPICS plugin for DABC (libDabcEzca.so)
 
-  \subpage ezca_plugin_doc
+\subpage ezca_plugin_doc
 
-  \ingroup dabc_plugins
-
- */
+\ingroup dabc_plugins
 
 
-/** \page ezca_plugin_doc Short description of EPICS plugin
+\page ezca_plugin_doc
+# Short description of EPICS plugin {#ezca_plugin_doc}
 
-Compilation
-===========
+## Compilation
 EPICS plugin will be automatically compiled, when EPICS_BASE and
 EPICS_EXTENSIONS variables are defined.
 
@@ -23,9 +22,8 @@ To disable compilation of EPICS plugin, call
    [shell] make noepics=1
 
 
+## Usage
 
-Usage
-=====
 1)Please adjust the configuration file CaRead.xml to match the epics process variables to monitor.
 
 Tag EpicsFlagRec specifies name of record which triggers a readout of all other desired records.
@@ -50,8 +48,7 @@ Tag PollingTimeout sets time in seconds for checking the EpicsFlagRec if new epi
 
 
 
-Go4 analysis for EPICS data
-============================
+## Go4 analysis for EPICS data
 Subdirectory plugins/ezca/go4 contains simple analysis,
 which could monitor data, provided by EPICS plugin.
 Just configure Go4 environment (via  '. go4login') and call make in the directory
@@ -59,5 +56,3 @@ Just configure Go4 environment (via  '. go4login') and call make in the director
 Optionally, start go4 monitoring of DABC in subfolder go4:
 "go4analysis -stream hostname"
 (with hostname the name of the machine that runs the DABC process with MbsServerKind "Stream")
-
-*/
