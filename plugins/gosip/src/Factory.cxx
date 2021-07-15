@@ -19,7 +19,6 @@
 
 dabc::FactoryPlugin fesafactory(new gosip::Factory("gosip"));
 
-
 dabc::Module* gosip::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "gosip::Player")
@@ -28,17 +27,3 @@ dabc::Module* gosip::Factory::CreateModule(const std::string &classname, const s
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
 
-/** \page gosip_plugin GOSIP plugin for DABC (libDabcGosip.so)
- *
- *  \subpage gosip_plugin_doc
- *
- *  \ingroup dabc_plugins
- *
- */
-
-
-/** \page gosip_plugin_doc Short description of GOSIP plugin
- *
- * This should be description of GOSIP plugin for DABC.
- *
- */

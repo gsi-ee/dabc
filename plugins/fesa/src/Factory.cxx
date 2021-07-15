@@ -31,18 +31,3 @@ dabc::Module* fesa::Factory::CreateModule(const std::string &classname, const st
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
-
-/** \page fesa_plugin FESA plugin for DABC (libDabcFesa.so)
- *
- *  \subpage fesa_plugin_doc
- *
- *  \ingroup dabc_plugins
- *
- */
-
-
-/** \page fesa_plugin_doc Short description of FESA plugin
- *
- * This should be description of FESA plugin for DABC.
- *
- */

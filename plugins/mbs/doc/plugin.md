@@ -1,13 +1,12 @@
-# MBS plugin for DABC (libDabcMbs.so) {#mbs_plugin}
+\page mbs_plugin
+# MBS plugin for DABC (libDabcMbs.so)
 
-@ingroup dabc_plugins
+\ingroup dabc_plugins
 
-Support of MBS in DABC
+\subpage mbs_readme
 
-@ref mbs_readme
+\subpage mbs_api
 
-@ref mbs_api
+\subpage mbs_util
 
-@ref mbs_util
-
-@ref mbs_web_interface
+\subpage mbs_web_interface

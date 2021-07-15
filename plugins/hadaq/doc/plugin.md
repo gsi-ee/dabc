@@ -1,6 +1,8 @@
-# HADAQ plugin (libDabcHadaq.so) {#hadaq_plugin}
+\page hadaq_plugin
 
-@ingroup dabc_plugins
+## HADAQ plugin (libDabcHadaq.so)
+
+\ingroup dabc_plugins
 
 Support for HADES DAQ in DABC <br>
 

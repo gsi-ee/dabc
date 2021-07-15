@@ -1,3 +1,13 @@
+\page http_plugin
+
+## HTTP plugin for DABC (libDabcHttp.so)
+
+\ingroup dabc_plugins
+
+\subpage http_readme
+
+
+\page http_readme
 # Use of HTTP plugin {#http_readme}
 
 ## Introduction
