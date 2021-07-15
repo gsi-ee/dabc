@@ -27,9 +27,9 @@ GNU General Public License for more details (http://www.gnu.org).
 
 This package was tested on:
     Debian 9.0 (64 bit)
-    OpenSuSe Tumblweed 05.2019
+    OpenSuSe Tumblweed 07.2021
     MacOS 10.14.6
-    compilers: gcc 4.8, gcc 8.2. clang 6.0
+    compilers: gcc 4.8, gcc 8.2, clang 6.0, gcc 11.1
 
 
 INSTALLATION:
@@ -44,7 +44,18 @@ INSTALLATION:
       [shell] cd /usr/local/pub
       [shell] svn co https://subversion.gsi.de/dabc/trunk dabc
 
-3. To compile dabc, just call make:
+2. Compile with cmake
+
+     [shell] mkdir build
+     [shell] cd build
+     [shell] cmake /usr/local/pub/dabc
+     [shell] make -j
+
+One could switch on/off different plugins calling cmake -Dverbs=OFF
+
+3. Compile with make
+
+    Just in source directory call:
 
        [shell] make -j
 
@@ -66,7 +77,7 @@ INSTALLATION:
 5. Use executable "dabc_exe you_file.xml" for single node applications,
    "dabc_run you_file.xml" for multi-node applications
 
-6. Read the DABC online documentation (on dabc.gsi.de)
+6. Read the DABC online documentation (on https://dabc.gsi.de)
    for further information how to configure the DABC and how to use the GUI!
 
 Please contact the DABC developer team for any bug reports and wishes!
