@@ -1615,14 +1615,14 @@ void dabc::Manager::ProcessCtrlCSignal()
 void dabc::Manager::ProcessPipeSignal()
 {
    // during shutdown do not try to reopen log file
-   dabc::Logger::DisableLogReopen();
+   // dabc::Logger::DisableLogReopen();
 
    DOUT0("Process signal SIGPIPE - Socket error from plug-in libraries?");
 
-   if (fMgrStoppedTime.null()) {
-      fMgrStoppedTime.GetNow();
-      return;
-   }
+   //if (fMgrStoppedTime.null()) {
+   //   fMgrStoppedTime.GetNow();
+   //   return;
+   //}
 
 }
 
