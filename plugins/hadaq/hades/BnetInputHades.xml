@@ -85,9 +85,9 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     <Module name="TRB889*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="33"/>
-       <TdcMin value="0x5010"/>
+    <!--   <TdcMin value="0x5010"/>
        <TdcMax value="0x5012"/>
-        <DisableCalibrationFor value="25"/>
+        <DisableCalibrationFor value="25"/>-->
     </Module>
     
 
@@ -124,22 +124,22 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- number of TDC channels -->
        <NumChannels value="53"/>
        <TotRMS value="0.4"/>
-       <TdcMin value="0x6464"/>
-       <TdcMax value="0x6466"/>
+     <!--  <TdcMin value="0x6464"/>
+       <TdcMax value="0x6466"/>-->
 	</Module>
     
     <Module name="TRB8b1*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="53"/>
        <TotRMS value="0.4"/>
-        <DisableCalibrationFor value="40"/>
+   <!--     <DisableCalibrationFor value="40"/>-->
 	</Module>
 	
      <Module name="TRB8b0*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
        <TotRMS value="0.4"/>
-       <DisableCalibrationFor value="[25,36]"/>
+     <!--  <DisableCalibrationFor value="[25,36]"/>-->
 	 
      </Module>
       <!-- special configuration for iTOF HUBs -->
