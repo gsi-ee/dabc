@@ -9,7 +9,8 @@
 // JAM 12-jun-2019 use file system demon branch of ltsm library
 #define LTSM_USE_FSD 1
 
-
+// JAM 17-Sep-2021 - enable compatibility mode for changed api
+#define LTSM_NEW_FSDAPI 1
 
 extern "C"
     {
@@ -19,7 +20,24 @@ extern "C"
 #ifdef LTSM_USE_FSD
 extern "C"
     {
+#ifdef LTSM_NEW_FSDAPI     
+        
+#include "fsqapi.h" 
+
+#define fsd_fconnect(a,b) fsq_fconnect(a,b)
+#define fsd_fdisconnect(X) fsq_fdisconnect(X)       
+#define fsd_fopen(a,b,c,d) fsq_fopen(a,b,c,d)
+#define fsd_fclose(X) fsq_fclose(X) 
+#define fsd_fwrite(a,b,c,d) fsq_fwrite(a,b,c,d) 
+        
+#define fsd_login_t fsq_login_t
+#define fsd_session_t fsq_session_t       
+#define fsd_session fsd_session       
+        
+#else        
 #include "fsdapi.h"
+#endif
+        
     }
 #endif
 
