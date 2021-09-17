@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include "dabc/Url.h"
+#include "dabc/Url.h" 
 #include "dabc/logging.h"
 #include "dabc/timing.h"
 #include "dabc/Manager.h"
@@ -11,7 +11,10 @@ ltsm::FileInterface::FileInterface() :
   dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0), fUseDaysubfolders(false)
 #ifdef LTSM_USE_FSD
    ,fUseFileSystemDemon(false), fServernameFSD("lxcopytool01.gsi.de"),fPortFSD(7625),fSessionFSD(0)
-#endif
+ #ifdef	LTSM_NEW_FSDAPI  
+   ,fFSQdestination(FSQ_STORAGE_LUSTRE_TSM)
+#endif  
+   #endif
 {
    DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
    api_msg_set_level(API_MSG_ERROR);
@@ -59,7 +62,18 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
       DOUT0("tsm::FileInterface::fopen uses  uses day prefix in path: %d from DEFAULTS.",fUseDaysubfolders);
     }
 
+#ifdef	LTSM_NEW_FSDAPI
+if (url.HasOption("ltsmFSQDestination"))
+    {
+      fFSQdestination = (enum fsq_storage_dest_t) url.GetOptionInt("ltsmFSQDestination", fFSQdestination);
+      DOUT0("tsm::FileInterface::fopen uses FSQ destinationh: %d (%s) from url options.",fFSQdestination, FSQ_STORAGE_DEST_STR(fFSQdestination));
+    }
+  else
+    {
+      DOUT0("tsm::FileInterface::fopen uses   uses FSQ destinationh: %d (%s) from DEFAULTS.",fFSQdestination, FSQ_STORAGE_DEST_STR(fFSQdestination));
+    }
 
+#endif
 
 
   if(fSessionFileCount >= fMaxFilesPerSession)
@@ -125,8 +139,15 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 #ifdef LTSM_USE_FSD
       if (fUseFileSystemDemon)
    {
+       
+#ifdef	LTSM_NEW_FSDAPI      
+// JAM 17-09-2021: new API which allows to vary final file destination:
+       rc = fsq_fdopen(fFsname.c_str(), (char*) fileName.c_str(),
+          (char*) fDescription.c_str(), fFSQdestination, fSessionFSD);
+#else             
      rc = fsd_fopen(fFsname.c_str(), (char*) fileName.c_str(),
           (char*) fDescription.c_str(), fSessionFSD);
+#endif
      if (rc)
        {
          EOUT(

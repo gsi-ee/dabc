@@ -74,7 +74,7 @@ namespace ltsm
 	
        
 	int fSessionFileCount; //< count number of files in current session
-
+ 
 	bool fUseDaysubfolders; //< append number of day in year as subfolder if true
 
 #ifdef LTSM_USE_FSD	
@@ -84,6 +84,17 @@ namespace ltsm
 	int fPortFSD;  //< port of file system demon connection
 
 	struct fsd_session_t* fSessionFSD; //< keep fsd session open during several files
+	
+#ifdef	LTSM_NEW_FSDAPI
+	enum fsq_storage_dest_t fFSQdestination; 
+    //<- may switch here destination for data
+// 	enum fsq_storage_dest_t {
+//         FSQ_STORAGE_NULL  - null device, just test network,
+// 	FSQ_STORAGE_LOCAL      - store to local disk of FSQ
+// 	FSQ_STORAGE_LUSTRE     - copy to lustre, but not to tape
+// 	FSQ_STORAGE_TSM	       - put to tsm tape archive only
+// 	FSQ_STORAGE_LUSTRE_TSM - both lustre and tape - hades production mode
+#endif	
 	
 #endif	
 	
