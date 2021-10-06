@@ -231,6 +231,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 //   DOUT0("mbs::ServerOutputAddon::Write_Buffer %u at state %d", buf.GetTotalSize(), fState);
 
    unsigned sendsize = buf.GetTotalSize();
+   unsigned events = 0;
 
    if (sendsize == 0) return dabc::do_Skip;
 
@@ -246,6 +247,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
          if (evsize % 2) evsize++;
          sendsize += evsize;
          rawsize += evsize;
+         events++;
       }
       iter->Close();
 
@@ -258,6 +260,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
    fHeader.Init(true);
    fHeader.SetUsedBufferSize(sendsize);
+   fHeader.SetNumEvents(events);
 
    // error in evapi, must be + sizeof(mbs::BufferHeader)
    fHeader.SetFullSize(sendsize - sizeof(mbs::BufferHeader));

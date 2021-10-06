@@ -184,6 +184,8 @@ namespace mbs {
       uint32_t UsedBufferSize() const;
       void SetUsedBufferSize(uint32_t len);
 
+      void SetNumEvents(int32_t events);
+
       void SetEndian() { iEndian = 1; }
       bool IsCorrectEndian() const { return iEndian == 1; }
    };

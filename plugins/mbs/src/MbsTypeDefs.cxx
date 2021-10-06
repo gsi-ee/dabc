@@ -187,6 +187,11 @@ void mbs::BufferHeader::SetUsedBufferSize(uint32_t len)
    }
 }
 
+void mbs::BufferHeader::SetNumEvents(int32_t events)
+{
+   iNumEvents = events;
+}
+
 void mbs::SwapData(void* data, unsigned bytessize)
 {
    if (data==0) return;
