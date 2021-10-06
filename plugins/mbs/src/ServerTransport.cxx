@@ -357,7 +357,6 @@ bool mbs::ServerTransport::StartTransport()
 
 bool mbs::ServerTransport::StopTransport()
 {
-   DOUT0("Stop server transport");
    return dabc::Transport::StopTransport();
 }
 
