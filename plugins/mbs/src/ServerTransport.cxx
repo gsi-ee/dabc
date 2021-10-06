@@ -357,6 +357,7 @@ bool mbs::ServerTransport::StartTransport()
 
 bool mbs::ServerTransport::StopTransport()
 {
+   DOUT0("Stop server transport");
    return dabc::Transport::StopTransport();
 }
 
@@ -366,10 +367,9 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       int fd = cmd.GetInt("fd", -1);
 
-      if (fd<=0) return dabc::cmd_false;
+      if (fd <= 0) return dabc::cmd_false;
 
-      int numconn(0);
-      int portindx = -1;
+      int numconn = 0, portindx = -1;
       for (unsigned n=0;n<NumOutputs();n++)
          if (IsOutputConnected(n)) {
             numconn++;
@@ -401,7 +401,6 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
       ServerOutputAddon *addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
       // FIXME: should we configure buffer size or could one ignore it???
       addon->FillServInfo(0x400000, true);
-
 
       if (portindx<0) portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
 
@@ -464,7 +463,7 @@ bool mbs::ServerTransport::SendNextBuffer()
       if (fDeliverAll) return false;
       // if server do not blocks, first wait until input queue will be filled
       if (!RecvQueueFull()) {
-         // DOUT0("mbs::ServerTransport::ProcessRecv let input queue to be filled size:%u", NumCanRecv());
+         // DOUT0("mbs::ServerTransport::SendNextBuffer %s let input queue to be filled name size:%u", GetName(), NumCanRecv());
          // dabc::SetDebugLevel(1);
          SignalRecvWhenFull();
          return false;

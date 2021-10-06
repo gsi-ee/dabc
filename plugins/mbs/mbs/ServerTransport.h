@@ -123,6 +123,7 @@ namespace mbs {
 
          virtual bool ProcessRecv(unsigned) { return SendNextBuffer(); }
          virtual bool ProcessSend(unsigned) { return SendNextBuffer(); }
+         virtual bool ProcessBuffer(unsigned) { return SendNextBuffer(); }
 
          bool SendNextBuffer();
 
