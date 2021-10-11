@@ -663,7 +663,7 @@ JSROOT.require("painter").then(jsrp => {
          html += "| " + this.MakeLabel("title='Full name: " + res.runname + "'", fname, 24);
          html += "| " + this.MakeLabel(prefix + "RunFileSize'", ((res.runsize || 0)/1024/1024).toFixed(2), 8);
 
-         fname = res.ltsmname || "";;
+         fname = res.ltsmname || "";
          if (fname && (fname.lastIndexOf("/")>0))
             fname = fname.substr(fname.lastIndexOf("/")+1);
 

@@ -35,10 +35,10 @@ saftdabc::Device::Device (const std::string &name, dabc::Command cmd) :
 #endif
    fBoardName = Cfg (saftdabc::xmlDeviceName, cmd).AsStr (name);
 
-  
+
 #ifdef  DABC_SAFT_USE_2_0
   std::map<std::string, std::string> devices = saftlib::SAFTd_Proxy::create()->getDevices();
-#else   
+#else
    fGlibMainloop= Glib::MainLoop::create(); //Glib::MainLoop::create(true) to run immediately?
    std::map<Glib::ustring, Glib::ustring> devices = saftlib::SAFTd_Proxy::create()->getDevices();
 #endif
@@ -75,7 +75,7 @@ void saftdabc::Device::RunGlibMainLoop()
   // TODO: put mainloop into background thread here?
 #ifdef  DABC_SAFT_USE_2_0
  DOUT1("WARNING: No GlibMainLoop for saftlib > 2.0, not started!");
-#else    
+#else
   DOUT1("RunGlibMainLoop starts.");
   fGlibMainloop->run();
   DOUT1("RunGlibMainLoop after fGlibMainloop->run();");
@@ -94,10 +94,10 @@ bool saftdabc::Device::DestroyByOwnThread ()
    DOUT1("saftdabc::Device DestroyByOwnThread()was called \n");
    // optionally clenaup something here?
    //ClearConditions();
-#ifndef  DABC_SAFT_USE_2_0  
+#ifndef  DABC_SAFT_USE_2_0
    fGlibMainloop->quit();
-#endif  
-   
+#endif
+
    return dabc::Device::DestroyByOwnThread();
 }
 
@@ -132,13 +132,13 @@ int saftdabc::Device::ExecuteCommand (dabc::Command cmd)
   {
     DOUT1("Executing Command %s  ", saftdabc::commandRunMainloop);
     RunGlibMainLoop();
-    return cmd_bool (res);;
+    return cmd_bool (res);
   }
 //  else if (cmd.IsName (saftdabc::commandStopAcq))
 //  {
 //    DOUT1("Executing Command %s  ", saftdabc::commandStopAcq);
 //    res = StopAcquisition ();
-//    return cmd_bool (res);;
+//    return cmd_bool (res);
 //  }
 //  else if (cmd.IsName (saftdabc::commandInitAcq))
 //  {
@@ -199,7 +199,7 @@ bool saftdabc::Device::RegisterInputCondition(saftdabc::Input* receiver, std::st
     bool found=false;
     const char* ioname=name.c_str(); // JAM need this hop because of map with Glib::ustring? better copy as is...
 
-    
+
 #ifdef  DABC_SAFT_USE_2_0
 std::map<std::string, std::string> inputs = fTimingReceiver->getInputs();
   //
@@ -211,8 +211,8 @@ std::map<std::string, std::string> inputs = fTimingReceiver->getInputs();
   //
   //  // here check if input names from config exist in the input list:
   for (std::map<Glib::ustring,Glib::ustring>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
-#endif  
-      
+#endif
+
         {
               if (it->first == ioname)
                 {
@@ -228,10 +228,10 @@ std::map<std::string, std::string> inputs = fTimingReceiver->getInputs();
     uint64_t prefix;
 #else
     guint64 prefix;
-#endif  
+#endif
   prefix = ECA_EVENT_ID_LATCH + (fMap_PrefixName.size()*2);
-   
-   
+
+
   bool rev =
       RegisterEventCondition (receiver, prefix, -2, IO_CONDITION_OFFSET,
           (SAFT_DABC_ACCEPT_CONFLICT | SAFT_DABC_ACCEPT_DELAYED | SAFT_DABC_ACCEPT_EARLY | SAFT_DABC_ACCEPT_LATE));
@@ -249,12 +249,12 @@ std::map<std::string, std::string> inputs = fTimingReceiver->getInputs();
   }
   /* Setup the event */
 
-#ifdef  DABC_SAFT_USE_2_0 
+#ifdef  DABC_SAFT_USE_2_0
   std::shared_ptr<saftlib::Input_Proxy> input = saftlib::Input_Proxy::create(inputs[ioname]);
- #else 
+ #else
   Glib::RefPtr<saftlib::Input_Proxy> input = saftlib::Input_Proxy::create(inputs[ioname]);
-#endif  
-  
+#endif
+
   input->setEventEnable(false);
   input->setEventPrefix(prefix);
   input->setEventEnable(true);
@@ -266,7 +266,7 @@ std::map<std::string, std::string> inputs = fTimingReceiver->getInputs();
 
 }
 
-#ifdef  DABC_SAFT_USE_2_0 
+#ifdef  DABC_SAFT_USE_2_0
  catch (const saftbus::Error& error)
  {
    /* Catch error(s) */
@@ -289,8 +289,8 @@ std::map<std::string, std::string> inputs = fTimingReceiver->getInputs();
 
 // todo: additional function arguments for condition flags (bool or another flagmask?)
 
-#ifdef DABC_SAFT_USE_2_0   
-bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, uint64_t id, uint64_t mask, int64_t offset, 
+#ifdef DABC_SAFT_USE_2_0
+bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, uint64_t id, uint64_t mask, int64_t offset,
                                 unsigned char flags)
 #else
 bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint64 id, guint64 mask, gint64 offset,
@@ -332,9 +332,9 @@ bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint6
             id, mask, offset, acearly, aclate, acconflict, acdelayed));
     return true;
   }
-  
-  
-#ifdef  DABC_SAFT_USE_2_0 
+
+
+#ifdef  DABC_SAFT_USE_2_0
  catch (const saftbus::Error& error)
  {
    /* Catch error(s) */
@@ -355,11 +355,11 @@ bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint6
 }
 
 
-#ifdef DABC_SAFT_USE_2_0      
+#ifdef DABC_SAFT_USE_2_0
     const std::string saftdabc::Device::GetInputDescription(uint64_t event)
 #else
     const std::string saftdabc::Device::GetInputDescription (guint64 event)
-#endif   
+#endif
 {
   try
   {
@@ -370,19 +370,19 @@ bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint6
 #else
     Glib::ustring catched_io = NON_IO_CONDITION_LABEL ;//"WR_Event";
     for (std::map<Glib::ustring, guint64>::iterator it = fMap_PrefixName.begin (); it != fMap_PrefixName.end (); ++it)
-#endif        
+#endif
     {
       if (event == it->second)
       {
         catched_io = it->first;
       }
     } /* Rising */
-    
-#ifdef  DABC_SAFT_USE_2_0    
+
+#ifdef  DABC_SAFT_USE_2_0
     for (std::map<std::string, uint64_t>::iterator it = fMap_PrefixName.begin (); it != fMap_PrefixName.end (); ++it)
 #else
-    for (std::map<Glib::ustring, guint64>::iterator it = fMap_PrefixName.begin (); it != fMap_PrefixName.end (); ++it)    
-#endif        
+    for (std::map<Glib::ustring, guint64>::iterator it = fMap_PrefixName.begin (); it != fMap_PrefixName.end (); ++it)
+#endif
     {
       if (event - 1 == it->second)
       {
@@ -401,17 +401,17 @@ bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint6
         catched_io.append (" Falling");
       }
     }
-#ifdef  DABC_SAFT_USE_2_0      
+#ifdef  DABC_SAFT_USE_2_0
    return catched_io;
-#else   
-   return catched_io.raw ();    
+#else
+   return catched_io.raw ();
 #endif
-   
+
   }
-  
-#ifdef  DABC_SAFT_USE_2_0      
+
+#ifdef  DABC_SAFT_USE_2_0
   catch (const saftbus::Error& error)
-#else  
+#else
   catch (const Glib::Error& error)
 #endif
   {
@@ -419,7 +419,7 @@ bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint6
     EOUT("Error %s in GetInputDescription", error.what().c_str());
     return std::string ("NONE");
   }
-  
+
 }
 
 void saftdabc::Device::AddEventStatistics (unsigned numevents)
@@ -436,20 +436,20 @@ bool saftdabc::Device::ClearConditions ()
     dabc::LockGuard gard(fConditionMutex);
     // first destroy conditions if possible:
     // we use our existing handles in container:_
-    
-#ifdef DABC_SAFT_USE_2_0 
+
+#ifdef DABC_SAFT_USE_2_0
      for (std::vector<std::shared_ptr<saftlib::SoftwareCondition_Proxy> >::iterator cit = fConditionProxies.begin ();
         cit != fConditionProxies.end (); ++cit)
     {
       std::shared_ptr<saftlib::SoftwareCondition_Proxy> destroy_condition = *cit;
 #else
-    
+
     for (std::vector<Glib::RefPtr<saftlib::SoftwareCondition_Proxy> >::iterator cit = fConditionProxies.begin ();
         cit != fConditionProxies.end (); ++cit)
     {
       Glib::RefPtr < saftlib::SoftwareCondition_Proxy > destroy_condition = *cit;
-#endif     
-      
+#endif
+
       if (destroy_condition->getDestructible () && (destroy_condition->getOwner () == ""))
       {
         DOUT0("ClearConditions will destroy condition of ID:0x%lx .", destroy_condition->getID());
@@ -482,15 +482,15 @@ bool saftdabc::Device::ClearConditions ()
     fActionSinks.clear();
 
   }
-  
- #ifdef  DABC_SAFT_USE_2_0 
+
+ #ifdef  DABC_SAFT_USE_2_0
  catch (const saftbus::Error& error)
  {
    /* Catch error(s) */
     EOUT("SAFTbus error %s in ClearConditions", error.what().c_str());
-     
+
 }
-#else 
+#else
   catch (const Glib::Error& error)
   {
     /* Catch error(s) */
@@ -507,7 +507,7 @@ bool saftdabc::Device::ClearConditions ()
 
 ///////////////////////////////////////////////////////////////////////////
 //////// following is taken from saftlib Commonfunctions.cpp which is not available in include interface
-#ifdef DABC_SAFT_USE_2_0   
+#ifdef DABC_SAFT_USE_2_0
 std::string saftdabc::tr_formatDate(uint64_t time, uint32_t pmode)
 #else
 std::string saftdabc::tr_formatDate(guint64 time, guint32 pmode)
@@ -535,7 +535,7 @@ std::string saftdabc::tr_formatDate(guint64 time, guint32 pmode)
 } //tr_formatDate
 
 /* format EvtID to a string */
-#ifdef DABC_SAFT_USE_2_0   
+#ifdef DABC_SAFT_USE_2_0
 std::string saftdabc::tr_formatActionEvent(uint64_t id, uint32_t pmode)
 #else
 std::string saftdabc::tr_formatActionEvent(guint64 id, guint32 pmode)
@@ -560,7 +560,7 @@ std::string saftdabc::tr_formatActionEvent(guint64 id, guint32 pmode)
   return full.str();
 } //tr_formatActionEvent
 
-#ifdef DABC_SAFT_USE_2_0 
+#ifdef DABC_SAFT_USE_2_0
 std::string saftdabc::tr_formatActionParam(uint64_t param, uint32_t evtNo, uint32_t pmode)
 #else
 std::string saftdabc::tr_formatActionParam(guint64 param, guint32 evtNo, guint32 pmode)
@@ -587,7 +587,7 @@ std::string saftdabc::tr_formatActionParam(guint64 param, guint32 evtNo, guint32
   return full.str();
 } // tr_formatActionParam
 
-#ifdef DABC_SAFT_USE_2_0 
+#ifdef DABC_SAFT_USE_2_0
 std::string saftdabc::tr_formatActionFlags(uint16_t flags, uint64_t delay, uint32_t pmode)
 #else
 std::string saftdabc::tr_formatActionFlags(guint16 flags, guint64 delay, guint32 pmode)

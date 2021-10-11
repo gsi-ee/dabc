@@ -834,7 +834,7 @@ $(function() {
         step: 10,
         spin: function( event, ui ) {  MyDisplay.fMbsLoggingHistory = ui.value;},
         stop: function( event, ui ) {  MyDisplay.hpainter.display("logger"); }
-    }).val(MyDisplay.fMbsLoggingHistory);;
+    }).val(MyDisplay.fMbsLoggingHistory);
 
 
 

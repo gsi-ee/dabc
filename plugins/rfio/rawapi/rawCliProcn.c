@@ -441,7 +441,7 @@ int rawCheckFileList(char **pcFileList, char **pcObjList,
          }
 
          /* get rel filename for gStore object ll */
-         pcc = strrchr(psFile->cFile, '/');;
+         pcc = strrchr(psFile->cFile, '/');
          strcpy(pcFilell, pcc);
 
          if (iDebug)

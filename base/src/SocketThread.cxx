@@ -47,7 +47,7 @@ const char* SocketErr(int err)
       case EINVAL: return "EINVAL";
       case ENOMEM: return "ENOMEM";
       case ENOTCONN: return "ENOTCONN";
-      case ENOTSOCK:  return "ENOTSOCK";;
+      case ENOTSOCK:  return "ENOTSOCK";
 
       case EACCES:  return "EACCES";
       case ECONNRESET:  return "ECONNRESET";
@@ -682,7 +682,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
              struct msghdr msg;
 
              msg.msg_name = fSendUseAddr ? &fSendAddr : 0;
-             msg.msg_namelen = fSendUseAddr ? sizeof(fSendAddr) : 0;;
+             msg.msg_namelen = fSendUseAddr ? sizeof(fSendAddr) : 0;
              msg.msg_iov = &(fSendIOV[fSendIOVFirst]);
              msg.msg_iovlen = fSendIOVNumber - fSendIOVFirst;
              msg.msg_control = 0;
