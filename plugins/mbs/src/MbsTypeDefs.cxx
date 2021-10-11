@@ -170,16 +170,15 @@ void mbs::BufferHeader::SetUsedBufferSize(uint32_t len)
    switch (iType) {
       // new buffer type
       case MBS_TYPE(100,1):
-               iUsedWords = len / 2;
-      if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
-
-      break;
+         iUsedWords = len / 2;
+         if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
+         break;
 
       // old buffer type
       case MBS_TYPE(10,1):
-               i_used = len / 2;
-      if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
-      break;
+         i_used = len / 2;
+         if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
+         break;
 
       default:
          //         EOUT("Uncknown buffer type %d-%d", i_type, i_subtype);
