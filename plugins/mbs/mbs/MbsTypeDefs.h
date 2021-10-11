@@ -177,6 +177,11 @@ namespace mbs {
 
       void Init(bool newformat);
 
+      // FullSize - size of data with header (48 bytes)
+      // iWords (or Header) contains size excluding header
+      uint32_t FullSize() const;
+      void SetFullSize(uint32_t sz);
+
       // length of buffer, which will be transported over socket
       uint32_t BufferLength() const;
 

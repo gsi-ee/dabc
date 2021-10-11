@@ -263,7 +263,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    fHeader.SetNumEvents(events);
 
    // error in evapi, must be + sizeof(mbs::BufferHeader)
-   fHeader.SetFullSize(sendsize - sizeof(mbs::BufferHeader));
+   // fHeader.SetFullSize(sendsize - sizeof(mbs::BufferHeader));
 
    if (fIter.null()) {
       fState = oSendingBuffer;

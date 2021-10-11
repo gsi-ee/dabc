@@ -135,6 +135,16 @@ void mbs::BufferHeader::Init(bool newformat)
    SetEndian();
 }
 
+uint32_t mbs::BufferHeader::FullSize() const
+{
+   return sizeof(BufferHeader) + iWords*2;
+}
+
+void mbs::BufferHeader::SetFullSize(uint32_t sz)
+{
+   iWords = (sz - sizeof(BufferHeader)) /2;
+}
+
 uint32_t mbs::BufferHeader::BufferLength() const
 {
    switch (iType) {

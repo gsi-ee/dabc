@@ -52,6 +52,7 @@ namespace mbs {
       };
 
       // FullSize - size of data with header (8 bytes)
+      // iWords contains size excluding header
       inline uint32_t FullSize() const { return 8 + iWords*2; }
       inline void SetFullSize(uint32_t sz) { iWords = (sz - 8) /2; }
 
