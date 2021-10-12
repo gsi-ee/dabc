@@ -110,7 +110,7 @@ void hadaq::TerminalModule::BeforeModuleStart()
    if (fDoShow) {
       dabc::SetDebugLevel(-1);
       if (fDoClear) {
-         auto res = system("clear");
+         auto res = std::system("clear");
          (void) res; // just avoid compiler warnings
       }
    }

@@ -94,10 +94,10 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
       std::string extra_include;
       if (cmd.GetBool("use_autotdc"))
-         if (system("ls first.C >/dev/null 2>/dev/null") != 0)
+         if (std::system("ls first.C >/dev/null 2>/dev/null") != 0)
             extra_include = dabc::format("-I%s/applications/autotdc", streamsys);
 
-      bool second = system("ls second.C >/dev/null 2>/dev/null") == 0;
+      bool second = std::system("ls second.C >/dev/null 2>/dev/null") == 0;
 
 #if defined(__MACH__) /* Apple OSX section */
       const char *compiler = "clang++";
@@ -112,11 +112,11 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
             compiler, dabcsys, streamsys, extra_include.c_str(),
             (second ? "-D_SECOND_ " : ""), ldflags, dabcsys, streamsys);
 
-      system("rm -f ./librunstream.so");
+      std::system("rm -f ./librunstream.so");
 
       DOUT0("Executing %s", exec.c_str());
 
-      int res = system(exec.c_str());
+      int res = std::system(exec.c_str());
 
       if (res!=0) {
          EOUT("Fail to compile first.C/second.C scripts. Abort");
@@ -138,8 +138,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
       }
    }
 
-
-   if (fParallel>=0) {
+   if (fParallel >= 0) {
       fAsf = Cfg("asf",cmd).AsStr();
       // do not autosave is specified, module will not stop when data source disappears
       if ((fAsf.length()==0) || (fParallel>0)) SetAutoStop(false);
@@ -390,7 +389,7 @@ void stream::RunModule::SaveHierarchy(dabc::Buffer buf)
    DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize());
    {
       dabc::BinaryFile f;
-      system("rm -f h.bin");
+      std::system("rm -f h.bin");
       if (f.OpenWriting("h.bin")) {
          if (f.WriteBufHeader(buf.GetTotalSize(), buf.GetTypeId()))
             for (unsigned n=0;n<buf.NumSegments();n++)
@@ -404,10 +403,10 @@ void stream::RunModule::SaveHierarchy(dabc::Buffer buf)
 
    DOUT0("Calling: %s", args.c_str());
 
-   int res = system(args.c_str());
+   int res = std::system(args.c_str());
 
    if (res!=0) EOUT("Fail to convert DABC histograms in ROOT file, check h.bin file");
-          else system("rm -f h.bin");
+          else std::system("rm -f h.bin");
 }
 
 void stream::RunModule::AfterModuleStop()
@@ -420,7 +419,7 @@ void stream::RunModule::AfterModuleStop()
 
    if (fParallel > 0) {
       ProduceMergedHierarchy();
-   } else if (fAsf.length()>0) {
+   } else if (fAsf.length() > 0) {
       SaveHierarchy(fWorkerHierarchy.SaveToBuffer());
    }
 
@@ -429,7 +428,7 @@ void stream::RunModule::AfterModuleStop()
 
 bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 {
-   if (fProcMgr==0) return false;
+   if (!fProcMgr) return false;
 
    fTotalEvnts++;
 
@@ -448,7 +447,7 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 
    fProcMgr->ProvideRawData(bbuf);
 
-   base::Event* outevent = 0;
+   base::Event *outevent = nullptr;
 
    // scan new data
    bool new_event = fProcMgr->AnalyzeNewData(outevent);

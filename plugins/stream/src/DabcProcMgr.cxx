@@ -345,7 +345,7 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
    DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize());
    {
       dabc::BinaryFile f;
-      system("rm -f h.bin");
+      std::system("rm -f h.bin");
       if (f.OpenWriting("h.bin")) {
          if (f.WriteBufHeader(buf.GetTotalSize(), buf.GetTypeId()))
             for (unsigned n=0;n<buf.NumSegments();n++)
@@ -361,14 +361,14 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
 
    DOUT0("Calling: %s", args.c_str());
 
-   int res = system(args.c_str());
+   int res = std::system(args.c_str());
 
    if (res!=0) {
       EOUT("Fail to convert DABC histograms in ROOT file, check h-date-time.bin file");
       args = dabc::format("mv h.bin h-%s-%s.bin", dt.OnlyDateAsString("-", true).c_str(), dt.OnlyTimeAsString("-", true).c_str());
-      system(args.c_str());
+      std::system(args.c_str());
    } else {
-      system("rm -f h.bin");
+      std::system("rm -f h.bin");
    }
 
    return res == 0;
