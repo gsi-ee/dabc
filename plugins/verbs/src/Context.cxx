@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -22,19 +24,16 @@
 #include <netinet/in.h>
 #include <endian.h>
 
-
 #ifndef  __NO_MULTICAST__
 #include "verbs/OpenSM.h"
 #endif
-
 
 #include "dabc/timing.h"
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 
-
-const char* verbs::typeThread = "verbs::Thread";
-const char* verbs::typeDevice = "verbs::Device";
+const char *verbs::typeThread = "verbs::Thread";
+const char *verbs::typeDevice = "verbs::Device";
 
 
 int null_gid(union ibv_gid *gid)
@@ -109,7 +108,7 @@ void verbs::PoolRegistry::CleanMRStructure()
 
 void verbs::PoolRegistry::SyncMRStructure()
 {
-   if (fPool==0) return;
+   if (!fPool) return;
 
    DOUT5("CreateMRStructure %s for pool %p numrefs %u", GetName(), fPool, NumReferences());
 
@@ -161,7 +160,7 @@ void verbs::PoolRegistry::SyncMRStructure()
 // _________________________________________________________________________
 
 verbs::Context::Context() :
-   dabc::Object(0, "VERBS"),
+   dabc::Object(nullptr, "VERBS"),
    fIbPort(0),
    fContext(0),
    fPD(0),

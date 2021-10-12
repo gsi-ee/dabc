@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -15,7 +17,6 @@
 
 #include "verbs/QueuePair.h"
 #include "verbs/Device.h"
-
 
 verbs::MemoryPool::MemoryPool(ContextRef ctx,
                               const char* name,
