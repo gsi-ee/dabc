@@ -44,9 +44,6 @@ const char* verbs::xmlMcastAddr = "McastAddr";
 #include "verbs/Transport.h"
 #include "verbs/MemoryPool.h"
 
-const int LoopBackQueueSize = 8;
-const int LoopBackBufferSize = 64;
-
 // this boolean indicates if one can use verbs calls from different threads
 // if no, all post/recv/completion operation for all QP/CQ will happens in the same thread
 

@@ -71,7 +71,7 @@ namespace dabc {
             uint32_t typid;
             uint32_t size;
          };
-      #pragma pack(0)
+      #pragma pack()
 
          enum ENetworkOperTypes {
             netot_Send     = 0x001U,

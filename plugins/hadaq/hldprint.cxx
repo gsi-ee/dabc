@@ -477,7 +477,7 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
          unsigned coarse = (msg >> 9) & 0xFFF;
          unsigned fine = msg & 0x1FF;
 
-         if ((onlych >= 0) && (channel != onlych)) continue;
+         if ((onlych >= 0) && (channel != (unsigned) onlych)) continue;
 
          double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
          if (fine > fine_max4)
