@@ -78,8 +78,8 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
       // ensure that all histos on all branches present
       hadaq::TdcProcessor::SetAllHistos(true);
 
-      const char *dabcsys = getenv("DABCSYS");
-      const char *streamsys = getenv("STREAMSYS");
+      const char *dabcsys = std::getenv("DABCSYS");
+      const char *streamsys = std::getenv("STREAMSYS");
       if (!dabcsys) {
          EOUT("DABCSYS variable not set, cannot run stream framework");
          dabc::mgr.StopApplication();

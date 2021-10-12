@@ -106,7 +106,7 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
 {
    fHttpSys = ".";
 
-   const char* dabcsys = getenv("DABCSYS");
+   const char* dabcsys = std::getenv("DABCSYS");
    if (dabcsys!=0) {
 
       AddLocation(dabcsys, "dabcsys/");
@@ -131,8 +131,8 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
       }
    }
 
-   const char* jsrootsys = getenv("JSROOTSYS");
-   if (jsrootsys!=0) fJsRootSys = jsrootsys;
+   const char* jsrootsys = std::getenv("JSROOTSYS");
+   if (jsrootsys) fJsRootSys = jsrootsys;
 
    if (!fJsRootSys.empty()) {
       AddLocation(fJsRootSys, "jsrootsys/", "root_", "/files/");

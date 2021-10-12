@@ -522,7 +522,7 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string &arg, int id)
 
 std::string dabc::ConfigBase::GetEnv(const char* name)
 {
-   const char* env = getenv(name);
+   const char *env = std::getenv(name);
    return std::string(env ? env : "");
 }
 
