@@ -16,7 +16,9 @@
 #ifndef HADAQ_MonitorModule
 #define HADAQ_MonitorModule
 
+#ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
+#endif
 
 namespace hadaq {
 

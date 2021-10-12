@@ -17,7 +17,7 @@
 #define MBS_MbsTypeDefs
 
 #ifndef MBS_LmdTypeDefs
-#include "LmdTypeDefs.h"
+#include "mbs/LmdTypeDefs.h"
 #endif
 
 #include <string>

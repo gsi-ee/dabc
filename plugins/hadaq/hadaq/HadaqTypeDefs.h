@@ -16,7 +16,9 @@
 #ifndef HADAQ_HadaqTypeDefs
 #define HADAQ_HadaqTypeDefs
 
+#ifndef HADAQ_defines
 #include "hadaq/defines.h"
+#endif
 
 namespace hadaq {
 

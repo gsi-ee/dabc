@@ -21,7 +21,7 @@
 #include "dabc/SocketThread.h"
 #endif
 
- #ifndef DABC_Pointer
+#ifndef DABC_Pointer
 #include "dabc/Pointer.h"
 #endif
 
