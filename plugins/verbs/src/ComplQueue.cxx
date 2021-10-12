@@ -25,22 +25,22 @@
 verbs::ComplQueue::ComplQueue(ContextRef ctx, int size,
                                     struct ibv_comp_channel *channel, bool useownchannel) :
    fContext(ctx),
-   f_cq(0),
+   f_cq(nullptr),
    f_channel(channel),
    f_ownchannel(false)
 {
-   if ((f_channel==0) && useownchannel) {
+   if (!f_channel && useownchannel) {
       f_ownchannel = true;
       f_channel = ibv_create_comp_channel(fContext.context());
    }
 
-   if (f_channel==0) {
+   if (!f_channel) {
       EOUT("Completion channel not specified ???");
       return;
    }
 
    f_cq = ibv_create_cq(fContext.context(), size, &fCQContext, f_channel, 0);
-   if (f_cq==0)
+   if (!f_cq)
       EOUT("Couldn't allocate completion queue (CQ)");
 
    fCQContext.events_get = 0;
@@ -57,12 +57,11 @@ verbs::ComplQueue::~ComplQueue()
 
    if (ibv_destroy_cq(f_cq))
       EOUT("Fail to destroy CQ");
-
-   f_cq = 0;
+   f_cq = nullptr;
 
    if (f_ownchannel)
       ibv_destroy_comp_channel(f_channel);
-   f_channel = 0;
+   f_channel = nullptr;
 }
 
 int verbs::ComplQueue::Poll()
@@ -171,7 +170,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
    if (!is_event) return Poll();
 
    struct ibv_cq *ev_cq;
-   ComplQueueContext *ev_ctx(0);
+   ComplQueueContext *ev_ctx = nullptr;
    if (ibv_get_cq_event(f_channel, &ev_cq, (void**)&ev_ctx)) {
       EOUT("Failed to get cq_event");
       return 2;
@@ -211,37 +210,37 @@ const char* verbs::ComplQueue::GetStrError(int err)
    struct discr_t {
        int code;
        const char* name;
+       discr_t(int _code, const char * _name) : code(_code), name(_name) {}
    };
 
    static discr_t errors[] = {
-         { code:IBV_WC_LOC_LEN_ERR, name:"IBV_WC_LOC_LEN_ERR" },
-         { code:IBV_WC_LOC_QP_OP_ERR, name:"IBV_WC_LOC_QP_OP_ERR" },
-         { code:IBV_WC_LOC_EEC_OP_ERR, name:"IBV_WC_LOC_EEC_OP_ERR" },
-         { code:IBV_WC_LOC_PROT_ERR, name:"IBV_WC_LOC_PROT_ERR" },
-         { code:IBV_WC_WR_FLUSH_ERR, name:"IBV_WC_WR_FLUSH_ERR" },
-         { code:IBV_WC_MW_BIND_ERR, name:"IBV_WC_MW_BIND_ERR" },
-         { code:IBV_WC_BAD_RESP_ERR, name:"IBV_WC_BAD_RESP_ERR" },
-         { code:IBV_WC_LOC_ACCESS_ERR, name:"IBV_WC_LOC_ACCESS_ERR" },
-         { code:IBV_WC_REM_INV_REQ_ERR, name:"IBV_WC_REM_INV_REQ_ERR" },
-         { code:IBV_WC_REM_ACCESS_ERR, name:"IBV_WC_REM_ACCESS_ERR" },
-         { code:IBV_WC_REM_OP_ERR, name:"IBV_WC_REM_OP_ERR" },
-         { code:IBV_WC_RETRY_EXC_ERR, name:"IBV_WC_RETRY_EXC_ERR" },
-         { code:IBV_WC_RNR_RETRY_EXC_ERR, name:"IBV_WC_RNR_RETRY_EXC_ERR" },
-         { code:IBV_WC_LOC_RDD_VIOL_ERR, name:"IBV_WC_LOC_RDD_VIOL_ERR" },
-         { code:IBV_WC_REM_INV_RD_REQ_ERR, name:"IBV_WC_REM_INV_RD_REQ_ERR" },
-         { code:IBV_WC_REM_ABORT_ERR, name:"IBV_WC_REM_ABORT_ERR" },
-         { code:IBV_WC_INV_EECN_ERR, name:"IBV_WC_INV_EECN_ERR" },
-         { code:IBV_WC_INV_EEC_STATE_ERR, name:"IBV_WC_INV_EEC_STATE_ERR" },
-         { code:IBV_WC_FATAL_ERR, name:"IBV_WC_FATAL_ERR" },
-         { code:IBV_WC_RESP_TIMEOUT_ERR, name:"IBV_WC_RESP_TIMEOUT_ERR" },
-         { code:IBV_WC_GENERAL_ERR, name:"IBV_WC_GENERAL_ERR" },
-         { code:0, name:0 }
+         { IBV_WC_LOC_LEN_ERR, "IBV_WC_LOC_LEN_ERR" },
+         { IBV_WC_LOC_QP_OP_ERR, "IBV_WC_LOC_QP_OP_ERR" },
+         { IBV_WC_LOC_EEC_OP_ERR, "IBV_WC_LOC_EEC_OP_ERR" },
+         { IBV_WC_LOC_PROT_ERR, "IBV_WC_LOC_PROT_ERR" },
+         { IBV_WC_WR_FLUSH_ERR, "IBV_WC_WR_FLUSH_ERR" },
+         { IBV_WC_MW_BIND_ERR, "IBV_WC_MW_BIND_ERR" },
+         { IBV_WC_BAD_RESP_ERR, "IBV_WC_BAD_RESP_ERR" },
+         { IBV_WC_LOC_ACCESS_ERR, "IBV_WC_LOC_ACCESS_ERR" },
+         { IBV_WC_REM_INV_REQ_ERR, "IBV_WC_REM_INV_REQ_ERR" },
+         { IBV_WC_REM_ACCESS_ERR, "IBV_WC_REM_ACCESS_ERR" },
+         { IBV_WC_REM_OP_ERR, "IBV_WC_REM_OP_ERR" },
+         { IBV_WC_RETRY_EXC_ERR, "IBV_WC_RETRY_EXC_ERR" },
+         { IBV_WC_RNR_RETRY_EXC_ERR, "IBV_WC_RNR_RETRY_EXC_ERR" },
+         { IBV_WC_LOC_RDD_VIOL_ERR, "IBV_WC_LOC_RDD_VIOL_ERR" },
+         { IBV_WC_REM_INV_RD_REQ_ERR, "IBV_WC_REM_INV_RD_REQ_ERR" },
+         { IBV_WC_REM_ABORT_ERR, "IBV_WC_REM_ABORT_ERR" },
+         { IBV_WC_INV_EECN_ERR, "IBV_WC_INV_EECN_ERR" },
+         { IBV_WC_INV_EEC_STATE_ERR, "IBV_WC_INV_EEC_STATE_ERR" },
+         { IBV_WC_FATAL_ERR, "IBV_WC_FATAL_ERR" },
+         { IBV_WC_RESP_TIMEOUT_ERR, "IBV_WC_RESP_TIMEOUT_ERR" },
+         { IBV_WC_GENERAL_ERR, "IBV_WC_GENERAL_ERR" },
+         { 0, nullptr }
    };
 
-   for (const discr_t* d = errors; d->name!=0; d++) {
+   for (const discr_t *d = errors; d->name != nullptr; d++) {
       if (err==d->code) return d->name;
    }
 
    return "noerror";
 }
-
