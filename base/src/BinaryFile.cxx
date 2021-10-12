@@ -100,10 +100,10 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
          }
       }
 
-      free(namelist[n]);
+      std::free(namelist[n]);
    }
 
-   free(namelist);
+   std::free(namelist);
 
    return res;
 }

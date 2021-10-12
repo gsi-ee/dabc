@@ -16,6 +16,7 @@
 #include "http/Server.h"
 
 #include <cstring>
+#include <cstdlib>
 
 #include "dabc/Url.h"
 #include "dabc/Publisher.h"
@@ -461,8 +462,8 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       // reserve place for header plus space required for the target buffer
       unsigned long zipbuflen = 18 + compressBound(objlen);
-      if (zipbuflen<512) zipbuflen = 512;
-      void* zipbuf = malloc(zipbuflen);
+      if (zipbuflen < 512) zipbuflen = 512;
+      void* zipbuf = std::malloc(zipbuflen);
 
       if (zipbuf==0) {
          EOUT("Fail to allocate %lu bytes memory !!!", zipbuflen);
@@ -492,7 +493,7 @@ bool http::Server::Process(const char* uri, const char* _query,
       int res = compress((Bytef*)bufcur-2, &zipbuflen, objptr, objlen);
       if (res!=Z_OK) {
          EOUT("Fail to compress buffer with ZLIB");
-         free(zipbuf);
+         std::free(zipbuf);
          return true;
       }
 

@@ -16,6 +16,7 @@
 #include "http/FastCgi.h"
 
 #include <cstring>
+#include <cstdlib>
 #include <unistd.h>
 
 #ifndef DABC_WITHOUT_FASTCGI
@@ -28,7 +29,7 @@ void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
 {
    std::ifstream is(fname);
 
-   char* buf = 0;
+   char *buf = nullptr;
    int length = 0;
 
    if (is) {
@@ -36,11 +37,11 @@ void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
       length = is.tellg();
       is.seekg (0, is.beg);
 
-      buf = (char*) malloc(length);
+      buf = (char *) std::malloc(length);
       is.read(buf, length);
       if (!is) {
-         free(buf);
-         buf = 0; length = 0;
+         std::free(buf);
+         buf = nullptr; length = 0;
       }
    }
 
@@ -76,7 +77,7 @@ void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
 
       FCGX_PutStr(buf, length, request->out);
 
-      free(buf);
+      std::free(buf);
    }
 
 }

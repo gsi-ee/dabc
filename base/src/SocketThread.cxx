@@ -894,7 +894,7 @@ dabc::SocketClientAddon::SocketClientAddon(const struct addrinfo* serv_addr, int
    fServAddr.ai_addrlen = serv_addr->ai_addrlen;
    fServAddr.ai_addr = nullptr;
    if ((serv_addr->ai_addrlen>0) && (serv_addr->ai_addr!=0)) {
-       fServAddr.ai_addr = (sockaddr*) malloc(fServAddr.ai_addrlen);
+       fServAddr.ai_addr = (sockaddr*) std::malloc(fServAddr.ai_addrlen);
        if (fServAddr.ai_addr)
           memcpy(fServAddr.ai_addr, serv_addr->ai_addr, fServAddr.ai_addrlen);
        else
@@ -904,7 +904,7 @@ dabc::SocketClientAddon::SocketClientAddon(const struct addrinfo* serv_addr, int
    fServAddr.ai_canonname = nullptr;
    if (serv_addr->ai_canonname) {
       size_t len = strlen(serv_addr->ai_canonname);
-      fServAddr.ai_canonname = (char*) malloc(len + 1);
+      fServAddr.ai_canonname = (char *) std::malloc(len + 1);
       if (fServAddr.ai_canonname)
          strncpy(fServAddr.ai_canonname, serv_addr->ai_canonname, len+1);
       else
@@ -917,8 +917,8 @@ dabc::SocketClientAddon::~SocketClientAddon()
 {
 //   DOUT0("Actual destroy of SocketClientAddon %p worker %p", this, fWorker());
 
-   free(fServAddr.ai_addr); fServAddr.ai_addr = nullptr;
-   free(fServAddr.ai_canonname); fServAddr.ai_canonname = nullptr;
+   std::free(fServAddr.ai_addr); fServAddr.ai_addr = nullptr;
+   std::free(fServAddr.ai_canonname); fServAddr.ai_canonname = nullptr;
 }
 
 void dabc::SocketClientAddon::SetRetryOpt(int nretry, double tmout)

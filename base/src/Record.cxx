@@ -16,6 +16,7 @@
 #include "dabc/Record.h"
 
 #include <cstring>
+#include <cstdlib>
 #include <fnmatch.h>
 
 #include "dabc/Manager.h"
@@ -425,12 +426,12 @@ bool dabc::RecordField::Stream(iostream& s)
             s.read(arrDouble, valueInt*sizeof(double));
             break;
          case kind_string:
-            valueStr = (char*) malloc((storesz-1)*8);
+            valueStr = (char *) std::malloc((storesz-1)*8);
             s.read(valueStr, (storesz-1)*8);
             break;
          case kind_arrstr: {
             s.read_int64(valueInt);
-            valueStr = (char*) malloc((storesz-2)*8);
+            valueStr = (char *) std::malloc((storesz-2)*8);
             s.read(valueStr, (storesz-2)*8);
             break;
          }
@@ -466,7 +467,7 @@ void dabc::RecordField::release()
       case kind_arruint: delete [] arrUInt; arrUInt = nullptr; break;
       case kind_arrdouble: delete [] arrDouble; arrDouble = nullptr; break;
       case kind_string:
-      case kind_arrstr: free(valueStr); valueStr = nullptr; break;
+      case kind_arrstr: std::free(valueStr); valueStr = nullptr; break;
       case kind_buffer: delete valueBuf; valueBuf = nullptr; break;
       case kind_reference: delete valueRef; valueRef = nullptr; break;
    }
@@ -1132,7 +1133,7 @@ bool dabc::RecordField::SetStr(const std::string &v)
 
    release();
    size_t len = v.length();
-   valueStr = (char*) malloc(len+1);
+   valueStr = (char *) std::malloc(len+1);
    if (!valueStr) return false;
 
    fKind = kind_string;
@@ -1149,7 +1150,7 @@ bool dabc::RecordField::SetStr(const char* v)
 
    release();
    size_t len = !v ? 0 : strlen(v);
-   valueStr = (char*) malloc(len+1);
+   valueStr = (char *) std::malloc(len+1);
    if (!valueStr) return false;
 
    fKind = kind_string;
@@ -1178,7 +1179,7 @@ bool dabc::RecordField::SetStrVect(const std::vector<std::string> &vect)
    size_t len = 0;
    for (unsigned n=0;n<vect.size();n++)
       len += vect[n].length()+1;
-   valueStr = (char *) malloc(len);
+   valueStr = (char *) std::malloc(len);
    if (!valueStr) return false;
 
    fKind = kind_arrstr;
@@ -1229,9 +1230,8 @@ bool dabc::RecordField::SetArrInt(int64_t size, int64_t* arr, bool owner)
    }
 
    if ((fKind == kind_arrint) && (size==valueInt))
-      if (memcmp(arrInt, arr, size*sizeof(int64_t))==0)
-      {
-         if (owner) delete[] arr;
+      if (memcmp(arrInt, arr, size*sizeof(int64_t))==0) {
+         if (owner) delete [] arr;
          return modified(false);
       }
 
@@ -1358,7 +1358,7 @@ void dabc::RecordField::SetArrStrDirect(int64_t size, char* arr, bool owner)
          fullsize += len+1;
          p+=len+1;
       }
-      valueStr = (char*) malloc(fullsize);
+      valueStr = (char *) std::malloc(fullsize);
       if (valueStr)
          memcpy(valueStr, arr, fullsize);
       else

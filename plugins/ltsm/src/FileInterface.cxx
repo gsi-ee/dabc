@@ -1,8 +1,9 @@
 #include "ltsm/FileInterface.h"
 
 #include <cstring>
+#include <cstdlib>
 
-#include "dabc/Url.h" 
+#include "dabc/Url.h"
 #include "dabc/logging.h"
 #include "dabc/timing.h"
 #include "dabc/Manager.h"
@@ -11,9 +12,9 @@ ltsm::FileInterface::FileInterface() :
   dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0), fUseDaysubfolders(false)
 #ifdef LTSM_USE_FSD
    ,fUseFileSystemDemon(false), fServernameFSD("lxcopytool01.gsi.de"),fPortFSD(7625),fSessionFSD(0)
- #ifdef	LTSM_NEW_FSDAPI  
+ #ifdef	LTSM_NEW_FSDAPI
    ,fFSQdestination(FSQ_STORAGE_LUSTRE_TSM)
-#endif  
+#endif
    #endif
 {
    DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
@@ -139,12 +140,12 @@ if (url.HasOption("ltsmFSQDestination"))
 #ifdef LTSM_USE_FSD
       if (fUseFileSystemDemon)
    {
-       
-#ifdef	LTSM_NEW_FSDAPI      
+
+#ifdef	LTSM_NEW_FSDAPI
 // JAM 17-09-2021: new API which allows to vary final file destination:
        rc = fsq_fdopen(fFsname.c_str(), (char*) fileName.c_str(),
           (char*) fDescription.c_str(), fFSQdestination, fSessionFSD);
-#else             
+#else
      rc = fsd_fopen(fFsname.c_str(), (char*) fileName.c_str(),
           (char*) fDescription.c_str(), fSessionFSD);
 #endif
@@ -157,8 +158,8 @@ if (url.HasOption("ltsmFSQDestination"))
          fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
          fDescription.c_str());
 
-         free(fSessionFSD);
-         fSessionFSD = 0; // on failure we retry open the session. Or keep it?
+         std::free(fSessionFSD);
+         fSessionFSD = nullptr; // on failure we retry open the session. Or keep it?
          return 0;
        }
        fCurrentFile = fileName.c_str();
@@ -182,8 +183,8 @@ if (url.HasOption("ltsmFSQDestination"))
          fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
          fDescription.c_str());
 
-         free(fSession);
-         fSession = 0; // on failure we retry open the session. Or keep it?
+         std::free(fSession);
+         fSession = nullptr; // on failure we retry open the session. Or keep it?
          return 0;
        }
      fCurrentFile = fileName.c_str();
@@ -504,13 +505,13 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
     strncpy(fsdlogin.hostname,  fServernameFSD.c_str(), DSM_MAX_NODE_LENGTH);
     fsdlogin.port=fPortFSD;
 
-    fSessionFSD = (struct fsd_session_t*) malloc(sizeof(struct fsd_session_t));
+    fSessionFSD = (struct fsd_session_t*) std::malloc(sizeof(struct fsd_session_t));
 #endif
     struct login_t tsmlogin;
     login_init(&tsmlogin, fServername.c_str(), fNode.c_str(),
                fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
                fFsname.c_str(), DEFAULT_FSTYPE);
-    fSession = (struct session_t*) malloc(sizeof(struct session_t));
+    fSession = (struct session_t*) std::malloc(sizeof(struct session_t));
     if (!fSession) {
        EOUT("Memory allocation error");
        return false;
@@ -555,14 +556,14 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 #ifdef LTSM_USE_FSD
        if (fUseFileSystemDemon)
     {
-      free(fSessionFSD);
-      fSessionFSD=0;
+      std::free(fSessionFSD);
+      fSessionFSD = nullptr;
     }
        else
 #endif
     {
-      free(fSession);
-      fSession=0;
+      std::free(fSession);
+      fSession = nullptr;
     }
        return false;
        } // if(rc)
@@ -588,16 +589,16 @@ bool ltsm::FileInterface::CloseTSMSession()
     {
       if(fSessionFSD==0) return false;
       fsd_fdisconnect(fSessionFSD);
-      free(fSessionFSD);
-      fSessionFSD = 0;
+      std::free(fSessionFSD);
+      fSessionFSD = nullptr;
     }
   else
 #endif
     {
       if(fSession==0) return false;
       tsm_fdisconnect(fSession);
-      free(fSession);
-      fSession = 0;
+      std::free(fSession);
+      fSession = nullptr;
     }
   fSessionFileCount=0;
   return true;

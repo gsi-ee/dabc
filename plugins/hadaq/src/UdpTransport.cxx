@@ -48,12 +48,12 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    fRunning(false),
    fMaxProcDist(0.)
 {
-   fMtuBuffer = malloc(fMTU);
+   fMtuBuffer = std::malloc(fMTU);
 }
 
 hadaq::NewAddon::~NewAddon()
 {
-   free(fMtuBuffer);
+   std::free(fMtuBuffer);
 }
 
 void hadaq::NewAddon::ProcessEvent(const dabc::EventId& evnt)

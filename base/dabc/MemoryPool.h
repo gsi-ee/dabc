@@ -145,7 +145,7 @@ namespace dabc {
          /** This is alternative method to supply memory to the pool.
           * User could allocate buffers itself and provide it to this method.
           * If specified, memory pool will take ownership over this memory -
-          * means free() function will be called to release this memory */
+          * means std::free() function will be called to release this memory */
          bool Assign(bool isowner, const std::vector<void*>& bufs, const std::vector<unsigned>& sizes) throw();
 
          /** Return pointers and sizes of all memory buffers in the pool

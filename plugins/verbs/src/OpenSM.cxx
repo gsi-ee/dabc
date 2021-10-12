@@ -16,6 +16,7 @@
 #include "verbs/OpenSM.h"
 
 #include <infiniband/opensm/osm_helper.h>
+#include <cstdlib>
 
 #include "dabc/logging.h"
 #include "verbs/QueuePair.h"
@@ -98,7 +99,7 @@ bool verbs::OpenSM::Init()
 {
    ib_api_status_t status;
 
-   f_log = (osm_log_t*) malloc (sizeof(osm_log_t));
+   f_log = (osm_log_t*) std::malloc (sizeof(osm_log_t));
    if (!f_log) {
       EOUT("Problem with memory allocation");
       return false;

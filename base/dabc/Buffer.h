@@ -93,18 +93,20 @@ namespace dabc {
               #endif
             }
 
-         void* operator new(size_t sz) {
-            return malloc(sz);
+         void* operator new(size_t sz)
+         {
+            return std::malloc(sz);
          }
 
-         void* operator new(size_t sz, void* area) {
+         void* operator new(size_t sz, void* area)
+         {
             if (area) return area;
-            return malloc(sz);
+            return std::malloc(sz);
          }
 
          void operator delete(void* area)
          {
-            free(area);
+            std::free(area);
          }
 
       public:

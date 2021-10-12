@@ -2,7 +2,8 @@
 
 #ifdef WITH_GPU
 
-#include <string.h>
+#include <cstring>
+#include <cstdlib>
 
 #include "dabc/logging.h"
 #include "dabc/timing.h"
@@ -48,11 +49,11 @@ bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type dev
        return false;
     }
 
-    cl_device_id* deviceIds = (cl_device_id*)malloc(sizeof(cl_device_id) * deviceCount);
+    cl_device_id* deviceIds = (cl_device_id*) std::malloc(sizeof(cl_device_id) * deviceCount);
     if(deviceIds == NULL)
     {
         EOUT("Failed to allocate memory(deviceIds)");
-        return 0;
+        return false;
     }
 
     // Get device ids
@@ -75,7 +76,7 @@ bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type dev
         DOUT2("Device %u : %s", i, deviceName);
     }
 
-    free(deviceIds);
+    std::free(deviceIds);
 
     return true;
 }
@@ -90,13 +91,13 @@ void opencl::Context::CloseGPU()
    totalLocalMemory = 0;
 
    if (fDevices!=0) {
-      free(fDevices);
-      fDevices = 0;
+      std::free(fDevices);
+      fDevices = nullptr;
    }
 
    if (maxWorkItemSizes!=0) {
-      free(maxWorkItemSizes);
-      maxWorkItemSizes = 0;
+      std::free(maxWorkItemSizes);
+      maxWorkItemSizes = nullptr;
    }
 
    if (fContext!=0) {
@@ -215,7 +216,7 @@ bool opencl::Context::OpenGPU()
    }
 
    /* Now allocate memory for device list based on the size we got earlier */
-   fDevices = (cl_device_id *)malloc(deviceListSize);
+   fDevices = (cl_device_id *) std::malloc(deviceListSize);
    if(fDevices == NULL) {
        EOUT("Failed to allocate memory (devices).");
        return false;
@@ -259,7 +260,7 @@ bool opencl::Context::OpenGPU()
       return false;
    }
 
-   maxWorkItemSizes = (size_t *)malloc(maxDimensions*sizeof(size_t));
+   maxWorkItemSizes = (size_t *) std::malloc(maxDimensions*sizeof(size_t));
 
    status = clGetDeviceInfo(
                fDevices[deviceId],

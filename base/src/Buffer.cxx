@@ -30,8 +30,8 @@ namespace dabc {
 
          void* fPtr;
 
-         MemoryContainer(void *ptr = 0) :
-            Object(0, "", flAutoDestroy),
+         MemoryContainer(void *ptr = nullptr) :
+            Object(nullptr, "", flAutoDestroy),
             fPtr(ptr)
          {
            #ifdef DABC_EXTRA_CHECKS
@@ -41,7 +41,7 @@ namespace dabc {
 
          virtual ~MemoryContainer()
          {
-            if (fPtr) { free(fPtr); fPtr = 0; }
+            if (fPtr) { std::free(fPtr); fPtr = nullptr; }
            #ifdef DABC_EXTRA_CHECKS
               DebugObject("Memory", this, -1);
            #endif
@@ -414,11 +414,10 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
    return res;
 }
 
-
-
 dabc::Buffer dabc::Buffer::CreateBuffer(BufferSize_t sz) throw()
 {
-    return CreateBuffer(malloc(sz), sz, true);
+   void *rawbuf = std::malloc(sz);
+   return CreateBuffer(rawbuf, sz, true);
 }
 
 dabc::Buffer dabc::Buffer::CreateBuffer(const void* ptr, unsigned size, bool owner, bool makecopy) throw()
@@ -430,7 +429,7 @@ dabc::Buffer dabc::Buffer::CreateBuffer(const void* ptr, unsigned size, bool own
    if (owner) {
       res.GetObject()->fPool = new MemoryContainer((void*)ptr);
    } else if (makecopy) {
-      void *newptr = malloc(size);
+      void *newptr = std::malloc(size);
       if (!newptr) {
          EOUT("Failed to allocate buffer of size %u", size);
          return res;
@@ -465,7 +464,7 @@ void dabc::Buffer::AllocateContainer(unsigned capacity)
 
    unsigned obj_size = sizeof(BufferContainer) + sizeof(MemSegment) * capacity;
 
-   void* area = malloc(obj_size);
+   void* area = std::malloc(obj_size);
 
    BufferContainer* cont = new (area) BufferContainer;
 

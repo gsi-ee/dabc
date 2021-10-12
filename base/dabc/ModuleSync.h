@@ -96,9 +96,9 @@ namespace dabc {
           * Keep processing of other events or commands.
           * Used in framework to rise exceptions when module should be stopped */
          bool WaitItemEvent(double& tmout,
-                            ModuleItem* item = 0,
-                            uint16_t *resevid = 0,
-                            ModuleItem** resitem = 0);
+                            ModuleItem *item = nullptr,
+                            uint16_t *resevid = nullptr,
+                            ModuleItem **resitem = nullptr);
 
          /** Internal - process commands which are submitted to sync queue */
          void AsyncProcessCommands();

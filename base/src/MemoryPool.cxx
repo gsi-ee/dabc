@@ -56,18 +56,18 @@ namespace dabc {
 
          void Release()
          {
-            if (fArr==0) return;
+            if (!fArr) return;
 
             for (unsigned n=0;n<fNumber;n++) {
                if (fArr[n].buf && fArr[n].owner) {
-                  free(fArr[n].buf);
+                  std::free(fArr[n].buf);
                }
-               fArr[n].buf = 0;
+               fArr[n].buf = nullptr;
                fArr[n].owner = false;
             }
 
-            delete[] fArr;
-            fArr = 0;
+            delete [] fArr;
+            fArr = nullptr;
             fNumber = 0;
 
             fFree.Reset();

@@ -13,6 +13,7 @@
  ********************************************************************/
 
 #include <unistd.h>
+#include <cstdlib>
 
 #include "dabc/logging.h"
 
@@ -1028,7 +1029,7 @@ extern "C" void RunPoolTest()
       DOUT0("Ext buffer: %s", buf1.AsStdString().c_str());
 
 
-      char* newbuf = (char*) malloc(256);
+      char* newbuf = (char*) std::malloc(256);
       if (newbuf) {
          strncpy(newbuf,"This is own buffer", 256);
 
@@ -1135,14 +1136,14 @@ class DBuffer {
 
       void close()
       {
-         if (fRec && fRec->decref()) free(fRec);
-         fRec = 0;
+         if (fRec && fRec->decref()) std::free(fRec);
+         fRec = nullptr;
       }
 
    public:
-      DBuffer() : fRec(0) { DOUT0("DBuffer Default constructor"); }
+      DBuffer() : fRec(nullptr) { DOUT0("DBuffer Default constructor"); }
 
-      DBuffer(unsigned extrasz) : fRec(0)
+      DBuffer(unsigned extrasz) : fRec(nullptr)
       {
          DOUT0("DBuffer normal constructor");
          allocate(extrasz);
@@ -1163,7 +1164,7 @@ class DBuffer {
       void allocate(unsigned extrasz = 0)
       {
          close();
-         fRec = (DBufferRec*) malloc(sizeof(DBufferRec) + extrasz);
+         fRec = (DBufferRec*) std::malloc(sizeof(DBufferRec) + extrasz);
          if (fRec) fRec->fRefCnt = 1;
       }
 
@@ -1286,12 +1287,12 @@ class MyClass {
 
 //      void* operator new(size_t sz) {
 //         printf ("Allocate size %d\n", (int) sz);
-//         return malloc(sz);
+//         return std::malloc(sz);
 //      }
       void operator delete(void* ptr)
       {
          printf ("delete ptr\n");
-         free(ptr);
+         std::free(ptr);
       }
 
 };
@@ -1301,7 +1302,7 @@ extern "C" void TestNew()
 {
    printf("Sizeof = %d\n", (int) sizeof(MyClass));
 
-   void* ptr = malloc(sizeof(MyClass));
+   void* ptr = std::malloc(sizeof(MyClass));
 
    MyClass* a = new (ptr) MyClass;
 

@@ -77,14 +77,14 @@ namespace dabc {
 
       XmlOutputStream(std::string* outstr, int bufsize = 20000)
       {
-         fOut = 0;
+         fOut = nullptr;
          fOutStr = outstr;
          Init(bufsize);
       }
 
       void Init(int bufsize)
       {
-         fBuf = (char*) malloc(bufsize);
+         fBuf = (char *) std::malloc(bufsize);
          fCurrent = fBuf;
          fMaxAddr = fBuf + bufsize;
          fLimitAddr = fBuf + int(bufsize*0.75);
@@ -93,14 +93,14 @@ namespace dabc {
       virtual ~XmlOutputStream()
       {
          if (fCurrent!=fBuf) OutputCurrent();
-         delete fOut; fOut = 0;
-         free(fBuf); fBuf = 0;
+         delete fOut; fOut = nullptr;
+         std::free(fBuf); fBuf = nullptr;
       }
 
       void OutputCurrent()
       {
          if (fCurrent!=fBuf) {
-            if (fOut!=0)
+            if (fOut)
                fOut->write(fBuf, fCurrent-fBuf);
             else if (fOutStr!=0)
                fOutStr->append(fBuf, fCurrent-fBuf);
@@ -177,7 +177,7 @@ namespace dabc {
          }
 
          fBufSize = ibufsize;
-         fBuf = (char*) malloc(fBufSize);
+         fBuf = (char *) std::malloc(fBufSize);
 
          fCurrent = 0;
          fMaxAddr = 0;
@@ -193,15 +193,15 @@ namespace dabc {
 
       virtual ~XmlInputStream()
       {
-         delete fInp; fInp = 0;
-         free(fBuf); fBuf = 0;
+         delete fInp; fInp = nullptr;
+         std::free(fBuf); fBuf = nullptr;
       }
 
-      inline bool IsBad() { return (fInp!=0) ? !(*fInp) : (fInpStr==0); }
+      inline bool IsBad() { return fInp ? !(*fInp) : (fInpStr==nullptr); }
 
       inline bool SkipComments() const { return false; }
 
-      inline bool EndOfFile() { return (fInp!=0) ? fInp->eof() : (fInpStrLen<=0); }
+      inline bool EndOfFile() { return fInp ? fInp->eof() : (fInpStrLen <= 0); }
 
       inline bool EndOfStream() { return EndOfFile() && (fCurrent>=fMaxAddr); }
 
@@ -488,7 +488,7 @@ void dabc::Xml::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
          else
             ((SXmlNode_t*) xmlnode)->fAttr = attr->fNext;
          //fNumNodes--;
-         free(attr);
+         std::free(attr);
          return;
       }
 
@@ -505,9 +505,9 @@ void dabc::Xml::FreeAllAttr(XMLNodePointer_t xmlnode)
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
    SXmlAttr_t* attr = node->fAttr;
-   while (attr!=0) {
+   while (attr != nullptr) {
       SXmlAttr_t* next = attr->fNext;
-      free(attr);
+      std::free(attr);
       attr = next;
    }
    node->fAttr = 0;
@@ -863,11 +863,11 @@ void dabc::Xml::FreeNode(XMLNodePointer_t xmlnode)
    while (attr!=0) {
       SXmlAttr_t* next = attr->fNext;
       //fNumNodes--;
-      free(attr);
+      std::free(attr);
       attr = next;
    }
 
-   free(node);
+   std::free(node);
 
    //fNumNodes--;
 }
@@ -1221,7 +1221,7 @@ dabc::XMLNodePointer_t dabc::Xml::AllocateNode(int namelen, XMLNodePointer_t par
 
    //fNumNodes++;
 
-   SXmlNode_t* node = (SXmlNode_t*) malloc(sizeof(SXmlNode_t) + namelen + 1);
+   SXmlNode_t* node = (SXmlNode_t*) std::malloc(sizeof(SXmlNode_t) + namelen + 1);
    if (!node) return nullptr;
 
    node->fType = kXML_NODE;
@@ -1245,7 +1245,7 @@ dabc::XMLAttrPointer_t dabc::Xml::AllocateAttr(int namelen, int valuelen, XMLNod
 
    //fNumNodes++;
 
-   SXmlAttr_t* attr = (SXmlAttr_t*) malloc(sizeof(SXmlAttr_t) + namelen + 1 + valuelen + 1);
+   SXmlAttr_t* attr = (SXmlAttr_t*) std::malloc(sizeof(SXmlAttr_t) + namelen + 1 + valuelen + 1);
    if (!attr) return nullptr;
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
