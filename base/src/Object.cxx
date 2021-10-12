@@ -104,9 +104,9 @@ dabc::Object::Object(const std::string &name, unsigned flags) :
    fObjectFlags(flags),
    fObjectParent(),
    fObjectName(name),
-   fObjectMutex(0),
+   fObjectMutex(nullptr),
    fObjectRefCnt(0),
-   fObjectChilds(0),
+   fObjectChilds(nullptr),
    fObjectBlock(0)
 {
    DOUT5("Created object %s %p", GetName(), this);
@@ -118,9 +118,9 @@ dabc::Object::Object(Reference parent, const std::string &name, unsigned flags) 
    fObjectFlags(flags),
    fObjectParent(parent),
    fObjectName(name),
-   fObjectMutex(0),
+   fObjectMutex(nullptr),
    fObjectRefCnt(0),
-   fObjectChilds(0),
+   fObjectChilds(nullptr),
    fObjectBlock(0)
 {
    DOUT5("Object created %s %p", GetName(), this);
@@ -133,9 +133,9 @@ dabc::Object::Object(const ConstructorPair& pair, unsigned flags) :
    fObjectFlags(flags),
    fObjectParent(pair.parent),
    fObjectName(pair.name),
-   fObjectMutex(0),
+   fObjectMutex(nullptr),
    fObjectRefCnt(0),
-   fObjectChilds(0),
+   fObjectChilds(nullptr),
    fObjectBlock(0)
 {
    DOUT5("Object created %s %p", GetName(), this);
@@ -202,7 +202,7 @@ void dabc::Object::SetLogging(bool on)
 
 bool dabc::Object::IsName(const char* str, int len) const
 {
-   if ((len==0) || (str==0)) return false;
+   if ((len==0) || (str == nullptr)) return false;
    if (len<0) return fObjectName.compare(str) == 0;
    return ((int) fObjectName.length()==len) && (fObjectName.compare(0, len, str,len) == 0);
 }
@@ -231,7 +231,7 @@ void dabc::Object::Destructor()
    }
    #endif
 
-   Mutex* m = 0;
+   Mutex* m = nullptr;
    bool delchilds = false;
 
    {
@@ -249,7 +249,7 @@ void dabc::Object::Destructor()
 //         delete obj;
       }
 
-      if (fObjectChilds!=0) {
+      if (fObjectChilds) {
 
          if (fObjectChilds->GetSize() > 0)
             EOUT("!!!!!!! CHILDS %u ARE NOT DELETED completely obj:%s %p", fObjectChilds->GetSize(), GetName(), this);
@@ -261,7 +261,7 @@ void dabc::Object::Destructor()
       }
 
       m = fObjectMutex;
-      fObjectMutex = 0;
+      fObjectMutex = nullptr;
    }
 
    if (delchilds) RemoveChilds();
@@ -270,14 +270,14 @@ void dabc::Object::Destructor()
    fObjectParent.Release();
 
    // destroy mutex
-   delete m; m=0;
+   delete m; m = nullptr;
 
    gNumInstances--;
 }
 
 bool dabc::Object::IncReference(bool withmutex)
 {
-   dabc::LockGuard lock(withmutex ? fObjectMutex : 0);
+   dabc::LockGuard lock(withmutex ? fObjectMutex : nullptr);
 
    if (GetState() == stDestructor) {
       EOUT("OBJ:%p %s Inc reference during destructor", this, GetName());
@@ -360,7 +360,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
             // if (GetFlag(flAutoDestroy) && (fObjectRefCnt <= (int)(fObjectChilds ? fObjectChilds->GetSize() : 0))) ask_to_destroy = true;
             if (GetFlag(flAutoDestroy) && (fObjectRefCnt == 0)) ask_to_destroy = true;
 
-            if (do_decrement && (fObjectChilds!=0) && ((unsigned) fObjectRefCnt == fObjectChilds->GetSize()) && GetFlag(flAutoDestroy)) {
+            if (do_decrement && fObjectChilds && ((unsigned) fObjectRefCnt == fObjectChilds->GetSize()) && GetFlag(flAutoDestroy)) {
                ask_to_destroy = true;
                // DOUT0("One could destroy object %s %p anyhow numrefs %u numchilds %u", GetName(), this, fObjectRefCnt, fObjectChilds->GetSize());
             }
@@ -579,7 +579,7 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
 
    Reference ref(child);
 
-   LockGuard guard(withmutex ? fObjectMutex : 0);
+   LockGuard guard(withmutex ? fObjectMutex : nullptr);
 
    if (child->fObjectParent.null()) {
       child->fObjectParent.fObj = this; // not very nice, but will work
@@ -589,7 +589,7 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
    // if object is owner of all childs, any child will get autodestroy flag
    if (GetFlag(flIsOwner)) child->SetAutoDestroy(true);
 
-   if (fObjectChilds==0) fObjectChilds = new ReferencesVector;
+   if (!fObjectChilds) fObjectChilds = new ReferencesVector;
 
    if (pos == (unsigned) -1)
       fObjectChilds->Add(ref);
@@ -616,9 +616,9 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
    while (--cnt>0) {
       LockGuard guard(fObjectMutex);
 
-      if (fObjectChilds==0) return false;
+      if (!fObjectChilds) return false;
 
-      if (fObjectBlock>0) continue;
+      if (fObjectBlock > 0) continue;
 
       isowner = GetFlag(flIsOwner);
 
@@ -678,16 +678,16 @@ dabc::Object* dabc::Object::GetChild(unsigned n) const
 {
    LockGuard guard(fObjectMutex);
 
-   return fObjectChilds==0 ? 0 : fObjectChilds->GetObject(n);
+   return fObjectChilds ? fObjectChilds->GetObject(n) : nullptr;
 }
 
 dabc::Reference dabc::Object::GetChildRef(unsigned n) const
 {
    LockGuard guard(fObjectMutex);
 
-   Object* obj = (fObjectChilds==0) ? 0 : fObjectChilds->GetObject(n);
+   Object *obj = fObjectChilds ? fObjectChilds->GetObject(n) : nullptr;
 
-   if (obj==0) return Reference();
+   if (!obj) return Reference();
 
    IntGuard block(fObjectBlock);
 
@@ -700,11 +700,11 @@ dabc::Reference dabc::Object::GetChildRef(unsigned n) const
 
 bool dabc::Object::GetAllChildRef(ReferencesVector* vect) const
 {
-   if (vect==0) return false;
+   if (!vect) return false;
 
    LockGuard guard(fObjectMutex);
 
-   if (fObjectChilds==0) return true;
+   if (!fObjectChilds) return true;
 
    PointersVector ptrs;
 
@@ -743,11 +743,11 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 {
    if (ref.null()) return ref;
 
-   if ((name==0) || (strlen(name)==0)) return ref;
+   if (!name || (strlen(name)==0)) return ref;
 
    if (*name=='/') {
       if (firsttime) {
-         while (ref()->GetParent()!=0)
+         while (ref()->GetParent())
             ref = Reference(ref()->GetParent());
          return SearchForChild(ref, name+1, false, force);
       } else {
@@ -788,12 +788,12 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
       dabc::Object *obj = (ref()->fObjectChilds==nullptr) ? nullptr : ref()->fObjectChilds->FindObject(name, ptok-name);
 
       // create new object under parent mutex - no one can create double entries simultaneously
-      if ((obj==0) && force) {
+      if ((obj==nullptr) && force) {
          obj = ref()->CreateInstance(std::string(name, ptok-name));
          ref()->AddChild(obj, false);
       }
 
-      if (obj!=0) {
+      if (obj) {
          IntGuard block(ref()->fObjectBlock);
 
          UnlockGuard unlock(ref()->fObjectMutex);
@@ -820,7 +820,7 @@ dabc::Reference dabc::Object::GetFolder(const std::string &name, bool force) thr
 
 bool dabc::Object::RemoveChilds(bool cleanup)
 {
-   ReferencesVector* del_vect = 0;
+   ReferencesVector* del_vect = nullptr;
 
    int cnt = 1000000;
 
@@ -830,13 +830,13 @@ bool dabc::Object::RemoveChilds(bool cleanup)
       LockGuard guard(fObjectMutex);
 
       // nothing to do
-      if (fObjectChilds==0) return true;
+      if (!fObjectChilds) return true;
 
-      if (fObjectBlock>0) continue;
+      if (fObjectBlock > 0) continue;
 
       isowner = GetFlag(flIsOwner);
       del_vect = fObjectChilds;
-      fObjectChilds = 0;
+      fObjectChilds = nullptr;
       break;
    }
 
@@ -872,7 +872,7 @@ void dabc::Object::SetName(const char *name)
 {
    LockGuard guard(fObjectMutex);
 
-   if (fObjectRefCnt>0) {
+   if (fObjectRefCnt > 0) {
       EOUT("Cannot change object name when reference counter %d is not zero!!!", fObjectRefCnt);
       throw dabc::Exception(ex_Object, "Cannot change object name when refcounter is not zero", GetName());
    }
@@ -920,7 +920,7 @@ void dabc::Object::SetNameDirect(const char* name)
 
 void dabc::Object::Destroy(Object* obj) throw()
 {
-   if (obj==0) return;
+   if (!obj) return;
 
    if (obj->DecReference(true, false))
       delete obj;
@@ -928,7 +928,7 @@ void dabc::Object::Destroy(Object* obj) throw()
 
 bool dabc::Object::Find(ConfigIO &cfg)
 {
-   return GetParent()==0 ? false : cfg.FindItem(GetName());
+   return !GetParent() ? false : cfg.FindItem(GetName());
 }
 
 dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::string &fullnamearg, bool withmanager)
@@ -984,11 +984,11 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(const std::string &fullname
 
 bool dabc::Object::IsParent(Object* obj) const
 {
-   if (obj==0) return false;
+   if (!obj) return false;
 
    Object* prnt = GetParent();
 
-   while (prnt!=0) {
+   while (prnt) {
       if (prnt==obj) return true;
       prnt = prnt->GetParent();
    }
@@ -1012,7 +1012,8 @@ bool dabc::Object::NameMatch(const std::string &name, const std::string &mask)
       do {
         // FIXME!!!! code missing
 
-
+         EOUT("Something wrong");
+         break;
 
       } while (lastsepar!=std::string::npos);
    }
@@ -1037,10 +1038,9 @@ bool dabc::Object::NameMatchM(const std::string &name, const std::string &mask)
 
       std::string submask;
 
-      if (separ==std::string::npos)
+      if (separ == std::string::npos)
          submask = mask.substr(lastsepar);
-      else
-      if (separ>lastsepar)
+      else if (separ > lastsepar)
          submask = mask.substr(lastsepar, separ-lastsepar);
 
       if (!submask.empty())
@@ -1060,12 +1060,12 @@ bool dabc::Object::NameMatchM(const std::string &name, const std::string &mask)
 
 void dabc::Object::FillFullName(std::string &fullname, Object* upto, bool exclude_top_parent) const
 {
-   if ((GetParent()!=0) && (GetParent() != upto)) {
+   if (GetParent() && (GetParent() != upto)) {
       GetParent()->FillFullName(fullname, upto, exclude_top_parent);
       fullname.append("/");
    }
 
-   if (GetParent()==0) {
+   if (!GetParent()) {
       if (exclude_top_parent) return;
       fullname.append("/");
    }

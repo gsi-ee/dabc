@@ -295,10 +295,10 @@ namespace dabc {
          const char* GetName() const { return fObjectName.c_str(); }
 
          /** \brief Checks if object name is same as provided string, __thread safe__ */
-         bool IsName(const char* str) const { return fObjectName.compare(str)==0; }
+         bool IsName(const char* str) const { return fObjectName.compare(str) == 0; }
 
          /** \brief Checks if object name is same as provided string, __thread safe__ */
-         bool IsName(const std::string &str) const { return fObjectName.compare(str)==0; }
+         bool IsName(const std::string &str) const { return fObjectName.compare(str) == 0; }
 
          /** \brief Checks if object name is same as provided, __thread safe__
           *

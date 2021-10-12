@@ -23,10 +23,10 @@
 #include "dabc/logging.h"
 
 dabc::Reference::Reference(Object* obj) :
-   fObj(0)
+   fObj(nullptr)
 {
    // this is empty reference
-   if (obj==0) return;
+   if (!obj) return;
 
    if (obj->IncReference())
       fObj = obj;
@@ -39,7 +39,7 @@ void dabc::Reference::SetObject(Object* obj, bool withmutex)
    Release();
 
    // this is empty reference
-   if (obj==0) return;
+   if (!obj) return;
 
    if (obj->IncReference(withmutex))
       fObj = obj;
@@ -56,7 +56,7 @@ void dabc::Reference::Assign(const Reference& src)
 }
 
 dabc::Reference::Reference(const Reference& src) throw() :
-   fObj(0)
+   fObj(nullptr)
 {
    if (!src.null()) Assign(src);
 }
@@ -76,7 +76,7 @@ dabc::Reference& dabc::Reference::operator=(Object* obj) throw()
 {
    Release();
 
-   if (obj!=0) {
+   if (obj) {
       Reference ref(obj);
       *this << ref;
    }
@@ -90,9 +90,9 @@ dabc::Reference& dabc::Reference::operator<<(Reference& src) throw()
    Release();
 
    // we are trying to avoid situation, that both references have same pointer in a time
-   Object* temp = src.fObj;
+   Object *temp = src.fObj;
 
-   src.fObj = 0;
+   src.fObj = nullptr;
 
    fObj = temp;
 
@@ -103,7 +103,7 @@ dabc::Reference dabc::Reference::Take()
 {
    dabc::Reference res;
    res.fObj = fObj;
-   fObj = 0;
+   fObj = nullptr;
 
    return res;
 }
@@ -137,17 +137,17 @@ dabc::Reference::~Reference()
 
 void dabc::Reference::Release() throw()
 {
-   if (fObj==0) return;
+   if (!fObj) return;
    if (fObj->DecReference(false))
       // special case - object is not referenced and want to be destroyed - let help him
       delete fObj;
-   fObj = 0;
+   fObj = nullptr;
 }
 
 
 void dabc::Reference::Destroy() throw()
 {
-   if (fObj==0) return;
+   if (!fObj) return;
 
    // we ask if object can be destroyed when reference is decreased
    if (fObj->DecReference(true))
@@ -155,13 +155,13 @@ void dabc::Reference::Destroy() throw()
       // but it does not means that object disappear immediately - it may be cleanup in its own thread
       delete fObj;
 
-   fObj = 0;
+   fObj = nullptr;
 }
 
 
 dabc::Object* dabc::Reference::GetParent() const
 {
-   return GetObject() ? GetObject()->GetParent() : 0;
+   return GetObject() ? GetObject()->GetParent() : nullptr;
 }
 
 const char* dabc::Reference::GetName() const
@@ -176,20 +176,19 @@ const char* dabc::Reference::ClassName() const
 
 bool dabc::Reference::IsName(const char* name) const
 {
-   if ((name==0) || (*name==0) || (GetObject()==0)) return false;
+   if ((name == nullptr) || (*name == 0) || (GetObject() == nullptr)) return false;
    return GetObject()->IsName(name);
 }
 
 dabc::Mutex* dabc::Reference::ObjectMutex() const
 {
-   return GetObject() ? GetObject()->ObjectMutex() : 0;
+   return GetObject() ? GetObject()->ObjectMutex() : nullptr;
 }
 
 bool dabc::Reference::AddChild(Object* obj)
 {
    return GetObject() ? GetObject()->AddChild(obj, true) : false;
 }
-
 
 unsigned dabc::Reference::NumChilds() const
 {
@@ -203,7 +202,7 @@ dabc::Reference dabc::Reference::GetChild(unsigned n) const
 
 bool dabc::Reference::GetAllChildRef(ReferencesVector* vect) const
 {
-   if ((GetObject()==0) || (vect==0)) return false;
+   if ((GetObject()==nullptr) || (vect==nullptr)) return false;
    return GetObject()->GetAllChildRef(vect);
 }
 
@@ -219,12 +218,10 @@ bool dabc::Reference::RemoveChild(const char* name, bool cleanup)
    return GetObject()->RemoveChild(GetObject()->FindChild(name), cleanup);
 }
 
-
 bool dabc::Reference::RemoveChilds(bool cleanup)
 {
    return GetObject() ?  GetObject()->RemoveChilds(cleanup) : true;
 }
-
 
 void dabc::Reference::Print(int lvl, const char* from) const
 {
@@ -233,21 +230,21 @@ void dabc::Reference::Print(int lvl, const char* from) const
 
 dabc::Reference dabc::Reference::GetFolder(const std::string &name, bool force) throw()
 {
-   if (GetObject()==0) return Reference();
+   if (GetObject()==nullptr) return Reference();
 
    return GetObject()->GetFolder(name, force);
 }
 
 std::string dabc::Reference::ItemName(bool compact) const
 {
-   if (GetObject()==0) return std::string();
+   if (GetObject()==nullptr) return std::string();
 
    return GetObject()->ItemName(compact);
 }
 
 std::string dabc::Reference::RelativeName(const dabc::Reference& topitem)
 {
-   if (null() || topitem.null() || (topitem==*this)) return "";
+   if (null() || topitem.null() || (topitem == *this)) return "";
 
    std::string res;
 

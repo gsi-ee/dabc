@@ -82,15 +82,15 @@ namespace dabc {
          Mutex* ObjectMutex() const;
 
          /** \brief Method used in copy constructor and assigned operations */
-         void Assign(const Reference & src);
+         void Assign(const Reference &src);
 
          /** \brief Special method, which allows to generate new reference when object mutex is locked.
           *   It may be necessary when non-recursive mutexes are used. */
-         bool AcquireRefWithoutMutex(Reference& ref);
+         bool AcquireRefWithoutMutex(Reference &ref);
 
          /** \brief Method used in reference constructor/assignments to verify is object is suitable */
          template<class T>
-         bool verify_object(Object* src, T* &tgt) { return (tgt=dynamic_cast<T*>(src))!=0; }
+         bool verify_object(Object* src, T* &tgt) { return (tgt = dynamic_cast<T*>(src)) != nullptr; }
 
       public:
 
@@ -199,7 +199,7 @@ namespace dabc {
          inline bool operator!=(Object* obj) const { return GetObject() != obj; }
 
          /** \brief Show on debug output content of reference */
-         void Print(int lvl=0, const char *from = nullptr) const;
+         void Print(int lvl = 0, const char *from = nullptr) const;
 
          /** \brief Return folder of specified name, no special symbols are allowed.
           * \param[in] name     requested folder name
@@ -222,12 +222,12 @@ namespace dabc {
 #define DABC_REFERENCE(RefClass, ParentClass, T) \
       public: \
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */ \
-         RefClass(T* obj = 0) throw() : ParentClass(obj) {} \
+         RefClass(T *obj = nullptr) throw() : ParentClass(obj) {} \
          /** \brief Copy constructor */ \
          RefClass(const RefClass& src) throw() : ParentClass(src) {} \
          /** \brief Copy constructor */ \
          RefClass(const Reference& src) throw() : ParentClass() \
-            { T* res(0); if (verify_object(src(),res)) { Assign(src); } } \
+            { T *res = nullptr; if (verify_object(src(),res)) { Assign(src); } } \
          /** \brief Return pointer on the object */ \
          inline T* GetObject() const { return (T*) ParentClass::GetObject(); } \
          /** \brief Return pointer on the object */ \
@@ -237,21 +237,21 @@ namespace dabc {
          /** \brief Assignment operator - copy reference. Also check dynamic_cast that type is supported */ \
          RefClass& operator=(const Reference& src) throw() \
          { \
-            Release(); T* res(0); \
+            Release(); T *res = nullptr; \
             if (verify_object(src(),res)) Assign(src);  \
             return *this; \
          } \
          /** \brief Assignment operator - create reference for object */ \
          RefClass& operator=(dabc::Object* obj) throw() \
          { \
-            Release(); T* res(0); \
+            Release(); T *res = nullptr; \
             if (verify_object(obj,res)) { RefClass ref((T*)obj); *this << ref; } \
             return *this; \
          } \
          /** \brief Move operator - reference moved from source to target */ \
          RefClass& operator<<(Reference& src) throw() \
          { \
-            T* res(0); \
+            T* res = nullptr; \
             if (verify_object(src(),res)) dabc::Reference::operator<<(src); \
                else { Release(); src.Release(); } \
             return *this; \
