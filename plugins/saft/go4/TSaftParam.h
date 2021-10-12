@@ -22,8 +22,7 @@
 class TSaftParam : public TGo4Parameter {
  public:
 
-
-      TSaftParam(const char* name=0);
+      TSaftParam(const char *name = nullptr);
       virtual ~TSaftParam();
 
       Bool_t fVerbose;  // print out received timing events

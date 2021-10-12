@@ -125,7 +125,7 @@ extern const char* xmlSaftVerbose;
    char     fDescription[SAFT_DABC_DESCRLEN]; //< specifies input type. we use simple char field for mbs buffers etc.
 
    Timing_Event (uint64_t event = 0, uint64_t param = 0, uint64_t deadline = 0, uint64_t executed = 0,
-       uint64_t flags = 0, uint64_t overflows = 0,const char* description=0) :
+       uint64_t flags = 0, uint64_t overflows = 0,const char *description = nullptr) :
        fEvent (event), fParam (param), fDeadline (deadline), fExecuted (executed), fFlags (flags), fOverflows(overflows)
    {
      if(description)

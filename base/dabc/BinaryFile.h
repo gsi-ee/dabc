@@ -38,7 +38,7 @@ namespace dabc {
 
          virtual ~FileInterface() {}
 
-         virtual Handle fopen(const char* fname, const char* mode, const char* = 0) { return (Handle) ::fopen(fname, mode); }
+         virtual Handle fopen(const char* fname, const char* mode, const char* = nullptr) { return (Handle) ::fopen(fname, mode); }
 
          virtual void fclose(Handle f) { if (f!=0) ::fclose((FILE*)f); }
 

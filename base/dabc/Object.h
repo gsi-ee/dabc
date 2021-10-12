@@ -453,7 +453,7 @@ namespace dabc {
          static bool NameMatchM(const std::string &name, const std::string &mask);
 
 #ifdef DABC_EXTRA_CHECKS
-         static void DebugObject(const char* classname = 0, Object* instance = 0, int kind = 0);
+         static void DebugObject(const char* classname = nullptr, Object *instance = nullptr, int kind = 0);
 #endif
 
       protected:

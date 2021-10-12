@@ -431,7 +431,7 @@ namespace dabc {
 
          /** Perform sleeping with event loop running.
           *  If prefix specified, output on terminal is performed */
-         void Sleep(double tmout, const char* prefix = 0);
+         void Sleep(double tmout, const char* prefix = nullptr);
 
          std::string GetLastCreatedDevName();
 
@@ -676,7 +676,7 @@ namespace dabc {
 
          /** Sleep for specified time, keep thread event loop running
           * See Manager::Sleep() method for more details */
-         void Sleep(double tmout, const char* prefix = 0);
+         void Sleep(double tmout, const char* prefix = nullptr);
 
          /** \brief Run manager main loop
           * \details should be called either from manager thread or from main process */

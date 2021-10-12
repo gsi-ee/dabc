@@ -86,7 +86,7 @@ namespace dabc {
          inline int GetDebugLevel() const { return fDebugLevel; }
          inline int GetFileLevel() const { return fFileLevel; }
 
-         void SetPrefix(const char* prefix = 0) { fPrefix = prefix ? prefix : ""; }
+         void SetPrefix(const char* prefix = nullptr) { fPrefix = prefix ? prefix : ""; }
          const char* GetPrefix() { return fPrefix.c_str(); }
 
          virtual void LogFile(const char* fname);
@@ -194,7 +194,7 @@ namespace dabc {
 
    extern void SetDebugLevel(int level = 0);
    extern void SetFileLevel(int level = 0);
-   extern void SetDebugPrefix(const char* prefix = 0);
+   extern void SetDebugPrefix(const char* prefix = nullptr);
 
    extern Logger* lgr();
 };

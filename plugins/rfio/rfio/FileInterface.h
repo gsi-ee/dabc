@@ -20,7 +20,7 @@ namespace rfio {
 
          virtual ~FileInterface();
 
-         virtual Handle fopen(const char* fname, const char* mode, const char* opt = 0);
+         virtual Handle fopen(const char *fname, const char *mode, const char *opt = nullptr);
 
          virtual void fclose(Handle f);
 

@@ -38,11 +38,11 @@ namespace hadaq {
          ~HldFile();
 
          /** Open file with specified name for writing */
-         bool OpenWrite(const char* fname, uint32_t rid=0, const char* opt = 0);
+         bool OpenWrite(const char *fname, uint32_t rid = 0, const char *opt = nullptr);
 
          /** Opened file for reading. Internal buffer required
            * when data read partially and must be kept there. */
-         bool OpenRead(const char* fname, const char* opt = 0);
+         bool OpenRead(const char *fname, const char *opt = nullptr);
 
          /** Close file */
          void Close();

@@ -45,7 +45,7 @@ namespace mbs {
             Close();
          }
 
-         bool OpenReading(const char* fname, const char* opt = 0)
+         bool OpenReading(const char* fname, const char *opt = nullptr)
          {
             if (isOpened()) return false;
 

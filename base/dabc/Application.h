@@ -155,7 +155,7 @@ namespace dabc {
 
       public:
 
-         Application(const char* classname = 0);
+         Application(const char* classname = nullptr);
          virtual ~Application();
 
          static const char* StateParName() { return "State"; }

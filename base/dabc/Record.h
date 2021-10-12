@@ -211,11 +211,11 @@ namespace dabc {
 
          std::string GetResult() { return buf; }
 
-         void CreateNode(const char * nodename);
-         void SetField(const char * name, const char * value);
-         void BeforeNextChild(const char* basename = 0);
+         void CreateNode(const char *nodename);
+         void SetField(const char *name, const char * value);
+         void BeforeNextChild(const char *basename = nullptr);
          void CloseChilds();
-         void CloseNode(const char * nodename);
+         void CloseNode(const char *nodename);
    };
 
    // =========================================================

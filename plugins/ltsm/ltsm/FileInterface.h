@@ -20,24 +20,24 @@ extern "C"
 #ifdef LTSM_USE_FSD
 extern "C"
     {
-#ifdef LTSM_NEW_FSDAPI     
-        
-#include "fsqapi.h" 
+#ifdef LTSM_NEW_FSDAPI
+
+#include "fsqapi.h"
 
 #define fsd_fconnect(a,b) fsq_fconnect(a,b)
-#define fsd_fdisconnect(X) fsq_fdisconnect(X)       
+#define fsd_fdisconnect(X) fsq_fdisconnect(X)
 #define fsd_fopen(a,b,c,d) fsq_fopen(a,b,c,d)
-#define fsd_fclose(X) fsq_fclose(X) 
-#define fsd_fwrite(a,b,c,d) fsq_fwrite(a,b,c,d) 
-        
+#define fsd_fclose(X) fsq_fclose(X)
+#define fsd_fwrite(a,b,c,d) fsq_fwrite(a,b,c,d)
+
 #define fsd_login_t fsq_login_t
-#define fsd_session_t fsq_session_t       
-#define fsd_session fsd_session       
-        
-#else        
+#define fsd_session_t fsq_session_t
+#define fsd_session fsd_session
+
+#else
 #include "fsdapi.h"
 #endif
-        
+
     }
 #endif
 
@@ -48,10 +48,9 @@ extern "C"
 
 
 
-namespace ltsm
-    {
+namespace ltsm {
 
-    class FileInterface: public dabc::FileInterface
+   class FileInterface: public dabc::FileInterface
 	{
     protected:
 
@@ -63,30 +62,30 @@ namespace ltsm
 	std::string fOwner;
 	std::string fFsname;
 	std::string fDescription;
-    
-	
+
+
 	int fMaxFilesPerSession; //< set maximum number of files before re-opening session. For correct migration job on TSM server
-	
+
 	int fSessionConnectRetries;//< number of attempts to connect new tsm session
-	
+
 
 	bool fIsClosing; //< avoid double fclose on termination by this
-	
-       
+
+
 	int fSessionFileCount; //< count number of files in current session
- 
+
 	bool fUseDaysubfolders; //< append number of day in year as subfolder if true
 
-#ifdef LTSM_USE_FSD	
+#ifdef LTSM_USE_FSD
 	bool fUseFileSystemDemon; //< write to file system demon server instead of TSM server
 
 	std::string fServernameFSD; //< name of the file system demon port
 	int fPortFSD;  //< port of file system demon connection
 
 	struct fsd_session_t* fSessionFSD; //< keep fsd session open during several files
-	
+
 #ifdef	LTSM_NEW_FSDAPI
-	enum fsq_storage_dest_t fFSQdestination; 
+	enum fsq_storage_dest_t fFSQdestination;
     //<- may switch here destination for data
 // 	enum fsq_storage_dest_t {
 //         FSQ_STORAGE_NULL  - null device, just test network,
@@ -94,27 +93,26 @@ namespace ltsm
 // 	FSQ_STORAGE_LUSTRE     - copy to lustre, but not to tape
 // 	FSQ_STORAGE_TSM	       - put to tsm tape archive only
 // 	FSQ_STORAGE_LUSTRE_TSM - both lustre and tape - hades production mode
-#endif	
-	
-#endif	
-	
-	
+#endif
+
+#endif
+
+
 	/** Re-open session with parameters specified in dabc options string*/
 	bool OpenTSMSession(const char* options);
 
 	/** Shut down current TSM session*/
 	bool CloseTSMSession();
-	
-	
-	
+
+
+
     public:
 
 	FileInterface();
 
 	virtual ~FileInterface();
 
-	virtual Handle fopen(const char* fname, const char* mode,
-		const char* opt = 0);
+	virtual Handle fopen(const char* fname, const char* mode, const char *opt = nullptr);
 
 	virtual void fclose(Handle f);
 

@@ -46,7 +46,7 @@ namespace dabc {
          static std::string  fLocalHost;
 
       public:
-         Configuration(const char* fname = 0);
+         Configuration(const char* fname = nullptr);
          virtual ~Configuration();
 
          bool SelectContext(unsigned nodeid, unsigned numnodes);
@@ -98,7 +98,7 @@ namespace dabc {
           * the xml file which should be used for autocreation */
          bool NextCreationNode(XMLNodePointer_t& prev, const char* nodename, bool check_name_for_multicast);
 
-         std::string GetUserPar(const char* name, const char* dflt = 0);
+         std::string GetUserPar(const char* name, const char* dflt = nullptr);
          int GetUserParInt(const char* name, int dflt = 0);
 
          std::string ConetextAppClass();

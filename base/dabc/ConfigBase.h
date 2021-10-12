@@ -129,32 +129,32 @@ namespace dabc {
 
          XMLNodePointer_t FindItemMatch(XMLNodePointer_t& lastmatch,
                                         XMLNodePointer_t node,
-                                        const char* sub1 = 0,
-                                        const char* sub2 = 0,
-                                        const char* sub3 = 0);
+                                        const char* sub1 = nullptr,
+                                        const char* sub2 = nullptr,
+                                        const char* sub3 = nullptr);
 
          XMLNodePointer_t FindMatch(XMLNodePointer_t lastmatch,
                                     XMLNodePointer_t node,
-                                    const char* sub1 = 0,
-                                    const char* sub2 = 0,
-                                    const char* sub3 = 0);
+                                    const char* sub1 = nullptr,
+                                    const char* sub2 = nullptr,
+                                    const char* sub3 = nullptr);
 
          std::string Find1(XMLNodePointer_t node,
                            const std::string &dflt,
                            const char* sub1,
-                           const char* sub2 = 0,
-                           const char* sub3 = 0);
+                           const char* sub2 = nullptr,
+                           const char* sub3 = nullptr);
 
          std::string FindN(XMLNodePointer_t node,
                            XMLNodePointer_t& prev,
                            const char* sub1,
-                           const char* sub2 = 0,
-                           const char* sub3 = 0);
+                           const char* sub2 = nullptr,
+                           const char* sub3 = nullptr);
 
          std::string GetEnv(const char* name);
 
          static bool IsNodeName(XMLNodePointer_t node, const char* name);
-         const char* GetAttr(XMLNodePointer_t node, const char* attr, const char* defvalue = 0);
+         const char* GetAttr(XMLNodePointer_t node, const char* attr, const char* defvalue = nullptr);
          int  GetIntAttr(XMLNodePointer_t node, const char* attr, int defvalue = 0);
 
          std::string GetNodeValue(XMLNodePointer_t node);
@@ -169,12 +169,12 @@ namespace dabc {
          static bool IsContextNode(XMLNodePointer_t node);
 
       public:
-         ConfigBase(const char* fname = 0);
+         ConfigBase(const char* fname = nullptr);
          ~ConfigBase();
 
          // following methods implemented for both XDAQ/native xml formats
 
-         bool IsOk() const { return fVersion>=0; }
+         bool IsOk() const { return fVersion >= 0; }
 
          int GetVersion() const { return fVersion; }
 
@@ -194,7 +194,7 @@ namespace dabc {
          std::string ContextName(unsigned id);
 
          /** method used by run.sh script to produce command line */
-         std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0);
+         std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = nullptr, const char* topworkdir = nullptr);
 
          /** Replaces entries like ${name} be variable value */
          std::string ResolveEnv(const std::string &arg, int id = -1);

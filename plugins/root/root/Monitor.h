@@ -67,7 +67,7 @@ namespace root {
          virtual double ProcessTimeout(double last_diff);
 
          /** Method scans normal objects, registered in ROOT and DABC */
-         void RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, const char* path = 0);
+         void RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy &main, const char *path = nullptr);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 

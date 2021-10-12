@@ -199,7 +199,7 @@ namespace dabc {
          inline bool operator!=(Object* obj) const { return GetObject() != obj; }
 
          /** \brief Show on debug output content of reference */
-         void Print(int lvl=0, const char* from = 0) const;
+         void Print(int lvl=0, const char *from = nullptr) const;
 
          /** \brief Return folder of specified name, no special symbols are allowed.
           * \param[in] name     requested folder name

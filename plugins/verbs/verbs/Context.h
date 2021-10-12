@@ -60,7 +60,7 @@ namespace verbs {
 
          bool CloseVerbs();
 
-         bool OpenVerbs(bool withmulticast = false, const char* devicename = 0, int ibport = -1);
+         bool OpenVerbs(bool withmulticast = false, const char *devicename = nullptr, int ibport = -1);
 
       public:
 
@@ -79,7 +79,7 @@ namespace verbs {
 
          enum MulticastActions { mcst_Error = 0, mcst_Ok, mcst_Register, mcst_Query, mcst_Init, mcst_Unregister };
 
-         bool OpenVerbs(bool withmulticast = false, const char* devicename = 0, int ibport = -1);
+         bool OpenVerbs(bool withmulticast = false, const char *devicename = nullptr, int ibport = -1);
 
          int IbPort() const { return GetObject() ? GetObject()->fIbPort : 0; }
          bool IsMulticast() const { return GetObject() ? GetObject()->fOsm!=0 : false; }
