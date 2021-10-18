@@ -416,7 +416,7 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
 
 dabc::Buffer dabc::Buffer::CreateBuffer(BufferSize_t sz) throw()
 {
-   void *rawbuf = std::malloc(sz);
+   void *rawbuf = (sz > 0) ? std::malloc(sz) : nullptr;
    return CreateBuffer(rawbuf, sz, true);
 }
 
