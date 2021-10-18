@@ -64,6 +64,7 @@ function(DABC_LINK_LIBRARY libname)
      list(APPEND ARG_DEPENDENCIES move_headers)
      set(_main_incl ${CMAKE_BINARY_DIR}/include)
      set_property(GLOBAL APPEND PROPERTY DABC_LIBRARY_TARGETS ${libname})
+     target_compile_options(${libname} PRIVATE -Wall)
    else()
      set(_main_incl ${DABC_INCLUDE_DIR})
    endif()
@@ -73,17 +74,17 @@ function(DABC_LINK_LIBRARY libname)
   if(ARG_DEPENDENCIES)
      add_dependencies(${libname} ${ARG_DEPENDENCIES})
   endif()
-  
+
 endfunction()
 
 
 #---------------------------------------------------------------------------------------------------
 #---DABC_EXECUTABLE(exename
-#                   SOURCES src1 src2          : 
+#                   SOURCES src1 src2          :
 #                   LIBRARIES lib1 lib2        : direct linked libraries
 #                   DEFINITIONS def1 def2      : library definitions
 #                   DEPENDENCIES dep1 dep2     : dependencies
-# 
+#
 #)
 function(DABC_EXECUTABLE exename)
    cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
@@ -97,6 +98,7 @@ function(DABC_EXECUTABLE exename)
    if(CMAKE_PROJECT_NAME STREQUAL DABC)
      list(APPEND ARG_DEPENDENCIES move_headers)
      set(_main_incl ${CMAKE_BINARY_DIR}/include)
+     target_compile_options(${exename} PRIVATE -Wall)
   else()
      set(_main_incl ${DABC_INCLUDE_DIR})
   endif()
