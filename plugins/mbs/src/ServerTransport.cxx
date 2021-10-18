@@ -183,7 +183,7 @@ void mbs::ServerOutputAddon::MakeCallback(unsigned arg)
 {
    dabc::OutputTransport* tr = dynamic_cast<dabc::OutputTransport*> (fWorker());
 
-   if (tr==0) {
+   if (!tr) {
       EOUT("Didnot found OutputTransport on other side worker %p", fWorker());
       fState = oError;
       SubmitWorkerCmd(dabc::Command("CloseTransport"));
@@ -235,26 +235,37 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
    if (sendsize == 0) return dabc::do_Skip;
 
+   bool is_mbs_buffer = (buf.GetTypeId() == mbs::mbt_MbsEvents);
+
    if (!fIter.null()) {
       dabc::EventsIterator *iter = fIter();
-      sendsize = 0;
       iter->Assign(buf);
-      unsigned rawsize = 0;
 
-      while (iter->NextEvent()) {
-         sendsize += sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
-         unsigned evsize = iter->EventSize();
-         if (evsize % 2) evsize++;
-         sendsize += evsize;
-         rawsize += evsize;
-         events++;
+      if (is_mbs_buffer) {
+         // use iterator to just account events
+         while (iter->NextEvent())
+            events++;
+         iter->Close();
+         if (events == 0) return dabc::do_Skip;
+      } else {
+         sendsize = 0;
+         unsigned rawsize = 0;
+
+         while (iter->NextEvent()) {
+            sendsize += sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
+            unsigned evsize = iter->EventSize();
+            if (evsize % 2) evsize++;
+            sendsize += evsize;
+            rawsize += evsize;
+            events++;
+         }
+         iter->Close();
+
+         if (rawsize == 0) return dabc::do_Skip;
+
+         iter->Assign(buf);
+         iter->NextEvent(); // shift to first event
       }
-      iter->Close();
-
-      if (rawsize == 0) return dabc::do_Skip;
-
-      iter->Assign(buf);
-      iter->NextEvent(); // shift to first event
    }
 
 
@@ -265,7 +276,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    // error in evapi, must be + sizeof(mbs::BufferHeader)
    // fHeader.SetFullSize(sendsize - sizeof(mbs::BufferHeader));
 
-   if (fIter.null()) {
+   if (fIter.null() || is_mbs_buffer) {
       fState = oSendingBuffer;
       StartNetSend(&fHeader, sizeof(fHeader), buf);
    } else {
