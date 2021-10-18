@@ -40,9 +40,10 @@ endfunction()
 #                     DEFINITIONS def1 def2      : library definitions
 #                     DEPENDENCIES dep1 dep2     : dependencies
 #                     INCLUDES dir1 dir2         : include directories
+#                     NOWARN                     : disable warnings for DABC libs
 #)
 function(DABC_LINK_LIBRARY libname)
-   cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
+   cmake_parse_arguments(ARG "NOWARN" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
 
    if(NOT ARG_SOURCES)
       file(GLOB ARG_SOURCES "src/*.cxx")
@@ -64,7 +65,9 @@ function(DABC_LINK_LIBRARY libname)
      list(APPEND ARG_DEPENDENCIES move_headers)
      set(_main_incl ${CMAKE_BINARY_DIR}/include)
      set_property(GLOBAL APPEND PROPERTY DABC_LIBRARY_TARGETS ${libname})
-     target_compile_options(${libname} PRIVATE -Wall)
+     if(NOT ARG_NOWARN)
+        target_compile_options(${libname} PRIVATE -Wall)
+     endif()
    else()
      set(_main_incl ${DABC_INCLUDE_DIR})
    endif()
