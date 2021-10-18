@@ -123,6 +123,7 @@ void mbs::BufferHeader::Init(bool newformat)
 {
    iWords = 0;
    iType = newformat ? MBS_TYPE(100,1) : MBS_TYPE(10,1);
+   iUsed = 0;
    iBufferId = 0;
    iNumEvents = 0;
    iTemp = 0;
