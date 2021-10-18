@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Variables>
+     <parallel value="0"/>
+     <asf value="tdc_calibr_prod.root"/>
+  </Variables>
+
+  <Context host="localhost" name="HADES">
+    <Run>
+      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcStream.so"/>  
+      <logfile value="hades.log"/>
+      <debuglevel value="1"/>
+      <loglevel value="-1"/>
+      <loglimit value="100"/>
+     <!-- <runtime value="50"/>-->
+    </Run>
+
+    <HttpServer name="http" port="8092">
+       <TopTitle value="HADES TDC calibration monitor"/>
+       <!-- Browser value="off"/-->
+       <Layout value="grid2x2"/>
+      <!--<!-- <DrawItem value="[HADES/Run/HLD/HLD_QaFinePerChannel,HADES/Run/HLD/HLD_QAToTPerChannel,HADES/Run/HLD/HLD_QaEdgesPerChannel,HADES/Run/HLD/HLD_QaErrorsPerChannel]"/>-->-->
+        <DrawItem value="[HADES/Run/HLD/HLD_ToTPerChannel,HADES/Run/HLD/HLD_QAToTPerChannel,HADES/Run/HLD/HLD_ShiftPerChannel,HADES/Run/HLD/HLD_ExpectedToT]"/>
+       <DrawOpt value=""/>
+       <Monitoring value="1000"/>
+    </HttpServer>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="4000000"/>
+       <NumBuffers value="1000"/>
+    </MemoryPool>
+
+    <Module name="Run" class="stream::RunModule">
+       <asf value="${asf}"/>
+       <parallel value="${parallel}"/>
+       <InputPort name="Input0"  url="hld:///store/08/01/data/tc${CALRUNID}01.hld?loop"/>
+   <!--<InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb11:8104"/>
+    InputPort name="Input0" reconnect="5" loop="1" url="mbss://localhost"/ -->
+       <OutputPort name="*" auto="false"/>
+       <Events width="4" prec="1" low="0" up="1000" sdebug="0"/>
+    </Module>
+
+  </Context>
+
+</dabc>
