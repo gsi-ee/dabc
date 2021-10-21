@@ -32,11 +32,12 @@ with minimal efforts.
 ## Requirements
 
 Following packages should be installed:
-* libqt4-devel
-* xorg-devel
-* g++
+* libQt5Gui-devel (or libqt5-devel)
+* xorg-x11-devel (or xorg-devel)
+* gcc-c++ (or g++)
+* cmake
 
-[Here is full list of prerequisites for ROOT](http://root.cern.ch/drupal/content/build-prerequisites)
+[Here is full list of prerequisites for ROOT](https://root.cern/install/dependencies/)
 
 It is recommended to use bash (at least, during compilation)
 
@@ -53,11 +54,13 @@ one could change default compiler with following commands:
 
 ## Reuse existing ROOT installation
 
-Most of the time is consumed by ROOT compilation, therefore if ROOT already installed on your machine, it can be reused. Just configure ROOTSYS, PATH and LD_LIBRARY_PATH variables before starting. For instance, call thisroot.sh script:
+Most of the time is consumed by ROOT compilation, therefore if ROOT already installed on your machine, it can be reused.
+Just configure ROOTSYS, PATH and LD_LIBRARY_PATH variables before starting. For instance, call thisroot.sh script:
 
     [shell] . your_root_path/bin/thisroot.sh
 
-Be aware that at least ROOT 5-34-32 version should be used and compiled with '--enable-http' flag.
+It is strongly recommended to use recent ROOT6 version like 6.24.06 with following components enabled: "-DCMAKE_CXX_STANDARD=14 -Droot7=ON -Dwebgui=ON -Dqt5web=ON"
+There is instruction how to [build ROOT from source](https://root.cern/install/build_from_source/).
 
 
 ## Compilation
@@ -66,7 +69,7 @@ To checkout and compile all components, just do:
 
     [shell] svn co https://subversion.gsi.de/dabc/trb3 trb3
     [shell] cd trb3
-    [shell] make -j4
+    [shell] make -j
 
 During compilation makelog.txt file will be created in each sub-directory.
 In case of any compilation problem please send me (S.Linev(at)gsi.de)
@@ -87,7 +90,7 @@ It set all shell variables, which are required for DAQ and analysis
 To obtain newest version from repository do:
 
     [shell] cd your_trb3_path
-    [shell] make -j4 update
+    [shell] make -j update
 
 ---------------------------
 
