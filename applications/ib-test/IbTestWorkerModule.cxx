@@ -2604,6 +2604,8 @@ void IbTestWorkerModule::MasterCleanup(int mainnode)
             EOUT("To node (%d,%d) send queue %d",lid, n, SendQueue(lid, n));
    }
 
+   (void) summulti; // avoid compiler warnings
+
    if ((sumsend!=0.) || (sumrecv!=0.)) {
 
       int64_t pars[2];
