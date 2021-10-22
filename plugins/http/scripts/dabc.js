@@ -10,11 +10,12 @@ JSROOT.require("painter").then(jsrp => {
 
    DABC.source_dir = "";
 
-   const dabc_script = document.currentScript;
-   if (dabc_script && (typeof dabc_script.src == "string")) {
-      const pos = dabc_script.src.indexOf("dabc.js");
+   const dabcScript = document.currentScript;
+
+   if (dabcScript && (typeof dabcScript.src == "string")) {
+      const pos = dabcScript.src.indexOf("dabc.js");
       if (pos >= 0) {
-         DABC.source_dir = dabc_script.src.substr(0, pos);
+         DABC.source_dir = dabcScript.src.substr(0, pos);
          console.log(`Set DABC.source_dir to ${DABC.source_dir}, ${DABC.version}`);
       }
    }
@@ -1346,7 +1347,59 @@ JSROOT.require("painter").then(jsrp => {
       return Promise.resolve(painter);
    }
 
-   // =============================================================
+   // ==================================================================
+
+   JSROOT.require('hist').then(() => {
+      JSROOT.TH2Painter.prototype.oldFillHistContextMenu = JSROOT.TH2Painter.prototype.fillHistContextMenu;
+
+      JSROOT.TH2Painter.prototype.fillHistContextMenu = function(menu) {
+         let itemname = this.getItemName();
+         if ((typeof itemname == "string") && (itemname.indexOf("HLD_ToTPerChannel") >= 0)) {
+            let tip = menu.painter.getToolTip(menu.getEventPosition());
+
+            // example how to get label from bin index
+            // if (tip.binx !== undefined) console.log('binx as text', menu.painter.getFramePainter().axisAsText("x", tip.binx));
+            // if (tip.biny !== undefined) console.log('biny as text', menu.painter.getFramePainter().axisAsText("y", tip.biny));
+
+            let histo = menu.painter.getHisto(),
+                binlbl = menu.painter.getAxisBinTip("x", histo.fXaxis, tip.binx-1);
+
+            if (binlbl && (typeof binlbl == "string") && (binlbl.indexOf("0x")==0))
+               menu.add(`Find TDC ${binlbl}`, () => {
+                  let tdc_name = "TDC_" + binlbl.substr(2);
+                  console.log('Searching TDC ', tdc_name);
+
+                  let tdc_folder, tdc_item;
+
+                  JSROOT.hpainter.forEachItem(item => {
+                     if (item._name == tdc_name) {
+                        tdc_item = item;
+                        tdc_folder = JSROOT.hpainter.itemFullName(item);
+                        console.log('found item', tdc_folder);
+                     }
+                  });
+                  if (tdc_item) {
+                     while (tdc_item) {
+                        tdc_item._isopen = true;
+                        tdc_item = tdc_item._parent;
+                     }
+
+                     JSROOT.hpainter.refreshHtml();
+                   }
+
+               });
+
+            // menu.add(`sub:Histogram bin [${tip.binx}, ${tip.biny}]`, () => menu.painter.provideSpecialDrawArea());
+            // menu.add("Show hpx", () => menu.painter.provideSpecialDrawArea("bottom").then(() => hh.getObject("hpx")).then(res => menu.painter.drawInSpecialArea(res.obj, "*H")));
+            // menu.add("Show hprof", () => menu.painter.provideSpecialDrawArea("left").then(() => hh.getObject("hprof")).then(res => menu.painter.drawInSpecialArea(res.obj, "E")));
+            // menu.add("Close extra area", () => menu.painter.provideSpecialDrawArea());
+            // menu.add("endsub:");
+         }
+         return this.oldFillHistContextMenu(menu);
+      };
+   });
+
+   // ===================================================================
 
    jsrp.addDrawFunc({
       name: "kind:rate",
