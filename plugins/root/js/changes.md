@@ -1,13 +1,57 @@
 # JSROOT changelog
 
 ## Changes in dev
+1. Fix problem with curved TGraph drawings (#218)
+2. Provide x3dscNNN and y3dscNNN draw option for histogram to resize x/y axis
+3. Provide JSROOT.Painter.setDefaultDrawOpt to change default draw option
+4. Provide example of custom entries in context menu
+5. Fix problems with TGraph drawing updates
+6. Provide alternative location for zstd-codec
+
+
+## Changes in 6.2.1
+1. Fix logy and logz handling on lego plots
+2. Fix error in statistic calculations for projections
+3. Fix zstd-codec loading with minified jsroot scripts
+
+
+## Changes in 6.2.0
+1. Support fully interactive second X/Y axis for histograms, graphs, functions and spline
+2. Support X+, Y+, RX, RY draw options for TF1
+3. Remove deprecated JSRootCore.js script, one have to use JSRoot.core.js
+4. Upgrade three.js to r127
+5. Upgrade d3.js to 6.7.0
+6. Implement "nozoomx" and "nozoomy" draw options for TPad
+7. Implement "frame" draw option for TGaxis - fix position of axis relative to the frame
+8. Preserve position of TPaletteAxis, if provided with histogram; make default position like in ROOT
+9. Support basic TLatex symbols in lego plos axis title
+10. Use frame margins when create 3D lego drawings
+11. Implement "nomargins" draw option for pad/canvas
+12. Support custom mouse click/dblcklick handlers in lego plots
+13. Implement marker styles 35 - 49
+14. Let switch orthographic camera in geometry via control gui (#217)
+15. Fix drawing of custom markers on 3D, also in node.js (#205)
+
+
+## Changes in 6.1.1
+1. Fix bug in TFrame drawing, some interactive features was not properly working
+
+
+## Changes in 6.1.0
+1. Support drawing produced by TRatioPlot, including interactive zooming
 2. Fix problem with TF1 drawing from histogram list of primitives
 3. Let disable showing of StreamerInfo in the GUI by adding &skipsi to URL
-4. Support drawing produced by TRatioPlot, including interactive zooming
-5. Provide tooltips when TH1 drawn with "E" or "P" option
-6. Fix problem with zooming of many overlayed histograms
-7. API change -> PadPainter.zoom function returns Promise now
-8. Support gridx/y, tickx/y, logx/y options for (multi) graphs painter
+4. Provide tooltips when TH1 drawn with "E" or "P" option
+5. Fix problem with zooming of many overlayed histograms
+6. API change -> PadPainter.zoom function returns Promise now
+7. Support gridx/y, tickx/y, logx/y options for (multi) graphs painter
+8. Provide simple Rebin functionality for TH1 (#210)
+9. Use jQuery dialog to input values, avoid prompt() which not always supported (#216)
+
+
+## Changes in 6.0.2
+1. Fix ZSTD size limitation, use streaming API (#214)
+2. Prevent endless recursion in JSROOT.parse() function
 
 
 ## Changes in 6.0.1
