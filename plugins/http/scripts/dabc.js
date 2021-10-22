@@ -1364,19 +1364,36 @@ JSROOT.require("painter").then(jsrp => {
             let histo = menu.painter.getHisto(),
                 binlbl = menu.painter.getAxisBinTip("x", histo.fXaxis, tip.binx-1);
 
-            if (binlbl && (typeof binlbl == "string") && (binlbl.indexOf("0x")==0))
-               menu.add(`Find TDC ${binlbl}`, () => {
-                  let tdc_name = "TDC_" + binlbl.substr(2), tdc_item;
+            let focusOnTdc = lbl => {
+               let tdc_name = "TDC_" + lbl.substr(2), tdc_item;
 
-                  JSROOT.hpainter.forEachItem(item => {
-                     if (item._name == tdc_name) {
-                        tdc_item = item;
-                        tdc_folder = JSROOT.hpainter.itemFullName(item);
-                     }
-                  });
-                  if (tdc_item)
-                     JSROOT.hpainter.focusOnItem(tdc_item);
+               JSROOT.hpainter.forEachItem(item => {
+                  if (item._name == tdc_name)
+                     tdc_item = item;
                });
+               if (tdc_item)
+                  JSROOT.hpainter.focusOnItem(tdc_item);
+
+            }
+
+            if (binlbl && (typeof binlbl == "string") && (binlbl.indexOf("0x")==0))
+               menu.add(`Focus on TDC ${binlbl}`, () => focusOnTdc(binlbl));
+
+            menu.add("Find TDC", () => menu.input("TDC id", binlbl, "TDC id").then(id => {
+               let nbins = histo.fXaxis.fNbins;
+               for (let bin = 0; bin < nbins; ++bin) {
+                  let lbl = menu.painter.getAxisBinTip("x", histo.fXaxis, bin);
+                  if (lbl == id) {
+                     console.log(`Find id ${id} with bin ${bin}`);
+                     focusOnTdc(id);
+                     let fp = menu.painter.getFramePainter();
+                     fp.zoomSingle("x", Math.max(1, bin - 10), Math.min(nbins-1, bin+10));
+
+                     fp.zoomChangedInteractive("x", true);
+                     break;
+                  }
+               }
+            }));
 
             // menu.add(`sub:Histogram bin [${tip.binx}, ${tip.biny}]`, () => menu.painter.provideSpecialDrawArea());
             // menu.add("Show hpx", () => menu.painter.provideSpecialDrawArea("bottom").then(() => hh.getObject("hpx")).then(res => menu.painter.drawInSpecialArea(res.obj, "*H")));
