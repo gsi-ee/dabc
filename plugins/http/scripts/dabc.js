@@ -1366,27 +1366,16 @@ JSROOT.require("painter").then(jsrp => {
 
             if (binlbl && (typeof binlbl == "string") && (binlbl.indexOf("0x")==0))
                menu.add(`Find TDC ${binlbl}`, () => {
-                  let tdc_name = "TDC_" + binlbl.substr(2);
-                  console.log('Searching TDC ', tdc_name);
-
-                  let tdc_folder, tdc_item;
+                  let tdc_name = "TDC_" + binlbl.substr(2), tdc_item;
 
                   JSROOT.hpainter.forEachItem(item => {
                      if (item._name == tdc_name) {
                         tdc_item = item;
                         tdc_folder = JSROOT.hpainter.itemFullName(item);
-                        console.log('found item', tdc_folder);
                      }
                   });
-                  if (tdc_item) {
-                     while (tdc_item) {
-                        tdc_item._isopen = true;
-                        tdc_item = tdc_item._parent;
-                     }
-
-                     JSROOT.hpainter.refreshHtml();
-                   }
-
+                  if (tdc_item)
+                     JSROOT.hpainter.focusOnItem(tdc_item);
                });
 
             // menu.add(`sub:Histogram bin [${tip.binx}, ${tip.biny}]`, () => menu.painter.provideSpecialDrawArea());
