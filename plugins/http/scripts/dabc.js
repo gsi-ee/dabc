@@ -1380,6 +1380,9 @@ JSROOT.require("painter").then(jsrp => {
                menu.add(`Focus on TDC ${binlbl}`, () => focusOnTdc(binlbl));
 
             menu.add("Find TDC", () => menu.input("TDC id", binlbl, "TDC id").then(id => {
+               if (!id) return;
+               id = id.substr(0,2) + id.substr(2).toUpperCase();
+
                let nbins = histo.fXaxis.fNbins;
                for (let bin = 0; bin < nbins; ++bin) {
                   let lbl = menu.painter.getAxisBinTip("x", histo.fXaxis, bin);
