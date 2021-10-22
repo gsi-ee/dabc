@@ -6,29 +6,21 @@ JSROOT.require("painter").then(jsrp => {
 
    let DABC = {};
 
-   DABC.version = "2.11.0 11/12/2020";
+   DABC.version = "2.11.0 22/10/2021";
 
-   DABC.source_dir = function(){
-      var scripts = document.getElementsByTagName('script');
+   DABC.source_dir = "";
 
-      for (var n in scripts) {
-         if (scripts[n]['type'] != 'text/javascript') continue;
-
-         var src = scripts[n]['src'];
-         if ((src == null) || (src.length == 0)) continue;
-
-         var pos = src.indexOf("dabc.js");
-         if (pos<0) continue;
-         if ((src.indexOf("JSRootCore.") > 0) || (src.indexOf("JSRoot.core.") > 0)) continue;
-
-         console.log("Set DABC.source_dir to " + src.substr(0, pos) + ", " + DABC.version);
-         return src.substr(0, pos);
+   const dabc_script = document.currentScript;
+   if (dabc_script && (typeof dabc_script.src == "string")) {
+      const pos = dabc_script.src.indexOf("dabc.js");
+      if (pos >= 0) {
+         DABC.source_dir = dabc_script.src.substr(0, pos);
+         console.log(`Set DABC.source_dir to ${DABC.source_dir}, ${DABC.version}`);
       }
-      return "";
-   }();
+   }
 
    DABC.InvokeCommand = function(itemname, args) {
-      var url = itemname + "/execute";
+      let url = itemname + "/execute";
       if (args && (typeof args == 'string')) url += "?" + args;
 
       JSROOT.httpRequest(url,"object");
@@ -37,28 +29,28 @@ JSROOT.require("painter").then(jsrp => {
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script
 
    DABC.HadaqDAQControl = function(hpainter, itemname) {
-      var mdi = hpainter.getDisplay();
+      let mdi = hpainter.getDisplay();
       if (!mdi) return null;
 
-      var frame = mdi.findFrame(itemname, true);
+      let frame = mdi.findFrame(itemname, true);
       if (!frame) return null;
 
-      var frameid = d3.select(frame).attr('id');
+      let frameid = d3.select(frame).attr('id');
 
-      var item = hpainter.findItem(itemname);
-      var calarr = [];
+      let item = hpainter.findItem(itemname);
+      let calarr = [];
       if (item) {
-         for (var n in item._parent._childs) {
-            var name = item._parent._childs[n]._name;
+         for (let n in item._parent._childs) {
+            let name = item._parent._childs[n]._name;
 
             if ((name.indexOf("TRB")==0) && (name.indexOf("TdcCal")>0)) {
-               var fullname = hpainter.itemFullName(item._parent._childs[n]);
+               let fullname = hpainter.itemFullName(item._parent._childs[n]);
                calarr.push(fullname);
             }
          }
       }
 
-      var html = "<fieldset>" +
+      let html = "<fieldset>" +
                  "<legend>DAQ</legend>" +
                  "<button class='hadaq_startfile'>Start file</button>" +
                  "<button class='hadaq_stopfile'>Stop file</button>" +
@@ -69,7 +61,7 @@ JSROOT.require("painter").then(jsrp => {
                  "</fieldset>" +
                  "<fieldset>" +
                  "<legend>Calibration</legend>";
-      for (var n in calarr)
+      for (let n in calarr)
          html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
       html+="</fieldset>";
 
@@ -85,13 +77,13 @@ JSROOT.require("painter").then(jsrp => {
          DABC.InvokeCommand(itemname+"/RestartHldFile");
       });
 
-      var inforeq = false;
+      let inforeq = false;
 
       function UpdateDaqStatus(res) {
          if (res==null) return;
-         var rate = "";
-         for (var n in res._childs) {
-            var item = res._childs[n], lbl = "", units = "";
+         let rate = "";
+         for (let n in res._childs) {
+            let item = res._childs[n], lbl = "", units = "";
 
             if (item._name=='HadaqInfo')
                $(frame).find('.hadaq_info').text("Info: " + item.value);
@@ -107,7 +99,7 @@ JSROOT.require("painter").then(jsrp => {
          $(frame).find('.hadaq_rate').css("font-size","120%").text(rate);
       }
 
-      var handler = setInterval(function() {
+      let handler = setInterval(function() {
          if ($("#" + frameid + " .hadaq_info").length==0) {
             // if main element disapper (reset), stop handler
             clearInterval(handler);
@@ -116,15 +108,15 @@ JSROOT.require("painter").then(jsrp => {
 
          if (inforeq) return;
 
-         var url = "multiget.json?items=[";
+         let url = "multiget.json?items=[";
          url+="'" + itemname + "'";
-         for (var n in calarr)
+         for (let n in calarr)
             url+= ",'" + calarr[n]+"/Status" + "'";
          url+="]";
          //url+="]&compact=3";
 
          function makehname(prefix, code, name) {
-            var str = code.toString(16).toUpperCase();
+            let str = code.toString(16).toUpperCase();
             while (str.length<4) str = "0"+str;
             return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
          }
@@ -142,11 +134,11 @@ JSROOT.require("painter").then(jsrp => {
    DABC.UpdateTRBStatus = function(holder, res, hpainter, multiget) {
 
       function makehname(prefix, code, name) {
-         var str = code.toString(16).toUpperCase();
+         let str = code.toString(16).toUpperCase();
          while (str.length < 4) str = "0"+str;
          str = prefix+"_"+str;
          if (name) str += "_"+name;
-         var hitem = null;
+         let hitem = null;
          hpainter.forEachItem(item => { if ((item._name == str) && !hitem) hitem = item; });
          if (hitem) return hpainter.itemFullName(hitem);
          console.log("did not found histogram " + str);
@@ -154,16 +146,15 @@ JSROOT.require("painter").then(jsrp => {
       }
 
       function makecalname(code) {
-         var str = code.toString(16);
+         let str = code.toString(16);
          while (str.length < 4) str = "0"+str;
          str = "TRB" + str + "_TdcCal";
-         var hitem = null;
+         let hitem = null;
          hpainter.forEachItem(item => { if ((item._name == str) && !hitem) hitem = item; });
          if (hitem) return hpainter.itemFullName(hitem);
          console.log("did not found element " + str);
          return str;
       }
-
 
       function get_status_color(status) {
          if (status.indexOf('Ready')==0) return 'green';
@@ -174,13 +165,13 @@ JSROOT.require("painter").then(jsrp => {
 
       holder.each(function(index) {
          if (!res) return;
-         var info = multiget ? res[index] : res;
+         let info = multiget ? res[index] : res;
          // when doing multiget, return object stored as result field
          if (('result' in info) && multiget) info = info.result;
          if (!info) return;
 
          if ($(this).children().length == 0) {
-            var code = "<div style='float:left'>";
+            let code = "<div style='float:left'>";
             code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "'>Clr</button>";
             if (!info.tdc) {
                code += "<button hist='" + makehname("TRB", info.trb, "ErrorBits") + "'>"+info.trb.toString(16)+"_ErrorBits</button>";
@@ -192,7 +183,7 @@ JSROOT.require("painter").then(jsrp => {
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "'>MsgPerTDC</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "ToTPerTDC") + "'>ToTPerTDC</button>";
-               for (var j in info.tdc)
+               for (let j in info.tdc)
                   code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
             }
             code += "</div>";
@@ -200,7 +191,7 @@ JSROOT.require("painter").then(jsrp => {
                code += "<div class='hadaq_progress'></div>";
             $(this).html(code);
             $(this).find("button").button().click(function(){
-               var histname = $(this).attr('hist');
+               let histname = $(this).attr('hist');
                if ($(this).text() == "Clr") {
                   JSROOT.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
                   return;
@@ -214,7 +205,7 @@ JSROOT.require("painter").then(jsrp => {
                   histname = histname.substr(0, histname.length-8) + "CalibrLog";
                }
 
-               var frame = hpainter.getDisplay().findFrame("dabc_drawing");
+               let frame = hpainter.getDisplay().findFrame("dabc_drawing");
                if (frame) hpainter.getDisplay().cleanupFrame(frame);
 
                hpainter.displayItems([histname],["frameid:dabc_drawing"]);
@@ -230,7 +221,7 @@ JSROOT.require("painter").then(jsrp => {
             .attr("title", "progress: " + info.progress + "%")
             .progressbar("option", "value", info.progress);
 
-         for (var j in info.tdc) {
+         for (let j in info.tdc) {
             $(this).find(".tdc_btn[tdc='"+info.tdc[j]+"']")
                    .css('color', get_status_color(info.tdc_status[j]))
                    .css('background', 'white')
@@ -241,22 +232,22 @@ JSROOT.require("painter").then(jsrp => {
 
 
    DABC.StreamControl = function(hpainter, itemname) {
-      var mdi = hpainter.getDisplay();
+      let mdi = hpainter.getDisplay();
       if (!mdi) return null;
 
-      var frame = mdi.findFrame(itemname, true);
+      let frame = mdi.findFrame(itemname, true);
       if (!frame) return null;
 
-      var ffid = d3.select(frame).attr('id');
+      let ffid = d3.select(frame).attr('id');
 
-      var item = hpainter.findItem(itemname + "/Status");
-      var calarr = [];
+      let item = hpainter.findItem(itemname + "/Status");
+      let calarr = [];
       if (item) {
-         for (var n in item._childs)
+         for (let n in item._childs)
             calarr.push(hpainter.itemFullName(item._childs[n]));
       }
 
-      var html = "<fieldset>" +
+      let html = "<fieldset>" +
                  "<legend>Stream</legend>" +
                  "<button class='store_startfile' title='Start storage of ROOT file'>Start file</button>" +
                  "<button class='store_stopfile' title='Stop storage of ROOT file'>Stop file</button>" +
@@ -266,7 +257,7 @@ JSROOT.require("painter").then(jsrp => {
                  "</fieldset>" +
                  "<fieldset>" +
                  "<legend>Calibration</legend>";
-      for (var n in calarr)
+      for (let n in calarr)
          html += "<div class='stream_tdc_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
       html+="</fieldset>";
 
@@ -283,7 +274,7 @@ JSROOT.require("painter").then(jsrp => {
          .button()
          .click(function() { DABC.InvokeCommand(itemname+"/Control/StopRootFile"); });
 
-      var inforeq = false;
+      let inforeq = false;
 
       function UpdateStreamStatus(res) {
          if (res==null) return;
@@ -291,7 +282,7 @@ JSROOT.require("painter").then(jsrp => {
          $(frame).find('.stream_info').text("Info: " + res.StoreInfo);
       }
 
-      var handler = setInterval(function() {
+      let handler = setInterval(function() {
          if ($("#"+ffid+" .stream_info").length==0) {
             // if main element disapper (reset), stop handler
             clearInterval(handler);
@@ -316,7 +307,7 @@ JSROOT.require("painter").then(jsrp => {
    DABC.CompareArrays = function(arr1, arr2) {
       if (!arr1 || !arr2) return arr1 == arr2;
       if (arr1.length != arr2.length) return false;
-      for (var k=0;k<arr1.length;++k)
+      for (let k=0;k<arr1.length;++k)
          if (arr1[k] != arr2[k]) return false;
       return true;
    }
@@ -362,7 +353,7 @@ JSROOT.require("painter").then(jsrp => {
    }
 
    DABC.BnetPainter.prototype.MakeLabel = function(attr, txt, sz) {
-      var lbl = "<label";
+      let lbl = "<label";
       if (attr) lbl += " " + attr;
       lbl +=">";
       if (txt === undefined) txt = "<undef>"; else
@@ -383,7 +374,7 @@ JSROOT.require("painter").then(jsrp => {
 
    DABC.BnetPainter.prototype.RefreshHTML = function(lastprefix) {
 
-      var html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
+      let html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
 
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
@@ -434,7 +425,7 @@ JSROOT.require("painter").then(jsrp => {
               this.MakeLabel("class='bnet_item_label h_item' title='display LTSM file sizes' itemname='__bld__/LtsmFileSize'", "Size", 8);
       html += "</pre>";
       html += "</div>";
-      for (var node in this.BuilderItems) {
+      for (let node in this.BuilderItems) {
          html += "<div style='float:left' class='jsroot bnet_builder" + node + "'>";
          html += "<pre style='margin:0'>";
          html += "<label>" + this.BuilderItems[node] + "</label>";
@@ -455,7 +446,7 @@ JSROOT.require("painter").then(jsrp => {
               this.MakeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);
       html += "</pre>";
       html += "</div>";
-      for (var node in this.InputItems) {
+      for (let node in this.InputItems) {
          html += "<div style='float:left' class='jsroot bnet_input" + node + "'>";
          html += "<pre style='margin:0'>";
          html += "<label>" + this.InputItems[node] + "</label>";
@@ -473,7 +464,7 @@ JSROOT.require("painter").then(jsrp => {
 
       html += "</div>";
 
-      var painter = this, main = d3.select(this.frame).html(html),
+      let painter = this, main = d3.select(this.frame).html(html),
           ctrl_visible = JSROOT.decodeUrl().has("browser") ? "" : "none";
 
       main.classed("jsroot_fixed_frame", true);
@@ -482,7 +473,7 @@ JSROOT.require("painter").then(jsrp => {
       main.selectAll(".bnet_item_clear").on("click", this.ClearDisplay.bind(this));
 
       main.select(".bnet_monitoring").on("click", function() {
-         var on = d3.select(this).property('checked');
+         let on = d3.select(this).property('checked');
          painter.hpainter.enableMonitoring(on);
          painter.hpainter.updateItems();
       });
@@ -491,14 +482,14 @@ JSROOT.require("painter").then(jsrp => {
          painter.DisplayItem(d3.select(this).attr("itemname"));
       });
 
-      var itemname = this.itemname;
+      let itemname = this.itemname;
 
-      var jnode = $(main.node());
+      let jnode = $(main.node());
 
       jnode.find(".bnet_startrun").button().css("display", ctrl_visible).click(function() {
          DABC.InvokeCommand(itemname+"/StartRun", "tmout=60&prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
       });
-      var sm = jnode.find(".bnet_selectrun");
+      let sm = jnode.find(".bnet_selectrun");
       sm.selectmenu({ width: 150 });
       if (lastprefix) { sm.val(lastprefix); sm.selectmenu("refresh"); }
       if (ctrl_visible == "none") sm.next('.ui-selectmenu-button').hide();
@@ -541,12 +532,12 @@ JSROOT.require("painter").then(jsrp => {
    }
 
    DABC.BnetPainter.prototype.ClearDisplay = function() {
-      var frame = this.hpainter.getDisplay().findFrame("dabc_drawing");
+      let frame = this.hpainter.getDisplay().findFrame("dabc_drawing");
       if (frame) this.hpainter.getDisplay().cleanupFrame(frame);
    }
 
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
-      var items = null, opt = "";
+      let items = null, opt = "";
 
       if (itemname.indexOf("__inp__")==0) {
          items = this.InputItems;
@@ -560,9 +551,9 @@ JSROOT.require("painter").then(jsrp => {
       if (items !== null) {
          if (items.length<2) return;
 
-         var subitem = itemname.substr(7);
+         let subitem = itemname.substr(7);
          itemname = "";
-         for (var k=0;k<items.length;++k) {
+         for (let k=0;k<items.length;++k) {
             itemname += (k>0 ? "," : "[") + items[k].substr(1) + subitem;
             opt += (k>0 ? "," : "[") + "plc";
             if (k==0) opt += "frameid:dabc_drawing";
@@ -588,15 +579,15 @@ JSROOT.require("painter").then(jsrp => {
    }
 
    DABC.BnetPainter.prototype.ClearAllHistograms = function() {
-       for(var indx=0;indx<this.InputItems.length;++indx) {
-          var itemname = this.InputItems[indx],
+       for(let indx=0;indx<this.InputItems.length;++indx) {
+          let itemname = this.InputItems[indx],
               info = this.InputInfo[indx];
 
           if (!itemname || !info || !info.calibr) continue;
 
           itemname = itemname.substr(1, itemname.lastIndexOf("/"));
 
-          for (var k=0;k<info.calibr.length;++k)
+          for (let k=0;k<info.calibr.length;++k)
              if (info.calibr[k])
                 JSROOT.httpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object");
        }
@@ -615,11 +606,11 @@ JSROOT.require("painter").then(jsrp => {
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
       if (!res) return;
 
-      var frame = d3.select(this.frame), elem,
+      let frame = d3.select(this.frame), elem,
           html = "", itemname = "", hadaqinfo = null, hadaqdata = null, hadaqevents = null, hadaqstate = null;
 
-      for (var n=0;n<res._childs.length;++n) {
-         var chld = res._childs[n];
+      for (let n=0;n<res._childs.length;++n) {
+         let chld = res._childs[n];
          if (chld._name == "HadaqData") hadaqdata = chld; else
          if (chld._name == "HadaqEvents") hadaqevents = chld; else
          if (chld._name == "HadaqInfo") hadaqinfo = chld; else
@@ -631,32 +622,32 @@ JSROOT.require("painter").then(jsrp => {
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
-         var col = this.GetQualityColor(res.quality);
+         let col = this.GetQualityColor(res.quality);
          itemname = this.BuilderItems[indx];
-         var pos = itemname.lastIndexOf("/");
+         let pos = itemname.lastIndexOf("/");
          html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
                                 "' title='Item: " + itemname + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
-         var col = this.GetQualityColor(res.quality);
+         let col = this.GetQualityColor(res.quality);
          itemname = this.InputItems[indx];
-         var title = "Item: " + itemname + "  State: " + hadaqstate.value;
+         let title = "Item: " + itemname + "  State: " + hadaqstate.value;
          if (res.progress) title += " progress:" + res.progress;
          title += " cansend:[" + (res.queues || "-") + "]";
 
-         var pos = itemname.lastIndexOf("/");
+         let pos = itemname.lastIndexOf("/");
          html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
                                 "' title='" + title + "'", this.InputNodes[indx].substr(7), 20);
       }
 
-      var prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
+      let prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
 
       html += "| " + this.MakeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 8);
       html += "| " + this.MakeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 8);
 
       if (isbuild) {
-         var fname = res.runname || "";
+         let fname = res.runname || "";
          if (fname && (fname.lastIndexOf("/")>0))
             fname = fname.substr(fname.lastIndexOf("/")+1);
 
@@ -673,23 +664,23 @@ JSROOT.require("painter").then(jsrp => {
          // if (hadaqinfo) html += "| " + this.MakeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
       } else {
          // info with HUBs and port numbers
-         var totallen = 0;
+         let totallen = 0;
          html += "|";
          if (res.ports && res.hubs && (res.ports.length == res.hubs.length)) {
-            for (var k=0;k<res.ports.length;++k) {
+            for (let k=0;k<res.ports.length;++k) {
                if (this.CalibrHub == res.hubs[k])
                   frame.select(".bnet_hub_info").html("<pre>" + res.hubs_info[k] + "</pre>");
-               var txt = "0x"+res.hubs[k].toString(16);
+               let txt = "0x"+res.hubs[k].toString(16);
                totallen += txt.length;
-               var title = "state:" + res.hubs_state[k] +
+               let title = "state:" + res.hubs_state[k] +
                            " quality:" + res.hubs_quality[k] +
                            " progr:" + res.hubs_progress[k] +
                            " " + res.hubs_info[k];
-               var style = "background-color:" + this.GetQualityColor(res.hubs_quality[k]);
-               var calitem = "";
+               let style = "background-color:" + this.GetQualityColor(res.hubs_quality[k]);
+               let calitem = "";
                if (res.calibr[k])
                   calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
-               var attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='h_item bnet_trb_label'";
+               let attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='h_item bnet_trb_label'";
 
                html += " " + this.MakeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
                // if (totallen>40) break;
@@ -701,7 +692,7 @@ JSROOT.require("painter").then(jsrp => {
 
       html += "</pre>";
 
-      var painter = this,
+      let painter = this,
           main = elem.html(html);
 
       main.selectAll(".bnet_item_label").on("click", function() {
@@ -721,9 +712,9 @@ JSROOT.require("painter").then(jsrp => {
    }
 
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
-      for (var n in this.InputItems)
+      for (let n in this.InputItems)
          JSROOT.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, false, n));
-      for (var n in this.BuilderItems)
+      for (let n in this.BuilderItems)
          JSROOT.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, true, n));
       if (this.CalibrItem)
          JSROOT.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(this.ProcessCalibrReq.bind(this));
@@ -733,16 +724,16 @@ JSROOT.require("painter").then(jsrp => {
 
       d3.select(this.frame).style('background-color', res ? null : "grey");
 
-      var chkbox = d3.select(this.frame).select(".bnet_monitoring");
+      let chkbox = d3.select(this.frame).select(".bnet_monitoring");
       if (!chkbox.empty() && (chkbox.property('checked') !== this.hpainter.isMonitoring()))
          chkbox.property('checked', this.hpainter.isMonitoring());
 
       if (!res) return;
 
-      var inp = null, bld = null, state = null, quality = null, drate, erate, lrate, ninp = [],
+      let inp = null, bld = null, state = null, quality = null, drate, erate, lrate, ninp = [],
           nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "", lastcalibr = null;
-      for (var k in res._childs) {
-         var elem = res._childs[k];
+      for (let k in res._childs) {
+         let elem = res._childs[k];
          switch (elem._name) {
             case "Inputs": inp = elem.value; ninp = elem.nodes; break;
             case "Builders": bld = elem.value; nbld = elem.nodes; break;
@@ -759,7 +750,7 @@ JSROOT.require("painter").then(jsrp => {
       }
 
       if (state) {
-         var col = this.GetQualityColor(quality || 0);
+         let col = this.GetQualityColor(quality || 0);
          // col = "red";
          //if (state=="Ready") col = "lightgreen"; else
          //if (state=="Accumulating") col = "lightblue"; else
@@ -777,12 +768,12 @@ JSROOT.require("painter").then(jsrp => {
          $(this.frame).find(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").css('background-color', (lrate > 0) ? "yellow" : "lightgreen");
 
       if (lastcalibr && (typeof lastcalibr.quality == 'number') && (typeof lastcalibr.time == 'string')) {
-         var quality = lastcalibr.quality || 1,
+         let quality = lastcalibr.quality || 1,
              dt = new Date(lastcalibr.time), now = new Date(),
              diff = (now.getTime() - dt.getTime())*1e-3, // seconds
              info = "CALIBR", title = "Calibration ";
          if (diff < 0) { info = "CHECK CALIBR"; if (quality>0.6) quality = 0.6; } else {
-            var hv = Math.floor(diff/3600),
+            let hv = Math.floor(diff/3600),
                 h = hv.toString(),
                 m = Math.round((diff - hv)/60).toString();
             if (m.length==1) m = "0"+m;
@@ -798,7 +789,7 @@ JSROOT.require("painter").then(jsrp => {
       $(this.frame).find(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
 
       // run prefix should not be overwritten
-      //var sm = $(this.frame).find(".bnet_selectrun");
+      //let sm = $(this.frame).find(".bnet_selectrun");
       //if (runprefix && (sm.val() != runprefix)) {
       //   sm.val(runprefix);
       //   sm.selectmenu("refresh");
@@ -857,9 +848,9 @@ JSROOT.require("painter").then(jsrp => {
    DABC.ConvertH = function(hpainter, item, obj) {
       if (!obj) return;
 
-      var res = {};
-      for (var k in obj) res[k] = obj[k]; // first copy all keys
-      for (var k in res) delete obj[k];   // then delete them from source
+      let res = {};
+      for (let k in obj) res[k] = obj[k]; // first copy all keys
+      for (let k in res) delete obj[k];   // then delete them from source
 
       if (res._kind == 'ROOT.TH1D') {
          JSROOT.create("TH1D", obj);
@@ -890,17 +881,17 @@ JSROOT.require("painter").then(jsrp => {
 
          obj.fBins = JSROOT.create("TList");
 
-         var npoly = 0, h2poly = JSON.parse(res.h2poly);
-         for (var n2 = 0; n2 < res.nbins2; ++n2)
-            for (var n1 = 0; n1 < res.nbins1; ++n1) {
+         let npoly = 0, h2poly = JSON.parse(res.h2poly);
+         for (let n2 = 0; n2 < res.nbins2; ++n2)
+            for (let n1 = 0; n1 < res.nbins1; ++n1) {
                if (npoly >= h2poly.length) break;
 
-               var poly = h2poly[npoly++];
+               let poly = h2poly[npoly++];
                if (!poly || (poly.length !== 2)) continue;
 
-               var xx = poly[0], yy = poly[1];
+               let xx = poly[0], yy = poly[1];
 
-               var bin = {
+               let bin = {
                   _typename: "TH2PolyBin",
                   fNumber: 1,
                   fContent: obj.getBinContent(n1+1, n2+1),
@@ -912,8 +903,8 @@ JSROOT.require("painter").then(jsrp => {
                };
                // used of text position only, for triangle workaround
                /* if (xx.length == 4) {
-                  var xsum = 0, ysum = 0;
-                  for (var k=0;k<xx.length;++k) {
+                  let xsum = 0, ysum = 0;
+                  for (let k=0;k<xx.length;++k) {
                      xsum += xx[k]; ysum += yy[k];
                   }
                   bin.fXmin = bin.fXmax = xsum / xx.length;
@@ -942,9 +933,9 @@ JSROOT.require("painter").then(jsrp => {
       if (res.hmax !== undefined) obj.fMaximum = res.hmax;
       if ('xlabels' in res) {
          obj.fXaxis.fLabels = JSROOT.create('THashList');
-         var lbls = res.xlabels.split(",");
-         for (var n in lbls) {
-            var lbl = JSROOT.create('TObjString');
+         let lbls = res.xlabels.split(",");
+         for (let n in lbls) {
+            let lbl = JSROOT.create('TObjString');
             lbl.fUniqueID = parseInt(n)+1;
             lbl.fString = lbls[n];
             obj.fXaxis.fLabels.Add(lbl);
@@ -952,9 +943,9 @@ JSROOT.require("painter").then(jsrp => {
       }
       if ('ylabels' in res) {
          obj.fYaxis.fLabels = JSROOT.create('THashList');
-         var lbls = res.ylabels.split(",");
-         for (var n in lbls) {
-            var lbl = JSROOT.create('TObjString');
+         let lbls = res.ylabels.split(",");
+         for (let n in lbls) {
+            let lbl = JSROOT.create('TObjString');
             lbl.fUniqueID = parseInt(n)+1;
             lbl.fString = lbls[n];
             obj.fYaxis.fLabels.Add(lbl);
@@ -965,29 +956,29 @@ JSROOT.require("painter").then(jsrp => {
 
    DABC.ExtractSeries = function(name, kind, obj, history) {
 
-      var ExtractField = function(node) {
+      let ExtractField = function(node) {
          if (!node || !(name in node)) return null;
 
          if (kind=="number") return Number(node[name]);
          if (kind=="time") {
-            var d  = new Date(node[name]);
+            let d  = new Date(node[name]);
             return d.getTime() / 1000.;
          }
          return node[name];
       }
 
       // xml node must have attribute, which will be extracted
-      var val = ExtractField(obj);
+      let val = ExtractField(obj);
       if (val==null) return null;
 
-      var arr = [];
+      let arr = [];
       arr.push(val);
 
       if (history!=null)
-         for (var n=history.length-1;n>=0;n--) {
+         for (let n=history.length-1;n>=0;n--) {
             // in any case stop iterating when see property delete
             if ("dabc:del" in history[n]) break;
-            var newval = ExtractField(history[n]);
+            let newval = ExtractField(history[n]);
             if (newval!=null) val = newval;
             arr.push(val);
          }
@@ -1000,7 +991,7 @@ JSROOT.require("painter").then(jsrp => {
       item.fullitemname = fullpath;
       if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0";
       if (!('hlimit' in item)) item.hlimit = 100;
-      var url = "get.json?compact=0&history=" + item.hlimit;
+      let url = "get.json?compact=0&history=" + item.hlimit;
       if (('request_version' in item) && (item.request_version>0)) url += "&version=" + item.request_version;
       item.request_version = 0;
       return url;
@@ -1016,25 +1007,25 @@ JSROOT.require("painter").then(jsrp => {
          return;
       }
 
-      var new_version = Number(obj._version);
+      let new_version = Number(obj._version);
 
-      var modified = (item.request_version != new_version);
+      let modified = (item.request_version != new_version);
 
       item.request_version = new_version;
 
       // this is array with history entries
-      var arr = obj.history;
+      let arr = obj.history;
 
       if (arr!=null) {
          // gap indicates that we could not get full history relative to provided version number
-         var gap = obj.history_gap;
+         let gap = obj.history_gap;
 
          // join both arrays with history entries
          if ((item.history == null) || (arr.length >= item['hlimit']) || gap) {
             item.history = arr;
          } else if (arr.length>0) {
             modified = true;
-            var total = item.history.length + arr.length;
+            let total = item.history.length + arr.length;
             if (total > item['hlimit'])
                item.history.splice(0, total - item['hlimit']);
 
@@ -1049,10 +1040,10 @@ JSROOT.require("painter").then(jsrp => {
 
       // now we should produce TGraph from the object
 
-      var x = DABC.ExtractSeries("time", "time", obj, item.history);
-      var y = DABC.ExtractSeries("value", "number", obj, item.history);
+      let x = DABC.ExtractSeries("time", "time", obj, item.history);
+      let y = DABC.ExtractSeries("value", "number", obj, item.history);
 
-      for (var k in obj) delete obj[k];  // delete all object keys
+      for (let k in obj) delete obj[k];  // delete all object keys
 
       if (!x) x = [];
       if (!y) y = [];
@@ -1061,18 +1052,18 @@ JSROOT.require("painter").then(jsrp => {
       JSROOT.create('TGraph', obj);
       obj.fHistogram = JSROOT.createHistogram('TH1F', x.length);
 
-      var _title = item._title || item.fullitemname;
+      let _title = item._title || item.fullitemname;
 
       JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: _title,
                            fX: x, fY: y, fNpoints: x.length,
                            fLineColor: 2, fLineWidth: 2 });
 
-      var xrange = x[x.length-1] - x[0];
+      let xrange = x[x.length-1] - x[0];
       obj.fHistogram.fTitle = obj.fTitle;
       obj.fHistogram.fXaxis.fXmin = x[0] - xrange*0.03;
       obj.fHistogram.fXaxis.fXmax = x[x.length-1] + xrange*0.03;
 
-      var ymin = Math.min.apply(null,y), ymax = Math.max.apply(null,y);
+      let ymin = Math.min.apply(null,y), ymax = Math.max.apply(null,y);
 
       if (!ymin) ymin = 0; if (!ymax) ymax = 0;
 
@@ -1104,7 +1095,7 @@ JSROOT.require("painter").then(jsrp => {
       painter.Draw = function(obj) {
          if (!obj) return;
 
-         var val = Number(obj["value"]);
+         let val = Number(obj["value"]);
 
          if ('low' in obj) {
             let min = Number(obj["low"]);
@@ -1116,11 +1107,11 @@ JSROOT.require("painter").then(jsrp => {
             if (Number.isFinite(max) && (max > this.max)) this.max = max;
          }
 
-         var redo = false;
+         let redo = false;
 
          if (val > this.max) {
             this.max = 1;
-            var cnt = 0;
+            let cnt = 0;
             while (val > this.max)
                this.max *= (((cnt++ % 3) == 1) ? 2.5 : 2);
 
@@ -1133,8 +1124,8 @@ JSROOT.require("painter").then(jsrp => {
       }
 
       painter.DrawValue = function(val, force) {
-         var rect = this.selectDom().node().getBoundingClientRect();
-         var sz = Math.min(rect.height, rect.width);
+         let rect = this.selectDom().node().getBoundingClientRect();
+         let sz = Math.min(rect.height, rect.width);
 
          if ((sz > this.lastsz*1.2) || (sz < this.lastsz*0.9)) force = true;
 
@@ -1148,7 +1139,7 @@ JSROOT.require("painter").then(jsrp => {
          if (!this.gauge) {
             this.lastsz = sz;
 
-            var config =  {
+            let config =  {
                size: sz,
                label: this._title,
                min: this.min,
@@ -1211,10 +1202,10 @@ JSROOT.require("painter").then(jsrp => {
       }
 
       painter.Draw = function() {
-         var html = "";
+         let html = "";
 
          if (this.history && ('log' in this.obj)) {
-            for (var i in this.obj.log) {
+            for (let i in this.obj.log) {
                html+="<pre style='margin-top:2px;margin-bottom:0px'>"+this.obj.log[i]+"</pre>";
             }
          } else {
@@ -1264,9 +1255,9 @@ JSROOT.require("painter").then(jsrp => {
 
       painter.ShowCommand = function() {
 
-         var cmdelemid = this.selectDom().attr('id');
+         let cmdelemid = this.selectDom().attr('id');
 
-         var frame = $("#" + cmdelemid);
+         let frame = $("#" + cmdelemid);
 
          frame.empty();
 
@@ -1277,15 +1268,15 @@ JSROOT.require("painter").then(jsrp => {
 
          frame.append("<h3>" + this.jsonnode.fullitemname + "</h3>");
 
-         var entryInfo = "<input id='" + cmdelemid + "_button' type='button' title='Execute' value='Execute'/><br/>";
+         let entryInfo = "<input id='" + cmdelemid + "_button' type='button' title='Execute' value='Execute'/><br/>";
 
-         for (var cnt=0;cnt<this.NumArgs();cnt++) {
-            var argname = this.ArgName(cnt);
-            var argkind = this.ArgKind(cnt);
-            var argdflt = this.ArgDflt(cnt);
+         for (let cnt=0;cnt<this.NumArgs();cnt++) {
+            let argname = this.ArgName(cnt);
+            let argkind = this.ArgKind(cnt);
+            let argdflt = this.ArgDflt(cnt);
 
-            var argid = cmdelemid + "_arg" + cnt;
-            var argwidth = (argkind=="int") ? "80px" : "170px";
+            let argid = cmdelemid + "_arg" + cnt;
+            let argwidth = (argkind=="int") ? "80px" : "170px";
 
             entryInfo += "Arg: " + argname + " ";
             entryInfo += "<input id='" + argid + "' style='width:" + argwidth + "' value='"+argdflt+"' argname = '" + argname + "'/>";
@@ -1296,15 +1287,15 @@ JSROOT.require("painter").then(jsrp => {
 
          frame.append(entryInfo);
 
-         var pthis = this;
+         let pthis = this;
 
          $("#"+ cmdelemid + "_button").click(function() { pthis.InvokeCommand(); });
 
-         for (var cnt=0;cnt<this.NumArgs();cnt++) {
-            var argid = cmdelemid + "_arg" + cnt;
-            var argkind = this.ArgKind(cnt);
-            var argmin = this.ArgMin(cnt);
-            var argmax = this.ArgMax(cnt);
+         for (let cnt=0;cnt<this.NumArgs();cnt++) {
+            let argid = cmdelemid + "_arg" + cnt;
+            let argkind = this.ArgKind(cnt);
+            let argmin = this.ArgMin(cnt);
+            let argmax = this.ArgMax(cnt);
 
             if ((argkind=="int") && (argmin!=null) && (argmax!=null))
                $("#"+argid).spinner({ min:argmin, max:argmax});
@@ -1314,20 +1305,20 @@ JSROOT.require("painter").then(jsrp => {
       painter.InvokeCommand = function() {
          if (this.req) return;
 
-         var cmdelemid = this.selectDom().attr('id');
+         let cmdelemid = this.selectDom().attr('id');
 
-         var resdiv = $("#" + cmdelemid + "_res");
+         let resdiv = $("#" + cmdelemid + "_res");
          resdiv.html("<h5>Send command to server</h5>");
 
-         var url = this.jsonnode.fullitemname + "/execute";
+         let url = this.jsonnode.fullitemname + "/execute";
 
-         for (var cnt=0;cnt<this.NumArgs();cnt++) {
-            var argid = cmdelemid + "_arg" + cnt;
-            var argkind = this.ArgKind(cnt);
-            var argmin = this.ArgMin(cnt);
-            var argmax = this.ArgMax(cnt);
+         for (let cnt=0;cnt<this.NumArgs();cnt++) {
+            let argid = cmdelemid + "_arg" + cnt;
+            let argkind = this.ArgKind(cnt);
+            let argmin = this.ArgMin(cnt);
+            let argmax = this.ArgMax(cnt);
 
-            var arginp = $("#"+argid);
+            let arginp = $("#"+argid);
 
             if (cnt==0) url+="?"; else url+="&";
 
