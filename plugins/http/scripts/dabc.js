@@ -1458,4 +1458,6 @@ JSROOT.define(["painter", "hist"], jsrp => {
 
    globalThis.DABC = DABC; // maybe used outside
 
+   return DABC;
+
 })
