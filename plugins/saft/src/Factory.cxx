@@ -1,3 +1,4 @@
+// $Id$
 
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
