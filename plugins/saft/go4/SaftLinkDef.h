@@ -1,4 +1,4 @@
-// $Id: SaftLinkDef.h 1251 2012-02-06 14:47:20Z linev $
+// $Id$
 //-----------------------------------------------------------------------
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI

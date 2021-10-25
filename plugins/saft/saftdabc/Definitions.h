@@ -1,4 +1,4 @@
-// $Id: Definitions.h 2216 2014-04-03 13:59:28Z linev $
+// $Id$
 
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *

@@ -1,4 +1,4 @@
-// $Id: TSaftProc.h 1549 2013-04-11 14:25:03Z linev $
+// $Id$
 //-----------------------------------------------------------------------
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI

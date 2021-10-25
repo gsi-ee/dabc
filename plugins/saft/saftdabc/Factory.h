@@ -1,4 +1,4 @@
-// $Id: Factory.h 2190 2014-03-27 15:34:14Z linev $
+// $Id$
 
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
