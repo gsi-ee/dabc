@@ -1,3 +1,18 @@
+// $Id$
+
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "rfio/FileInterface.h"
 
 #include "rawapin.h"
@@ -207,5 +222,5 @@ bool rfio::FileInterface::fflush(Handle f)
 
 dabc::Object* rfio::FileInterface::fmatch(const char* fmask, bool select_files)
 {
-   return 0;
+   return nullptr;
 }

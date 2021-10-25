@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -25,5 +27,5 @@ void* rfio::Factory::CreateAny(const std::string &classname, const std::string&,
       return new rfio::FileInterface;
    }
 
-   return 0;
+   return nullptr;
 }

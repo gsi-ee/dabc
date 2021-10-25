@@ -55,7 +55,7 @@ dabc::DataInput* ezca::Factory::CreateDataInput(const std::string &typ)
    if (url.GetProtocol()=="ezca")
       return new ezca::EpicsInput(url.GetHostName());
 
-   return 0;
+   return nullptr;
 }
 
 dabc::Module* ezca::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
