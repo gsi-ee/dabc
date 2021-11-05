@@ -9,6 +9,12 @@
 6. Provide alternative location for zstd-codec
 7. Allows to use JSROOT.define() in external scripts
 8. Fix - properly draw TH1 with line option when fill attributes specified
+9. Fix error in objects drawing from the inspector
+10. Optmize TH2 col drawings to produce smaller SVG
+11. For sub-pads containers use svg:g with clip-path instead of svg:svg
+12. Let skip HEAD requests when reading files (#223)
+13. Fully redesing TLatex parsing, use many svg elements instead of plain text/tspan
+14. Make TLatex reliably working in node.js, does not depend from availability of canvas component
 
 
 ## Changes in 6.2.1
