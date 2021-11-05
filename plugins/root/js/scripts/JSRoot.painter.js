@@ -433,10 +433,17 @@ JSROOT.define(['d3'], (d3) => {
          return "M" + (x + this.x0).toFixed(this.ndig) + "," + (y + this.y0).toFixed(this.ndig) + this.marker;
 
       // use optimized handling with relative position
-      let xx = Math.round(x), yy = Math.round(y), m1 = "M" + xx + "," + yy + "h1",
-          m2 = (this.lastx === null) ? m1 : ("m" + (xx - this.lastx) + "," + (yy - this.lasty) + "h1");
+      let xx = Math.round(x), yy = Math.round(y), mv = "M" + xx + "," + yy;
+      if (this.lastx !== null) {
+         if ((xx == this.lastx) && (yy == this.lasty)) {
+            mv = ""; // pathological case, but let exclude it
+         } else {
+            let m2 = "m" + (xx - this.lastx) + "," + (yy - this.lasty);
+            if (m2.length < mv.length) mv = m2;
+         }
+      }
       this.lastx = xx + 1; this.lasty = yy;
-      return (m2.length < m1.length) ? m2 : m1;
+      return mv + "h1";
    }
 
    /** @summary Returns full size of marker */
@@ -766,7 +773,6 @@ JSROOT.define(['d3'], (d3) => {
      * @memberof JSROOT
      * @param {object} args - different arguments to set fill attributes, see {@link JSROOT.TAttFillHandler.setArgs} for more info
      * @param {number} [args.kind = 2] - 1 means object drawing where combination fillcolor==0 and fillstyle==1001 means no filling,  2 means all other objects where such combination is white-color filling
-     * @private
      */
 
    function TAttFillHandler(args) {
@@ -2651,102 +2657,101 @@ JSROOT.define(['d3'], (d3) => {
          }
       });
 
-      // now hidden text after rescaling can be shown
+      // now process text and latex drawings
       all_args.forEach(arg => {
-         if (!arg.txt_node) return; // only normal text is processed
-         any_text = true;
-         let txt = arg.txt_node;
-         delete arg.txt_node;
-         txt.attr('visibility', null);
-
-         if (JSROOT.nodejs) {
-            if (arg.scale && (f > 0)) { arg.box.width = arg.box.width / f; arg.box.height = arg.box.height / f; }
-         } else if (!arg.plain && !arg.fast) {
-            // exact box dimension only required when complex text was build
-            arg.box = jsrp.getElementRect(txt, 'bbox');
+         let txt, is_txt, scale = 1;
+         if (arg.txt_node) {
+            txt = arg.txt_node;
+            delete arg.txt_node;
+            is_txt = true;
+         } else if (arg.txt_g) {
+            txt = arg.txt_g;
+            delete arg.txt_g;
+            is_txt = false;
+         } else {
+            return;
          }
 
-         // if (arg.text.length>20) console.log(arg.box, arg.align, arg.x, arg.y, 'plain', arg.plain, 'inside', arg.width, arg.height);
+         txt.attr('visibility', null);
+
+         any_text = true;
 
          if (arg.width) {
             // adjust x position when scale into specified rectangle
-            if (arg.align[0] == "middle") arg.x += arg.width / 2; else
-               if (arg.align[0] == "end") arg.x += arg.width;
+            if (arg.align[0] == "middle")
+               arg.x += arg.width / 2;
+             else if (arg.align[0] == "end")
+                arg.x += arg.width;
+         }
+
+         if (arg.height) {
+            if (arg.align[1].indexOf('bottom') === 0)
+               arg.y += arg.height;
+            else if (arg.align[1] == 'middle')
+               arg.y += arg.height / 2;
          }
 
          arg.dx = arg.dy = 0;
 
-         if (arg.plain) {
-            txt.attr("text-anchor", arg.align[0]);
-         } else {
-            txt.attr("text-anchor", "start");
-            arg.dx = ((arg.align[0] == "middle") ? -0.5 : ((arg.align[0] == "end") ? -1 : 0)) * arg.box.width;
-         }
+         if (is_txt) {
 
-         if (arg.height) {
-            if (arg.align[1].indexOf('bottom') === 0) arg.y += arg.height; else
-               if (arg.align[1] == 'middle') arg.y += arg.height / 2;
-         }
+            // handle simple text drawing
 
-         if (arg.plain) {
-            if (arg.align[1] == 'top') txt.attr("dy", ".8em"); else
-               if (arg.align[1] == 'middle') {
+            if (JSROOT.nodejs) {
+               if (arg.scale && (f > 0)) { arg.box.width *= 1/f; arg.box.height *= 1/f; }
+            } else if (!arg.plain && !arg.fast) {
+               // exact box dimension only required when complex text was build
+               arg.box = jsrp.getElementRect(txt, 'bbox');
+            }
+
+            if (arg.plain) {
+               txt.attr("text-anchor", arg.align[0]);
+               if (arg.align[1] == 'top')
+                  txt.attr("dy", ".8em");
+               else if (arg.align[1] == 'middle') {
                   if (JSROOT.nodejs) txt.attr("dy", ".4em"); else txt.attr("dominant-baseline", "middle");
                }
+            } else {
+               txt.attr("text-anchor", "start");
+               arg.dx = ((arg.align[0] == "middle") ? -0.5 : ((arg.align[0] == "end") ? -1 : 0)) * arg.box.width;
+               arg.dy = ((arg.align[1] == 'top') ? (arg.top_shift || 1) : (arg.align[1] == 'middle') ? (arg.mid_shift || 0.5) : 0) * arg.box.height;
+            }
+
          } else {
-            arg.dy = ((arg.align[1] == 'top') ? (arg.top_shift || 1) : (arg.align[1] == 'middle') ? (arg.mid_shift || 0.5) : 0) * arg.box.height;
+
+            // handle latext drawing
+            let box = arg.text_rect;
+
+            scale = (f > 0) && (Math.abs(1-f)>0.01) ? 1/f : 1;
+
+            arg.dx = ((arg.align[0] == "middle") ? -0.5 : ((arg.align[0] == "end") ? -1 : 0)) * box.width * scale;
+
+            if (arg.align[1] == 'top')
+               arg.dy = -box.y1*scale;
+            else if (arg.align[1] == 'bottom')
+               arg.dy = -box.y2*scale;
+            else if (arg.align[1] == 'middle')
+               arg.dy = -0.5*(box.y1 + box.y2)*scale;
+
          }
 
          if (!arg.rotate) { arg.x += arg.dx; arg.y += arg.dy; arg.dx = arg.dy = 0; }
 
          // use translate and then rotate to avoid complex sign calculations
-         let trans = (arg.x || arg.y) ? "translate(" + Math.round(arg.x) + "," + Math.round(arg.y) + ")" : "";
-         if (arg.rotate) trans += " rotate(" + Math.round(arg.rotate) + ")";
-         if (arg.dx || arg.dy) trans += " translate(" + Math.round(arg.dx) + "," + Math.round(arg.dy) + ")";
+         let trans = "";
+         if (arg.y)
+            trans = "translate(" + Math.round(arg.x) + "," + Math.round(arg.y) + ")";
+         else if (arg.x)
+            trans = "translate(" + Math.round(arg.x) + ")";
+         if (arg.rotate)
+            trans += " rotate(" + Math.round(arg.rotate) + ")";
+         if (scale !== 1)
+            trans += " scale(" + scale.toFixed(3) + ")";
+         if (arg.dy)
+            trans += " translate(" + Math.round(arg.dx) + "," + Math.round(arg.dy) + ")";
+         else if (arg.dx)
+            trans += " translate(" + Math.round(arg.dx) + ")";
          if (trans) txt.attr("transform", trans);
-      });
-
-      // finally process TLatex drawings
-      all_args.forEach(arg => {
-         if (!arg.txt_g) return;
-         any_text = true;
-         let txt_g = arg.txt_g;
-         delete arg.txt_g;
-         txt_g.attr('visibility', null);
-
-         let box = arg.text_rect;
-
-         if (arg.width) {
-            // adjust x position when scale into specified rectangle
-            if (arg.align[0] == "middle") arg.x += arg.width / 2; else
-               if (arg.align[0] == "end") arg.x += arg.width;
-         }
-
-         arg.dx = arg.dy = 0;
-
-         let scale = (f > 0) && (Math.abs(1-f)>0.01) ? 1/f : 1;
-
-         arg.dx = ((arg.align[0] == "middle") ? -0.5 : ((arg.align[0] == "end") ? -1 : 0)) * box.width * scale;
-
-         if (arg.height) {
-            if (arg.align[1].indexOf('bottom') === 0) arg.y += arg.height; else
-               if (arg.align[1] == 'middle') arg.y += arg.height / 2;
-         }
-
-         if (arg.align[1] == 'top')
-            arg.dy = -box.y1*scale;
-         else if (arg.align[1] == 'bottom')
-            arg.dy = -box.y2*scale;
-         else if (arg.align[1] == 'middle')
-            arg.dy = -0.5*(box.y1 + box.y2)*scale;
-
-         if (!arg.rotate) { arg.x += arg.dx; arg.y += arg.dy; arg.dx = arg.dy = 0; }
-
-         let trans = (arg.x || arg.y) ? "translate(" + Math.round(arg.x) + "," + Math.round(arg.y) + ")" : "";
-         if (arg.rotate) trans += " rotate(" + Math.round(arg.rotate) + ")";
-         if (scale !== 1) trans += ` scale(${scale.toFixed(3)})`;
-         if (arg.dx || arg.dy) trans += " translate(" + Math.round(arg.dx) + "," + Math.round(arg.dy) + ")";
-         if (trans) txt_g.attr("transform", trans);
       });
 
 
@@ -3599,7 +3604,7 @@ JSROOT.define(['d3'], (d3) => {
       { name: "TProfile", icon: "img_profile", prereq: "hist", func: ".drawHistogram1D", opt: ";E0;E1;E2;p;AH;hist" },
       { name: "TH2Poly", icon: "img_histo2d", prereq: "hist", func: ".drawHistogram2D", opt: ";COL;COL0;COLZ;LCOL;LCOL0;LCOLZ;LEGO;TEXT;same", expand_item: "fBins", theonly: true },
       { name: "TProfile2Poly", sameas: "TH2Poly" },
-      { name: "TH2PolyBin", icon: "img_histo2d", draw_field: "fPoly" },
+      { name: "TH2PolyBin", icon: "img_histo2d", draw_field: "fPoly", draw_field_opt: "L" },
       { name: /^TH2/, icon: "img_histo2d", prereq: "hist", func: ".drawHistogram2D", opt: ";COL;COLZ;COL0;COL1;COL0Z;COL1Z;COLA;BOX;BOX1;PROJ;PROJX1;PROJX2;PROJX3;PROJY1;PROJY2;PROJY3;SCAT;TEXT;TEXTE;TEXTE0;CONT;CONT1;CONT2;CONT3;CONT4;ARR;SURF;SURF1;SURF2;SURF4;SURF6;E;A;LEGO;LEGO0;LEGO1;LEGO2;LEGO3;LEGO4;same", ctrl: "colz" },
       { name: "TProfile2D", sameas: "TH2" },
       { name: /^TH3/, icon: 'img_histo3d', prereq: "hist3d", func: ".drawHistogram3D", opt: ";SCAT;BOX;BOX2;BOX3;GLBOX1;GLBOX2;GLCOL" },
@@ -3898,7 +3903,7 @@ JSROOT.define(['d3'], (d3) => {
          return Promise.resolve(null);
 
       if (handle.draw_field && obj[handle.draw_field])
-         return JSROOT.draw(dom, obj[handle.draw_field], opt);
+         return JSROOT.draw(dom, obj[handle.draw_field], opt || handle.draw_field_opt);
 
       if (!handle.func && !handle.direct) {
          if (opt && (opt.indexOf("same") >= 0)) {
