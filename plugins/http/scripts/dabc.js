@@ -1436,7 +1436,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
          if (binlbl && (typeof binlbl == "string") && (binlbl.indexOf("0x")==0))
             menu.add(`Focus on TDC ${binlbl}`, () => focusOnTdc(binlbl));
 
-         menu.add("Find TDC", () => menu.input("TDC id", binlbl, "TDC id").then(id => {
+         menu.add("Find TDC", () => menu.input("TDC id", binlbl).then(id => {
             if (!id) return;
             id = id.substr(0,2) + id.substr(2).toUpperCase();
 
