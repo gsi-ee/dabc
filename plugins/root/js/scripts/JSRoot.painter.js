@@ -611,6 +611,11 @@ JSROOT.define(['d3'], (d3) => {
    /** @summary get fill color */
    TAttMarkerHandler.prototype.getFillColor = function() { return this.fill ? this.color : "none"; }
 
+   /** @summary returns true if marker attributes will produce empty (invisible) output */
+   TAttMarkerHandler.prototype.empty = function() {
+      return (this.color === 'none') || (!this.fill && !this.stroke);
+   }
+
    /** @summary Apply marker styles to created element */
    TAttMarkerHandler.prototype.apply = function(selection) {
       selection.style('stroke', this.stroke ? this.color : "none");
@@ -833,6 +838,11 @@ JSROOT.define(['d3'], (d3) => {
       return !fill || (fill == 'none');
    }
 
+   /** @summary Returns true if fill attributes has real color */
+   TAttFillHandler.prototype.hasColor = function() {
+      return this.color && (this.color != 'none');
+   }
+
    /** @summary Set solid fill color as fill pattern
      * @param {string} col - solid color */
    TAttFillHandler.prototype.setSolidColor = function(col) {
@@ -845,7 +855,7 @@ JSROOT.define(['d3'], (d3) => {
      * @param {string} [solid_color] - when specified, checks if fill color matches */
    TAttFillHandler.prototype.isSolid = function(solid_color) {
       if (this.pattern !== 1001) return false;
-      return !solid_color || solid_color == this.color;
+      return !solid_color || (solid_color == this.color);
    }
 
    /** @summary Method used when color or pattern were changed with OpenUi5 widgets
@@ -2056,8 +2066,8 @@ JSROOT.define(['d3'], (d3) => {
 
       // set attributes for debugging
       if (this.draw_object) {
-         this.draw_g.attr('objname', encodeURI(this.draw_object.fName || "name"));
-         this.draw_g.attr('objtype', encodeURI(this.draw_object._typename || "type"));
+         this.draw_g.attr('objname', (this.draw_object.fName || "name").replace(/[^\w]/g, '_'));
+         this.draw_g.attr('objtype', (this.draw_object.fName || "name").replace(/[^\w]/g, '_'));
       }
 
       this.draw_g.property('in_frame', !!frame_layer); // indicates coordinate system
@@ -3224,6 +3234,8 @@ JSROOT.define(['d3'], (d3) => {
 
    AxisBasePainter.prototype = Object.create(ObjectPainter.prototype);
 
+   /** @summary Cleanup axis painter
+     * @private */
    AxisBasePainter.prototype.cleanup = function() {
       this.ticks = [];
       delete this.format;
@@ -3331,7 +3343,7 @@ JSROOT.define(['d3'], (d3) => {
    AxisBasePainter.prototype.poduceLogTicks = function(func, number) {
       function linearArray(arr) {
          let sum1 = 0, sum2 = 0;
-         for (let k=1;k<arr.length;++k) {
+         for (let k = 1; k < arr.length; ++k) {
             let diff = (arr[k] - arr[k-1]);
             sum1 += diff;
             sum2 += diff*diff;
@@ -3368,12 +3380,27 @@ JSROOT.define(['d3'], (d3) => {
    AxisBasePainter.prototype.produceTicks = function(ndiv, ndiv2) {
       if (!this.noticksopt) {
          let total = ndiv * (ndiv2 || 1);
-         return this.log ? this.poduceLogTicks(this.func, total) : this.func.ticks(total);
+
+         if (this.log) return this.poduceLogTicks(this.func, total);
+
+         let dom = this.func.domain();
+
+         const check = ticks => {
+            if (ticks.length <= total) return true;
+            if (ticks.length > total + 1) return false;
+            return (ticks[0] === dom[0]) || (ticks[total] === dom[1]); // special case of N+1 ticks, but match any range
+         }
+
+         let res1 = this.func.ticks(total);
+         if (ndiv2 || check(res1)) return res1;
+
+         let res2 = this.func.ticks(Math.round(total * 0.7));
+         return (res2.length > 2) && check(res2) ? res2 : res1;
       }
 
       let dom = this.func.domain(), ticks = [];
       if (ndiv2) ndiv = (ndiv-1) * ndiv2;
-      for (let n=0;n<=ndiv;++n)
+      for (let n = 0; n <= ndiv; ++n)
          ticks.push((dom[0]*(ndiv-n) + dom[1]*n)/ndiv);
       return ticks;
    }

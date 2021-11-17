@@ -104,7 +104,7 @@
 
    /** @summary JSROOT version date
      * @desc Release date in format day/month/year like "14/01/2021"*/
-   JSROOT.version_date = "5/11/2021";
+   JSROOT.version_date = "17/11/2021";
 
    /** @summary JSROOT version id and date
      * @desc Produced by concatenation of {@link JSROOT.version_id} and {@link JSROOT.version_date}
@@ -1348,11 +1348,11 @@
          return Promise.resolve(res);
       }
 
-      function match_url(src) {
+      const match_url = src => {
          if (src == url) return true;
          let indx = src.indexOf(url);
          return (indx > 0) && (indx + url.length == src.length) && (src[indx-1] == "/");
-      }
+      };
 
       if (isstyle) {
          let styles = document.getElementsByTagName('link');

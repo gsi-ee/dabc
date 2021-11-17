@@ -3069,25 +3069,25 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
             elem.call(this.lineatt.func);
       }
 
-      if ((btn1.length>0) && (this.fillatt.color !== 'none'))
+      if ((btn1.length > 0) && this.fillatt.hasColor())
          this.draw_g.append("svg:path")
                     .attr("d", btn1)
                     .style("stroke","none")
                     .call(this.fillatt.func)
                     .style("fill", d3.rgb(this.fillatt.color).brighter(0.5).toString());
 
-      if (btn2.length>0)
+      if (btn2.length > 0)
          this.draw_g.append("svg:path")
                     .attr("d", btn2)
                     .style("stroke","none")
                     .call(this.fillatt.func)
-                    .style("fill", this.fillatt.color === 'none' ? 'red' : d3.rgb(this.fillatt.color).darker(0.5).toString());
+                    .style("fill", !this.fillatt.hasColor() ? 'red' : d3.rgb(this.fillatt.color).darker(0.5).toString());
 
       if (cross.length > 0) {
          let elem = this.draw_g.append("svg:path")
                                .attr("d", cross)
                                .style("fill", "none");
-         if (this.lineatt.color !== 'none')
+         if (!this.lineatt.empty())
             elem.call(this.lineatt.func);
          else
             elem.style('stroke','black');
@@ -3362,7 +3362,7 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
           funcs = pmain.getGrFuncs(this.options.second_x, this.options.second_y),
           handle = null;
 
-      // if (this.lineatt.color == 'none') this.lineatt.color = 'cyan';
+      // if (this.lineatt.empty()) this.lineatt.color = 'cyan';
 
       if (this.isRH2Poly()) {
          handle = this.drawPolyBinsColor();
@@ -3945,7 +3945,7 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
       // adjust font size
       for (let j = 0; j < nlines; ++j) {
          let line = lines[j];
-         if (j>0) maxlen = Math.max(maxlen, line.length);
+         if (j > 0) maxlen = Math.max(maxlen, line.length);
          if ((j == 0) || (line.indexOf('|') < 0)) continue;
          if (first_stat === 0) first_stat = j;
          let parts = line.split("|");
@@ -3977,10 +3977,11 @@ JSROOT.define(['d3', 'painter', 'v7gpad'], (d3, jsrp) => {
                this.drawText({ align: "middle", x: width * n / num_cols, y: posy, latex: 0,
                                width: width/num_cols, height: stepy, text: parts[n], draw_g: text_g });
          } else if (lines[j].indexOf('=') < 0) {
-            if (j==0) {
+            if (j == 0) {
                has_head = true;
-               if (lines[j].length > maxlen + 5)
-                  lines[j] = lines[j].substr(0,maxlen+2) + "...";
+               let max_hlen = Math.max(maxlen, Math.round((width-2*margin_x)/stepy/0.65));
+               if (lines[j].length > max_hlen + 5)
+                  lines[j] = lines[j].substr(0,max_hlen+2) + "...";
             }
             this.drawText({ align: (j == 0) ? "middle" : "start", x: margin_x, y: posy,
                             width: width-2*margin_x, height: stepy, text: lines[j], draw_g: text_g });

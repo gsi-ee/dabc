@@ -439,7 +439,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       // adjust font size
       for (let j = 0; j < nlines; ++j) {
          let line = lines[j];
-         if (j>0) maxlen = Math.max(maxlen, line.length);
+         if (j > 0) maxlen = Math.max(maxlen, line.length);
          if ((j == 0) || (line.indexOf('|') < 0)) continue;
          if (first_stat === 0) first_stat = j;
          let parts = line.split("|");
@@ -469,8 +469,9 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          } else if (lines[j].indexOf('=') < 0) {
             if (j==0) {
                has_head = true;
-               if (lines[j].length > maxlen + 5)
-                  lines[j] = lines[j].substr(0,maxlen+2) + "...";
+               let max_hlen = Math.max(maxlen, Math.round((width-2*margin_x)/stepy/0.65));
+               if (lines[j].length > max_hlen + 5)
+                  lines[j] = lines[j].substr(0,max_hlen+2) + "...";
             }
             this.drawText({ align: (j == 0) ? "middle" : "start", x: margin_x, y: posy,
                             width: width-2*margin_x, height: stepy, text: lines[j], color: tcolor });
@@ -749,56 +750,59 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
          // Draw fill pattern (in a box)
          if (draw_fill) {
-            let fillatt = (painter && painter.fillatt) ? painter.fillatt : this.createAttFill(o_fill);
-
-            // box total height is yspace*0.7
-            // define x,y as the center of the symbol for this entry
-            let rect = this.draw_g.append("svg:rect")
-                           .attr("x", x0 + padding_x)
-                           .attr("y", Math.round(pos_y+step_y*0.1))
-                           .attr("width", tpos_x - 2*padding_x - x0)
-                           .attr("height", Math.round(step_y*0.8))
-                           .call(fillatt.func);
-            if (!fillatt.empty()) isany = true;
+            let lineatt, fillatt = (painter && painter.fillatt) ? painter.fillatt : this.createAttFill(o_fill);
             if ((lopt.indexOf('l') < 0 && lopt.indexOf('e') < 0) && (lopt.indexOf('p') < 0)) {
-               let lineatt = (painter && painter.lineatt) ? painter.lineatt : new JSROOT.TAttLineHandler(o_line);
-               rect.call(lineatt.func);
-               if (lineatt.color !== 'none') isany = true;
+               lineatt = (painter && painter.lineatt) ? painter.lineatt : new JSROOT.TAttLineHandler(o_line);
+               if (lineatt.empty()) lineatt = null;
+            }
+
+            if (!fillatt.empty() || lineatt) {
+                isany = true;
+
+               // box total height is yspace*0.7
+               // define x,y as the center of the symbol for this entry
+               let rect = this.draw_g.append("svg:path")
+                              .attr("d", `M${x0 + padding_x},${Math.round(pos_y+step_y*0.1)}v${Math.round(step_y*0.8)}h${tpos_x-2*padding_x-x0}v${-Math.round(step_y*0.8)}z`)
+                              .call(fillatt.func);
+                if (lineatt)
+                   rect.call(lineatt.func);
             }
          }
 
          // Draw line and error (when specified)
          if (draw_line || draw_error) {
             let lineatt = (painter && painter.lineatt) ? painter.lineatt : new JSROOT.TAttLineHandler(o_line);
-            this.draw_g.append("svg:path")
-               .attr("d", `M${x0 + padding_x},${mid_y}H${tpos_x - padding_x}`)
-               .call(lineatt.func);
+            if (!lineatt.empty()) {
 
-            if (draw_error)
+               isany = true;
+
                this.draw_g.append("svg:path")
-                   .attr("d", `M${mid_x},${Math.round(pos_y+step_y*0.1)}V${Math.round(pos_y+step_y*0.9)}`)
-                   .call(lineatt.func);
+                  .attr("d", `M${x0 + padding_x},${mid_y}H${tpos_x - padding_x}`)
+                  .call(lineatt.func);
 
-            if (lineatt.color !== 'none') isany = true;
+               if (draw_error)
+                  this.draw_g.append("svg:path")
+                      .attr("d", `M${mid_x},${Math.round(pos_y+step_y*0.1)}V${Math.round(pos_y+step_y*0.9)}`)
+                      .call(lineatt.func);
+            }
          }
 
          // Draw Polymarker
          if (draw_marker) {
             let marker = (painter && painter.markeratt) ? painter.markeratt : new JSROOT.TAttMarkerHandler(o_marker);
-            this.draw_g
-                .append("svg:path")
-                .attr("d", marker.create((x0 + tpos_x)/2, mid_y))
-                .call(marker.func);
-            if (marker.color !== 'none') isany = true;
+            if (!marker.empty()) {
+               isany = true;
+               this.draw_g
+                   .append("svg:path")
+                   .attr("d", marker.create((x0 + tpos_x)/2, mid_y))
+                   .call(marker.func);
+            }
          }
 
          // special case - nothing draw, try to show rect with line attributes
-         if (!isany && painter && painter.lineatt && (painter.lineatt.color !== 'none'))
-            this.draw_g.append("svg:rect")
-                       .attr("x", x0 + padding_x)
-                       .attr("y", Math.round(pos_y+step_y*0.1))
-                       .attr("width", tpos_x - 2*padding_x - x0)
-                       .attr("height", Math.round(step_y*0.8))
+         if (!isany && painter && painter.lineatt && !painter.lineatt.empty())
+            this.draw_g.append("svg:path")
+                       .attr("d", `M${x0 + padding_x},${Math.round(pos_y+step_y*0.1)}v${Math.round(step_y*0.8)}h${tpos_x-2*padding_x-x0}v${-Math.round(step_y*0.8)}z`)
                        .attr("fill", "none")
                        .call(painter.lineatt.func);
 
@@ -3840,7 +3844,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
           path_fill = null, path_err = null, path_marker = null, path_line = null,
           hints_err = null, hints_marker = null,
           do_marker = false, do_err = false,
-          endx = "", endy = "", dend = 0, my, yerr1, yerr2, bincont, binerr, mx1, mx2, midx, mmx1, mmx2,
+          dend = 0, dlw = 0, my, yerr1, yerr2, bincont, binerr, mx1, mx2, midx, mmx1, mmx2,
           text_col, text_angle, text_size;
 
       if (show_errors && !show_markers && (histo.fMarkerStyle > 1))
@@ -3856,6 +3860,10 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       }
 
       if (show_line) path_line = "";
+      
+      dlw = this.lineatt.width + JSROOT.gStyle.fEndErrorSize;
+      if (this.options.ErrorKind === 1)
+         dend = Math.floor((this.lineatt.width-1)/2);
 
       if (show_markers) {
          // draw markers also when e2 option was specified
@@ -3903,13 +3911,6 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       // instead define min and max value and made min-max drawing
       let use_minmax = ((right-left) > 3*width);
 
-      if (this.options.ErrorKind === 1) {
-         let lw = this.lineatt.width + JSROOT.gStyle.fEndErrorSize;
-         endx = "m0," + lw + "v-" + 2*lw + "m0," + lw;
-         endy = "m" + lw + ",0h-" + 2*lw + "m" + lw + ",0";
-         dend = Math.floor((this.lineatt.width-1)/2);
-      }
-
       if (draw_any_but_hist) use_minmax = true;
 
       // just to get correct values for the specified bin
@@ -3935,11 +3936,17 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             edx = Math.round((mx2-mx1)*this.options.errorX);
             mmx1 = midx - edx;
             mmx2 = midx + edx;
-            path_err += "M" + (mmx1+dend) +","+ my + endx + "h" + (mmx2-mmx1-2*dend) + endx;
+            if (this.options.ErrorKind === 1)
+               path_err += `M${mmx1+dend},${my-dlw}v${2*dlw}m0,-${dlw}h${mmx2-mmx1-2*dend}m0,-${dlw}v${2*dlw}`;
+            else
+               path_err += `M${mmx1+dend},${my}h${mmx2-mmx1-2*dend}`;
          }
-         path_err += "M" + midx + "," + (my-yerr1+dend) + endy + "v" + (yerr1+yerr2-2*dend) + endy;
+         if (this.options.ErrorKind === 1)
+            path_err += `M${midx-dlw},${my-yerr1+dend}h${2*dlw}m${-dlw},0v${yerr1+yerr2-2*dend}m${-dlw},0h${2*dlw}`;
+         else
+            path_err += `M${midx},${my-yerr1+dend}v${yerr1+yerr2-2*dend}`;
          if (hints_err !== null)
-            hints_err += "M" + (midx-edx) + "," + (my-yerr1) + "h" + (2*edx) + "v" + (yerr1+yerr2) + "h" + (-2*edx) + "z";
+            hints_err += `M${midx-edx},${my-yerr1}h${2*edx}v${yerr1+yerr2}h${-2*edx}z`;
       };
 
       let draw_bin = bin => {
@@ -5132,8 +5139,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       let dx, dy, x1, y1, binz, is_zero, colindx, last_entry = null;
 
       const flush_last_entry = () => {
-         last_entry.path += "h"+dx + "v"+last_entry.dy + "h"+(-dx) + "z";
-         last_entry.dy = 0;
+         last_entry.path += `h${dx}v${last_entry.y2-last_entry.y}h${-dx}z`;
          last_entry = null;
       };
 
@@ -5172,7 +5178,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             if (!entry) {
                entry = entries[colindx] = { path: cmd1 };
             } else if (can_merge && (entry === last_entry)) {
-               entry.dy += dy;
+               entry.y2 = y1 + dy;
                continue;
             } else {
                let ddx = x1 - entry.x, ddy = y1 - entry.y;
@@ -5180,6 +5186,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
                   let cmd2 = `m${ddx},${ddy}`;
                   entry.path += (cmd2.length < cmd1.length) ? cmd2 : cmd1;
                }
+
             }
             if (last_entry) flush_last_entry();
 
@@ -5187,7 +5194,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             entry.y = y1;
 
             if (can_merge) {
-               entry.dy = dy;
+               entry.y2 = y1 + dy;
                last_entry = entry;
             } else {
                entry.path += `h${dx}v${dy}h${-dx}z`;
@@ -5210,23 +5217,38 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /** @summary Build histogram contour lines
      * @private */
    TH2Painter.prototype.buildContour = function(handle, levels, palette, contour_func) {
-      let histo = this.getObject(),
-          kMAXCONTOUR = 2004,
-          kMAXCOUNT = 2000,
-          // arguments used in the PaintContourLine
-          xarr = new Float32Array(2*kMAXCONTOUR),
-          yarr = new Float32Array(2*kMAXCONTOUR),
-          itarr = new Int32Array(2*kMAXCONTOUR),
-          lj = 0, ipoly, poly, polys = [], np, npmax = 0,
+
+      const histo = this.getObject(),
+            kMAXCONTOUR = 2004,
+            kMAXCOUNT = 2000,
+            // arguments used in the PaintContourLine
+            xarr = new Float32Array(2*kMAXCONTOUR),
+            yarr = new Float32Array(2*kMAXCONTOUR),
+            itarr = new Int32Array(2*kMAXCONTOUR),
+            nlevels = levels.length;
+      let lj = 0, ipoly, poly, polys = [], np, npmax = 0,
           x = [0.,0.,0.,0.], y = [0.,0.,0.,0.], zc = [0.,0.,0.,0.], ir = [0,0,0,0],
           i, j, k, n, m, ljfill, count,
           xsave, ysave, itars, ix, jx;
 
-      function BinarySearch(zc) {
-         for (let kk=0;kk<levels.length;++kk)
-            if (zc<levels[kk]) return kk-1;
-         return levels.length-1;
+      const BinarySearch = zc => {
+         for (let kk = 0; kk < nlevels; ++kk)
+            if (zc < levels[kk])
+               return kk-1;
+         return nlevels-1;
       }
+
+//      // not used while slower for <100 levels
+//      const RealBinarySearch = zc => {
+//         let l = 0, r = nlevels-1;
+//         if (zc < levels[0]) return -1;
+//         if (zc >= levels[r]) return r;
+//         while (r - l > 1) {
+//            let m = Math.round((r+l)/2);
+//            if (zc < levels[m]) r = m; else l = m;
+//         }
+//         return r-1;
+//      }
 
       function PaintContourLine(elev1, icont1, x1, y1,  elev2, icont2, x2, y2) {
          /* Double_t *xarr, Double_t *yarr, Int_t *itarr, Double_t *levels */
@@ -5437,28 +5459,33 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
           func = main.getProjectionFunc();
 
       function BuildPath(xp,yp,iminus,iplus,do_close) {
-         let cmd = "", last, pnt, first, isany, matched;
+         let cmd = "", lastx, lasty, x0, y0, isany = false, matched, x, y;
          for (let i = iminus; i <= iplus; ++i) {
             if (func) {
-               pnt = func(xp[i], yp[i]);
-               pnt.x = Math.round(funcs.grx(pnt.x));
-               pnt.y = Math.round(funcs.gry(pnt.y));
+               let pnt = func(xp[i], yp[i]);
+               x = Math.round(funcs.grx(pnt.x));
+               y = Math.round(funcs.gry(pnt.y));
             } else {
-               pnt = { x: Math.round(xp[i]), y: Math.round(yp[i]) };
+               x = Math.round(xp[i]);
+               y = Math.round(yp[i]);
             }
             if (!cmd) {
-               cmd = "M" + pnt.x + "," + pnt.y; first = pnt;
-            } else if ((i == iplus) && first && (pnt.x == first.x) && (pnt.y == first.y)) {
+               cmd = `M${x},${y}`; x0 = x; y0 = y;
+            } else if ((i == iplus) && (iminus !== iplus) && (x == x0) && (y == y0)) {
                if (!isany) return ""; // all same points
                cmd += "z"; do_close = false; matched = true;
-            } else if ((pnt.x != last.x) && (pnt.y != last.y)) {
-               cmd +=  "l" + (pnt.x - last.x) + "," + (pnt.y - last.y); isany = true;
-            } else if (pnt.x != last.x) {
-               cmd +=  "h" + (pnt.x - last.x); isany = true;
-            } else if (pnt.y != last.y) {
-               cmd +=  "v" + (pnt.y - last.y); isany = true;
+            } else {
+               let dx = x - lastx, dy = y - lasty;
+               if (dx) {
+                  isany = true;
+                  cmd += dy ? `l${dx},${dy}` : `h${dx}`;
+               } else if (dy) {
+                  isany = true;
+                  cmd += `v${dy}`;
+               }
             }
-            last = pnt;
+
+            lastx = x; lasty = y;
          }
 
          if (do_close && !matched && !func)
@@ -5499,20 +5526,19 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       // try to build path which fills area to outside borders
       function BuildPathOutside(xp,yp,iminus,iplus,side) {
 
-         let points = [{ x:0, y:0 }, {x:frame_w, y:0}, {x:frame_w, y:frame_h}, {x:0, y:frame_h} ];
+         const points = [{ x:0, y:0 }, {x:frame_w, y:0}, {x:frame_w, y:frame_h}, {x:0, y:frame_h} ];
 
-         function get_intersect(i,di) {
+         const get_intersect = (i,di) => {
             let segm = { x1: xp[i], y1: yp[i], x2: 2*xp[i] - xp[i+di], y2: 2*yp[i] - yp[i+di] };
             for (let i=0;i<4;++i) {
                let res = get_segm_intersection(segm, { x1: points[i].x, y1: points[i].y, x2: points[(i+1)%4].x, y2: points[(i+1)%4].y});
                if (res) {
-
                   res.indx = i + 0.5;
                   return res;
                }
             }
             return null;
-         }
+         };
 
          let pnt1, pnt2;
          iminus--;
@@ -5527,19 +5553,19 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          // TODO: now side is always same direction, could be that side should be checked more precise
          let indx = pnt2.indx, step = side*0.5;
 
-         dd += "L" + pnt2.x + "," + pnt2.y;
+         dd += `L${pnt2.x},${pnt2.y}`;
 
          while (Math.abs(indx - pnt1.indx) > 0.1) {
             indx = Math.round(indx + step) % 4;
-            dd += "L" + points[indx].x + "," + points[indx].y;
+            dd += `L${points[indx].x},${points[indx].y}`;
             indx += step;
          }
 
-         return dd + "L" + pnt1.x + "," + pnt1.y + "z";
+         return dd + `L${pnt1.x},${pnt1.y}z`;
       }
 
       if (this.options.Contour === 14) {
-         let dd = "M0,0h"+frame_w+"v"+frame_h+"h-"+frame_w+"z";
+         let dd = `M0,0h${frame_w}v${frame_h}h${-frame_w}z`;
          if (this.options.Proj) {
             let sz = handle.j2 - handle.j1, xd = new Float32Array(sz*2), yd = new Float32Array(sz*2);
             for (let i=0;i<sz;++i) {
@@ -5594,8 +5620,8 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
    /** @summary Create poly bin
      * @private */
-   TH2Painter.prototype.createPolyBin = function(pmain, funcs, bin, text_pos) {
-      let cmd = "", acc_x = 0, acc_y = 0, ngr, ngraphs = 1, gr = null;
+   TH2Painter.prototype.createPolyBin = function(funcs, bin, text_pos) {
+      let cmd = "", grcmd = "", acc_x = 0, acc_y = 0, ngr, ngraphs = 1, gr = null;
 
       if (bin.fPoly._typename == 'TMultiGraph')
          ngraphs = bin.fPoly.fGraphs.arr.length;
@@ -5610,12 +5636,12 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          bin._sumx += (x1+x2)*len/2;
          bin._sumy += (y1+y2)*len/2;
          bin._suml += len;
-      }
+      };
 
       const flush = () => {
-         if (acc_x) { cmd += "h" + acc_x; acc_x = 0; }
-         if (acc_y) { cmd += "v" + acc_y; acc_y = 0; }
-      }
+         if (acc_x) { grcmd += "h" + acc_x; acc_x = 0; }
+         if (acc_y) { grcmd += "v" + acc_y; acc_y = 0; }
+      };
 
       for (ngr = 0; ngr < ngraphs; ++ ngr) {
          if (!gr || (ngr>0)) gr = bin.fPoly.fGraphs.arr[ngr];
@@ -5627,7 +5653,9 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
          if ((npnts > 2) && (x[0] === x[npnts-1]) && (y[0] === y[npnts-1])) npnts--;
 
-         cmd += "M"+grx+","+gry;
+         let poscmd = `M${grx},${gry}`;
+
+         grcmd = "";
 
          for (n = 1; n < npnts; ++n) {
             nextx = Math.round(funcs.grx(x[n]));
@@ -5644,7 +5672,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
                   acc_x += dx;
                } else {
                   flush();
-                  cmd += "l" + dx + "," + dy;
+                  grcmd += "l" + dx + "," + dy;
                }
 
                grx = nextx; gry = nexty;
@@ -5653,7 +5681,9 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
          if (text_pos) addPoint(grx, gry, Math.round(funcs.grx(x[0])), Math.round(funcs.gry(y[0])));
          flush();
-         cmd += "z";
+
+         if (grcmd)
+            cmd += poscmd + grcmd + "z";
       }
 
       if (text_pos) {
@@ -5701,7 +5731,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
          if ((bin.fXmin > funcs.scale_xmax) || (bin.fXmax < funcs.scale_xmin) ||
              (bin.fYmin > funcs.scale_ymax) || (bin.fYmax < funcs.scale_ymin)) continue;
 
-         cmd = this.createPolyBin(pmain, funcs, bin, this.options.Text && bin.fContent);
+         cmd = this.createPolyBin(funcs, bin, this.options.Text && bin.fContent);
 
          if (colPaths[colindx] === undefined)
             colPaths[colindx] = cmd;
@@ -5959,20 +5989,18 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             ww = Math.max(Math.round(ww - 2*dgrx), 1);
             hh = Math.max(Math.round(hh - 2*dgry), 1);
 
-            res += "M"+xx+","+yy + "v"+hh + "h"+ww + "v-"+hh + "z";
+            res += `M${xx},${yy}v${hh}h${ww}v${-hh}z`;
 
             if ((binz < 0) && (this.options.BoxStyle === 10))
-               cross += "M"+xx+","+yy + "l"+ww+","+hh + "M"+(xx+ww)+","+yy + "l-"+ww+","+hh;
+               cross += `M${xx},${yy}l${ww},${hh}m0,${-hh}l${-ww},${hh}`;
 
             if ((this.options.BoxStyle === 11) && (ww>5) && (hh>5)) {
-               let pww = Math.round(ww*0.1),
-                   phh = Math.round(hh*0.1),
-                   side1 = "M"+xx+","+yy + "h"+ww + "l"+(-pww)+","+phh + "h"+(2*pww-ww) +
-                           "v"+(hh-2*phh)+ "l"+(-pww)+","+phh + "z",
-                   side2 = "M"+(xx+ww)+","+(yy+hh) + "v"+(-hh) + "l"+(-pww)+","+phh + "v"+(hh-2*phh)+
-                           "h"+(2*pww-ww) + "l"+(-pww)+","+phh + "z";
-               if (binz<0) { btn2+=side1; btn1+=side2; }
-                      else { btn1+=side1; btn2+=side2; }
+               const pww = Math.round(ww*0.1),
+                     phh = Math.round(hh*0.1),
+                     side1 = `M${xx},${yy}h${ww}l${-pww},${phh}h${2*pww-ww}v${hh-2*phh}l${-pww},${phh}z`,
+                     side2 = `M${xx+ww},${yy+hh}v${-hh}l${-pww},${phh}v${hh-2*phh}h${2*pww-ww}l${-pww},${phh}z`;
+               if (binz < 0) { btn2 += side1; btn1 += side2; }
+                        else { btn1 += side1; btn2 += side2; }
             }
          }
       }
@@ -5987,7 +6015,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             elem.call(this.lineatt.func);
       }
 
-      if ((btn1.length > 0) && (this.fillatt.color !== 'none'))
+      if ((btn1.length > 0) && this.fillatt.hasColor())
          this.draw_g.append("svg:path")
                     .attr("d", btn1)
                     .style("stroke","none")
@@ -5999,13 +6027,13 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
                     .attr("d", btn2)
                     .style("stroke","none")
                     .call(this.fillatt.func)
-                    .style("fill", this.fillatt.color === 'none' ? 'red' : d3.rgb(this.fillatt.color).darker(0.5).toString());
+                    .style("fill", !this.fillatt.hasColor() ? 'red' : d3.rgb(this.fillatt.color).darker(0.5).toString());
 
       if (cross.length > 0) {
          let elem = this.draw_g.append("svg:path")
                                .attr("d", cross)
                                .style("fill", "none");
-         if (this.lineatt.color !== 'none')
+         if (!this.lineatt.empty())
             elem.call(this.lineatt.func);
          else
             elem.style('stroke','black');
@@ -6191,13 +6219,13 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             colindx = cntr.getContourIndex(binz/cw/ch);
             if (colindx < 0) continue;
 
-            cmd1 = "M"+handle.grx[i]+","+handle.gry[j+1];
+            cmd1 = `M${handle.grx[i]},${handle.gry[j+1]}`;
             if (colPaths[colindx] === undefined) {
                colPaths[colindx] = cmd1;
                cell_w[colindx] = cw;
                cell_h[colindx] = ch;
             } else{
-               cmd2 = "m" + (handle.grx[i]-currx[colindx]) + "," + (handle.gry[j+1] - curry[colindx]);
+               cmd2 = `m${handle.grx[i]-currx[colindx]},${handle.gry[j+1] - curry[colindx]}`;
                colPaths[colindx] += (cmd2.length < cmd1.length) ? cmd2 : cmd1;
                cell_w[colindx] = Math.max(cell_w[colindx], cw);
                cell_h[colindx] = Math.max(cell_h[colindx], ch);
@@ -6206,7 +6234,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             currx[colindx] = handle.grx[i];
             curry[colindx] = handle.gry[j+1];
 
-            colPaths[colindx] += "v"+ch+"h"+cw+"v-"+ch+"z";
+            colPaths[colindx] += `v${ch}h${cw}v${-ch}z`;
          }
       }
 
@@ -6230,7 +6258,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
               pattern.selectAll("*").remove();
 
            let npix = Math.round(factor*cntr.arr[colindx]*cell_w[colindx]*cell_h[colindx]);
-           if (npix<1) npix = 1;
+           if (npix < 1) npix = 1;
 
            let arrx = new Float32Array(npix), arry = new Float32Array(npix);
 
@@ -6249,7 +6277,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
            let path = "";
 
-           for (let n=0;n<npix;++n)
+           for (let n = 0;n < npix; ++n)
               path += this.markeratt.create(arrx[n] * cell_w[colindx], arry[n] * cell_h[colindx]);
 
            pattern.attr("width", cell_w[colindx])
@@ -6471,7 +6499,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
             res.changed = ttrect.property("current_bin") !== foundindx;
 
             if (res.changed)
-                  ttrect.attr("d", this.createPolyBin(pmain, funcs, bin))
+                  ttrect.attr("d", this.createPolyBin(funcs, bin))
                         .style("opacity", "0.7")
                         .property("current_bin", foundindx);
          }
