@@ -1340,7 +1340,6 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
 
          this.draw_kind = "nodes";
 
-         // here are up to five elements are collected, try to group them
          nodes = this.draw_g.selectAll(".grpoint")
                      .data(drawbins)
                      .enter()
@@ -1456,30 +1455,33 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
       }
 
       if (this.options.Mark) {
-         // for tooltips use markers only if nodes where not created
+         // for tooltips use markers only if nodes were not created
          let path = "", pnt, grx, gry;
 
          this.createAttMarker({ attr: graph, style: this.options.Mark - 100 });
-
+         
          this.marker_size = this.markeratt.getFullSize();
 
          this.markeratt.resetPos();
-
-         // let produce SVG at maximum 1MB
-         let maxnummarker = 1000000 / (this.markeratt.getMarkerLength() + 7), step = 1;
+         
+         let want_tooltip = !JSROOT.batch_mode && JSROOT.settings.Tooltip && (!this.markeratt.fill || (this.marker_size < 7)) && !nodes,
+             hints_marker = "", hsz = Math.max(5, Math.round(this.marker_size*0.7)),
+             maxnummarker = 1000000 / (this.markeratt.getMarkerLength() + 7), step = 1; // let produce SVG at maximum 1MB
 
          if (!drawbins)
             drawbins = this.optimizeBins(maxnummarker);
          else if (this.canOptimize() && (drawbins.length > 1.5*maxnummarker))
             step = Math.min(2, Math.round(drawbins.length/maxnummarker));
 
-         for (let n = 0; n < drawbins.length; n+=step) {
+         for (let n = 0; n < drawbins.length; n += step) {
             pnt = drawbins[n];
             grx = funcs.grx(pnt.x);
             if ((grx > -this.marker_size) && (grx < w + this.marker_size)) {
                gry = funcs.gry(pnt.y);
-               if ((gry > -this.marker_size) && (gry < h + this.marker_size))
+               if ((gry > -this.marker_size) && (gry < h + this.marker_size)) {
                   path += this.markeratt.create(grx, gry);
+                  if (want_tooltip) hints_marker += `M${grx-hsz},${gry-hsz}h${2*hsz}v${2*hsz}h${-2*hsz}z`;
+               }
             }
          }
 
@@ -1487,10 +1489,15 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
             this.draw_g.append("svg:path")
                        .attr("d", path)
                        .call(this.markeratt.func);
-            if ((nodes===null) && (this.draw_kind=="none"))
-               this.draw_kind = (this.options.Mark==101) ? "path" : "mark";
-
+            if ((nodes===null) && (this.draw_kind == "none"))
+               this.draw_kind = (this.options.Mark == 101) ? "path" : "mark";
          }
+         if (want_tooltip && hints_marker) 
+            this.draw_g.append("svg:path")
+                .attr("d", hints_marker)
+                .attr("stroke", "none")
+                .attr("fill", "none")
+                .attr("pointer-events", "visibleFill");
       }
 
       if (!JSROOT.batch_mode)
@@ -1618,7 +1625,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
    TGraphPainter.prototype.findBestBin = function(pnt) {
       if (!this.bins) return null;
 
-      let islines = (this.draw_kind=="lines"),
+      let islines = (this.draw_kind == "lines"),
           bestindx = -1,
           bestbin = null,
           bestdist = 1e10,
@@ -1659,11 +1666,9 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
 
       if (!bestbin && islines) {
 
-         bestdist = 10000;
+         bestdist = 1e10;
 
-         function IsInside(x, x1, x2) {
-            return ((x1>=x) && (x>=x2)) || ((x1<=x) && (x<=x2));
-         }
+         const IsInside = (x, x1, x2) => ((x1>=x) && (x>=x2)) || ((x1<=x) && (x<=x2));
 
          let bin0 = this.bins[0], grx0 = funcs.grx(bin0.x), gry0, posy = 0;
          for (n = 1; n < this.bins.length; ++n) {
@@ -1816,7 +1821,7 @@ JSROOT.define(['d3', 'painter', 'math', 'gpad'], (d3, jsrp) => {
             if (!hint.islines) {
                elem.style('stroke', hint.color1 == 'black' ? 'green' : 'black').style('fill','none');
             } else {
-               if (this.options.Line)
+               if (this.options.Line || this.options.Curve)
                   elem.call(this.lineatt.func);
                else
                   elem.style('stroke','black');
