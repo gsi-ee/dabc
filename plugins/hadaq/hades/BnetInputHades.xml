@@ -122,7 +122,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
 
     <Module name="TRB8b15_TdcCal">
        <!-- number of TDC channels -->
-       <NumChannels value="53"/>
+       <NumChannels value="49"/>
        <TotRMS value="0.4"/>
      <!--  <TdcMin value="0x6464"/>
        <TdcMax value="0x6466"/>-->
@@ -130,7 +130,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     
     <Module name="TRB8b1*_TdcCal">
        <!-- number of TDC channels -->
-       <NumChannels value="53"/>
+       <NumChannels value="49"/>
        <TotRMS value="0.4"/>
    <!--     <DisableCalibrationFor value="40"/>-->
 	</Module>
@@ -190,8 +190,8 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <CalibrTrigger value="0xffff"/>
 
        <!-- Hits around ch0 time selected for calibration -->
-       <TrigDWindowLow value="-100"/>
-       <TrigDWindowHigh value="100"/>
+       <TrigDWindowLow value="-20"/>
+       <TrigDWindowHigh value="80"/>
 
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
