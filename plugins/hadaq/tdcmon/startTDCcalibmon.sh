@@ -8,6 +8,8 @@ echo starting tdc analysis with runid $CALRUNID
 sleep 1
 TDCMONHOME=/home/hadaq/local/tdcmon/dabc
 cd $TDCMONHOME
+rm -rf tmp/*
+rm -rf cal/*
 for servernode in  08 09 10 11 14 15 16 
 do
   echo ------------------------------------

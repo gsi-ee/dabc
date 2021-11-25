@@ -11,7 +11,7 @@ void first()
    // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
-   base::ProcMgr::instance()->SetHistFilling(2);
+   base::ProcMgr::instance()->SetHistFilling(2); //2
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 491);
@@ -23,6 +23,9 @@ void first()
    // enable HADES raw data quality monitoring, update histos every 5 seconds
    hadaq::TdcProcessor::SetHadesMonitorInterval(5);
 
+   
+   hadaq::TdcProcessor::SetDefaults(600,50, 2);
+   
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
@@ -35,6 +38,8 @@ void first()
 
    // [min..max] range for HUB ids
    hadaq::TrbProcessor::SetHUBRange(0x100, 0x100);
+   
+   hadaq::TdcProcessor::SetIgnoreCalibrMsgs(true);
 
    // when first argument true - TRB/TDC will be created on-the-fly
    // second parameter is function name, called after elements are created
@@ -93,15 +98,19 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);
       if (tdc==0) continue;
 
-      if ((tdc->GetID() >= 0x5000) && (tdc->GetID() < 0x6200))
-         tdc->SetTotUpperLimit(2000);
+      //if ((tdc->GetID() >= 0x5000) && (tdc->GetID() < 0x6200))
+         tdc->SetTotUpperLimit(200); // 2000
 
       //printf("Configure %s!\n", tdc->GetName());
 
-      // tdc->SetUseLastHit(true);
+      tdc->SetUseLastHit(true);
 
-      //for (unsigned nch=2;nch<tdc->NumChannels();nch++)
-      //   tdc->SetRefChannel(nch, 1, 0xffff, 2000,  -10., 10.);
+      for (unsigned nch=1;nch<tdc->NumChannels();nch++)
+         tdc->SetRefChannel(nch, 0, 0xffff, 2000,  -10., 10.);
+      
+   
+    
+    
    }
 }
 
