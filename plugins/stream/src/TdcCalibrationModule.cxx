@@ -56,6 +56,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fEdges = Cfg("EdgeMask", cmd).AsUInt(1);
    fTdcMin = Cfg("TdcMin", cmd).AsUIntVect();
    fTdcMax = Cfg("TdcMax", cmd).AsUIntVect();
+   fTdcPaired = Cfg("TdcPaired", cmd).AsUIntVect();
    fTotStatLimit = Cfg("TotStat", cmd).AsInt(0);
    fTotRMSLimit = Cfg("TotRMS", cmd).AsDouble(0.);
 
@@ -353,6 +354,10 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
 
    if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
    if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
+
+   for (unsigned n = 0; n < fTdcPaired.size(); ++n)
+      if (fTdcPaired[n] == tdc->GetID())
+         tdc->SetPairedChannels(true);
 
    tdc->UseExplicitCalibration();
 
