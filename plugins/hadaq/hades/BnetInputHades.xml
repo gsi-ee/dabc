@@ -75,12 +75,13 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
 
     <!--  Thread name="SpecialThrd" affinity="+1"/-->
 
-    <!-- special configuration for START detector -->
+    <!-- special configuration for START detector, mark TDC with paired channels -->
     <Module name="TRB888*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
+       <TdcPaired value="[0x5000,0x5001,0x5002,0x5003,0x5004,0x5005,0x5006,0x5007]"/>
     </Module>
-    
+
 <!-- special configuration for VETO detector -->
     <Module name="TRB889*_TdcCal">
        <!-- number of TDC channels -->
@@ -89,7 +90,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <TdcMax value="0x5012"/>
         <DisableCalibrationFor value="25"/>-->
     </Module>
-    
+
 
     <!-- special configuration for ECAL HUBs -->
     <Module name="TRB8a*_TdcCal">
@@ -127,20 +128,20 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
      <!--  <TdcMin value="0x6464"/>
        <TdcMax value="0x6466"/>-->
 	</Module>
-    
+
     <Module name="TRB8b1*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
        <TotRMS value="0.4"/>
    <!--     <DisableCalibrationFor value="40"/>-->
 	</Module>
-	
+
      <Module name="TRB8b0*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
        <TotRMS value="0.4"/>
      <!--  <DisableCalibrationFor value="[25,36]"/>-->
-	 
+
      </Module>
       <!-- special configuration for iTOF HUBs -->
      <Module name="TRB8d0*_TdcCal">
