@@ -39,6 +39,8 @@ namespace stream {
    protected:
 
       int fNumSub;                  // number of sub-modules
+      int fNumEv;                   // number of precessed events
+      int fMaxNumEv;                // maximal number of events to process
       bool fReplace;                // replace or not TDC messages
       DabcProcMgr *fProcMgr;        // central process manager
       hadaq::HldProcessor *fHLD;    // processor of HLD events

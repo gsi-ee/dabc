@@ -39,11 +39,14 @@ stream::RecalibrateModule::RecalibrateModule(const std::string &name, dabc::Comm
    dabc::ModuleAsync(name, cmd),
    fNumSub(0),
    fReplace(false),
-   fProcMgr(0),
-   fHLD(0)
+   fProcMgr(nullptr),
+   fHLD(nullptr)
 {
    fNumSub = Cfg("NumSub",cmd).AsInt(1);
    fReplace = Cfg("Replace",cmd).AsBool(true);
+
+   fNumEv = 0;
+   fMaxNumEv = Cfg("MaxNumEv",cmd).AsInt(0);
 
    EnsurePorts(1, 1, fReplace ? "" : dabc::xmlWorkPool);
 
@@ -107,6 +110,7 @@ bool stream::RecalibrateModule::retransmit()
             //DOUT0("Buffer size %u Original size %u", buf.GetTotalSize(), tgt.distance_to(resbuf));
 
             while (iter.NextEvent()) {
+               fNumEv++;
                unsigned len = fHLD->TransformEvent(iter.evnt(), iter.evntsize(), tgt(), tgt.rawsize());
                if (len==0) { EOUT("Fail to transform HLD event"); break; }
                if (tgt.shift(len)!=len) { EOUT("no enough space to shift to next event"); exit(5); break; }
@@ -124,6 +128,8 @@ bool stream::RecalibrateModule::retransmit()
       }
 
       SendToAllOutputs(buf);
+      if ((fMaxNumEv > 0) && (fNumEv >= fMaxNumEv))
+         dabc::mgr.StopApplication();
 
       return true;
    }
