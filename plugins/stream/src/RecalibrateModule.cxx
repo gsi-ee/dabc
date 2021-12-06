@@ -123,7 +123,7 @@ bool stream::RecalibrateModule::retransmit()
             buf = resbuf;
          }
 
-      } else {
+      } else if (buf.GetTypeId() != dabc::mbt_EOF) {
          DOUT0("Buffer of unsupported type %d", buf.GetTypeId());
       }
 
