@@ -117,6 +117,10 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
          tdc->UseExplicitCalibration();
          if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
          if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
+         
+         for (unsigned k = 0; k < fTdcPaired.size(); ++k)
+            if (fTdcPaired[k] == fTDCs[n])
+               tdc->SetPairedChannels(true);
       }
       item.SetField("tdc", fTDCs);
    } else {
