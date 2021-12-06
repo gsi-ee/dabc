@@ -168,7 +168,9 @@ namespace dabc {
           * If specified, supposed that I/O object is double-derived from DataOutput and Addon */
          virtual WorkerAddon* Write_GetAddon() { return 0; }
 
-         void ShowInfo(int lvl, const std::string &info);
+         /** Show info for data output
+          * Returns true if value was just printed on the output */
+         bool ShowInfo(int lvl, const std::string &info);
 
       public:
 

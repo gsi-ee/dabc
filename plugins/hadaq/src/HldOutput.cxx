@@ -180,8 +180,9 @@ bool hadaq::HldOutput::StartNewFile()
    if (fRunSlave && fRfio)
       DOUT1("File %s is open for writing", CurrentFileName().c_str());
 
-   ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
-   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
+   std::string info = dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
+   if (!ShowInfo(0, info))
+      DOUT0("%s", info.c_str());
 
    fLastRunNumber = fRunNumber;
 
@@ -252,8 +253,9 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    bool is_events = (buf.GetTypeId() == hadaq::mbt_HadaqEvents);
 
    if (!is_events && !is_eol && !is_subev) {
-      ShowInfo(-1, dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
-      EOUT("Discard buffer %u", buf.GetTypeId());
+      std::string info = dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()); 
+      if (!ShowInfo(-1, info.c_str()))
+         EOUT("%s", info.c_str());
 
       return dabc::do_Error;
    }
@@ -279,8 +281,6 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
             continue;
          }
 
-//          ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
-//                     nextrunid, nextrunid, fRunNumber,fRunNumber));
          DOUT1("HldOutput Finds New Runid %d or 0x%x from EPICS in event header (previous: %d or 0x%x)",
                   nextrunid, nextrunid, fRunNumber, fRunNumber);
          fRunNumber = nextrunid;

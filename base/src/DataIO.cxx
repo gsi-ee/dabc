@@ -58,21 +58,23 @@ void dabc::DataOutput::SetInfoParName(const std::string &name)
 }
 
 
-void dabc::DataOutput::ShowInfo(int lvl, const std::string &info)
+bool dabc::DataOutput::ShowInfo(int lvl, const std::string &info)
 {
    dabc::InfoParameter par;
    if (!fInfoName.empty())
       par = dabc::mgr.FindPar(fInfoName);
 
    if (par.null()) {
-      if (lvl<0)
+      if (lvl < 0)
          EOUT(info.c_str());
       else
-         DOUT1(info.c_str());
-   } else {
-      par.SetValue(info);
-      par.FireModified();
-   }
+         DOUT0(info.c_str());
+      return true;
+   } 
+   
+   par.SetValue(info);
+   par.FireModified();
+   return false;
 }
 
 
