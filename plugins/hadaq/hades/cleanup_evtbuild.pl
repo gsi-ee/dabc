@@ -4,7 +4,7 @@ use strict;
 use Data::Dumper;
 
 #- Kill daq_netmem and daq_evtbuild if remained
-
+# old EBS, deprecated
 # my $pname = "daq_netmem";
 # my @out_list = `ps -C $pname`;
 # &killSoftProcs(\@out_list, $pname);
@@ -40,15 +40,15 @@ sleep 10;
 
 # JAM 8-2017 to ensure dabc processes have gone, kill everything that still remains on the hard way: 
 # for the moment, test dabc shutdown again-
+# JAM 12-2021: do not force sockets to wait state here?
 
+#$pname = "dabc_exe.head";
+#@out_list = `ps -C $pname`;
+#&killHardProcs(\@out_list, $pname);
 
-$pname = "dabc_exe.head";
-@out_list = `ps -C $pname`;
-&killHardProcs(\@out_list, $pname);
-
-$pname = "dabc_exe.jun20";
-@out_list = `ps -C $pname`;
-&killHardProcs(\@out_list, $pname);
+#$pname = "dabc_exe.jun20";
+#@out_list = `ps -C $pname`;
+#&killHardProcs(\@out_list, $pname);
 
 #$pname = "dabc_exe";
 #@out_list = `ps -C $pname`;
@@ -69,17 +69,17 @@ print "                ...done.\n";
 
 #- Remove shared memory segments if remained
 
-my $shm_dir = "/dev/shm";
+#my $shm_dir = "/dev/shm";
+#
+#opendir(DIR, $shm_dir) or die "Could not open $shm_dir: $!";
 
-opendir(DIR, $shm_dir) or die "Could not open $shm_dir: $!";
+#my @shm_list = grep(/\w+\.shm/, readdir(DIR));
 
-my @shm_list = grep(/\w+\.shm/, readdir(DIR));
-
-foreach my $shmem (@shm_list){
-    my $cmd = "rm $shm_dir/$shmem";
-    #print "cmd: $cmd\n";
-    system($cmd);
-}
+#foreach my $shmem (@shm_list){
+#    my $cmd = "rm $shm_dir/$shmem";
+#    #print "cmd: $cmd\n";
+#    system($cmd);
+#}
 
 ################### END OF MAIN ###################
 
