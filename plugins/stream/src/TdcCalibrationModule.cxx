@@ -117,10 +117,12 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
          tdc->UseExplicitCalibration();
          if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
          if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
-         
+
          for (unsigned k = 0; k < fTdcPaired.size(); ++k)
-            if (fTdcPaired[k] == fTDCs[n])
+            if (fTdcPaired[k] == fTDCs[n]) {
                tdc->SetPairedChannels(true);
+               tdc->SetToTRange(30., 20., 65.);
+            }
       }
       item.SetField("tdc", fTDCs);
    } else {
@@ -360,8 +362,10 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
    if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
 
    for (unsigned n = 0; n < fTdcPaired.size(); ++n)
-      if (fTdcPaired[n] == tdc->GetID())
+      if (fTdcPaired[n] == tdc->GetID()) {
          tdc->SetPairedChannels(true);
+         tdc->SetToTRange(30., 20., 65.);
+      }
 
    tdc->UseExplicitCalibration();
 
