@@ -20,13 +20,26 @@ use Data::Dumper;
 # &killHardProcs(\@out_list, $pname);
 ##########################################
 
-my $pname = "dabc_exe.head";
-my @out_list = `ps -C $pname`;
+
+# JAM 8-12-2021: shutdown builders first, then inputs:
+my $pname = "dabc_exe";
+my @out_list = `ps ax | grep $pname | grep Builder`;
 &killKeyboardInterrupt(\@out_list, $pname);
 
-$pname = "dabc_exe.jun20";
-@out_list = `ps -C $pname`;
+print "waiting 10 seconds for files to close properly...\n";
+sleep 10;
+
+@out_list = `ps ax | grep $pname | grep Input`;
 &killKeyboardInterrupt(\@out_list, $pname);
+
+### old: kill everything at once
+#my $pname = "dabc_exe.head";
+#my @out_list = `ps -C $pname`;
+#&killKeyboardInterrupt(\@out_list, $pname);
+
+#$pname = "dabc_exe.jun20";
+#@out_list = `ps -C $pname`;
+#&killKeyboardInterrupt(\@out_list, $pname);
 
 #$pname = "dabc_exe";
 #@out_list = `ps -C $pname`;
@@ -35,8 +48,8 @@ $pname = "dabc_exe.jun20";
 
 # JAM 8-2017 this might be required to give epics time for distribution of new runid?
 
-print "waiting 10 seconds for files to close properly...\n";
-sleep 10;
+#print "waiting 10 seconds for files to close properly...\n";
+#sleep 10;
 
 # JAM 8-2017 to ensure dabc processes have gone, kill everything that still remains on the hard way: 
 # for the moment, test dabc shutdown again-
