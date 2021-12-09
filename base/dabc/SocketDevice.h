@@ -43,6 +43,7 @@ namespace dabc {
          std::string            fBindHost;   // host name used for socket binding
          int                    fBindPort;   // selected port number
          std::string            fCmdChannelId; // server id of command channel, which will redirect sockets
+         bool                   fDebugMode;   // debug mode
 
          virtual double ProcessTimeout(double last_diff);
 

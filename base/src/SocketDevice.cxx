@@ -87,11 +87,11 @@ namespace dabc {
          char fOutBuf[SocketDevice::ProtocolMsgSize];
       public:
 
-         SocketProtocolAddon(int connfd, SocketDevice* dev, NewConnectRec* rec, void *redirect = nullptr) :
+         SocketProtocolAddon(int connfd, SocketDevice *dev, NewConnectRec *rec, void *redirect = nullptr) :
             dabc::SocketIOAddon(connfd),
             fDevice(dev),
             fRec(rec),
-            fState(rec==0 ? stServerProto : stClientProto)
+            fState(!rec ? stServerProto : stClientProto)
          {
             if (redirect) {
                fState = stRedirect;
@@ -140,6 +140,8 @@ namespace dabc {
                   // do like we receive input buffer ourself
                   fDevice->ServerProtocolRequest(this, fInBuf, fOutBuf);
                   StartSend(fOutBuf, SocketDevice::ProtocolMsgSize);
+                  if (fDevice->fDebugMode)
+                     DOUT0("scktclnt: sending protocol reply via socket %d", Socket());
                   break;
                default:
                   EOUT("Wrong state %d", fState);
@@ -193,7 +195,8 @@ dabc::SocketDevice::SocketDevice(const std::string &name, Command cmd) :
    fConnRecs(),
    fProtocols(),
    fConnCounter(0),
-   fCmdChannelId()
+   fCmdChannelId(),
+   fDebugMode(false)
 {
    fBindHost = Cfg("host", cmd).AsStr();
    fBindPort = Cfg("port", cmd).AsInt(-1);
@@ -351,7 +354,7 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
 
          DOUT2("****** SOCKET START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str());
 
-         NewConnectRec* rec = 0;
+         NewConnectRec* rec = nullptr;
 
          if (req.IsServerSide()) {
 
@@ -361,7 +364,7 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
          } else {
 
             SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(req.GetServerId());
-            if (client!=0) {
+            if (client) {
 
                // try to make little bit faster than timeout expire why we need
                // some time for the connection protocol
@@ -377,9 +380,9 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
 
          // reply remote command that one other side can start connection
 
-         req.ReplyRemoteCommand(rec!=0);
+         req.ReplyRemoteCommand(rec!=nullptr);
 
-         if (rec==0) return cmd_false;
+         if (!rec) return cmd_false;
 
          rec->fLocalCmd = cmd;
 
@@ -413,20 +416,19 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
       if (typ == "Server") {
          DOUT2("SocketDevice:: create server protocol for socket %d connid %s", fd, connid.c_str());
 
-         SocketProtocolAddon* proto = new SocketProtocolAddon(fd, this, 0);
+         SocketProtocolAddon* proto = new SocketProtocolAddon(fd, this, nullptr);
 
          thread().MakeWorkerFor(proto, connid);
 
          LockGuard guard(DeviceMutex());
          fProtocols.push_back(proto);
-      } else
-      if (typ == "Client") {
-         SocketProtocolAddon* proto = 0;
+      } else if (typ == "Client") {
+         SocketProtocolAddon* proto = nullptr;
 
          {
             LockGuard guard(DeviceMutex());
             NewConnectRec* rec = _FindRec(connid.c_str());
-            if (rec==0) {
+            if (!rec) {
                EOUT("Client connected for not exiting rec %s", connid.c_str());
                close(fd);
                cmd_res = cmd_false;
@@ -439,13 +441,12 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
             }
          }
          if (proto) thread().MakeWorkerFor(proto, connid);
-      } else
-      if (typ == "Error") {
-         NewConnectRec* rec = 0;
+      } else if (typ == "Error") {
+         NewConnectRec* rec = nullptr;
          {
             LockGuard guard(DeviceMutex());
             rec = _FindRec(connid.c_str());
-            if (rec==0) {
+            if (!rec) {
                EOUT("Client error for not existing rec %s", connid.c_str());
                cmd_res = cmd_false;
             } else {
@@ -458,12 +459,11 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
          if (rec) DestroyRec(rec, false);
       } else
          cmd_res = cmd_false;
-   } else
-   if (cmd.IsName("RedirectConnect")) {
+   } else if (cmd.IsName("RedirectConnect")) {
       int fd = cmd.GetInt("Socket");
       Buffer buf = cmd.GetRawData();
 
-      SocketProtocolAddon* proto = new SocketProtocolAddon(fd, this, 0, buf.SegmentPtr());
+      SocketProtocolAddon *proto = new SocketProtocolAddon(fd, this, nullptr, buf.SegmentPtr());
 
       thread().MakeWorkerFor(proto, fCmdChannelId);
 
@@ -472,6 +472,8 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
 
       cmd_res = cmd_true;
 
+   } else if (cmd.IsName("EnableDebug")) {
+      fDebugMode = true;
    } else {
       cmd_res = dabc::Device::ExecuteCommand(cmd);
    }
@@ -513,7 +515,7 @@ bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char
 
    {
       LockGuard guard(DeviceMutex());
-      if ((rec==0) || !fConnRecs.has_ptr(rec)) {
+      if (!rec || !fConnRecs.has_ptr(rec)) {
          EOUT("Protocol completed without rec %p", rec);
          fProtocols.remove(proc);
          destr = true;
@@ -547,15 +549,15 @@ bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char
 
 void dabc::SocketDevice::RemoveProtocolAddon(SocketProtocolAddon* proc, bool res)
 {
-   if (proc==0) return;
+   if (!proc) return;
 
    NewConnectRec* rec = proc->fRec;
 
    {
       LockGuard guard(DeviceMutex());
-      if (rec!=0) {
+      if (rec) {
          fConnRecs.remove(rec);
-         rec->fProtocol = 0;
+         rec->fProtocol = nullptr;
       } else
          fProtocols.remove(proc);
    }

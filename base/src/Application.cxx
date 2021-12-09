@@ -21,7 +21,7 @@
 #include "dabc/Configuration.h"
 #include "dabc/Url.h"
 
-dabc::Application::Application(const char* classname) :
+dabc::Application::Application(const char *classname) :
    Worker(dabc::mgr(), xmlAppDfltName),
    fAppClass(classname ? classname : typeApplication),
    fInitFunc(0),
@@ -239,9 +239,9 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    dabc::Configuration* cfg = dabc::mgr()->cfg();
 
    while (cfg->NextCreationNode(node, xmlDeviceNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
-      const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      if ((name==0) || (clname==0)) continue;
+      const char *name = Xml::GetAttr(node, xmlNameAttr);
+      const char *clname = Xml::GetAttr(node, xmlClassAttr);
+      if (!name || !clname) continue;
 
       fAppDevices.push_back(name);
 
@@ -249,12 +249,15 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
          EOUT("Fail to create device %s class %s", name, clname);
          return cmd_false;
       }
+
+      if (fConnDebug)
+         dabc::mgr.FindDevice(name).Submit(dabc::Command("EnableDebug"));
    }
 
    while (cfg->NextCreationNode(node, xmlThreadNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
-      const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
+      const char *name = Xml::GetAttr(node, xmlNameAttr);
+      const char *clname = Xml::GetAttr(node, xmlClassAttr);
+      const char *devname = Xml::GetAttr(node, xmlDeviceAttr);
       if (name==0) continue;
       if (clname==0) clname = dabc::typeThread;
       if (devname==0) devname = "";
@@ -263,7 +266,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    }
 
    while (cfg->NextCreationNode(node, xmlMemoryPoolNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      const char *name = Xml::GetAttr(node, xmlNameAttr);
       fAppPools.push_back(name);
       DOUT2("Create memory pool %s", name);
       if (!dabc::mgr.CreateMemoryPool(name)) {
@@ -273,9 +276,9 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    }
 
    while (cfg->NextCreationNode(node, xmlModuleNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
-      const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
+      const char *name = Xml::GetAttr(node, xmlNameAttr);
+      const char *clname = Xml::GetAttr(node, xmlClassAttr);
+      const char *thrdname = Xml::GetAttr(node, xmlThreadAttr);
       if (clname==0) continue;
       if (thrdname==0) thrdname="";
 
@@ -327,14 +330,14 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
 
    while (cfg->NextCreationNode(node, xmlConnectionNode, false)) {
 
-      const char* outputname = Xml::GetAttr(node, "output");
-      const char* inputname = Xml::GetAttr(node, "input");
+      const char *outputname = Xml::GetAttr(node, "output");
+      const char *inputname = Xml::GetAttr(node, "input");
 
       // output and input should always be specified
       if ((outputname==0) || (inputname==0)) continue;
 
-      const char* kind = Xml::GetAttr(node, "kind");
-      const char* lst = Xml::GetAttr(node, "list");
+      const char *kind = Xml::GetAttr(node, "kind");
+      const char *lst = Xml::GetAttr(node, "list");
 
       std::vector<std::string> arr;
 
