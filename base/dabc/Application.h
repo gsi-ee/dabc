@@ -107,6 +107,7 @@ namespace dabc {
          bool               fSelfControl;   ///< when true, application itself decide when stop main loop
 
          double             fConnTimeout;   ///< time for connecting all modules, default 5s
+         bool               fConnDebug;     ///< period of connection debug mode for connections, default false
 
          std::vector<std::string> fAppDevices;   ///< list of devices, created by application
          std::vector<std::string> fAppPools;     ///< list of pools, created by application

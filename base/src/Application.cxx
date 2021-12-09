@@ -43,6 +43,7 @@ dabc::Application::Application(const char* classname) :
    fSelfControl = Cfg("self").AsBool(true);
 
    fConnTimeout = Cfg("ConnTimeout").AsDouble(5);
+   fConnDebug = Cfg("ConnDebug").AsBool(false);
 
    PublishPars("$CONTEXT$/App");
 }
@@ -388,6 +389,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    dabc::Command cmd("ActivateConnections");
    cmd.SetTimeout(fConnTimeout);
    cmd.SetReceiver(dabc::Manager::ConnMgrName());
+   cmd.SetBool("ConnDebug", fConnDebug);
 
    cmd.SetRef("StateCmd", statecmd);
    cmd.SetStr("StateCmdTarget", tgtstate);

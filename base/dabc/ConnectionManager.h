@@ -141,6 +141,8 @@ namespace dabc {
          Command            fConnCmd;          ///< actual global command for connections establishing/closing
          int                fDoingConnection;  ///< flag indicates that about connection activity: 0 - nothing, -1 - closing, 1 - establishing
          int                fConnCounter;      ///< counter for issued connections
+         bool               fConnDebug;        ///< extra debug output during running connections
+         dabc::TimeStamp    fConnDebugTm;      ///< time to check debug output
 
          /** \brief Analyze reply of the command, send to the device */
          void HandleConnectRequestCmdReply(CmdConnectionManagerHandle cmd);

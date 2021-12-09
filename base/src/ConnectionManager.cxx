@@ -199,16 +199,31 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 {
    if (fDoingConnection==0) return -1.;
 
+   if (fConnDebug && fConnDebugTm.Expired(0.5)) {
+      std::string msg = dabc::format("NRecs:%d", (int) fRecs.GetSize());
+
+      for (unsigned n = 0; n < fRecs.GetSize(); n++) {
+         ConnectionRequestFull req = fRecs[n];
+         if (!req.null())
+         msg += dabc::format(" pr:%d", req.progress());
+      }
+
+      DOUT0("Conn progres: %s ", msg.c_str());
+
+      fConnDebugTm.GetNow();
+   }
+
+
    double mindelay = 1.;
 
-   for (unsigned n=0; n<fRecs.GetSize(); n++) {
+   for (unsigned n = 0; n < fRecs.GetSize(); n++) {
 
       ConnectionRequestFull req = fRecs[n];
       if (req.null()) continue;
 
       double tm = req()->CheckDelay(last_diff);
-      if (tm>0) {
-         if (tm<mindelay) mindelay = tm;
+      if (tm > 0) {
+         if (tm < mindelay) mindelay = tm;
          continue;
       }
 
@@ -383,8 +398,8 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
       return cmd_false;
 
-   } else
-   if (cmd.IsName("ActivateConnections")) {
+   } else if (cmd.IsName("ActivateConnections")) {
+
       fConnCmd.ReplyFalse();
 
       DOUT2("Start processing of connections  number %u", fRecs.GetSize());
@@ -392,12 +407,14 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
       fDoingConnection = 1;
       fConnCmd = cmd;
 
+      fConnDebug = cmd.GetBool("ConnDebug");
+
       ActivateTimeout(0.);
 
       return cmd_postponed;
 
-   } else
-   if (cmd.IsName("ShutdownConnection")) {
+   } else if (cmd.IsName("ShutdownConnection")) {
+
       fConnCmd.ReplyFalse();
 
       fDoingConnection = -1;
