@@ -1,12 +1,11 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="app1" host="master" port="5432"/>
-  <Context name="app2" host="node01" port="5433"/>
-  <Context name="app3" host="node02" port="5434"/>
-  <Context name="app4" host="node03" port="5435"/>
+  <Context name="app1" host="localhost" port="5432"/>
+  <Context name="app2" host="localhost" port="5433"/>
+  <Context name="app3" host="localhost" port="5434"/>
+  <Context name="app4" host="localhost" port="5435"/>
   <Context name="*">
     <Run>
-      <lib value="libDabcVerbs.so"/>
       <lib value="libDabcNetTest.so"/>
       <debuglevel value="1"/>
       <debugger value="false"/>
@@ -17,36 +16,41 @@
       <copycfg value="false"/>
       <runtime value="10"/>
     </Run>
+
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-    
+
+    <Application ConnTimeout="15"/>
+
+    <Device name="NetDev" class="dabc::SocketDevice"/>
+
     <!-- this is configuration of Sender module, which produces data traffic -->
-    
+
     <Module name="Sender" class="NetTestSenderModule">
        <NumOutputs value="${DABCNUMNODES}"/>
        <!--Kind value can be "cmd-test", "chaotic", "regular" -->
        <Kind value="chaotic"/>
-       <OutputPort name="*" queue="5" rate="OutRate"/>
+       <OutputPort name="*" queue="5" rate="OutRate" timeout="12"/>
        <OutRate width="5" prec="3" low="0" up="50" debug="1"/>
        <CmdExeTime width="5" prec="3" units="ms" low="0" up="50" debug="1"/>
     </Module>
-    
+
     <!-- this is configuration of Receiver module - just consuming data from receivers -->
-    
+
     <Module name="Receiver" class="NetTestReceiverModule">
        <NumInputs value="${DABCNUMNODES}"/>
-       <InputPort name="*" queue="10" rate="InpRate"/>
+       <InputPort name="*" queue="10" rate="InpRate" timeout="12"/>
        <InpRate width="5" prec="3" low="0" up="50" debug="1"/>
     </Module>
-    
-    <!-- Network device required to establish connections between application modules 
+
+    <!-- Network device required to establish connections between application modules
          Connection specifies how modules are connected in the network. pool attribute
          required for verbs transport, while memory pool should be registered by verbs -->
-    
+
     <Device name="NetDev" class="dabc::SocketDevice"/>
-    <Connection kind="all-to-all" device="NetDev" output="Sender" input="Receiver" pool="Pool"/>
-    
+    <Connection kind="all-to-all" device="NetDev" output="Sender" input="Receiver" pool="Pool" list="[localhost:5432,localhost:5433,localhost:5434,localhost:5435]"/>
+
   </Context>
 </dabc>

@@ -332,25 +332,39 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       const char* kind = Xml::GetAttr(node, "kind");
       const char* lst = Xml::GetAttr(node, "list");
 
+      std::vector<std::string> arr;
+
+      if (lst && *lst) {
+         dabc::RecordField fld(cfg->ResolveEnv(lst));
+         arr = fld.AsStrVect();
+      }
+
       if (kind && (strcmp(kind,"all-to-all")==0)) {
-         nconn++;
-         int numnodes = dabc::mgr.NumNodes();
+         int numnodes = 1;
+         if (arr.size() > 0)
+            numnodes = arr.size();
+         else
+            dabc::mgr.NumNodes();
 
          DOUT2("Create all-to-all connections for %d nodes", numnodes);
 
-         for (int nsender=0; nsender<numnodes; nsender++)
-            for (int nreceiver=0;nreceiver<numnodes;nreceiver++) {
-               std::string port1 = dabc::Url::ComposePortName(nsender, dabc::format("%s/Output", outputname), nreceiver);
+         for (int nsender = 0; nsender < numnodes; nsender++)
+            for (int nreceiver = 0; nreceiver<numnodes; nreceiver++) {
+               std::string port1, port2;
 
-               std::string port2 = dabc::Url::ComposePortName(nreceiver, dabc::format("%s/Input", inputname), nsender);
+               if (arr.size() == 0) {
+                  port1 = dabc::Url::ComposePortName(nsender, dabc::format("%s/Output", outputname), nreceiver);
+                  port2 = dabc::Url::ComposePortName(nreceiver, dabc::format("%s/Input", inputname), nsender);
+               } else {
+                  port1 = dabc::format("dabc://%s/%s/Output%d", arr[nsender].c_str(), outputname, nreceiver);
+                  port2 = dabc::format("dabc://%s/%s/Input%d", arr[nreceiver].c_str(), inputname, nsender);
+               }
 
                dabc::ConnectionRequest req = dabc::mgr.Connect(port1, port2);
                req.SetConfigFromXml(node);
+               if (!req.null()) nconn++;
             }
-      } else
-      if (lst && *lst) {
-         dabc::RecordField fld(cfg->ResolveEnv(lst));
-         std::vector<std::string> arr = fld.AsStrVect();
+      } else if (arr.size() > 0) {
          for (unsigned n = 0; n < arr.size(); ++n) {
             std::string out = dabc::replace_all(cfg->ResolveEnv(outputname), "%name%", arr[n]),
                         inp = dabc::replace_all(cfg->ResolveEnv(inputname), "%name%", arr[n]),
