@@ -100,7 +100,7 @@ DAQDISK - switches disk demon mode on/off
        <NumBuffers value="5000"/>
     </MemoryPool>
 
-    <Device name="NetDev" class="dabc::SocketDevice"/>
+    <Device name="NetDev" class="dabc::SocketDevice" ConnDebug="true"/>
 
     <Module name="Combiner" class="hadaq::CombinerModule">
 
