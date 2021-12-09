@@ -235,7 +235,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
 <!--        <InputPort name="Input2" url="nhadaq://host:50002"/> -->
-       <OutputPort name="Output*" optional="true" queue="300"/>
+       <OutputPort name="Output*" optional="true" queue="300" timeout="100"/>
 
        <AccountLostEventDiff value="false"/>
        <ExtraDebug value="false"/>
