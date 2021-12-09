@@ -93,14 +93,14 @@ DAQDISK - switches disk demon mode on/off
     <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
 
-    <Application ConnTimeout="100"/>
+    <Application ConnTimeout="100"  ConnDebug="true"/>
 
     <MemoryPool name="Pool">
        <BufferSize value="2000000"/>
        <NumBuffers value="5000"/>
     </MemoryPool>
 
-    <Device name="NetDev" class="dabc::SocketDevice" ConnDebug="true"/>
+    <Device name="NetDev" class="dabc::SocketDevice"/>
 
     <Module name="Combiner" class="hadaq::CombinerModule">
 
