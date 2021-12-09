@@ -393,8 +393,6 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    cmd.SetRef("StateCmd", statecmd);
    cmd.SetStr("StateCmdTarget", tgtstate);
 
-   if (fConnDebug)
-
    dabc::mgr.Submit(Assign(cmd));
 
    return cmd_postponed;
