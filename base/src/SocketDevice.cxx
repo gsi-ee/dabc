@@ -87,13 +87,13 @@ namespace dabc {
          char fOutBuf[SocketDevice::ProtocolMsgSize];
       public:
 
-         SocketProtocolAddon(int connfd, SocketDevice* dev, NewConnectRec* rec, void* redirect = 0) :
+         SocketProtocolAddon(int connfd, SocketDevice* dev, NewConnectRec* rec, void *redirect = nullptr) :
             dabc::SocketIOAddon(connfd),
             fDevice(dev),
             fRec(rec),
             fState(rec==0 ? stServerProto : stClientProto)
          {
-            if (redirect!=0) {
+            if (redirect) {
                fState = stRedirect;
                memcpy(fInBuf, redirect, SocketDevice::ProtocolMsgSize); // as it was received
             }

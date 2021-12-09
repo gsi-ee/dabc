@@ -117,6 +117,7 @@ namespace dabc {
          // each time it is reconnected, it will append special command to register itself in remote master
          bool               fMasterConn;
          std::string        fClientNameSufix;  ///< name suffix, which will be append to name seen on the server side
+         bool               fDebugMode;        ///< debug mode
 
          virtual void OnThreadAssigned();
 
@@ -152,7 +153,7 @@ namespace dabc {
 
       public:
          SocketCommandClient(Reference parent, const std::string &name,
-                             SocketAddon* addon,
+                             SocketAddon* addon, bool debug_mode = false,
                              const std::string &hostname = "",
                              double reconnect = 0.);
          virtual ~SocketCommandClient();
@@ -180,6 +181,7 @@ namespace dabc {
          bool            fClientsAllowed; ///<  when true, incoming clients are allowed
          int             fClientCnt;      ///<  counter for new clients
          std::string     fRedirectDevice; ///< name of socket device, which can get redirection
+         bool            fDebugMode;      ///< debug mode
 
          virtual int PreviewCommand(Command cmd);
          virtual int ExecuteCommand(Command cmd);

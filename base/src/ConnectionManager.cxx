@@ -244,11 +244,11 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 
             DeviceRef dev = dabc::mgr.FindDevice(req.GetConnDevice());
 
-            if (dev.null() || port.null()) {
-               if (dev.null())
-                  EOUT("Cannot find device %s for connection record", req.GetConnDevice().c_str());
-               if (port.null())
-                  EOUT("Cannot find port %s for connection record", req.GetLocalUrl().c_str());
+            if (dev.null()) {
+               EOUT("Cannot find device %s for connection record", req.GetConnDevice().c_str());
+               req.SetProgress(progrFailed);
+            } else if (port.null()) {
+               EOUT("Cannot find port %s for connection record", req.GetLocalUrl().c_str());
                req.SetProgress(progrFailed);
             } else {
                // req.SetInlineDataSize(port()->InlineDataSize());

@@ -25,7 +25,7 @@
 #include "dabc/SocketDevice.h"
 
 dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string &name,
-                                               SocketAddon* addon,
+                                               SocketAddon* addon, bool debug_mode,
                                                const std::string &hostname,
                                                double reconnect) :
    dabc::Worker(MakePair(parent, name)),
@@ -45,7 +45,8 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
    fRemoteObserver(false),
    fRemoteName(),
    fMasterConn(false),
-   fClientNameSufix()
+   fClientNameSufix(),
+   fDebugMode(debug_mode)
 {
    AssignAddon(addon);
 
@@ -54,7 +55,7 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
    SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (addon);
 
    // we are getting I/O in the constructor, means connection is established
-   if (io!=0) {
+   if (io) {
       fState = stWorking;
       fSendingActive = false;
       fRecvState = recvHeader;
@@ -71,7 +72,7 @@ void dabc::SocketCommandClient::OnThreadAssigned()
 {
    dabc::Worker::OnThreadAssigned();
 
-   if (!fRemoteHostName.empty() && (fReconnectPeriod>0) && fAddon.null())
+   if (!fRemoteHostName.empty() && (fReconnectPeriod > 0) && fAddon.null())
       ActivateTimeout(0.);
    else
       ActivateTimeout(1.);
@@ -233,7 +234,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
       case kindCommand:
 
-         if (fRecvHdr.data_rawsize>0) {
+         if (fRecvHdr.data_rawsize > 0) {
             dabc::Buffer rawdata = dabc::Buffer::CreateBuffer(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
             cmd.SetRawData(rawdata);
          }
@@ -341,8 +342,11 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
 
             if (fRecvHdr.dabc_header == dabc::SocketDevice::headerConnect) {
 
+               if (fDebugMode)
+                  DOUT0("cmdclnt: get header with connect request via socket %d", io->Socket());
+
                SocketCommandChannel* ch = dynamic_cast<SocketCommandChannel*> (GetParent());
-               if ((ch==0) || ch->fRedirectDevice.empty()) {
+               if (!ch || ch->fRedirectDevice.empty()) {
                   CloseClient(true, "Wrong socket device connect from network");
                   return;
                }
@@ -383,6 +387,9 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
 
             SocketCommandChannel* ch = dynamic_cast<SocketCommandChannel*> (GetParent());
             SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
+
+            if (fDebugMode)
+               DOUT0("cmdclnt: get full connect request, redirect socket %d", io->Socket());
 
             dabc::Command cmd("RedirectConnect");
             cmd.SetInt("Socket", io->TakeSocket());
@@ -497,11 +504,14 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 {
    double next_tmout = 1.;
 
-   if (fAddon.null() && !fRemoteHostName.empty() && (fReconnectPeriod>0)) {
+   if (fAddon.null() && !fRemoteHostName.empty() && (fReconnectPeriod > 0)) {
 
       SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(fRemoteHostName, defaultDabcPort);
 
-      if (client!=0) {
+      if (client) {
+         if (fDebugMode)
+            DOUT0("cmdclnt: create client socket %d for remote host %s", client->Socket(), fRemoteHostName.c_str());
+
          client->SetRetryOpt(2000000000, fReconnectPeriod);
 
          client->SetDeliverEventsToWorker(true);
@@ -509,6 +519,8 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
          AssignAddon(client);
       } else {
          next_tmout = fReconnectPeriod;
+         if (fDebugMode)
+            DOUT0("cmdclnt: fail to create client socket for remote host %s", fRemoteHostName.c_str());
       }
    }
 
@@ -526,7 +538,8 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string &name, Socket
    dabc::Worker(MakePair(name.empty() ? "/CommandChannel" : name)),
    fNodeId(0),
    fClientsAllowed(true),
-   fClientCnt(0)
+   fClientCnt(0),
+   fDebugMode(false)
 {
    fNodeId = dabc::mgr()->cfg()->MgrNodeId();
 
@@ -570,7 +583,9 @@ dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std
 
    std::string worker_name = dabc::format("Client%d", fClientCnt++);
 
-   worker = new SocketCommandClient(this, worker_name, 0, remnodename, conn_tmout);
+   worker = new SocketCommandClient(this, worker_name, nullptr, fDebugMode, remnodename, conn_tmout);
+   if (fDebugMode)
+      DOUT0("cmdchl: create client side worker for remote node %s", remnodename.c_str());
 
    worker()->AssignToThread(thread());
 
@@ -621,11 +636,12 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       SocketIOAddon* io = new SocketIOAddon(fd);
       io->SetDeliverEventsToWorker(true);
 
-      worker = new SocketCommandClient(this, worker_name, io);
+      worker = new SocketCommandClient(this, worker_name, io, fDebugMode);
 
       worker()->AssignToThread(thread());
 
-      DOUT3("SocketCommand - create server side fd:%d worker:%s thread:%s", fd, worker_name.c_str(), thread().GetName());
+      if (fDebugMode)
+         DOUT0("cmdchl: create server side fd:%d worker:%s thread:%s", fd, worker_name.c_str(), thread().GetName());
 
       worker.Release();
 
@@ -681,6 +697,8 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
          return dabc::cmd_true;
       }
       return dabc::cmd_false;
+   } else if (cmd.IsName("EnableDebug")) {
+      fDebugMode = true;
    }
 
    return dabc::Worker::ExecuteCommand(cmd);

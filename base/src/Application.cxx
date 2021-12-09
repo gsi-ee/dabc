@@ -320,6 +320,9 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       }
    }
 
+   if (fConnDebug)
+      dabc::mgr.GetCommandChannel().Submit(dabc::Command("EnableDebug"));
+
    int nconn = 0;
 
    while (cfg->NextCreationNode(node, xmlConnectionNode, false)) {
