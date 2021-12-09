@@ -194,25 +194,35 @@ void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_time
    }
 }
 
+void dabc::ConnectionManager::CheckDebugOutput(const std::string &msg)
+{
+   if (!fConnDebug)
+      return;
+
+   if (msg.empty() && !fConnDebugTm.Expired(0.5))
+      return;
+
+   std::string progr;
+
+   for (unsigned n = 0; n < fRecs.GetSize(); n++) {
+      ConnectionRequestFull req = fRecs[n];
+      if (!req.null())
+         progr += dabc::format(" conn:%s progr:%d", req.GetConnId().c_str(), (int) req.progress());
+   }
+
+   DOUT0("cmgr: %s progress nrecs: %d %s", msg.c_str(), (int) fRecs.GetSize(), progr.c_str());
+
+   fConnDebugTm.GetNow();
+}
+
+
 
 double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 {
    if (fDoingConnection==0) return -1.;
 
-   if (fConnDebug && fConnDebugTm.Expired(0.5)) {
-      std::string msg = dabc::format("NRecs:%d", (int) fRecs.GetSize());
-
-      for (unsigned n = 0; n < fRecs.GetSize(); n++) {
-         ConnectionRequestFull req = fRecs[n];
-         if (!req.null())
-         msg += dabc::format(" pr:%d", req.progress());
-      }
-
-      DOUT0("Conn progres: %s ", msg.c_str());
-
-      fConnDebugTm.GetNow();
-   }
-
+   if (fConnDebug)
+      CheckDebugOutput();
 
    double mindelay = 1.;
 
@@ -352,14 +362,17 @@ dabc::ConnectionRequestFull dabc::ConnectionManager::FindConnection(const std::s
 
 int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 {
+   if (fConnDebug)
+      CheckDebugOutput(std::string("cmd ") + cmd.GetName());
+
    if (cmd.IsName(CmdGlobalConnect::CmdName())) {
 
       CmdGlobalConnect cmd1 = cmd;
 
       ConnectionRequestFull req = FindConnection(cmd1.GetUrl1(), cmd1.GetUrl2());
 
-      DOUT2("Get request for %s -> %s  found:%p",
-            cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str(), req());
+      if (fConnDebug)
+         DOUT0("cmgr: get request for %s -> %s  id: %s  progress: %d", cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str(), (req.null() ? "---" : req.GetConnId().c_str()),  (req.null() ? -1 : (int) req.progress()));
 
       if (req.null()) {
          EOUT("Request from remote for undefined connection %s %s", cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str());
@@ -430,10 +443,12 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
 bool dabc::ConnectionManager::ReplyCommand(Command cmd)
 {
+   if (fConnDebug)
+      CheckDebugOutput(std::string("replied ") + cmd.GetName());
+
    if (cmd.IsName(CmdConnectionManagerHandle::CmdName())) {
       HandleConnectRequestCmdReply(cmd);
-   } else
-   if (cmd.IsName(CmdGlobalConnect::CmdName())) {
+   } else if (cmd.IsName(CmdGlobalConnect::CmdName())) {
       HandleCmdGlobalConnectReply(cmd);
    }
 

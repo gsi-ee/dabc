@@ -198,7 +198,7 @@ dabc::SocketDevice::SocketDevice(const std::string &name, Command cmd) :
    fBindHost = Cfg("host", cmd).AsStr();
    fBindPort = Cfg("port", cmd).AsInt(-1);
 
-   if (fBindHost.empty() && (fBindPort<0)) {
+   if (fBindHost.empty() && (fBindPort < 0)) {
       dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
       if (!chl.null()) {
          dabc::Command cmd("RedirectSocketConnect");

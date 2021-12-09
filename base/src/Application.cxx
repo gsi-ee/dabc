@@ -390,9 +390,10 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    cmd.SetTimeout(fConnTimeout);
    cmd.SetReceiver(dabc::Manager::ConnMgrName());
    cmd.SetBool("ConnDebug", fConnDebug);
-
    cmd.SetRef("StateCmd", statecmd);
    cmd.SetStr("StateCmdTarget", tgtstate);
+
+   if (fConnDebug)
 
    dabc::mgr.Submit(Assign(cmd));
 

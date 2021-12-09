@@ -161,6 +161,8 @@ namespace dabc {
             In case of timeout command can be finished successfully if connection is optional */
          void CheckConnectionRecs(bool finish_command = false);
 
+         void CheckDebugOutput(const std::string &msg = "");
+
          /** \brief Destroy all connections, if necessary - request to cleanup custom data by device */
          virtual void ModuleCleanup();
 

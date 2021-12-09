@@ -108,7 +108,7 @@ bool dabc::SocketCommandClient::EnsureRecvBuffer(unsigned strsize)
 
 void dabc::SocketCommandClient::CloseClient(bool iserr, const char* msg)
 {
-   if (msg!=0) {
+   if (msg) {
       if (iserr)
          EOUT("%s closing connection due to error %s", ItemName().c_str(), msg);
       else

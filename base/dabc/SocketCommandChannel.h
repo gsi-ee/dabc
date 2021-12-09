@@ -177,7 +177,7 @@ namespace dabc {
 
       protected:
          int             fNodeId;         ///<  current node id
-         bool            fClientsAllowed; ///<  when true, incomming clients are allowed
+         bool            fClientsAllowed; ///<  when true, incoming clients are allowed
          int             fClientCnt;      ///<  counter for new clients
          std::string     fRedirectDevice; ///< name of socket device, which can get redirection
 
