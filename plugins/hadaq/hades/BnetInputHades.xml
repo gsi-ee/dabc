@@ -64,7 +64,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
       <thrdstoptime value="20"/>
     </Run>
 
-    <Application ConnTimeout="60"/>
+    <Application ConnTimeout="100"/>
 
     <MemoryPool name="Pool">
        <BufferSize value="2000000"/>
