@@ -140,8 +140,6 @@ namespace dabc {
                   // do like we receive input buffer ourself
                   fDevice->ServerProtocolRequest(this, fInBuf, fOutBuf);
                   StartSend(fOutBuf, SocketDevice::ProtocolMsgSize);
-                  if (fDevice->fDebugMode)
-                     DOUT0("scktclnt: sending protocol reply via socket %d", Socket());
                   break;
                default:
                   EOUT("Wrong state %d", fState);
@@ -155,7 +153,7 @@ namespace dabc {
                case stServerProto:
                case stRedirect:
                   // DOUT5("Server job finished");
-                  if (fDevice->ProtocolCompleted(this, 0))
+                  if (fDevice->ProtocolCompleted(this, nullptr))
                      DeleteWorker();
                   break;
                case stClientProto:
@@ -352,19 +350,22 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
       case ConnectionManager::progrDoingConnect: {
          // one should register request and start connection here
 
-         DOUT2("****** SOCKET START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str());
+         if (fDebugMode)
+            DOUT0("scktdev: SOCKET START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str());
 
          NewConnectRec* rec = nullptr;
 
          if (req.IsServerSide()) {
 
-            rec = new NewConnectRec(reqitem, req, 0);
+            rec = new NewConnectRec(reqitem, req, nullptr);
 
             AddRec(rec);
          } else {
 
             SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(req.GetServerId());
             if (client) {
+               if (fDebugMode)
+                  DOUT0("scktdev: create client socket %d for server %s", client->Socket(), req.GetServerId().c_str());
 
                // try to make little bit faster than timeout expire why we need
                // some time for the connection protocol
@@ -375,6 +376,9 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
                AddRec(rec);
 
                thread().MakeWorkerFor(client);
+            } else {
+               if (fDebugMode)
+                  DOUT0("scktdev: FAIL to create client for server %s", req.GetServerId().c_str());
             }
          }
 
@@ -463,6 +467,9 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
       int fd = cmd.GetInt("Socket");
       Buffer buf = cmd.GetRawData();
 
+      if (fDebugMode)
+         DOUT0("scktdev: handle redirected socket %d", fd);
+
       SocketProtocolAddon *proto = new SocketProtocolAddon(fd, this, nullptr, buf.SegmentPtr());
 
       thread().MakeWorkerFor(proto, fCmdChannelId);
@@ -481,7 +488,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
    return cmd_res;
 }
 
-void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolAddon* proc, const char* inmsg, char* outmsg)
+void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolAddon *proc, const char *inmsg, char *outmsg)
 {
    strcpy(outmsg, "denied");
 
@@ -491,15 +498,18 @@ void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolAddon* proc, const 
       return;
    }
 
-   NewConnectRec* rec = 0;
+   NewConnectRec* rec = nullptr;
 
    {
       LockGuard guard(DeviceMutex());
       rec = _FindRec(inmsg+sizeof(uint32_t));
-      if (rec==0) return;
+      if (!rec) return;
    }
 
    strcpy(outmsg, "accepted");
+
+   if (fDebugMode)
+      DOUT0("scktdev: sending accept message via socket %d", proc->Socket());
 
    LockGuard guard(DeviceMutex());
    fProtocols.remove(proc);
@@ -528,6 +538,9 @@ bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char
    if (inmsg) res = (strcmp(inmsg, "accepted")==0);
 
    if (inmsg) DOUT3("Reply from server: %s", inmsg);
+
+   if (fDebugMode && inmsg)
+      DOUT0("scktdev: receive message %s via socket %d", inmsg, proc->Socket());
 
    if (res) {
       // create transport for the established connection
