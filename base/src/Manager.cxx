@@ -2137,7 +2137,7 @@ bool dabc::ManagerRef::IsLocalItem(const std::string &name)
 
 dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string &port1name, const std::string &port2name)
 {
-   // configure conection between two ports
+   // configure connection between two ports
    // Normally port1 is output and port2 is input port1->port2
    // But bidirectional connection can be established as well
 
@@ -2164,7 +2164,8 @@ dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string &port1name, 
       return dabc::ConnectionRequest();
    }
 
-   if (port1.null() && port2.null()) return dabc::ConnectionRequest();
+   if (port1.null() && port2.null())
+      return dabc::ConnectionRequest();
 
    if (GetObject()->GetCommandChannel().null()) {
       EOUT("Not possible to establish remote connection without command channel");

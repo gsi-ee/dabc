@@ -142,6 +142,7 @@ namespace dabc {
          int                fDoingConnection;  ///< flag indicates that about connection activity: 0 - nothing, -1 - closing, 1 - establishing
          int                fConnCounter;      ///< counter for issued connections
          bool               fWasAnyRequest;    ///< is any request was submitted
+         int                fNumGetConn;       ///< number of connections which should be processed by manager
          bool               fConnDebug;        ///< extra debug output during running connections
          dabc::TimeStamp    fConnDebugTm;      ///< time to check debug output
 

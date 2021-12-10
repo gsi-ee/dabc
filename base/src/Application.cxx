@@ -396,6 +396,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    cmd.SetTimeout(fConnTimeout);
    cmd.SetReceiver(dabc::Manager::ConnMgrName());
    cmd.SetBool("ConnDebug", fConnDebug);
+   cmd.SetInt("NumConn", nconn);
    cmd.SetRef("StateCmd", statecmd);
    cmd.SetStr("StateCmdTarget", tgtstate);
 

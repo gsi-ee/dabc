@@ -52,6 +52,7 @@ dabc::ConnectionManager::ConnectionManager(const std::string &name, Command cmd)
    fDoingConnection(0),
    fConnCounter(0),
    fWasAnyRequest(false),
+   fNumGetConn(0),
    fConnDebug(false),
    fConnDebugTm()
 {
@@ -101,6 +102,7 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
       req.SetConnId(dabc::format("%s_Conn%d", dabc::mgr.GetLocalAddress().c_str(), fConnCounter++));
 
    fWasAnyRequest = true; // indicate that connection exists
+   fNumGetConn--; // how much connections should be processed
 
    fRecs.Add(req);
 
@@ -121,6 +123,7 @@ void dabc::ConnectionManager::ModuleCleanup()
    // UnregisterForParameterEvent(ConnectionObject::ObjectName());
 
    fWasAnyRequest = false;
+   fNumGetConn = 0;
    fDoingConnection = 0;
 
    fConnCmd.ReplyFalse();
@@ -178,7 +181,7 @@ void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_time
       DOUT2("SOME CONNECTIONS FINSIHED WITH FAILURE");
       // rest of the connections will be continued - application should decide how to work
       if (fRecs.GetSize() == 0) fDoingConnection = 0;
-   } else if ((fRecs.GetSize() == 0) && fWasAnyRequest)  {
+   } else if ((fRecs.GetSize() == 0) && fWasAnyRequest && (fNumGetConn <= 0))  {
       fDoingConnection = 0;
       fConnCmd.ReplyTrue();
       DOUT0("ALL CONNECTIONS FINSIHED OK");
@@ -425,6 +428,7 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
       fConnCmd = cmd;
 
       fConnDebug = cmd.GetBool("ConnDebug");
+      fNumGetConn = cmd.GetInt("NumConn") - fRecs.GetSize();
 
       ActivateTimeout(0.);
 
