@@ -50,7 +50,10 @@ dabc::ConnectionManager::ConnectionManager(const std::string &name, Command cmd)
    fRecs(),
    fConnCmd(),
    fDoingConnection(0),
-   fConnCounter(0)
+   fConnCounter(0),
+   fWasAnyRequest(false),
+   fConnDebug(false),
+   fConnDebugTm()
 {
    // we want to see all events which produced by any of connection object
    RegisterForParameterEvent(ConnectionObject::ObjectName());
@@ -97,6 +100,8 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
    if (req.IsServerSide())
       req.SetConnId(dabc::format("%s_Conn%d", dabc::mgr.GetLocalAddress().c_str(), fConnCounter++));
 
+   fWasAnyRequest = true; // indicate that connection exists
+
    fRecs.Add(req);
 
    // TODO: in current implementation connection requests are collected and activated only when
@@ -108,7 +113,6 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
       fDoingConnection = 1;
       ActivateTimeout(0.);
    }
-
 }
 
 
@@ -116,6 +120,7 @@ void dabc::ConnectionManager::ModuleCleanup()
 {
    // UnregisterForParameterEvent(ConnectionObject::ObjectName());
 
+   fWasAnyRequest = false;
    fDoingConnection = 0;
 
    fConnCmd.ReplyFalse();
@@ -135,7 +140,7 @@ void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_time
 
    unsigned n = 0;
 
-   while (n<fRecs.GetSize()) {
+   while (n < fRecs.GetSize()) {
 
       ConnectionRequestFull req = fRecs[n];
 
@@ -172,9 +177,8 @@ void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_time
       fConnCmd.ReplyFalse();
       DOUT2("SOME CONNECTIONS FINSIHED WITH FAILURE");
       // rest of the connections will be continued - application should decide how to work
-      if (fRecs.GetSize()==0) fDoingConnection = 0;
-   } else
-   if (fRecs.GetSize()==0) {
+      if (fRecs.GetSize() == 0) fDoingConnection = 0;
+   } else if ((fRecs.GetSize() == 0) && fWasAnyRequest)  {
       fDoingConnection = 0;
       fConnCmd.ReplyTrue();
       DOUT0("ALL CONNECTIONS FINSIHED OK");

@@ -2141,7 +2141,7 @@ dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string &port1name, 
    // Normally port1 is output and port2 is input port1->port2
    // But bidirectional connection can be established as well
 
-   if (GetObject()==0) return dabc::ConnectionRequest();
+   if (!GetObject()) return dabc::ConnectionRequest();
 
    PortRef port1 = FindPort(port1name);
    PortRef port2 = FindPort(port2name);
