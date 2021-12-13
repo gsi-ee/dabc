@@ -35,6 +35,9 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    fCmdReplies = 0;
    fCmdQuality = 1.;
 
+   fCalibrRunId = 0;
+   fCalibrTm = 0;
+
    fRefreshCnt = 1;
    fRefreshReplies = 0;
 
@@ -133,7 +136,7 @@ void hadaq::BnetMasterModule::AddItem(std::vector<std::string> &items, std::vect
    nodes.emplace_back(node);
 }
 
-void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, unsigned runid)
+void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, unsigned runid, bool set_time)
 {
    dabc::Hierarchy item  = fWorkerHierarchy.GetHChild("LastCalibr");
    if (!item) return;
@@ -147,8 +150,13 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, 
    }
 
    if (do_write) {
-      tm.GetNow();
-      fprintf(f,"%lu\n", (long unsigned) tm.AsJSDate());
+      if (set_time || (fCalibrTm == 0)) {
+         tm.GetNow();
+         fCalibrTm = tm.AsJSDate();
+      } else {
+         tm.SetJSDate(fCalibrTm);
+      }
+      fprintf(f,"%lu\n", (long unsigned) fCalibrTm);
       fprintf(f,"%f\n", quality);
       fprintf(f,"%u\n", runid);
    } else {
@@ -158,7 +166,8 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, 
       if (fscanf(f,"%lf", &quality) != 1) EOUT("Fail to get quality from lastcalibr.txt");
       if (fscanf(f,"%u", &runid) != 1) EOUT("Fail to get runid from lastcalibr.txt");
 
-      if (!do_write) fCalibrRunId = runid;
+      fCalibrRunId = runid;
+      fCalibrTm = tm_js;
    }
    fclose(f);
 
@@ -309,7 +318,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
             fWorkerHierarchy.GetHChild("RunningCmd").SetField("value","");
 
-            if (stop_calibr) PreserveLastCalibr(true, fCmdQuality, fCalibrRunId);
+            if (stop_calibr) PreserveLastCalibr(true, fCmdQuality, fCalibrRunId, true);
          }
       }
 
@@ -325,7 +334,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          if (--fRefreshReplies <= 0) {
             fCurrentRefreshCmd.Reply(dabc::cmd_true);
-            PreserveLastCalibr(true, q0, fCalibrRunId);
+            PreserveLastCalibr(true, q0, fCalibrRunId, false);
          }
       }
 

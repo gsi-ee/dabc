@@ -41,6 +41,7 @@ namespace hadaq {
          int           fCmdReplies; ///< number of replies for current command
          double        fCmdQuality;  ///< current command quality, used when creating calibration
          unsigned      fCalibrRunId;  ///< last calibration runid
+         long unsigned fCalibrTm;     ///< last calibr time in seconds since 1970
 
          dabc::Command fCurrentRefreshCmd; ///< currently running cmd to refresh nodes qualities
          int           fRefreshCnt{0};   ///< currently running refresh command
@@ -79,7 +80,7 @@ namespace hadaq {
 
          void AddItem(std::vector<std::string> &items, std::vector<std::string> &nodes, const std::string &item, const std::string &node);
 
-         void PreserveLastCalibr(bool do_write = false, double quality = 1., unsigned runid = 0);
+         void PreserveLastCalibr(bool do_write = false, double quality = 1., unsigned runid = 0, bool set_time = false);
 
       public:
 
