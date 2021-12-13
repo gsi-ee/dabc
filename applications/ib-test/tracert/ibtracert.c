@@ -211,7 +211,7 @@ int get_cached_route(int node_lid, ib_dr_path_t* path, char* desc, char* info, c
 
   char* cache = 0;
 
-  if (!use_cache) return;
+  if (!use_cache) return 0;
 
   if (node_lid==0) {
 
