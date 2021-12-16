@@ -24,13 +24,16 @@ void first()
    hadaq::TdcProcessor::SetHadesMonitorInterval(5);
 
    
-   hadaq::TdcProcessor::SetDefaults(600,50, 2);
+   hadaq::TdcProcessor::SetDefaults(600,40, 2);
+   
+   // JAM 16-12-21: same setup as in bnet inputs here:
+   hadaq::TdcProcessor::SetTriggerDWindow(-20, 80);
    
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
    // 3   - falling edge enabled and uses calibration from rising edge
-   // 4   - falling edge enabled and common statistic is used for calibration
+   // 4   - falling edge enabled and common statistic is used for calibrations
    hadaq::TrbProcessor::SetDefaults(49, 2);
 
    // [min..max] range for TDC ids
