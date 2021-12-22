@@ -97,7 +97,7 @@ dabc::FileInput::FileInput(const dabc::Url& url) :
    DataInput(),
    fFileName(url.GetFullName()),
    fFilesList(),
-   fIO(0),
+   fIO(nullptr),
    fCurrentName(),
    fLoop(url.HasOption("loop")),
    fReduce(url.GetOptionDouble("reduce",1.))
@@ -110,9 +110,9 @@ dabc::FileInput::~FileInput()
 {
    DOUT3("Destroy file input %p", this);
 
-   if (fIO!=0) {
+   if (fIO) {
       delete fIO;
-      fIO = 0;
+      fIO = nullptr;
    }
 }
 
@@ -161,7 +161,7 @@ bool dabc::FileInput::Read_Init(const WorkerRef& wrk, const Command& cmd)
       return false;
    }
 
-   if (fIO==0) fIO = new dabc::FileInterface;
+   if (!fIO) fIO = new dabc::FileInterface;
 
    return InitFilesList();
 }
@@ -193,7 +193,7 @@ dabc::FileOutput::FileOutput(const dabc::Url& url, const std::string &ext) :
    fFileName(url.GetFullName()),
    fSizeLimitMB(url.GetOptionInt(dabc::xml_maxsize,0)),
    fFileExtens(ext),
-   fIO(0),
+   fIO(nullptr),
    fCurrentFileNumber(url.GetOptionInt(dabc::xml_number,0)),
    fCurrentFileName(),
    fCurrentFileSize(0),
@@ -205,15 +205,15 @@ dabc::FileOutput::FileOutput(const dabc::Url& url, const std::string &ext) :
 
 dabc::FileOutput::~FileOutput()
 {
-   if (fIO!=0) {
+   if (fIO) {
       delete fIO;
-      fIO = 0;
+      fIO = nullptr;
    }
 }
 
 void dabc::FileOutput::SetIO(dabc::FileInterface* io)
 {
-   if (fIO!=0) {
+   if (fIO) {
       EOUT("File interface object already assigned");
       delete io;
    } else {
@@ -226,7 +226,7 @@ bool dabc::FileOutput::Write_Init()
 {
    if (!DataOutput::Write_Init()) return false;
 
-   if (fIO==0) fIO = new FileInterface;
+   if (!fIO) fIO = new FileInterface;
 
    std::string mask = ProduceFileName("*");
 
