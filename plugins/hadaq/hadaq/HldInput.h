@@ -36,6 +36,8 @@ namespace hadaq {
          bool CloseFile();
          bool OpenNextFile();
 
+         virtual std::string GetListFileExtension() { return ".hll"; }
+
       public:
          HldInput(const dabc::Url& ulr);
          virtual ~HldInput();

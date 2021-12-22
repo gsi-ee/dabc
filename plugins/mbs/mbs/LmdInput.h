@@ -37,6 +37,8 @@ namespace mbs {
 
           bool OpenNextFile();
 
+          virtual std::string GetListFileExtension() { return ".lml"; }
+
        public:
           LmdInput(const dabc::Url& url);
           virtual ~LmdInput();

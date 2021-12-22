@@ -259,6 +259,8 @@ namespace dabc {
          const std::string &CurrentFileName() const { return fCurrentName; }
          void ClearCurrentFileName() { fCurrentName.clear(); }
 
+         virtual std::string GetListFileExtension() { return ""; }
+
          FileInput(const dabc::Url& url);
 
       public:

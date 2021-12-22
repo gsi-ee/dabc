@@ -18,6 +18,8 @@
 #include "dabc/Manager.h"
 #include "dabc/BinaryFile.h"
 
+#include <fstream>
+
 dabc::Buffer dabc::DataInput::ReadBuffer()
 {
    unsigned sz = Read_Size();
@@ -70,8 +72,8 @@ bool dabc::DataOutput::ShowInfo(int lvl, const std::string &info)
       else
          DOUT0(info.c_str());
       return true;
-   } 
-   
+   }
+
    par.SetValue(info);
    par.FireModified();
    return false;
@@ -116,7 +118,7 @@ dabc::FileInput::~FileInput()
 
 void dabc::FileInput::SetIO(dabc::FileInterface* io)
 {
-   if (fIO!=0) {
+   if (fIO) {
       EOUT("File interface object already assigned");
       delete io;
    } else {
@@ -126,8 +128,18 @@ void dabc::FileInput::SetIO(dabc::FileInterface* io)
 
 bool dabc::FileInput::InitFilesList()
 {
+   std::string ext = GetListFileExtension();
+
    if (fFileName.find_first_of("*?") != std::string::npos) {
       fFilesList = fIO->fmatch(fFileName.c_str());
+   } if (!ext.empty() && (ext.length() < fFileName.length()) && (fFileName.rfind(ext) == fFileName.length() - ext.length())) {
+      fFilesList = new dabc::Object(0, "FilesList");
+      std::ifstream filein(fFileName);
+      std::string line;
+      while (std::getline(filein, line)) {
+         if (!line.empty())
+            new dabc::Object(fFilesList(), line);
+      }
    } else {
       fFilesList = new dabc::Object(0, "FilesList");
       new dabc::Object(fFilesList(), fFileName);
