@@ -23,9 +23,9 @@ void first()
    // enable HADES raw data quality monitoring, update histos every 5 seconds
    hadaq::TdcProcessor::SetHadesMonitorInterval(5);
 
-   
+
    hadaq::TdcProcessor::SetDefaults(600,40, 2);
-   
+
    // JAM 16-12-21: same setup as in bnet inputs here:
    hadaq::TdcProcessor::SetTriggerDWindow(-20, 80);
    
@@ -41,7 +41,7 @@ void first()
 
    // [min..max] range for HUB ids
    hadaq::TrbProcessor::SetHUBRange(0x100, 0x100);
-   
+
    hadaq::TdcProcessor::SetIgnoreCalibrMsgs(true);
 
    // when first argument true - TRB/TDC will be created on-the-fly
@@ -110,10 +110,7 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 
       for (unsigned nch=1;nch<tdc->NumChannels();nch++)
          tdc->SetRefChannel(nch, 0, 0xffff, 2000,  -10., 10.);
-      
-   
-    
-    
+
    }
 }
 
