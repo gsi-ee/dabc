@@ -7,8 +7,8 @@
 
   <Context host="localhost" name="HADES">
     <Run>
-      <lib value="libDabcHttp.so"/>
-      <lib value="libDabcStream.so"/>
+      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcStream.so"/>  
       <logfile value="hades.log"/>
       <debuglevel value="1"/>
       <loglevel value="-1"/>
@@ -20,7 +20,7 @@
        <TopTitle value="HADES TDC calibration monitor"/>
        <!-- Browser value="off"/-->
        <Layout value="grid2x2"/>
-       <DrawItem value="[HADES/Run/HLD/HLD_ToTPerChannel,HADES/Run/HLD/HLD_QAToTPerChannel,HADES/Run/HLD/HLD_ShiftPerChannel,HADES/Run/HLD/HLD_DevPerChannel]"/>
+       <DrawItem value="[HADES/Run/HLD/HLD_ToTPerChannel,HADES/Run/HLD/HLD_RisingDtPerChannel,HADES/Run/HLD/HLD_ShiftPerChannel,HADES/Run/HLD/HLD_DevPerChannel]"/>
        <DrawOpt value=""/>
        <Monitoring value="1000"/>
     </HttpServer>
@@ -31,11 +31,12 @@
     </MemoryPool>
 
     <Module name="Run" class="stream::RunModule">
-       <autostop value="false"/>
+       <autostop value="false"/> 
        <asf value="${asf}"/>
        <parallel value="${parallel}"/>
        <InputPort name="Input0"  url="hld:///store/08/01/data/tc${CALRUNID}01.hld"/>
-       <!-- InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb11:8104"/ -->
+   <!--<InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb11:8104"/>
+    InputPort name="Input0" reconnect="5" loop="1" url="mbss://localhost"/ -->
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" sdebug="0"/>
     </Module>
