@@ -400,6 +400,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
               "<option value='fr'>Forward detector (rpc only) file</option>" +
               "<option value='it'>Inner TOF file</option>" +
               "<option value='tc'>TDC Calibration file</option>" +
+              "<option value='ct'>TDC Calibration test file</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
               "<button class='bnet_lastcalibr' title='Status of last calibration'>CALIBR</button>" +
