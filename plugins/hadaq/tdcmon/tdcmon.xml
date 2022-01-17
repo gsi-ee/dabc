@@ -34,9 +34,9 @@
        <autostop value="false"/> 
        <asf value="${asf}"/>
        <parallel value="${parallel}"/>
-       <InputPort name="Input0"  url="hld:///store/08/01/data/tc${CALRUNID}01.hld"/>
-   <!--<InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb11:8104"/>
-    InputPort name="Input0" reconnect="5" loop="1" url="mbss://localhost"/ -->
+<!--        <InputPort name="Input0"  url="hld:///store/08/01/data/ct${CALRUNID}01.hld"/> -->
+       <InputPort name="Input0"  url="hld://list.hll"/>
+
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" sdebug="0"/>
     </Module>
