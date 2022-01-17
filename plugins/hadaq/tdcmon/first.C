@@ -25,12 +25,12 @@ void first()
 
    // JAM22: suppress several unrequired histograms
    hadaq::TdcProcessor::SetHadesReducedMonitoring(true);
-     
+
    hadaq::TdcProcessor::SetDefaults(600,40, 2);
-   
+
    // JAM 16-12-21: same setup as in bnet inputs here:
    hadaq::TdcProcessor::SetTriggerDWindow(-20, 80);
-   
+
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
@@ -43,12 +43,15 @@ void first()
 
    // [min..max] range for HUB ids
    hadaq::TrbProcessor::SetHUBRange(0x100, 0x100);
-   
+
    hadaq::TdcProcessor::SetIgnoreCalibrMsgs(true);
 
    // when first argument true - TRB/TDC will be created on-the-fly
    // second parameter is function name, called after elements are created
    hadaq::HldProcessor* hld = new hadaq::HldProcessor(true, "after_create");
+
+   // filter-out 0x9 and 0xE events
+   hld->SetFilterStatusEvents(true);
 
    // first parameter if filename  prefix for calibration files
    //     and calibration mode (empty string - no file I/O)
@@ -112,10 +115,10 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 
       for (unsigned nch=1;nch<tdc->NumChannels();nch++)
          tdc->SetRefChannel(nch, 0, 0xffff, 2000,  -10., 10.);
-      
-   
-    
-    
+
+
+
+
    }
 }
 
