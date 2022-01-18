@@ -3533,7 +3533,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       }
 
       if (!when_axis_changed) {
-         if (set_zoom && (this.draw_content || set_zoom2)) {
+         if (set_zoom && this.draw_content) {
             this.zoom_ymin = (hmin == -1111) ? this.ymin : hmin;
             this.zoom_ymax = (hmax == -1111) ? this.ymax : hmax;
          } else {
@@ -3860,7 +3860,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       }
 
       if (show_line) path_line = "";
-      
+
       dlw = this.lineatt.width + JSROOT.gStyle.fEndErrorSize;
       if (this.options.ErrorKind === 1)
          dend = Math.floor((this.lineatt.width-1)/2);
@@ -6881,9 +6881,9 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
 
    let drawTF2 = (divid, func, opt) => {
 
-      let d = new JSROOT.DrawOptions(opt);
-
-      let hist = createTF2Histogram(func, d.check('NOSAVE'));
+      let d = new JSROOT.DrawOptions(opt),
+          nosave = d.check('NOSAVE'),
+          hist = createTF2Histogram(func, nosave);
 
       if (d.empty())
          opt = "cont3";
@@ -6895,7 +6895,7 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
       return drawHistogram2D(divid, hist, opt).then(hpainter => {
 
          hpainter.tf2_typename = func._typename;
-         hpainter.tf2_nosave = d.check('NOSAVE');
+         hpainter.tf2_nosave = nosave;
 
          hpainter.updateObject = function(obj /*, opt*/) {
             if (!obj || (this.tf2_typename != obj._typename)) return false;
