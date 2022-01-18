@@ -36,6 +36,7 @@ int usage(const char* errstr = nullptr)
    printf("Following sources are supported:\n");
    printf("   hld://path/file.hld         - HLD file reading\n");
    printf("   file.hld                    - HLD file reading (file extension MUST be '.hld')\n");
+   printf("   file.hll                    - list of HLD files (file extension MUST be '.hll')\n");
    printf("   dabcnode                    - DABC stream server\n");
    printf("   dabcnode:port               - DABC stream server with custom port\n");
    printf("   mbss://dabcnode/Transport   - DABC transport server\n");
@@ -1121,12 +1122,12 @@ int main(int argc, char* argv[])
 
    bool ishld = false;
    std::string src = argv[1];
-   if ((src.find(".hld") != std::string::npos) && (src.find("hld://") != 0)) {
+   if (((src.find(".hld") != std::string::npos) || (src.find(".hll") != std::string::npos)) && (src.find("hld://") != 0)) {
       src = std::string("hld://") + src;
       ishld = true;
+   } else if ((src.find("hld://") == 0) || (src.find(".hld") != std::string::npos) || (src.find(".hll") != std::string::npos)) {
+      ishld = true;
    }
-
-   if ((src.find("hld://") == 0) || (src.find(".hld") != std::string::npos)) ishld = true;
 
    if (tmout < 0) tmout = ishld ? 0.5 : 5.;
 
