@@ -118,8 +118,8 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          for (let n in res._childs) {
             let item = res._childs[n], lbl = "", units = "";
 
-            if (item._name=='HadaqInfo')
-               $(frame).find('.hadaq_info').text("Info: " + item.value);
+            if (item._name == 'HadaqInfo')
+               dom.select('.hadaq_info').text("Info: " + item.value);
             if (item._name=='HadaqData') { lbl = "Rate: "; units = " " + item.units+"/s"; }
             if (item._name=='HadaqEvents') { lbl = "Ev: "; units = " Hz"; }
             if (item._name=='HadaqLostEvents') { lbl = "Lost:"; units = " Hz"; }
@@ -129,7 +129,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
             }
          }
 
-         $(frame).find('.hadaq_rate').css("font-size","120%").text(rate);
+         dom.select('.hadaq_rate').style("font-size","120%").text(rate);
       }
 
       let handler = setInterval(function() {
@@ -331,13 +331,12 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       }, 2000);
    }
 
-
    // =========================================== BNET ============================================
 
    DABC.compareArrays = function(arr1, arr2) {
       if (!arr1 || !arr2) return arr1 == arr2;
       if (arr1.length != arr2.length) return false;
-      for (let k=0;k<arr1.length;++k)
+      for (let k = 0; k < arr1.length; ++k)
          if (arr1[k] != arr2[k]) return false;
       return true;
    }
@@ -1223,11 +1222,11 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
       painter.redrawObject = function(obj) {
          this.obj = obj;
-         this.Draw();
+         this.drawLog();
          return true;
       }
 
-      painter.Draw = function() {
+      painter.drawLog = function() {
          let html = "";
 
          if (this.history && ('log' in this.obj)) {
@@ -1241,7 +1240,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          this.selectDom().select("div").html(html);
       }
 
-      painter.Draw();
+      painter.drawLog();
 
       return Promise.resolve(painter);
    }
