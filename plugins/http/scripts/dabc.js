@@ -1,16 +1,17 @@
 const dabcScript = document.currentScript;
 
-JSROOT.define(["painter", "hist"], jsrp => {
+JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
    "use strict";
 
    JSROOT.settings.DragAndDrop = true;
+   JSROOT.loadScript("https://root.cern/js/6.3.2/style/jquery-ui.min.css");
 
    // const jsrp = arr[0];
 
    const DABC = {};
 
-   DABC.version = "2.11.0 22/10/2021";
+   DABC.version = "2.11.0 19/01/2022";
 
    DABC.source_dir = "";
 
@@ -38,10 +39,8 @@ JSROOT.define(["painter", "hist"], jsrp => {
       let frame = mdi.findFrame(itemname, true);
       if (!frame) return null;
 
-      let frameid = d3.select(frame).attr('id');
+      let item = hpainter.findItem(itemname), calarr = [];
 
-      let item = hpainter.findItem(itemname);
-      let calarr = [];
       if (item) {
          for (let n in item._parent._childs) {
             let name = item._parent._childs[n]._name;
@@ -55,9 +54,9 @@ JSROOT.define(["painter", "hist"], jsrp => {
 
       let html = "<fieldset>" +
                  "<legend>DAQ</legend>" +
-                 "<button class='hadaq_startfile'>Start file</button>" +
-                 "<button class='hadaq_stopfile'>Stop file</button>" +
-                 "<button class='hadaq_restartfile'>Restart file</button>" +
+                 "<button class='hadaq_startfile hadaq_btn'>Start file</button>" +
+                 "<button class='hadaq_stopfile hadaq_btn'>Stop file</button>" +
+                 "<button class='hadaq_restartfile hadaq_btn'>Restart file</button>" +
                  '<input class="hadaq_filename" type="text" name="filename" value="file.hld" style="margin-top:5px;"/><br/>' +
                  "<label class='hadaq_rate'>Rate: __undefind__</label><br/>"+
                  "<label class='hadaq_info'>Info: __undefind__</label>"+
@@ -70,13 +69,38 @@ JSROOT.define(["painter", "hist"], jsrp => {
 
       d3.select(frame).html(html);
 
-      $(frame).find(".hadaq_startfile").button().click(function() {
-         DABC.InvokeCommand(itemname+"/StartHldFile", "filename="+$(frame).find('.hadaq_filename').val()+"&maxsize=2000");
+      // ass button style as first child
+      d3.select(frame).append("style").html(
+         `.hadaq_btn {
+             display: inline-block;
+             padding: .4em 1em;
+             margin-right: .1em;
+             vertical-align: middle;
+             text-align: center;
+             font-family: Arial,Helvetica,sans-serif;
+             font-size: 1em;
+             border: 1px solid #c5c5c5;
+             background: #f6f6f6;
+             font-weight: normal;
+             color: #454545;
+             border-radius: 3px;
+             cursor: pointer;
+          }
+          .hadaq_btn:hover {
+             background: #e6e6e6;
+          }
+          .hadaq_btn:active {
+             border: 1px solid blue;
+             color: white;
+          }`).lower();
+
+      d3.select(frame).select(".hadaq_startfile").on("click", () => {
+         DABC.InvokeCommand(itemname+"/StartHldFile", "filename="+d3.select(frame).select('.hadaq_filename').property("value")+"&maxsize=2000");
       });
-      $(frame).find(".hadaq_stopfile").button().click(function() {
+      d3.select(frame).select(".hadaq_stopfile").on("click", () => {
          DABC.InvokeCommand(itemname+"/StopHldFile");
       });
-      $(frame).find(".hadaq_restartfile").button().click(function() {
+      d3.select(frame).select(".hadaq_restartfile").on("click", () => {
          DABC.InvokeCommand(itemname+"/RestartHldFile");
       });
 
@@ -103,7 +127,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
       }
 
       let handler = setInterval(function() {
-         if ($("#" + frameid + " .hadaq_info").length==0) {
+         if (d3.select(frame).select(".hadaq_info").empty()) {
             // if main element disapper (reset), stop handler
             clearInterval(handler);
             return;
@@ -375,13 +399,13 @@ JSROOT.define(["painter", "hist"], jsrp => {
       return lbl;
    }
 
-   DABC.BnetPainter.prototype.RefreshHTML = function(lastprefix) {
+   DABC.BnetPainter.prototype.refreshHtml = function(lastprefix) {
 
       let html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
 
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
-              "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
+              "<button class='bnet_startrun bnet_btn' title='Start run, write files on all event builders'>Start</button>" +
               "<select class='bnet_selectrun'>" +
               "<option>NO_FILE</option>" +
               "<option value='be'>Beam file</option>" +
@@ -403,7 +427,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
               "<option value='ct'>TDC Calibration test file</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
-              "<button class='bnet_lastcalibr' title='Status of last calibration'>CALIBR</button>" +
+              "<button class='bnet_lastcalibr bnet_btn' title='Status of last calibration'>CALIBR</button>" +
               "<button class='bnet_resetdaq' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
               "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
@@ -471,6 +495,30 @@ JSROOT.define(["painter", "hist"], jsrp => {
       let painter = this, main = d3.select(this.frame).html(html),
           ctrl_visible = JSROOT.decodeUrl().has("browser") ? "" : "none";
 
+      main.append("style").html(
+         `.bnet_btn {
+             display: inline-block;
+             padding: .4em 1em;
+             margin-right: .1em;
+             vertical-align: middle;
+             text-align: center;
+             font-family: Arial,Helvetica,sans-serif;
+             font-size: 1em;
+             border: 1px solid #c5c5c5;
+             background: #f6f6f6;
+             font-weight: normal;
+             color: #454545;
+             border-radius: 3px;
+             cursor: pointer;
+          }
+          .bnet_btn:hover {
+             background: #e6e6e6;
+          }
+          .bnet_btn:active {
+             border: 1px solid blue;
+             color: white;
+          }`).lower();
+
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
 
@@ -501,9 +549,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
          DABC.InvokeCommand(itemname+"/StopRun", "tmout=60" );
       });
 
-      jnode.find(".bnet_lastcalibr").button().click(function() {
-         DABC.InvokeCommand(itemname+"/RefreshRun", "tmout=60");
-      });
+      main.select(".bnet_lastcalibr").on("click", () => DABC.InvokeCommand(itemname+"/RefreshRun", "tmout=60"));
 
       jnode.find(".bnet_resetdaq").button().css("display", ctrl_visible).click(function() {
          if (confirm("Really drop buffers on all BNET nodes"))
@@ -786,7 +832,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
             if (h>240) { if (quality>0.6) quality = 0.6; title = "Consider to peform calibration, "; }
          }
          title += "last: " + lastcalibr.value;
-         $(this.frame).find(".bnet_lastcalibr").css('background-color', this.GetQualityColor(quality)).attr("title", title).text(info);
+         d3.select(this.frame).select(".bnet_lastcalibr").style('background-color', this.GetQualityColor(quality)).attr("title", title).text(info);
       }
 
       $(this.frame).find(".bnet_runid_lbl").text(" RunId: " + runid);
@@ -815,7 +861,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
 
       if (changed) {
          this.DisplayCalItem(0, "");
-         this.RefreshHTML(lastprefix);
+         this.refreshHtml(lastprefix);
          this.hpainter.reload(); // also refresh hpainter - most probably items are changed
       }
 
@@ -835,7 +881,7 @@ JSROOT.define(["painter", "hist"], jsrp => {
       return hpainter.createCustomDisplay(itemname, "vert2").then(() => {
          let painter = new DABC.BnetPainter(hpainter, itemname);
          if (painter.active()) {
-            painter.RefreshHTML();
+            painter.refreshHtml();
             painter.main_timer = setInterval(() => painter.SendMainRequest(), 2000);
             painter.DisplayItem("/"+painter.itemname+"/EventsRate");
          }
