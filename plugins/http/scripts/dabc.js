@@ -408,7 +408,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
               "<button class='bnet_startrun dabc_btn' title='Start run, write files on all event builders'>Start</button>" +
-              "<select class='bnet_selectrun dabc_btn' style='width: 150px'>" +
+              "<select class='bnet_selectrun dabc_btn' style='width: 17em'>" +
               "<option>NO_FILE</option>" +
               "<option value='be'>Beam file</option>" +
               "<option value='te'>Test file</option>" +
@@ -436,7 +436,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
               "<button class='bnet_lostevents dabc_btn' title='Total lost events'>0.0 Ev/s</button>" +
               "<button class='bnet_frameclear dabc_btn' title='Clear drawings'>Clr</button>" +
               "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
-              "<button class='bnet_histclear' title='Clear all histograms'>Hist</button>" +
+              "<button class='bnet_histclear dabc_btn' title='Clear all histograms'>Hist</button>" +
               "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
               "<label class='bnet_runprefix_lbl' title='Current Run Prefix'>Prefix: </label>" +
               "</fieldset>";
