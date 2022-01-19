@@ -26,7 +26,7 @@ DABC_LINK_LIBRARY(DabcHttp
                     src/Factory.cxx
                     src/FastCgi.cxx
                     src/Server.cxx
-                 LIBRARIES 
+                 LIBRARIES
                     DabcBase
                     ${extra_libs}
                  INCLUDES
@@ -36,4 +36,5 @@ DABC_LINK_LIBRARY(DabcHttp
                     ${extra_defs})
 
 file(COPY scripts DESTINATION ${CMAKE_BINARY_DIR}/plugins/http)
+file(COPY jq DESTINATION ${CMAKE_BINARY_DIR}/plugins/http)
 file(COPY img DESTINATION ${CMAKE_BINARY_DIR}/plugins/http)
