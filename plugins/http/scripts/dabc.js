@@ -23,7 +23,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       }
    }
 
-   DABC.InvokeCommand = function(itemname, args) {
+   DABC.invokeCommand = function(itemname, args) {
       let url = itemname + "/execute";
       if (args && (typeof args == 'string')) url += "?" + args;
 
@@ -95,13 +95,13 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
           }`).lower();
 
       d3.select(frame).select(".hadaq_startfile").on("click", () => {
-         DABC.InvokeCommand(itemname+"/StartHldFile", "filename="+d3.select(frame).select('.hadaq_filename').property("value")+"&maxsize=2000");
+         DABC.invokeCommand(itemname+"/StartHldFile", "filename="+d3.select(frame).select('.hadaq_filename').property("value")+"&maxsize=2000");
       });
       d3.select(frame).select(".hadaq_stopfile").on("click", () => {
-         DABC.InvokeCommand(itemname+"/StopHldFile");
+         DABC.invokeCommand(itemname+"/StopHldFile");
       });
       d3.select(frame).select(".hadaq_restartfile").on("click", () => {
-         DABC.InvokeCommand(itemname+"/RestartHldFile");
+         DABC.invokeCommand(itemname+"/RestartHldFile");
       });
 
       let inforeq = false;
@@ -153,12 +153,12 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
             if (!res) return;
             UpdateDaqStatus(res[0].result);
             res.shift();
-            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter, true);
+            DABC.updateTrbStatus($(frame).find('.hadaq_calibr'), res, hpainter, true);
          }).finally(() => { inforeq = false; });
       }, 2000);
    }
 
-   DABC.UpdateTRBStatus = function(holder, res, hpainter, multiget) {
+   DABC.updateTrbStatus = function(holder, res, hpainter, multiget) {
 
       function makehname(prefix, code, name) {
          let str = code.toString(16).toUpperCase();
@@ -295,11 +295,11 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       $(frame).find(".store_startfile")
          .button()
          .click(function() {
-            DABC.InvokeCommand(itemname+"/Control/StartRootFile", "fname="+$(frame).find('.store_filename').val());
+            DABC.invokeCommand(itemname+"/Control/StartRootFile", "fname="+$(frame).find('.store_filename').val());
          });
       $(frame).find(".store_stopfile")
          .button()
-         .click(function() { DABC.InvokeCommand(itemname+"/Control/StopRootFile"); });
+         .click(function() { DABC.invokeCommand(itemname+"/Control/StopRootFile"); });
 
       let inforeq = false;
 
@@ -322,7 +322,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          JSROOT.httpRequest(itemname + "/Status/get.json", "object").then(res => {
             if (!res) return;
             UpdateStreamStatus(res);
-            DABC.UpdateTRBStatus($(frame).find('.stream_tdc_calibr'), res._childs, hpainter, false);
+            DABC.updateTrbStatus($(frame).find('.stream_tdc_calibr'), res._childs, hpainter, false);
          }).finally(() => { inforeq = false; });
 
       }, 2000);
@@ -331,7 +331,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
    // =========================================== BNET ============================================
 
-   DABC.CompareArrays = function(arr1, arr2) {
+   DABC.compareArrays = function(arr1, arr2) {
       if (!arr1 || !arr2) return arr1 == arr2;
       if (arr1.length != arr2.length) return false;
       for (let k=0;k<arr1.length;++k)
@@ -379,7 +379,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       return this.hpainter && this.frame;
    }
 
-   DABC.BnetPainter.prototype.MakeLabel = function(attr, txt, sz) {
+   DABC.BnetPainter.prototype.makeLabel = function(attr, txt, sz) {
       let lbl = "<label";
       if (attr) lbl += " " + attr;
       lbl +=">";
@@ -444,13 +444,13 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='jsroot bnet_builders_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
-              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 8) + "| " +
-              this.MakeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 8) + "| " +
-              this.MakeLabel("", "File local", 24) +  "| " +
-              this.MakeLabel("class='bnet_item_label h_item' title='display local file sizes' itemname='__bld__/RunFileSize'", "Size", 8) + "| " +
-              this.MakeLabel("", "File LTSM", 24) +  "| " +
-              this.MakeLabel("class='bnet_item_label h_item' title='display LTSM file sizes' itemname='__bld__/LtsmFileSize'", "Size", 8);
+      html += this.makeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
+              this.makeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 8) + "| " +
+              this.makeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 8) + "| " +
+              this.makeLabel("", "File local", 24) +  "| " +
+              this.makeLabel("class='bnet_item_label h_item' title='display local file sizes' itemname='__bld__/RunFileSize'", "Size", 8) + "| " +
+              this.makeLabel("", "File LTSM", 24) +  "| " +
+              this.makeLabel("class='bnet_item_label h_item' title='display LTSM file sizes' itemname='__bld__/LtsmFileSize'", "Size", 8);
       html += "</pre>";
       html += "</div>";
       for (let node in this.BuilderItems) {
@@ -468,10 +468,10 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='jsroot bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
-              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 8) + "| " +
-              this.MakeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 8) + "| " +
-              this.MakeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);
+      html += this.makeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
+              this.makeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 8) + "| " +
+              this.makeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 8) + "| " +
+              this.makeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);
       html += "</pre>";
       html += "</div>";
       for (let node in this.InputItems) {
@@ -524,45 +524,43 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
       main.selectAll(".bnet_item_clear").on("click", () => this.clearDisplay());
 
-      main.select(".bnet_monitoring").on("click", function() {
-         let on = d3.select(this).property('checked');
+      main.select(".bnet_monitoring").on("click", () => {
+         let on = main.select(".bnet_monitoring").property('checked');
          painter.hpainter.enableMonitoring(on);
          painter.hpainter.updateItems();
       });
 
       main.selectAll(".bnet_item_label").on("click", function() {
-         painter.DisplayItem(d3.select(this).attr("itemname"));
+         painter.displayItem(d3.select(this).attr("itemname"));
       });
 
       let itemname = this.itemname;
 
-      let jnode = $(main.node());
-
       main.select(".bnet_startrun").style("display", ctrl_visible).on("click", () => {
-         DABC.InvokeCommand(itemname+"/StartRun", "tmout=60&prefix=" + main.select(".bnet_selectrun").property("value"));
+         DABC.invokeCommand(itemname + "/StartRun", "tmout=60&prefix=" + main.select(".bnet_selectrun").property("value"));
       });
 
       main.select(".bnet_selectrun").style("display", ctrl_visible).property("value", lastprefix || undefined);
 
-      main.select(".bnet_stoprun").style("display", ctrl_visible).on("click", () => DABC.InvokeCommand(itemname+"/StopRun", "tmout=60" ));
+      main.select(".bnet_stoprun").style("display", ctrl_visible).on("click", () => DABC.invokeCommand(itemname+"/StopRun", "tmout=60" ));
 
-      main.select(".bnet_lastcalibr").on("click", () => DABC.InvokeCommand(itemname+"/RefreshRun", "tmout=60"));
+      main.select(".bnet_lastcalibr").on("click", () => DABC.invokeCommand(itemname+"/RefreshRun", "tmout=60"));
 
       main.select(".bnet_resetdaq").style("display", ctrl_visible).on("click", () => {
          if (confirm("Really drop buffers on all BNET nodes"))
-            DABC.InvokeCommand(itemname+"/ResetDAQ");
+            DABC.invokeCommand(itemname+"/ResetDAQ");
       });
 
       main.select(".bnet_totalrate").on("click", () => {
-         painter.DisplayItem("/"+itemname+"/DataRate");
+         painter.displayItem("/"+itemname+"/DataRate");
       });
 
       main.select(".bnet_totalevents").on("click", () => {
-         painter.DisplayItem("/"+itemname+"/EventsRate");
+         painter.displayItem("/"+itemname+"/EventsRate");
       });
 
       main.select(".bnet_lostevents").on("click", () => {
-         painter.DisplayItem("/"+itemname+"/LostRate");
+         painter.displayItem("/"+itemname+"/LostRate");
       });
 
       main.select(".bnet_frameclear").on("click", () => {
@@ -583,7 +581,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       if (frame) this.hpainter.getDisplay().cleanupFrame(frame);
    }
 
-   DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
+   DABC.BnetPainter.prototype.displayItem = function(itemname) {
       let items = null, opt = "";
 
       if (itemname.indexOf("__inp__")==0) {
@@ -642,7 +640,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
        setTimeout(() => this.hpainter.updateItems(false), 1000);
    }
 
-   DABC.BnetPainter.prototype.GetQualityColor = function(quality) {
+   DABC.BnetPainter.prototype.getQualityColor = function(quality) {
       if (quality <= 0.3) return "red";
       if (quality < 0.7) return "yellow";
       if (quality < 0.8) return "lightblue";
@@ -650,7 +648,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       return "lightgreen";
    }
 
-   DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
+   DABC.BnetPainter.prototype.processReq = function(isbuild, indx, res) {
       if (!res) return;
 
       let frame = d3.select(this.frame), elem,
@@ -669,46 +667,46 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
-         let col = this.GetQualityColor(res.quality);
+         let col = this.getQualityColor(res.quality);
          itemname = this.BuilderItems[indx];
          let pos = itemname.lastIndexOf("/");
-         html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
+         html += this.makeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
                                 "' title='Item: " + itemname + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
-         let col = this.GetQualityColor(res.quality);
+         let col = this.getQualityColor(res.quality);
          itemname = this.InputItems[indx];
          let title = "Item: " + itemname + "  State: " + hadaqstate.value;
          if (res.progress) title += " progress:" + res.progress;
          title += " cansend:[" + (res.queues || "-") + "]";
 
          let pos = itemname.lastIndexOf("/");
-         html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
+         html += this.makeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
                                 "' title='" + title + "'", this.InputNodes[indx].substr(7), 20);
       }
 
       let prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
 
-      html += "| " + this.MakeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 8);
-      html += "| " + this.MakeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 8);
+      html += "| " + this.makeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 8);
+      html += "| " + this.makeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 8);
 
       if (isbuild) {
          let fname = res.runname || "";
          if (fname && (fname.lastIndexOf("/")>0))
             fname = fname.substr(fname.lastIndexOf("/")+1);
 
-         html += "| " + this.MakeLabel("title='Full name: " + res.runname + "'", fname, 24);
-         html += "| " + this.MakeLabel(prefix + "RunFileSize'", ((res.runsize || 0)/1024/1024).toFixed(2), 8);
+         html += "| " + this.makeLabel("title='Full name: " + res.runname + "'", fname, 24);
+         html += "| " + this.makeLabel(prefix + "RunFileSize'", ((res.runsize || 0)/1024/1024).toFixed(2), 8);
 
          fname = res.ltsmname || "";
          if (fname && (fname.lastIndexOf("/")>0))
             fname = fname.substr(fname.lastIndexOf("/")+1);
 
-         html += "| " + this.MakeLabel("title='Full name: " + res.ltsmname + "'", fname, 24);
-         html += "| " + this.MakeLabel(prefix + "LtsmFileSize'", ((res.ltsmsize || 0)/1024/1024).toFixed(2), 8);
+         html += "| " + this.makeLabel("title='Full name: " + res.ltsmname + "'", fname, 24);
+         html += "| " + this.makeLabel(prefix + "LtsmFileSize'", ((res.ltsmsize || 0)/1024/1024).toFixed(2), 8);
 
-         // if (hadaqinfo) html += "| " + this.MakeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
+         // if (hadaqinfo) html += "| " + this.makeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
       } else {
          // info with HUBs and port numbers
          let totallen = 0;
@@ -723,18 +721,18 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
                            " quality:" + res.hubs_quality[k] +
                            " progr:" + res.hubs_progress[k] +
                            " " + res.hubs_info[k];
-               let style = "background-color:" + this.GetQualityColor(res.hubs_quality[k]);
+               let style = "background-color:" + this.getQualityColor(res.hubs_quality[k]);
                let calitem = "";
                if (res.calibr[k])
                   calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
                let attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='h_item bnet_trb_label'";
 
-               html += " " + this.MakeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
+               html += " " + this.makeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
                // if (totallen>40) break;
             }
          }
 
-         if (!totallen) html += " " + this.MakeLabel("", "failure", 40);
+         if (!totallen) html += " " + this.makeLabel("", "failure", 40);
       }
 
       html += "</pre>";
@@ -743,31 +741,31 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
           main = elem.html(html);
 
       main.selectAll(".bnet_item_label").on("click", function() {
-         painter.DisplayItem(d3.select(this).attr("itemname"));
+         painter.displayItem(d3.select(this).attr("itemname"));
       });
       main.selectAll(".bnet_trb_label").on("click", function() {
          painter.displayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
       });
    }
 
-   DABC.BnetPainter.prototype.ProcessCalibrReq = function(res) {
+   DABC.BnetPainter.prototype.processCalibrReq = function(res) {
       if (!res) return;
 
       this.CalibrInfo = res;
 
-      DABC.UpdateTRBStatus($(this.frame).find('.bnet_tdc_calibr'), res, this.hpainter, false);
+      DABC.updateTrbStatus($(this.frame).find('.bnet_tdc_calibr'), res, this.hpainter, false);
    }
 
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
       for (let n in this.InputItems)
-         JSROOT.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, false, n));
+         JSROOT.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.processReq.bind(this, false, n));
       for (let n in this.BuilderItems)
-         JSROOT.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.ProcessReq.bind(this, true, n));
+         JSROOT.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.processReq.bind(this, true, n));
       if (this.CalibrItem)
-         JSROOT.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(this.ProcessCalibrReq.bind(this));
+         JSROOT.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(res => this.processCalibrReq(res));
    }
 
-   DABC.BnetPainter.prototype.ProcessMainRequest = function(res) {
+   DABC.BnetPainter.prototype.processMainRequest = function(res) {
 
       d3.select(this.frame).style('background-color', res ? null : "grey");
 
@@ -797,7 +795,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       }
 
       if (state) {
-         let col = this.GetQualityColor(quality || 0);
+         let col = this.getQualityColor(quality || 0);
          // col = "red";
          //if (state=="Ready") col = "lightgreen"; else
          //if (state=="Accumulating") col = "lightblue"; else
@@ -829,7 +827,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
             if (h>240) { if (quality>0.6) quality = 0.6; title = "Consider to peform calibration, "; }
          }
          title += "last: " + lastcalibr.value;
-         d3.select(this.frame).select(".bnet_lastcalibr").style('background-color', this.GetQualityColor(quality)).attr("title", title).text(info);
+         d3.select(this.frame).select(".bnet_lastcalibr").style('background-color', this.getQualityColor(quality)).attr("title", title).text(info);
       }
 
       $(this.frame).find(".bnet_runid_lbl").text(" RunId: " + runid);
@@ -842,14 +840,14 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       //   sm.selectmenu("refresh");
       //}
 
-      if (!DABC.CompareArrays(this.InputItems,inp)) {
+      if (!DABC.compareArrays(this.InputItems,inp)) {
          this.InputItems = inp;
          this.InputNodes = ninp;
          this.InputInfo = [];
          changed = true;
       }
 
-      if (!DABC.CompareArrays(this.BuilderItems,bld)) {
+      if (!DABC.compareArrays(this.BuilderItems,bld)) {
          this.BuilderItems = bld;
          this.BuilderNodes = nbld;
          this.BuilderInfo = [];
@@ -865,12 +863,12 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       this.SendInfoRequests();
    }
 
-   DABC.BnetPainter.prototype.SendMainRequest = function() {
+   DABC.BnetPainter.prototype.sendMainRequest = function() {
       if (this.mainreq) return;
       this.mainreq = true;
       JSROOT.httpRequest(this.itemname + "/get.json", "object")
-         .then(res => this.ProcessMainRequest(res))
-         .catch(() => this.ProcessMainRequest(null))
+         .then(res => this.processMainRequest(res))
+         .catch(() => this.processMainRequest(null))
          .finally(() => { this.mainreq = false; });
    }
 
@@ -879,8 +877,8 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          let painter = new DABC.BnetPainter(hpainter, itemname);
          if (painter.active()) {
             painter.refreshHtml();
-            painter.main_timer = setInterval(() => painter.SendMainRequest(), 2000);
-            painter.DisplayItem("/"+painter.itemname+"/EventsRate");
+            painter.main_timer = setInterval(() => painter.sendMainRequest(), 2000);
+            painter.displayItem("/"+painter.itemname+"/EventsRate");
          }
       });
    }
@@ -1336,7 +1334,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
          let pthis = this;
 
-         $("#"+ cmdelemid + "_button").click(function() { pthis.InvokeCommand(); });
+         $("#"+ cmdelemid + "_button").click(function() { pthis.invokeCommand(); });
 
          for (let cnt=0;cnt<this.NumArgs();cnt++) {
             let argid = cmdelemid + "_arg" + cnt;
@@ -1349,7 +1347,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          }
       }
 
-      painter.InvokeCommand = function() {
+      painter.invokeCommand = function() {
          if (this.req) return;
 
          let cmdelemid = this.selectDom().attr('id');
@@ -1383,7 +1381,6 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
              .then(res => resdiv.html("<h5>Get reply res=" + res['_Result_'] + "</h5>"))
              .catch(() => resdiv.html("<h5>missing reply from server</h5>"))
              .finally(() => { this.req = false; });
-
       }
 
       painter.ShowCommand();
