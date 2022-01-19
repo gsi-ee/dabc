@@ -13,25 +13,28 @@ function MbsState() {
    this.fLogData = null;
 }
 
-MbsState.prototype.DabcCommand = function(cmd, option, callback) {
-   var xmlHttp = new XMLHttpRequest();
-   var pre = "../";
-   var suf = "/execute";
-   var fullcom = pre + cmd + suf + "?" + option;
-   console.log(fullcom);
-   xmlHttp.open('GET', fullcom, true);
-   xmlHttp.onreadystatechange = function() {
+MbsState.prototype.DabcCommand = function(cmd, option) {
+   let pre = "../",
+       suf = "/execute",
+       fullcom = pre + cmd + suf;
+   if (option) fullcom +=  "?" + option;
 
-      if (xmlHttp.readyState == 4) {
-         console.log("DabcCommand completed.");
-         var reply = JSON.parse(xmlHttp.responseText);
-         console.log("Reply= %s", reply);
-         callback(true); // todo: evaluate return values of reply
-      }
-   }
-   xmlHttp.send(null);
-};
+   return JSROOT.httpRequest(fullcom, "text")
+                .then(reply => { console.log('Reply = ' + reply); return true; });
+}
 
+MbsState.prototype.DabcParameterNew = function(par) {
+   let pre = "../",
+       suf = "/get.json",
+       fullcom = pre + par + suf;
+
+   return JSROOT.httpRequest(fullcom, "text")
+                .then(reply => {
+                   if (!reply) return null;
+                   let obj = JSON.parse(reply);
+                   return obj ? obj.value : null;
+               });
+}
 
 MbsState.prototype.DabcParameter = function(par, callback) {
    var xmlHttp = new XMLHttpRequest();
@@ -314,16 +317,14 @@ MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
 
    if(mode!=0) return; // only change display mode, do not start new trending history
 
-   MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval, function(result) {
-      MyDisplay.SetStatusMessage(result ? "CmdSetRateInterval sent."
-            : "CmdSetRateInterval FAILED.");
-   });
+   MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval)
+      .then(() => MyDisplay.SetStatusMessage("CmdSetRateInterval sent."))
+      .catch(() => MyDisplay.SetStatusMessage("CmdSetRateInterval FAILED."));
 
-   MBS.DabcCommand("CmdSetHistoryDepth", "entries="+this.fLoggingHistory, function(result) {
-      MyDisplay.SetStatusMessage(result ? "CmdSetHistoryDepth  sent."
-            : "CmdSetHistoryDepth FAILED.");
-   });
 
+   MBS.DabcCommand("CmdSetHistoryDepth", "entries="+this.fLoggingHistory)
+      .then(() => MyDisplay.SetStatusMessage("CmdSetHistoryDepth sent."))
+      .catch(() => MyDisplay.SetStatusMessage("CmdSetHistoryDepth FAILED."));
 }
 
 
@@ -534,12 +535,10 @@ $(function() {
             if (!response)
                return;
 
-            MBS.DabcCommand("CmdMbs", "cmd=sta acq", function(
-                  result) {
-               MyDisplay.SetStatusMessage(result ? "Start Acquisition command sent."
-                     : "Start Acquisition FAILED.");
-               MyDisplay.RefreshMonitor();
-            });
+            MBS.DabcCommand("CmdMbs", "cmd=sta acq")
+               .then(() => MyDisplay.SetStatusMessage("Start Acquisition command sent."))
+               .catch(() => MyDisplay.SetStatusMessage("Start Acquisition FAILED."))
+               .finally(() => MyDisplay.RefreshMonitor());
          });
 
    $("#buttonStopAcquisition").button({showLabel: false, icon:  "ui-icon-stop MyButtonStyle"}).click(
@@ -549,12 +548,10 @@ $(function() {
             var response = MyDisplay.Confirm(requestmsg);
             if (!response)
                return;
-            MBS.DabcCommand("CmdMbs", "cmd=sto acq", function(
-                  result) {
-               MyDisplay.SetStatusMessage(result ? "Stop Acquisition command sent."
-                     : "Stop Acquisition FAILED.");
-               MyDisplay.RefreshMonitor();
-            });
+            MBS.DabcCommand("CmdMbs", "cmd=sto acq")
+               .then(() => MyDisplay.SetStatusMessage("Stop Acquisition command sent."))
+               .catch(() => MyDisplay.SetStatusMessage("Stop Acquisition FAILED."))
+               .finally(() => MyDisplay.RefreshMonitor());
          });
 
 ////////// startup command will not work at the moment:
@@ -564,14 +561,10 @@ $(function() {
       if (!response)
          return;
 
-      MBS.DabcCommand("CmdMbs","cmd=\@startup",function(
-            result) {
-         MyDisplay.SetStatusMessage(result ? "Init Acquisition (@startup) command sent."
-               : "Init Acquisition FAILED.");
-         MyDisplay.RefreshMonitor();
-
-      });
-
+      MBS.DabcCommand("CmdMbs","cmd=\@startup")
+         .then(() => MyDisplay.SetStatusMessage("Init Acquisition (@startup) command sent."))
+         .catch(() => MyDisplay.SetStatusMessage("Init Acquisition FAILED."))
+         .finally(() => MyDisplay.RefreshMonitor());
    });
 
    $("#buttonShutdownAcquisition").button({showLabel: false, icon:  "ui-icon-arrowthick-1-s MyButtonStyle"}).click(function() {
@@ -580,14 +573,10 @@ $(function() {
       if (!response)
          return;
 
-      MBS.DabcCommand("CmdMbs","cmd=\@shutdown",function(
-            result) {
-         MyDisplay.SetStatusMessage(result ? "Shutdwon Acquisition (@shutdown) command sent."
-               : "Shutdown Acquisition FAILED.");
-         MyDisplay.RefreshMonitor();
-
-      });
-
+      MBS.DabcCommand("CmdMbs","cmd=\@shutdown")
+         .then(() => MyDisplay.SetStatusMessage("Shutdwon Acquisition (@shutdown) command sent."))
+         .catch(() => MyDisplay.SetStatusMessage("Shutdwon Acquisition FAILED."))
+         .finally(() => MyDisplay.RefreshMonitor());
    });
 
 
@@ -613,13 +602,10 @@ $(function() {
                event.preventDefault();
                return;
             }
-            MBS.DabcCommand("CmdMbs", "cmd=clo fi", function(result) {
-               MyDisplay.SetStatusMessage(result ? "Stop File command sent."
-                  : "Stop File FAILED.");
-               MyDisplay.RefreshMonitor();
-            });
-
-
+            MBS.DabcCommand("CmdMbs", "cmd=clo fi")
+               .then(() => MyDisplay.SetStatusMessage("Stop File command sent."))
+               .catch(() => MyDisplay.SetStatusMessage("Stop File FAILED."))
+               .finally(() => MyDisplay.RefreshMonitor());
          }
          else {
             var datafilename = document.getElementById("Filename").value;
@@ -649,16 +635,13 @@ $(function() {
             if ($("#FileAutoMode").is(':checked'))
                options += " -AUTO";
 
-            MBS.DabcCommand("CmdMbs", options, function(
-               result) {
-               MyDisplay.SetStatusMessage(result ? "Start File command sent: " + options
-                  : "Start File FAILED.");
-               if (result) {
-                  MBS.fFileName = datafilename;
-               }
-               MyDisplay.RefreshMonitor();
+            MBS.DabcCommand("CmdMbs", options)
+               .then(() => {
+                   MyDisplay.SetStatusMessage("Start File command sent: " + options);
+                   MBS.fFileName = datafilename;
+                }).catch(() => MyDisplay.SetStatusMessage("Start File FAILED."))
+               .finally(() => MyDisplay.RefreshMonitor());
 
-            });
          }
          event.preventDefault();
       }
@@ -737,12 +720,11 @@ $(function() {
                   return;
                   }
 
-               MBS.DabcCommand("CmdMbs", cmdpar,function(
-                     result) {
-                  MyDisplay.SetStatusMessage(result ? "Send MBS command: "+cmdpar
-                        : "MBS command  FAILED.");
-                  MyDisplay.RefreshMonitor();
-               });
+               MBS.DabcCommand("CmdMbs", cmdpar)
+                  .then(() => MyDisplay.SetStatusMessage("Send MBS command: "+cmdpar))
+                  .catch(() => MyDisplay.SetStatusMessage("MBS command  FAILED."))
+                  .finally(() => MyDisplay.RefreshMonitor());
+
                event.preventDefault();
             });
 
