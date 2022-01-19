@@ -1,525 +1,519 @@
+JSROOT.require(['painter', 'hierarchy']).then(() => {
 
-var MBS;
-var MyDisplay;
+   let MBS, MyDisplay;
 
-////////////// State class reflecting remote state and communication:
-function MbsState() {
-   this.fSetupLoaded=false;
-   this.fRunning = false;
-   this.fFileOpen = false;
-   this.fFileName = "run0.lmd";
-   this.fFileInterval = 1000;
-   this.fLogging = false;
-   this.fLogData = null;
-}
+   ////////////// State class reflecting remote state and communication:
+   function MbsState() {
+      this.fSetupLoaded=false;
+      this.fRunning = false;
+      this.fFileOpen = false;
+      this.fFileName = "run0.lmd";
+      this.fFileInterval = 1000;
+      this.fLogging = false;
+      this.fLogData = null;
+   }
 
-MbsState.prototype.DabcCommand = function(cmd, option) {
-   let pre = "../",
-       suf = "/execute",
-       fullcom = pre + cmd + suf;
-   if (option) fullcom +=  "?" + option;
+   MbsState.prototype.DabcCommand = function(cmd, option) {
+      let pre = "../",
+          suf = "/execute",
+          fullcom = pre + cmd + suf;
+      if (option) fullcom +=  "?" + option;
 
-   return JSROOT.httpRequest(fullcom, "text")
-                .then(reply => { console.log('Reply = ' + reply); return true; });
-}
+      return JSROOT.httpRequest(fullcom, "text")
+                   .then(reply => { console.log('Reply = ' + reply); return true; });
+   }
 
-MbsState.prototype.DabcParameterNew = function(par) {
-   let pre = "../",
-       suf = "/get.json",
-       fullcom = pre + par + suf;
+   MbsState.prototype.DabcParameterNew = function(par) {
+      let pre = "../",
+          suf = "/get.json",
+          fullcom = pre + par + suf;
 
-   return JSROOT.httpRequest(fullcom, "text")
-                .then(reply => {
-                   if (!reply) return null;
-                   let obj = JSON.parse(reply);
-                   return obj ? obj.value : null;
-               });
-}
+      return JSROOT.httpRequest(fullcom, "text")
+                   .then(reply => {
+                      if (!reply) return null;
+                      let obj = JSON.parse(reply);
+                      return obj ? obj.value : null;
+                  });
+   }
 
-MbsState.prototype.DabcParameter = function(par, callback) {
-   var xmlHttp = new XMLHttpRequest();
-   var pre = "../";
-   var suf = "/get.json";
-   var fullcom = pre + par + suf;
-   // console.log(fullcom);
-   xmlHttp.open('GET', fullcom, true);
-   xmlHttp.onreadystatechange = function() {
+   MbsState.prototype.DabcParameter = function(par, callback) {
+      var xmlHttp = new XMLHttpRequest();
+      var pre = "../";
+      var suf = "/get.json";
+      var fullcom = pre + par + suf;
+      // console.log(fullcom);
+      xmlHttp.open('GET', fullcom, true);
+      xmlHttp.onreadystatechange = function() {
 
-      if (xmlHttp.readyState == 4) {
-         //console.log("DabcParameter request completed.");
-         var reply = JSON.parse(xmlHttp.responseText);
-          if (typeof reply != 'object') {
-               console.log("non-object in json response from server");
+         if (xmlHttp.readyState == 4) {
+            //console.log("DabcParameter request completed.");
+            var reply = JSON.parse(xmlHttp.responseText);
+             if (typeof reply != 'object') {
+                  console.log("non-object in json response from server");
+                  return;
+               }
+
+   //          var val= false;
+   //          val=(reply['value']==="true") ? true : false;
+             //console.log("response=%s, Reply= %s, value=%s", xmlHttp.responseText, reply, val);
+             //console.log("name=%s, value= %s state=%s", reply['_name'], reply['value'], val);
+            callback("true",reply['value']);
+         }
+      }
+      xmlHttp.send(null);
+   };
+
+
+   MbsState.prototype.GosipCommand = function(cmd, command_callback) {
+   // this is variation of code found in gosip polandsetup gui:
+
+      var cmdurl="/GOSIP/Test/CmdGosip/execute";
+      var xmlHttp = new XMLHttpRequest();
+      var sfp=0;
+      var dev=0;
+
+      var cmdtext = cmdurl + "?sfp=" + sfp + "&dev=" + dev;
+   //
+   //   if (log)
+       cmdtext += "&log=1";
+   //
+      cmdtext += "&cmd=\'" + cmd + "\'";
+   //
+      console.log(cmdtext);
+   //
+      xmlHttp.open('GET', cmdtext, true);
+   //
+      var pthis = this;
+
+      xmlHttp.onreadystatechange = function() {
+         // console.log("onready change " + xmlHttp.readyState);
+         if (xmlHttp.readyState == 4) {
+            var reply = JSON.parse(xmlHttp.responseText);
+            var ddd = "";
+            if (!reply || (reply["_Result_"] != 1)) {
+               command_callback(false, null,ddd);
                return;
             }
 
-//          var val= false;
-//          val=(reply['value']==="true") ? true : false;
-          //console.log("response=%s, Reply= %s, value=%s", xmlHttp.responseText, reply, val);
-          //console.log("name=%s, value= %s state=%s", reply['_name'], reply['value'], val);
-         callback("true",reply['value']);
-      }
-   }
-   xmlHttp.send(null);
-};
+            if (reply['log'] != null) {
 
+               // console.log("log length = " + Setup.fLogData.length);
+               for ( var i in reply['log']) {
 
+                  if (reply['log'][i].search("\n") >= 0)
+                     console.log("found 1");
+                  if (reply['log'][i].search("\\n") >= 0)
+                     console.log("found 2");
+                  if (reply['log'][i].search("\\\n") >= 0)
+                     console.log("found 3");
 
-
-MbsState.prototype.GosipCommand = function(cmd, command_callback) {
-// this is variation of code found in gosip polandsetup gui:
-
-   var cmdurl="/GOSIP/Test/CmdGosip/execute";
-   var xmlHttp = new XMLHttpRequest();
-   var sfp=0;
-   var dev=0;
-
-   var cmdtext = cmdurl + "?sfp=" + sfp + "&dev=" + dev;
-//
-//   if (log)
-    cmdtext += "&log=1";
-//
-   cmdtext += "&cmd=\'" + cmd + "\'";
-//
-   console.log(cmdtext);
-//
-   xmlHttp.open('GET', cmdtext, true);
-//
-   var pthis = this;
-
-   xmlHttp.onreadystatechange = function() {
-      // console.log("onready change " + xmlHttp.readyState);
-      if (xmlHttp.readyState == 4) {
-         var reply = JSON.parse(xmlHttp.responseText);
-         var ddd = "";
-         if (!reply || (reply["_Result_"] != 1)) {
-            command_callback(false, null,ddd);
-            return;
-         }
-
-         if (reply['log'] != null) {
-
-            // console.log("log length = " + Setup.fLogData.length);
-            for ( var i in reply['log']) {
-
-               if (reply['log'][i].search("\n") >= 0)
-                  console.log("found 1");
-               if (reply['log'][i].search("\\n") >= 0)
-                  console.log("found 2");
-               if (reply['log'][i].search("\\\n") >= 0)
-                  console.log("found 3");
-
-               ddd += "<pre>";
-               ddd += reply['log'][i].replace(/\\n/g, "<br/>");
-               ddd += "</pre>";
+                  ddd += "<pre>";
+                  ddd += reply['log'][i].replace(/\\n/g, "<br/>");
+                  ddd += "</pre>";
+               }
+               //console.log(ddd);
             }
-            //console.log(ddd);
+
+            command_callback(true, ddd, reply["res"]);
          }
+      };
 
-         command_callback(true, ddd, reply["res"]);
-      }
-   };
-
-   xmlHttp.send(null);
-}
-
-
-
-MbsState.prototype.UpdateRunstate = function(ok, state){
-   //console.log("UpdateRunstate with ok=%s, value=%s", ok, state);
-   if (ok=="true") {
-      this.fRunning = (state==true);
-   } else {
-      console.log("UpdateRunstate failed.");
+      xmlHttp.send(null);
    }
-}
 
-MbsState.prototype.UpdateFilestate = function(ok, state){
 
-   if (ok=="true") {
-      this.fFileOpen = (state==true);
+
+   MbsState.prototype.UpdateRunstate = function(ok, state){
+      //console.log("UpdateRunstate with ok=%s, value=%s", ok, state);
+      if (ok=="true") {
+         this.fRunning = (state==true);
       } else {
-      console.log("UpdateFilestate failed.");
-   }
-   //console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
-}
-
-MbsState.prototype.UpdateSetupstate = function(ok, state){
-
-   if (ok=="true") {
-      this.fSetupLoaded = (state==true);
-      } else {
-      console.log("UpdateSetupstate failed.");
-   }
-   //console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
-}
-
-MbsState.prototype.UpdateHistoryDepth = function(ok, val){
-
-   if (ok=="true") {
-      MyDisplay.fLoggingHistory = val;
-      } else {
-      console.log("UpdateHistoryDepth failed.");
-   }
-   console.log("UpdateUpdateHistoryDepth with ok=%s, value=%s, loghistory=%d", ok, val, MyDisplay.fLoggingHistory);
-}
-
-MbsState.prototype.UpdateRateInterval = function(ok, val){
-
-   if (ok=="true") {
-      MyDisplay.fRateInterval = val;
-      } else {
-      console.log("UpdateRateInterval failed.");
-   }
-   console.log("UpdateRateInterval with ok=%s, value=%s, interval=%d", ok, val, MyDisplay.fRateInterval);
-}
-
-
-
-
-
-MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
-// DABC states as strings:
-//   "Halted"
-//   "Ready"
-//    "Running"
-//    "Failure";
-//    "Transition";
-
-
-   if (ok=="true") {
-      this.fDabcState = state;
-
-   } else {
-      console.log("UpdateDABCstate failed.");
-   }
-    //console.log("UpdateDABCstate with ok=%s, value=%s, dabcstate=%s", ok, state, this.fDabcState);
-    refreshcall();
-}
-
-
-
-MbsState.prototype.Update = function(callback){
-   var pthis = this;
-
-   // TEST:
-   this.DabcParameter("MbsSetupLoaded", function(res,val) { pthis.UpdateSetupstate(res,val); });
-   this.DabcParameter("MbsAcqRunning", function(res,val) { pthis.UpdateRunstate(res,val); });
-   this.DabcParameter("MbsFileOpen",function(res,val) { pthis.UpdateFilestate(res,val); })
-
-   this.DabcParameter("MbsHistoryDepth",function(res,val) { pthis.UpdateHistoryDepth(res,val); })
-   this.DabcParameter("MbsRateInterval",function(res,val) { pthis.UpdateRateInterval(res,val); })
-
-//
-   this.DabcParameter("../../web-mbs/App/State",function(res,val) { pthis.UpdateDABCstate(res,val, callback); })
-
-
-   //this.fDabcState="Running";
-   //callback(); // will be done when last parameter update response has been processed
-}
-
-
-/////////////// DISPLAY class to manage current view:
-function MbsDisplay(state){
-   this.fMbsState = state;
-   this.fDoCommandConfirm = true;
-   this.fShowGosip = false;
-   this.fMonitoring = false;
-   this.fTrending = false;
-   this.fTrendingHistory = 100;
-   this.fFileLogMode = 4;
-   this.fLoggingHistory = 100;
-   this.fRateInterval = 1;
-   this.fMbsLoggingHistory = 500;
-   this.fUpdateTimer = null;
-   this.fUpdateInterval = 2000; // ms
-   this.fMiddlerightPos = 0;
-   this.fMiddleWidth = 0;
-}
-
-// set up view elements of display:
-MbsDisplay.prototype.BuildView = function() {
-   var hpainter = new JSROOT.HierarchyPainter('root', null);
-
-   var disp = new JSROOT.CustomDisplay();
-   disp.addFrame("EvRateDisplay", "EventRate");
-   disp.addFrame("DatRateDisplay", "DataRate");
-   disp.addFrame("SrvRateDisplay", "ServerRate");
-   disp.addFrame("DeviceInfo", "logger");
-   // use same frame for different items
-   disp.addFrame("ReadoutInfo", "rate_log");
-   disp.addFrame("ReadoutInfo", "rash_log");
-   disp.addFrame("ReadoutInfo", "rast_log");
-   disp.addFrame("ReadoutInfo", "ratf_log");
-
-   hpainter.setDisplay(disp);
-
-   this.hpainter = null;
-
-   hpainter.openOnline("../").then(() => {
-      this.hpainter = hpainter;
-      this.SetTrending(false, 300);
-      hpainter.display("logger");
-      this.SetFileLogMode(4, 0, 0);   // init log window, but keep history and interval from server
-   });
-}
-
-
-MbsDisplay.prototype.SetRateGauges = function(){
-   this.hpainter.display("EventRate", "gauge");
-   this.hpainter.display("DataRate", "gauge");
-   this.hpainter.display("ServerRate", "gauge");
-}
-
-
-MbsDisplay.prototype.SetRateTrending = function(history) {
-   this.fTrendingHistory = history;
-
-   this.hpainter.display("EventRate", "line");
-   this.hpainter.display("DataRate", "line");
-   this.hpainter.display("ServerRate", "line");
-}
-
-
-MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
-
-   if(history==0)
-      history=document.getElementById("Loglength").value;
-
-   if(deltat==0)
-      deltat=document.getElementById("Loginterval").value;
-
-   this.fLoggingHistory=history;
-   this.fRateInterval=deltat;
-
-   if(mode!=0) this.fFileLogMode=mode;
-
-   console.log("SetFileLogMode with mode="+mode+" , history="+history +" , deltat="+deltat);
-   switch (this.fFileLogMode) {
-   case "1":
-      // "rate"
-      this.hpainter.display("rate_log");
-      break;
-   case "2":
-      // "rash"
-      this.hpainter.display("rash_log");
-      break;
-   case "3":
-      // "rast"
-      this.hpainter.display("rast_log");
-      break;
-   case "4":
-   default:
-      // "ratf"
-      this.hpainter.display("ratf_log");
-      break;
-   };
-
-   if(mode!=0) return; // only change display mode, do not start new trending history
-
-   MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval)
-      .then(() => MyDisplay.SetStatusMessage("CmdSetRateInterval sent."))
-      .catch(() => MyDisplay.SetStatusMessage("CmdSetRateInterval FAILED."));
-
-
-   MBS.DabcCommand("CmdSetHistoryDepth", "entries="+this.fLoggingHistory)
-      .then(() => MyDisplay.SetStatusMessage("CmdSetHistoryDepth sent."))
-      .catch(() => MyDisplay.SetStatusMessage("CmdSetHistoryDepth FAILED."));
-}
-
-
-MbsDisplay.prototype.RefreshMonitor = function() {
-
-   if (!this.hpainter) return;
-
-   this.hpainter.updateItems();
-
-   // optionally adjust scrollbars at info logs:
-   $("#daq_log").scrollTop($("#daq_log")[0].scrollHeight - $("#daq_log").height());
-   $("#file_log").scrollTop($("#file_log")[0].scrollHeight - $("#file_log").height());
-
-   this.fMbsState.Update(() => this.RefreshView());
-}
-
-
-MbsDisplay.prototype.ChangeMonitoring = function(on) {
-
-   this.fMonitoring = on;
-   if(on) {
-       this.SetStatusMessage("Starting monitoring timer with "+ this.fUpdateInterval + " ms.");
-       this.fUpdateTimer = window.setInterval(function(){MyDisplay.RefreshMonitor()}, this.fUpdateInterval);
-   } else {
-       window.clearInterval(this.fUpdateTimer);
-       this.SetStatusMessage("Stopped monitoring timer.");
-   }
-}
-
-MbsDisplay.prototype.SetTrending = function(on,history) {
-   this.fTrending = on;
-   if(on) {
-     console.log("SetTrending on");
-     this.SetRateTrending(history); // todo: get interval from textbox
-   } else {
-     console.log("SetTrending off");
-     this.SetRateGauges();
-   }
-}
-
-MbsDisplay.prototype.SetCommandConfirm = function(on) {
-   this.fDoCommandConfirm = on;
-}
-
-
-MbsDisplay.prototype.ShowGosipPanel = function(on){
-
-    if (!on) {
-         $('#gosip_container').hide();
-         $('#gosip_log').hide();
-         // $('#daq_log').height("400px"); // this does not allow to set
-         // automatic stretch to bottom
-         $('#daq_log').css({
-            bottom : "2.7em",
-            height : "auto"
-         });
-
-      } else {
-         $('#gosip_container').show();
-         $('#gosip_log').show();
-         // $('#daq_log').height("270px"); }
-         $('#daq_log').css({
-            bottom : "auto",
-            height : "198px"
-         });
-      }
-    this.fShoWGosip=on;
-}
-
-
-MbsDisplay.prototype.RefreshView = function() {
-
-   if (this.fMbsState.fRunning) {
-      $("#mbs_container").addClass("styleGreen").removeClass("styleRed").removeClass("styleYellow");
-   } else {
-      if (this.fMbsState.fSetupLoaded) {
-         $("#mbs_container").addClass("styleYellow").removeClass("styleRed").removeClass("styleGreen");
-      } else {
-         $("#mbs_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow");
+         console.log("UpdateRunstate failed.");
       }
    }
-    //console.log("RefreshView typeof fileopen=%s, value=%s globalvalue=%s", typeof(this.fMbsState.fFileOpen),
-   //       this.fMbsState.fFileOpen, Pexor.fFileOpen);
 
-   if (this.fMbsState.fFileOpen) {
-      //console.log("RefreshView finds open file");
-      $("#file_container").addClass("styleGreen").removeClass("styleRed");
-      $("#buttonStartFile").button("option", {icon:  "ui-icon-closethick MyButtonStyle" });
-      $("#buttonStartFile").attr("title", "Close output file");
-      $("#FileAutoMode").prop('disabled', true);
-      $("#FileRFIO").prop('disabled', true);
-      $("#Filesize").spinner("disable");
+   MbsState.prototype.UpdateFilestate = function(ok, state){
 
-   } else {
-      //console.log("RefreshView finds close file");
-      $("#file_container").addClass("styleRed").removeClass("styleGreen");
-      $("#buttonStartFile").button("option", {icon:  "ui-icon-seek-next MyButtonStyle" });
-      $("#buttonStartFile").attr("title", "Open lmd file for writing");
-      $("#FileAutoMode").prop('disabled', false);
-      $("#FileRFIO").prop('disabled', false);
-      $("#Filesize").spinner("enable");
+      if (ok=="true") {
+         this.fFileOpen = (state==true);
+         } else {
+         console.log("UpdateFilestate failed.");
+      }
+      //console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
    }
 
-   if (this.fMonitoring) {
-      $("#monitoring_container").addClass("styleGreen").removeClass("styleRed");
-      $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-stop MyButtonStyle\"></span>");
-      $("label[for='Monitoring']").attr("title", "Stop frequent refresh");
-      $("#Refreshtime").spinner("disable");
-      $("#Loglength").spinner("disable");
-      $("#Loginterval").spinner("disable");
+   MbsState.prototype.UpdateSetupstate = function(ok, state){
 
-   } else {
-      $("#monitoring_container").addClass("styleRed").removeClass("styleGreen");
-      $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-play MyButtonStyle\"></span>");
-      $("label[for='Monitoring']").attr("title", "Activate frequent refresh");
-      $("#Refreshtime").spinner("enable");
-      $("#Loglength").spinner("enable");
-      $("#Loginterval").spinner("enable");
-
+      if (ok=="true") {
+         this.fSetupLoaded = (state==true);
+         } else {
+         console.log("UpdateSetupstate failed.");
+      }
+      //console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
    }
 
-   if (!this.fTrending) {
-      $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-image MyButtonStyle\"></span>");//
-      $("label[for='Trending']").attr("title", "Rates are displayed as gauges. Press to switch to trending graphs.");
-      $("#Trendlength").spinner("enable");
-   } else {
-      $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-circle-arrow-n MyButtonStyle\"></span>");
-      $("label[for='Trending']").attr("title", "Rates are displayed as trending graphs. Press to switch to gauges.");
-      $("#Trendlength").spinner("disable");
+   MbsState.prototype.UpdateHistoryDepth = function(ok, val){
+
+      if (ok=="true") {
+         MyDisplay.fLoggingHistory = val;
+         } else {
+         console.log("UpdateHistoryDepth failed.");
+      }
+      console.log("UpdateUpdateHistoryDepth with ok=%s, value=%s, loghistory=%d", ok, val, MyDisplay.fLoggingHistory);
    }
 
-   if($("#FileRFIO").is(':checked')){
-      $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-link MyButtonStyle\"></span>");
-      $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
-   } else {
-      $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-disk MyButtonStyle\"></span>");
-      $("label[for='FileRFIO']").attr("title", "Write to local disk is enabled.");
+   MbsState.prototype.UpdateRateInterval = function(ok, val){
+
+      if (ok=="true") {
+         MyDisplay.fRateInterval = val;
+         } else {
+         console.log("UpdateRateInterval failed.");
+      }
+      console.log("UpdateRateInterval with ok=%s, value=%s, interval=%d", ok, val, MyDisplay.fRateInterval);
    }
 
-   if($("#FileAutoMode").is(':checked')){
-      $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-star MyButtonStyle\"></span>");
-      $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering is enabled. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
-   } else {
-      $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-document MyButtonStyle\"></span>");
-      $("label[for='FileAutoMode']").attr("title",  "Use exact file name is enabled. Will return error if file already exists.");
+
+
+   MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
+   // DABC states as strings:
+   //   "Halted"
+   //   "Ready"
+   //    "Running"
+   //    "Failure";
+   //    "Transition";
+
+
+      if (ok=="true") {
+         this.fDabcState = state;
+
+      } else {
+         console.log("UpdateDABCstate failed.");
+      }
+       //console.log("UpdateDABCstate with ok=%s, value=%s, dabcstate=%s", ok, state, this.fDabcState);
+       refreshcall();
    }
 
-   if (this.fDoCommandConfirm) {
-      $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-comment MyButtonStyle\"></span>");//
-      $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is ON");
-   } else {
-      $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-alert MyButtonStyle\"></span>");
-      $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is OFF");
+
+
+   MbsState.prototype.Update = function(callback){
+      var pthis = this;
+
+      // TEST:
+      this.DabcParameter("MbsSetupLoaded", function(res,val) { pthis.UpdateSetupstate(res,val); });
+      this.DabcParameter("MbsAcqRunning", function(res,val) { pthis.UpdateRunstate(res,val); });
+      this.DabcParameter("MbsFileOpen",function(res,val) { pthis.UpdateFilestate(res,val); })
+
+      this.DabcParameter("MbsHistoryDepth",function(res,val) { pthis.UpdateHistoryDepth(res,val); })
+      this.DabcParameter("MbsRateInterval",function(res,val) { pthis.UpdateRateInterval(res,val); })
+
+   //
+      this.DabcParameter("../../web-mbs/App/State",function(res,val) { pthis.UpdateDABCstate(res,val, callback); })
+
+
+      //this.fDabcState="Running";
+      //callback(); // will be done when last parameter update response has been processed
    }
 
-   $('#Loglength').val(MyDisplay.fLoggingHistory);
-   $('#Loginterval').val(Math.round(MyDisplay.fRateInterval));
 
-   // console.log("RefreshView with dabc state = %s",
-   // this.fMbsState.fDabcState);
+   /////////////// DISPLAY class to manage current view:
+   function MbsDisplay(state){
+      this.fMbsState = state;
+      this.fDoCommandConfirm = true;
+      this.fShowGosip = false;
+      this.fMonitoring = false;
+      this.fTrending = false;
+      this.fTrendingHistory = 100;
+      this.fFileLogMode = 4;
+      this.fLoggingHistory = 100;
+      this.fRateInterval = 1;
+      this.fMbsLoggingHistory = 500;
+      this.fUpdateTimer = null;
+      this.fUpdateInterval = 2000; // ms
+      this.fMiddlerightPos = 0;
+      this.fMiddleWidth = 0;
+   }
 
-//    if (this.fMbsState.fDabcState=="Running") {
-//      //   console.log("RefreshView finds Running state");
-//         $("#dabc_container").addClass("styleGreen").removeClass("styleRed").removeClass("styleYellow").removeClass("styleBlue");
-//
-//      }
-//    else if (this.fMbsState.fDabcState=="Ready") {
-//       //   console.log("RefreshView finds Ready state");
-//         $("#dabc_container").addClass("styleYellow").removeClass("styleRed").removeClass("styleGreen").removeClass("styleBlue");
-//      }
-//    else if ((this.fMbsState.fDabcState=="Failure") || (this.fMbsState.fDabcState=="Transition")) {
-//       //console.log("RefreshView finds Failure state");
-//       $("#dabc_container").addClass("styleBlue").removeClass("styleYellow").removeClass("styleRed").removeClass("styleGreen");
-//      }
-//    else {
-//       //console.log("RefreshView finds other state");
-//         $("#dabc_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow").removeClass("styleBlue");
-//      }
-}
+   // set up view elements of display:
+   MbsDisplay.prototype.BuildView = function() {
+      var hpainter = new JSROOT.HierarchyPainter('root', null);
+
+      var disp = new JSROOT.CustomDisplay();
+      disp.addFrame("EvRateDisplay", "EventRate");
+      disp.addFrame("DatRateDisplay", "DataRate");
+      disp.addFrame("SrvRateDisplay", "ServerRate");
+      disp.addFrame("DeviceInfo", "logger");
+      // use same frame for different items
+      disp.addFrame("ReadoutInfo", "rate_log");
+      disp.addFrame("ReadoutInfo", "rash_log");
+      disp.addFrame("ReadoutInfo", "rast_log");
+      disp.addFrame("ReadoutInfo", "ratf_log");
+
+      hpainter.setDisplay(disp);
+
+      this.hpainter = null;
+
+      hpainter.openOnline("../").then(() => {
+         this.hpainter = hpainter;
+         this.SetTrending(false, 300);
+         hpainter.display("logger");
+         this.SetFileLogMode(4, 0, 0);   // init log window, but keep history and interval from server
+      });
+   }
 
 
-MbsDisplay.prototype.SetStatusMessage= function(info) {
-   var d = new Date();
-   var txt = d.toLocaleString() + "  >" + info;
-   document.getElementById("status_message").innerHTML = txt;
-}
+   MbsDisplay.prototype.SetRateGauges = function(){
+      this.hpainter.display("EventRate", "gauge");
+      this.hpainter.display("DataRate", "gauge");
+      this.hpainter.display("ServerRate", "gauge");
+   }
 
-MbsDisplay.prototype.Confirm = function(msg) {
-   if(this.fDoCommandConfirm)
-      return (confirm(msg));
-   else
-      return true;
-}
 
-$(function() {
+   MbsDisplay.prototype.SetRateTrending = function(history) {
+      this.fTrendingHistory = history;
+
+      this.hpainter.display("EventRate", "line");
+      this.hpainter.display("DataRate", "line");
+      this.hpainter.display("ServerRate", "line");
+   }
+
+
+   MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
+
+      if(history==0)
+         history=document.getElementById("Loglength").value;
+
+      if(deltat==0)
+         deltat=document.getElementById("Loginterval").value;
+
+      this.fLoggingHistory=history;
+      this.fRateInterval=deltat;
+
+      if(mode!=0) this.fFileLogMode=mode;
+
+      console.log("SetFileLogMode with mode="+mode+" , history="+history +" , deltat="+deltat);
+      switch (this.fFileLogMode) {
+      case "1":
+         // "rate"
+         this.hpainter.display("rate_log");
+         break;
+      case "2":
+         // "rash"
+         this.hpainter.display("rash_log");
+         break;
+      case "3":
+         // "rast"
+         this.hpainter.display("rast_log");
+         break;
+      case "4":
+      default:
+         // "ratf"
+         this.hpainter.display("ratf_log");
+         break;
+      };
+
+      if(mode!=0) return; // only change display mode, do not start new trending history
+
+      MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval)
+         .then(() => MyDisplay.SetStatusMessage("CmdSetRateInterval sent."))
+         .catch(() => MyDisplay.SetStatusMessage("CmdSetRateInterval FAILED."));
+
+
+      MBS.DabcCommand("CmdSetHistoryDepth", "entries="+this.fLoggingHistory)
+         .then(() => MyDisplay.SetStatusMessage("CmdSetHistoryDepth sent."))
+         .catch(() => MyDisplay.SetStatusMessage("CmdSetHistoryDepth FAILED."));
+   }
+
+
+   MbsDisplay.prototype.RefreshMonitor = function() {
+
+      if (!this.hpainter) return;
+
+      this.hpainter.updateItems();
+
+      // optionally adjust scrollbars at info logs:
+      $("#daq_log").scrollTop($("#daq_log")[0].scrollHeight - $("#daq_log").height());
+      $("#file_log").scrollTop($("#file_log")[0].scrollHeight - $("#file_log").height());
+
+      this.fMbsState.Update(() => this.RefreshView());
+   }
+
+
+   MbsDisplay.prototype.ChangeMonitoring = function(on) {
+
+      this.fMonitoring = on;
+      if(on) {
+          this.SetStatusMessage("Starting monitoring timer with "+ this.fUpdateInterval + " ms.");
+          this.fUpdateTimer = window.setInterval(function(){MyDisplay.RefreshMonitor()}, this.fUpdateInterval);
+      } else {
+          window.clearInterval(this.fUpdateTimer);
+          this.SetStatusMessage("Stopped monitoring timer.");
+      }
+   }
+
+   MbsDisplay.prototype.SetTrending = function(on,history) {
+      this.fTrending = on;
+      if(on) {
+        console.log("SetTrending on");
+        this.SetRateTrending(history); // todo: get interval from textbox
+      } else {
+        console.log("SetTrending off");
+        this.SetRateGauges();
+      }
+   }
+
+   MbsDisplay.prototype.SetCommandConfirm = function(on) {
+      this.fDoCommandConfirm = on;
+   }
+
+
+   MbsDisplay.prototype.ShowGosipPanel = function(on){
+
+       if (!on) {
+            $('#gosip_container').hide();
+            $('#gosip_log').hide();
+            // $('#daq_log').height("400px"); // this does not allow to set
+            // automatic stretch to bottom
+            $('#daq_log').css({
+               bottom : "2.7em",
+               height : "auto"
+            });
+
+         } else {
+            $('#gosip_container').show();
+            $('#gosip_log').show();
+            // $('#daq_log').height("270px"); }
+            $('#daq_log').css({
+               bottom : "auto",
+               height : "198px"
+            });
+         }
+       this.fShoWGosip=on;
+   }
+
+
+   MbsDisplay.prototype.RefreshView = function() {
+
+      if (this.fMbsState.fRunning) {
+         $("#mbs_container").addClass("styleGreen").removeClass("styleRed").removeClass("styleYellow");
+      } else {
+         if (this.fMbsState.fSetupLoaded) {
+            $("#mbs_container").addClass("styleYellow").removeClass("styleRed").removeClass("styleGreen");
+         } else {
+            $("#mbs_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow");
+         }
+      }
+       //console.log("RefreshView typeof fileopen=%s, value=%s globalvalue=%s", typeof(this.fMbsState.fFileOpen),
+      //       this.fMbsState.fFileOpen, Pexor.fFileOpen);
+
+      if (this.fMbsState.fFileOpen) {
+         //console.log("RefreshView finds open file");
+         $("#file_container").addClass("styleGreen").removeClass("styleRed");
+         $("#buttonStartFile").button("option", {icon:  "ui-icon-closethick MyButtonStyle" });
+         $("#buttonStartFile").attr("title", "Close output file");
+         $("#FileAutoMode").prop('disabled', true);
+         $("#FileRFIO").prop('disabled', true);
+         $("#Filesize").spinner("disable");
+
+      } else {
+         //console.log("RefreshView finds close file");
+         $("#file_container").addClass("styleRed").removeClass("styleGreen");
+         $("#buttonStartFile").button("option", {icon:  "ui-icon-seek-next MyButtonStyle" });
+         $("#buttonStartFile").attr("title", "Open lmd file for writing");
+         $("#FileAutoMode").prop('disabled', false);
+         $("#FileRFIO").prop('disabled', false);
+         $("#Filesize").spinner("enable");
+      }
+
+      if (this.fMonitoring) {
+         $("#monitoring_container").addClass("styleGreen").removeClass("styleRed");
+         $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-stop MyButtonStyle\"></span>");
+         $("label[for='Monitoring']").attr("title", "Stop frequent refresh");
+         $("#Refreshtime").spinner("disable");
+         $("#Loglength").spinner("disable");
+         $("#Loginterval").spinner("disable");
+
+      } else {
+         $("#monitoring_container").addClass("styleRed").removeClass("styleGreen");
+         $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-play MyButtonStyle\"></span>");
+         $("label[for='Monitoring']").attr("title", "Activate frequent refresh");
+         $("#Refreshtime").spinner("enable");
+         $("#Loglength").spinner("enable");
+         $("#Loginterval").spinner("enable");
+
+      }
+
+      if (!this.fTrending) {
+         $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-image MyButtonStyle\"></span>");//
+         $("label[for='Trending']").attr("title", "Rates are displayed as gauges. Press to switch to trending graphs.");
+         $("#Trendlength").spinner("enable");
+      } else {
+         $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-circle-arrow-n MyButtonStyle\"></span>");
+         $("label[for='Trending']").attr("title", "Rates are displayed as trending graphs. Press to switch to gauges.");
+         $("#Trendlength").spinner("disable");
+      }
+
+      if($("#FileRFIO").is(':checked')){
+         $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-link MyButtonStyle\"></span>");
+         $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
+      } else {
+         $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-disk MyButtonStyle\"></span>");
+         $("label[for='FileRFIO']").attr("title", "Write to local disk is enabled.");
+      }
+
+      if($("#FileAutoMode").is(':checked')){
+         $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-star MyButtonStyle\"></span>");
+         $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering is enabled. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
+      } else {
+         $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-document MyButtonStyle\"></span>");
+         $("label[for='FileAutoMode']").attr("title",  "Use exact file name is enabled. Will return error if file already exists.");
+      }
+
+      if (this.fDoCommandConfirm) {
+         $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-comment MyButtonStyle\"></span>");//
+         $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is ON");
+      } else {
+         $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-alert MyButtonStyle\"></span>");
+         $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is OFF");
+      }
+
+      $('#Loglength').val(MyDisplay.fLoggingHistory);
+      $('#Loginterval').val(Math.round(MyDisplay.fRateInterval));
+
+      // console.log("RefreshView with dabc state = %s",
+      // this.fMbsState.fDabcState);
+
+   //    if (this.fMbsState.fDabcState=="Running") {
+   //      //   console.log("RefreshView finds Running state");
+   //         $("#dabc_container").addClass("styleGreen").removeClass("styleRed").removeClass("styleYellow").removeClass("styleBlue");
+   //
+   //      }
+   //    else if (this.fMbsState.fDabcState=="Ready") {
+   //       //   console.log("RefreshView finds Ready state");
+   //         $("#dabc_container").addClass("styleYellow").removeClass("styleRed").removeClass("styleGreen").removeClass("styleBlue");
+   //      }
+   //    else if ((this.fMbsState.fDabcState=="Failure") || (this.fMbsState.fDabcState=="Transition")) {
+   //       //console.log("RefreshView finds Failure state");
+   //       $("#dabc_container").addClass("styleBlue").removeClass("styleYellow").removeClass("styleRed").removeClass("styleGreen");
+   //      }
+   //    else {
+   //       //console.log("RefreshView finds other state");
+   //         $("#dabc_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow").removeClass("styleBlue");
+   //      }
+   }
+
+
+   MbsDisplay.prototype.SetStatusMessage= function(info) {
+      var d = new Date();
+      var txt = d.toLocaleString() + "  >" + info;
+      document.getElementById("status_message").innerHTML = txt;
+   }
+
+   MbsDisplay.prototype.Confirm = function(msg) {
+      if(this.fDoCommandConfirm)
+         return (confirm(msg));
+      else
+         return true;
+   }
 
    MBS = new MbsState();
    MyDisplay = new MbsDisplay(MBS);
@@ -928,13 +922,10 @@ $(function() {
            }
        });
 
-
-
    MyDisplay.ShowGosipPanel(false);
     //MyDisplay.RefreshView();
 
    MyDisplay.RefreshMonitor();
-
 
    $(document).tooltip();
 
