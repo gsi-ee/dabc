@@ -406,7 +406,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
               "<button class='bnet_startrun bnet_btn' title='Start run, write files on all event builders'>Start</button>" +
-              "<select class='bnet_selectrun'>" +
+              "<select class='bnet_selectrun bnet_btn' style='width: 150px'>" +
               "<option>NO_FILE</option>" +
               "<option value='be'>Beam file</option>" +
               "<option value='te'>Test file</option>" +
@@ -426,13 +426,13 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
               "<option value='tc'>TDC Calibration file</option>" +
               "<option value='ct'>TDC Calibration test file</option>" +
               "</select>" +
-              "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
+              "<button class='bnet_stoprun bnet_btn' title='Stops run, close all opened files'>Stop</button>" +
               "<button class='bnet_lastcalibr bnet_btn' title='Status of last calibration'>CALIBR</button>" +
-              "<button class='bnet_resetdaq' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
-              "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
-              "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
-              "<button class='bnet_lostevents' title='Total lost events'>0.0 Ev/s</button>" +
-              "<button class='bnet_frameclear' title='Clear drawings'>Clr</button>" +
+              "<button class='bnet_resetdaq bnet_btn' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
+              "<button class='bnet_totalrate bnet_btn' title='Total data rate'>0.00 MB/s</button>" +
+              "<button class='bnet_totalevents bnet_btn' title='Total build events'>0.0 Ev/s</button>" +
+              "<button class='bnet_lostevents bnet_btn' title='Total lost events'>0.0 Ev/s</button>" +
+              "<button class='bnet_frameclear bnet_btn' title='Clear drawings'>Clr</button>" +
               "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
               "<button class='bnet_histclear' title='Clear all histograms'>Hist</button>" +
               "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
@@ -520,9 +520,9 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
           }`).lower();
 
       main.classed("jsroot_fixed_frame", true);
-      main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
+      main.selectAll(".bnet_trb_clear").on("click", () => this.displayCalItem(0, ""));
 
-      main.selectAll(".bnet_item_clear").on("click", this.ClearDisplay.bind(this));
+      main.selectAll(".bnet_item_clear").on("click", () => this.clearDisplay());
 
       main.select(".bnet_monitoring").on("click", function() {
          let on = d3.select(this).property('checked');
@@ -538,50 +538,47 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
       let jnode = $(main.node());
 
-      jnode.find(".bnet_startrun").button().css("display", ctrl_visible).click(function() {
-         DABC.InvokeCommand(itemname+"/StartRun", "tmout=60&prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
+      main.select(".bnet_startrun").style("display", ctrl_visible).on("click", () => {
+         DABC.InvokeCommand(itemname+"/StartRun", "tmout=60&prefix=" + main.select(".bnet_selectrun").property("value"));
       });
-      let sm = jnode.find(".bnet_selectrun");
-      sm.selectmenu({ width: 150 });
-      if (lastprefix) { sm.val(lastprefix); sm.selectmenu("refresh"); }
-      if (ctrl_visible == "none") sm.next('.ui-selectmenu-button').hide();
-      jnode.find(".bnet_stoprun").button().css("display", ctrl_visible).click(function() {
-         DABC.InvokeCommand(itemname+"/StopRun", "tmout=60" );
-      });
+
+      main.select(".bnet_selectrun").style("display", ctrl_visible).property("value", lastprefix || undefined);
+
+      main.select(".bnet_stoprun").style("display", ctrl_visible).on("click", () => DABC.InvokeCommand(itemname+"/StopRun", "tmout=60" ));
 
       main.select(".bnet_lastcalibr").on("click", () => DABC.InvokeCommand(itemname+"/RefreshRun", "tmout=60"));
 
-      jnode.find(".bnet_resetdaq").button().css("display", ctrl_visible).click(function() {
+      main.select(".bnet_resetdaq").style("display", ctrl_visible).on("click", () => {
          if (confirm("Really drop buffers on all BNET nodes"))
             DABC.InvokeCommand(itemname+"/ResetDAQ");
       });
 
-      jnode.find(".bnet_totalrate").button().click(function() {
+      main.select(".bnet_totalrate").on("click", () => {
          painter.DisplayItem("/"+itemname+"/DataRate");
       });
 
-      jnode.find(".bnet_totalevents").button().click(function() {
+      main.select(".bnet_totalevents").on("click", () => {
          painter.DisplayItem("/"+itemname+"/EventsRate");
       });
 
-      jnode.find(".bnet_lostevents").button().click(function() {
+      main.select(".bnet_lostevents").on("click", () => {
          painter.DisplayItem("/"+itemname+"/LostRate");
       });
 
-      jnode.find(".bnet_frameclear").button().click(function() {
-         painter.DisplayCalItem(0, "");
-         painter.ClearDisplay();
+      main.select(".bnet_frameclear").on("click", () => {
+         painter.displayCalItem(0, "");
+         painter.clearDisplay();
       });
 
-      jnode.find(".bnet_histclear").button().css("display", ctrl_visible).click(function() {
-         painter.ClearAllHistograms();
+      main.select(".bnet_histclear").style("display", ctrl_visible).on("click", () => {
+         painter.clearAllHistograms();
       });
 
       // set top painter after drawing
       this.setTopPainter();
    }
 
-   DABC.BnetPainter.prototype.ClearDisplay = function() {
+   DABC.BnetPainter.prototype.clearDisplay = function() {
       let frame = this.hpainter.getDisplay().findFrame("dabc_drawing");
       if (frame) this.hpainter.getDisplay().cleanupFrame(frame);
    }
@@ -613,11 +610,11 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          opt += ",any]";
       }
 
-      this.ClearDisplay();
+      this.clearDisplay();
       this.hpainter.displayItems([itemname], [opt]);
    }
 
-   DABC.BnetPainter.prototype.DisplayCalItem = function(hubid, itemname) {
+   DABC.BnetPainter.prototype.displayCalItem = function(hubid, itemname) {
       this.CalibrHub = hubid;
       this.CalibrItem = itemname;
 
@@ -628,7 +625,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       d3.select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
    }
 
-   DABC.BnetPainter.prototype.ClearAllHistograms = function() {
+   DABC.BnetPainter.prototype.clearAllHistograms = function() {
        for(let indx=0;indx<this.InputItems.length;++indx) {
           let itemname = this.InputItems[indx],
               info = this.InputInfo[indx];
@@ -749,7 +746,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          painter.DisplayItem(d3.select(this).attr("itemname"));
       });
       main.selectAll(".bnet_trb_label").on("click", function() {
-         painter.DisplayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
+         painter.displayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
       });
    }
 
@@ -860,7 +857,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       }
 
       if (changed) {
-         this.DisplayCalItem(0, "");
+         this.displayCalItem(0, "");
          this.refreshHtml(lastprefix);
          this.hpainter.reload(); // also refresh hpainter - most probably items are changed
       }
