@@ -1,11 +1,10 @@
 const dabcScript = document.currentScript;
 
-JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
+JSROOT.define(["painter", "jquery", "hist"], (jsrp) => {
 
    "use strict";
 
    JSROOT.settings.DragAndDrop = true;
-   JSROOT.loadScript("https://root.cern/js/6.3.2/style/jquery-ui.min.css");
 
    // const jsrp = arr[0];
 
