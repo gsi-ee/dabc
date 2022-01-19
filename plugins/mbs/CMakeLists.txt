@@ -9,3 +9,5 @@ DABC_EXECUTABLE(mbsprint
 DABC_EXECUTABLE(mbscmd
                 SOURCES utils/mbscmd.cxx
                 LIBRARIES DabcBase DabcMbs)
+
+file(COPY htm DESTINATION ${CMAKE_BINARY_DIR}/plugins/mbs)
