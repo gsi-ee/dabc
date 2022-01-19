@@ -267,10 +267,15 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       let frame = mdi.findFrame(itemname, true);
       if (!frame) return null;
 
-      let ffid = d3.select(frame).attr('id');
+      let dom = d3.select(frame),
+          ffid = dom.attr('id'),
+          item = hpainter.findItem(itemname + "/Status"),
+          calarr = [];
+      if (!ffid) {
+         ffid = "dabc_stream_control";
+         dom.attr('id', "dabc_stream_control");
+      }
 
-      let item = hpainter.findItem(itemname + "/Status");
-      let calarr = [];
       if (item) {
          for (let n in item._childs)
             calarr.push(hpainter.itemFullName(item._childs[n]));
@@ -278,8 +283,8 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
       let html = "<fieldset>" +
                  "<legend>Stream</legend>" +
-                 "<button class='store_startfile' title='Start storage of ROOT file'>Start file</button>" +
-                 "<button class='store_stopfile' title='Stop storage of ROOT file'>Stop file</button>" +
+                 "<button class='store_startfile dabc_btn' title='Start storage of ROOT file'>Start file</button>" +
+                 "<button class='store_stopfile dabc_btn' title='Stop storage of ROOT file'>Stop file</button>" +
                  '<input class="store_filename" type="text" name="filename" value="file.root" style="margin-top:5px;"/><br/>' +
                  "<label class='stream_rate'>Rate: __undefind__</label><br/>" +
                  "<label class='stream_info'>Info: __undefind__</label>" +
@@ -290,29 +295,25 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          html += "<div class='stream_tdc_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
       html+="</fieldset>";
 
-      d3.select(frame).html(html);
+      dom.html(html);
 
-      $(frame).find(".store_filename").prop("title", "Name of ROOT file to store.\nOne can specify store kind and maxsize with args like:\n file.root&kind=2&maxsize=2000");
+      DABC.addDabcStyle(dom);
 
-      $(frame).find(".store_startfile")
-         .button()
-         .click(function() {
-            DABC.invokeCommand(itemname+"/Control/StartRootFile", "fname="+$(frame).find('.store_filename').val());
-         });
-      $(frame).find(".store_stopfile")
-         .button()
-         .click(function() { DABC.invokeCommand(itemname+"/Control/StopRootFile"); });
+      dom.select(".store_filename").attr("title", "Name of ROOT file to store.\nOne can specify store kind and maxsize with args like:\n file.root&kind=2&maxsize=2000");
+
+      dom.select(".store_startfile").on("click", () => DABC.invokeCommand(itemname+"/Control/StartRootFile", "fname="+dom.select('.store_filename').property("value")));
+      dom.select(".store_stopfile").on("click", () => DABC.invokeCommand(itemname+"/Control/StopRootFile"));
 
       let inforeq = false;
 
       function UpdateStreamStatus(res) {
-         if (res==null) return;
-         $(frame).find('.stream_rate').css("font-size","120%").text("Rate: " + res.EventsRate + " ev/s");
-         $(frame).find('.stream_info').text("Info: " + res.StoreInfo);
+         if (!res) return;
+         dom.select('.stream_rate').style("font-size","120%").text("Rate: " + res.EventsRate + " ev/s");
+         dom.select('.stream_info').text("Info: " + res.StoreInfo);
       }
 
       let handler = setInterval(function() {
-         if ($("#"+ffid+" .stream_info").length==0) {
+         if (d3.select("#"+ffid+" .stream_info").empty()) {
             // if main element disapper (reset), stop handler
             clearInterval(handler);
             return;
