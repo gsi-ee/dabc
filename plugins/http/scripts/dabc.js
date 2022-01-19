@@ -30,6 +30,33 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       JSROOT.httpRequest(url,"object");
    }
 
+   /** @summary add button style as first child */
+   DABC.addDabcStyle = function(dom) {
+      dom.append("style").html(
+         `.dabc_btn {
+             display: inline-block;
+             padding: .4em 1em;
+             margin-right: .1em;
+             vertical-align: middle;
+             text-align: center;
+             font-family: Arial,Helvetica,sans-serif;
+             font-size: 1em;
+             border: 1px solid #c5c5c5;
+             background: #f6f6f6;
+             font-weight: normal;
+             color: #454545;
+             border-radius: 3px;
+             cursor: pointer;
+          }
+          .dabc_btn:hover {
+             background: #e6e6e6;
+          }
+          .dabc_btn:active {
+             border: 1px solid blue;
+             color: white;
+          }`).lower();
+   }
+
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script
 
    DABC.HadaqDAQControl = function(hpainter, itemname) {
@@ -54,9 +81,9 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
       let html = "<fieldset>" +
                  "<legend>DAQ</legend>" +
-                 "<button class='hadaq_startfile hadaq_btn'>Start file</button>" +
-                 "<button class='hadaq_stopfile hadaq_btn'>Stop file</button>" +
-                 "<button class='hadaq_restartfile hadaq_btn'>Restart file</button>" +
+                 "<button class='hadaq_startfile dabc_btn'>Start file</button>" +
+                 "<button class='hadaq_stopfile dabc_btn'>Stop file</button>" +
+                 "<button class='hadaq_restartfile dabc_btn'>Restart file</button>" +
                  '<input class="hadaq_filename" type="text" name="filename" value="file.hld" style="margin-top:5px;"/><br/>' +
                  "<label class='hadaq_rate'>Rate: __undefind__</label><br/>"+
                  "<label class='hadaq_info'>Info: __undefind__</label>"+
@@ -67,40 +94,19 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
       html+="</fieldset>";
 
-      d3.select(frame).html(html);
+      let dom = d3.select(frame);
 
-      // ass button style as first child
-      d3.select(frame).append("style").html(
-         `.hadaq_btn {
-             display: inline-block;
-             padding: .4em 1em;
-             margin-right: .1em;
-             vertical-align: middle;
-             text-align: center;
-             font-family: Arial,Helvetica,sans-serif;
-             font-size: 1em;
-             border: 1px solid #c5c5c5;
-             background: #f6f6f6;
-             font-weight: normal;
-             color: #454545;
-             border-radius: 3px;
-             cursor: pointer;
-          }
-          .hadaq_btn:hover {
-             background: #e6e6e6;
-          }
-          .hadaq_btn:active {
-             border: 1px solid blue;
-             color: white;
-          }`).lower();
+      dom.html(html);
 
-      d3.select(frame).select(".hadaq_startfile").on("click", () => {
-         DABC.invokeCommand(itemname+"/StartHldFile", "filename="+d3.select(frame).select('.hadaq_filename').property("value")+"&maxsize=2000");
+      DABC.addDabcStyle(dom);
+
+      dom.select(".hadaq_startfile").on("click", () => {
+         DABC.invokeCommand(itemname+"/StartHldFile", "filename="+dom.select('.hadaq_filename').property("value")+"&maxsize=2000");
       });
-      d3.select(frame).select(".hadaq_stopfile").on("click", () => {
+      dom.select(".hadaq_stopfile").on("click", () => {
          DABC.invokeCommand(itemname+"/StopHldFile");
       });
-      d3.select(frame).select(".hadaq_restartfile").on("click", () => {
+      dom.select(".hadaq_restartfile").on("click", () => {
          DABC.invokeCommand(itemname+"/RestartHldFile");
       });
 
@@ -153,7 +159,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
             if (!res) return;
             UpdateDaqStatus(res[0].result);
             res.shift();
-            DABC.updateTrbStatus($(frame).find('.hadaq_calibr'), res, hpainter, true);
+            DABC.updateTrbStatus(d3.select(frame).select('.hadaq_calibr'), res, hpainter, true);
          }).finally(() => { inforeq = false; });
       }, 2000);
    }
@@ -190,15 +196,16 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          return 'red';
       }
 
-      holder.each(function(index) {
+      holder.each(function(_data, index) {
          if (!res) return;
-         let info = multiget ? res[index] : res;
+         let dom = d3.select(this),
+             info = multiget ? res[index] : res;
          // when doing multiget, return object stored as result field
          if (('result' in info) && multiget) info = info.result;
          if (!info) return;
 
-         if ($(this).children().length == 0) {
-            let code = "<div style='float:left'>";
+         if (dom.selectAll("*").empty()) {
+            let code = "<div style='display:flex;flex-direction:row;width:100%;'>";
             code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "'>Clr</button>";
             if (!info.tdc) {
                code += "<button hist='" + makehname("TRB", info.trb, "ErrorBits") + "'>"+info.trb.toString(16)+"_ErrorBits</button>";
@@ -213,21 +220,17 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
                for (let j in info.tdc)
                   code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
             }
-            code += "</div>";
             if (info.tdc)
-               code += "<div class='hadaq_progress'></div>";
-            $(this).html(code);
-            $(this).find("button").button().click(function(){
-               let histname = $(this).attr('hist');
-               if ($(this).text() == "Clr") {
-                  JSROOT.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
-                  return;
-               }
-               if ($(this).text() == "Ackn") {
-                  JSROOT.httpRequest(histname+"/cmd.json?command=AcknowledgeQuality", "object");
-                  return;
-               }
-               if ($(this).text() == "Log") {
+               code += `<progress class="hadaq_progress" max="100" style="flex-grow:1">0%</progress>`;
+            code += "</div>";
+            dom.html(code);
+            dom.selectAll("button").classed("dabc_btn", true).on("click", function() {
+               let histname = d3.select(this).attr('hist');
+               if (d3.select(this).text() == "Clr")
+                  return JSROOT.httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
+               if (d3.select(this).text() == "Ackn")
+                  return JSROOT.httpRequest(histname+"/cmd.json?command=AcknowledgeQuality", "object");
+               if (d3.select(this).text() == "Log") {
                   // log item is one level higher then histograms, excluding trb module name
                   histname = histname.substr(0, histname.length-8) + "CalibrLog";
                }
@@ -238,21 +241,20 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
                hpainter.displayItems([histname],["frameid:dabc_drawing"]);
             });
             if (info.tdc)
-               $(this).find(".hadaq_progress").progressbar({ value: info.progress });
+               dom.select(".hadaq_progress").property("value", info.progress);
          }
 
-         $(this).css('background-color', get_status_color(info.value));
-         $(this).attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
+         dom.style('background-color', get_status_color(info.value));
+         dom.attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
 
-         $(this).find(".hadaq_progress")
-            .attr("title", "progress: " + info.progress + "%")
-            .progressbar("option", "value", info.progress);
+         dom.select(".hadaq_progress").attr("title", "progress: " + info.progress + "%")
+            .property("value", info.progress);
 
          for (let j in info.tdc) {
-            $(this).find(".tdc_btn[tdc='"+info.tdc[j]+"']")
-                   .css('color', get_status_color(info.tdc_status[j]))
-                   .css('background', 'white')
-                   .attr("title", "TDC" + info.tdc[j].toString(16) + " " + info.tdc_status[j] + " Progress:" + info.tdc_progr[j]);
+            dom.select(`.tdc_btn[tdc='${info.tdc[j]}']`)
+               .style('color', get_status_color(info.tdc_status[j]))
+               .style('background', 'white')
+               .attr("title", `TDC ${info.tdc[j].toString(16)} ${info.tdc_status[j]}  Progress: ${info.tdc_progr[j]}`);
          }
       });
    }
@@ -322,7 +324,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          JSROOT.httpRequest(itemname + "/Status/get.json", "object").then(res => {
             if (!res) return;
             UpdateStreamStatus(res);
-            DABC.updateTrbStatus($(frame).find('.stream_tdc_calibr'), res._childs, hpainter, false);
+            DABC.updateTrbStatus(d3.select(frame).select('.stream_tdc_calibr'), res._childs, hpainter, false);
          }).finally(() => { inforeq = false; });
 
       }, 2000);
@@ -405,8 +407,8 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
-              "<button class='bnet_startrun bnet_btn' title='Start run, write files on all event builders'>Start</button>" +
-              "<select class='bnet_selectrun bnet_btn' style='width: 150px'>" +
+              "<button class='bnet_startrun dabc_btn' title='Start run, write files on all event builders'>Start</button>" +
+              "<select class='bnet_selectrun dabc_btn' style='width: 150px'>" +
               "<option>NO_FILE</option>" +
               "<option value='be'>Beam file</option>" +
               "<option value='te'>Test file</option>" +
@@ -426,13 +428,13 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
               "<option value='tc'>TDC Calibration file</option>" +
               "<option value='ct'>TDC Calibration test file</option>" +
               "</select>" +
-              "<button class='bnet_stoprun bnet_btn' title='Stops run, close all opened files'>Stop</button>" +
-              "<button class='bnet_lastcalibr bnet_btn' title='Status of last calibration'>CALIBR</button>" +
-              "<button class='bnet_resetdaq bnet_btn' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
-              "<button class='bnet_totalrate bnet_btn' title='Total data rate'>0.00 MB/s</button>" +
-              "<button class='bnet_totalevents bnet_btn' title='Total build events'>0.0 Ev/s</button>" +
-              "<button class='bnet_lostevents bnet_btn' title='Total lost events'>0.0 Ev/s</button>" +
-              "<button class='bnet_frameclear bnet_btn' title='Clear drawings'>Clr</button>" +
+              "<button class='bnet_stoprun dabc_btn' title='Stops run, close all opened files'>Stop</button>" +
+              "<button class='bnet_lastcalibr dabc_btn' title='Status of last calibration'>CALIBR</button>" +
+              "<button class='bnet_resetdaq dabc_btn' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
+              "<button class='bnet_totalrate dabc_btn' title='Total data rate'>0.00 MB/s</button>" +
+              "<button class='bnet_totalevents dabc_btn' title='Total build events'>0.0 Ev/s</button>" +
+              "<button class='bnet_lostevents dabc_btn' title='Total lost events'>0.0 Ev/s</button>" +
+              "<button class='bnet_frameclear dabc_btn' title='Clear drawings'>Clr</button>" +
               "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
               "<button class='bnet_histclear' title='Clear all histograms'>Hist</button>" +
               "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
@@ -495,29 +497,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       let painter = this, main = d3.select(this.frame).html(html),
           ctrl_visible = JSROOT.decodeUrl().has("browser") ? "" : "none";
 
-      main.append("style").html(
-         `.bnet_btn {
-             display: inline-block;
-             padding: .4em 1em;
-             margin-right: .1em;
-             vertical-align: middle;
-             text-align: center;
-             font-family: Arial,Helvetica,sans-serif;
-             font-size: 1em;
-             border: 1px solid #c5c5c5;
-             background: #f6f6f6;
-             font-weight: normal;
-             color: #454545;
-             border-radius: 3px;
-             cursor: pointer;
-          }
-          .bnet_btn:hover {
-             background: #e6e6e6;
-          }
-          .bnet_btn:active {
-             border: 1px solid blue;
-             color: white;
-          }`).lower();
+      DABC.addDabcStyle(main);
 
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", () => this.displayCalItem(0, ""));
@@ -753,7 +733,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
       this.CalibrInfo = res;
 
-      DABC.updateTrbStatus($(this.frame).find('.bnet_tdc_calibr'), res, this.hpainter, false);
+      DABC.updateTrbStatus(d3.select(this.frame).select('.bnet_tdc_calibr'), res, this.hpainter, false);
    }
 
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
