@@ -737,7 +737,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       DABC.updateTrbStatus(d3.select(this.frame).select('.bnet_tdc_calibr'), res, this.hpainter, false);
    }
 
-   DABC.BnetPainter.prototype.SendInfoRequests = function() {
+   DABC.BnetPainter.prototype.sendInfoRequests = function() {
       for (let n in this.InputItems)
          JSROOT.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.processReq.bind(this, false, n));
       for (let n in this.BuilderItems)
@@ -748,10 +748,12 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
    DABC.BnetPainter.prototype.processMainRequest = function(res) {
 
-      d3.select(this.frame).style('background-color', res ? null : "grey");
+      let dom = d3.select(this.frame);
 
-      let chkbox = d3.select(this.frame).select(".bnet_monitoring");
-      if (!chkbox.empty() && (chkbox.property('checked') !== this.hpainter.isMonitoring()))
+      dom.style('background-color', res ? null : "grey");
+
+      let chkbox = dom.select(".bnet_monitoring");
+      if (!chkbox.empty() && (chkbox.property('checked') != this.hpainter.isMonitoring()))
          chkbox.property('checked', this.hpainter.isMonitoring());
 
       if (!res) return;
@@ -781,17 +783,17 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          //if (state=="Ready") col = "lightgreen"; else
          //if (state=="Accumulating") col = "lightblue"; else
          //if (state=="NoFile") col = "yellow";
-         d3.select(this.frame).select(".bnet_state").text("Run control: " + state).style('background-color',col);
+         dom.select(".bnet_state").text("Run control: " + state).style('background-color',col);
       }
 
       if (typeof drate == 'number')
-         $(this.frame).find(".bnet_totalrate").text(drate.toFixed(2) + " MB/s").css('background-color', (drate>0) ? "lightgreen" : "yellow");
+         dom.select(".bnet_totalrate").text(drate.toFixed(2) + " MB/s").style('background-color', (drate > 0) ? "lightgreen" : "yellow");
 
       if (typeof erate == 'number')
-         $(this.frame).find(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").css('background-color', (erate>0) ? "lightgreen" : "yellow");
+         dom.select(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").style('background-color', (erate > 0) ? "lightgreen" : "yellow");
 
       if (typeof lrate == 'number')
-         $(this.frame).find(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").css('background-color', (lrate > 0) ? "yellow" : "lightgreen");
+         dom.select(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").style('background-color', (lrate > 0) ? "yellow" : "lightgreen");
 
       if (lastcalibr && (typeof lastcalibr.quality == 'number') && (typeof lastcalibr.time == 'string')) {
          let quality = lastcalibr.quality || 1,
@@ -808,17 +810,16 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
             if (h>240) { if (quality>0.6) quality = 0.6; title = "Consider to peform calibration, "; }
          }
          title += "last: " + lastcalibr.value;
-         d3.select(this.frame).select(".bnet_lastcalibr").style('background-color', this.getQualityColor(quality)).attr("title", title).text(info);
+         dom.select(".bnet_lastcalibr").style('background-color', this.getQualityColor(quality)).attr("title", title).text(info);
       }
 
-      $(this.frame).find(".bnet_runid_lbl").text(" RunId: " + runid);
-      $(this.frame).find(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
+      dom.select(".bnet_runid_lbl").text(" RunId: " + runid);
+      dom.select(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
 
       // run prefix should not be overwritten
-      //let sm = $(this.frame).find(".bnet_selectrun");
-      //if (runprefix && (sm.val() != runprefix)) {
-      //   sm.val(runprefix);
-      //   sm.selectmenu("refresh");
+      //let sm = dom.select(".bnet_selectrun");
+      //if (runprefix && (sm.property("value") != runprefix)) {
+      //   sm.property("value", runprefix);
       //}
 
       if (!DABC.compareArrays(this.InputItems,inp)) {
@@ -841,7 +842,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
          this.hpainter.reload(); // also refresh hpainter - most probably items are changed
       }
 
-      this.SendInfoRequests();
+      this.sendInfoRequests();
    }
 
    DABC.BnetPainter.prototype.sendMainRequest = function() {
@@ -1118,7 +1119,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       painter.lastsz = 0;
       painter._title = "";
 
-      painter.Draw = function(obj) {
+      painter.draw = function(obj) {
          if (!obj) return;
 
          let val = Number(obj["value"]);
@@ -1146,10 +1147,10 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
 
          this._title = obj._name || "gauge"
          val = JSROOT.Painter.floatToString(val,"5.3g");
-         this.DrawValue(val, redo);
+         this.drawValue(val, redo);
       }
 
-      painter.DrawValue = function(val, force) {
+      painter.drawValue = function(val, force) {
          let rect = this.selectDom().node().getBoundingClientRect();
          let sz = Math.min(rect.height, rect.width);
 
@@ -1192,15 +1193,15 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       }
 
       painter.checkResize = function() {
-         this.DrawValue(this.lastval);
+         this.drawValue(this.lastval);
       }
 
       painter.redrawObject = function(obj) {
-         this.Draw(obj);
+         this.draw(obj);
          return true;
       }
 
-      painter.Draw(obj);
+      painter.draw(obj);
 
       return Promise.resolve(painter);
    }
@@ -1211,7 +1212,6 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       let painter = new JSROOT.BasePainter(divid);
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
-
 
       if (painter.history) {
          painter.selectDom().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
