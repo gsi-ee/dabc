@@ -1145,7 +1145,7 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
             redo = true;
          }
 
-         this._title = obj._name || "gauge"
+         this._title = obj._name || "gauge";
          val = JSROOT.Painter.floatToString(val,"5.3g");
          this.drawValue(val, redo);
       }
@@ -1252,119 +1252,91 @@ JSROOT.define(["painter", "jquery", "jquery-ui", "hist"], (jsrp, $) => {
       let painter = new JSROOT.BasePainter(divid);
 
       painter.jsonnode = obj;
-      painter.req = null;
 
-      painter.NumArgs = function() {
+      painter.numArgs = function() {
          if (this.jsonnode==null) return 0;
          return this.jsonnode["numargs"];
       }
 
-      painter.ArgName = function(n) {
-         return (n<this.NumArgs()) ? this.jsonnode["arg"+n] : "";
+      painter.argName = function(n) {
+         return (n < this.numArgs()) ? this.jsonnode["arg"+n] : "";
       }
 
-      painter.ArgKind = function(n) {
-         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_kind"] : "";
+      painter.argKind = function(n) {
+         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_kind"] : "";
       }
 
-      painter.ArgDflt = function(n) {
-         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_dflt"] : "";
+      painter.argDflt = function(n) {
+         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_dflt"] : "";
       }
 
-      painter.ArgMin = function(n) {
-         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_min"] : null;
+      painter.argMin = function(n) {
+         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_min"] : null;
       }
 
-      painter.ArgMax = function(n) {
-         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_max"] : null;
+      painter.argMax = function(n) {
+         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_max"] : null;
       }
 
-      painter.ShowCommand = function() {
+      painter.showCommand = function() {
 
-         let cmdelemid = this.selectDom().attr('id');
+         let dom = this.selectDom();
 
-         let frame = $("#" + cmdelemid);
+         dom.html("");
 
-         frame.empty();
+         if (!this.jsonnode)
+            return dom.html("cannot access command definition...<br/>");
 
-         if (this.jsonnode==null) {
-            frame.append("cannotr access command definition...<br/>");
-            return;
+         dom.append("h3").text(this.jsonnode.fullitemname);
+
+         dom.append("button")
+            .attr("title","Execute command " + this.jsonnode.fullitemname)
+            .text("Exectute")
+            .on("click", () => this.invokeCommand());
+
+         for (let cnt = 0; cnt < this.numArgs(); cnt++) {
+            let argname = this.argName(cnt),
+                argkind = this.argKind(cnt);
+
+            dom.append("div").html(`Arg: ${argname} <input class="dabccmd_arg${cnt}">`);
+
+            let elem = dom.select(`.dabccmd_arg${cnt}`)
+               .attr("type", argkind=="int" ? "number" : "text")
+               .style("width", (argkind=="int") ? "80px" : "170px")
+               .property("value", this.argDflt(cnt));
+
+            if (argkind == "int")
+               elem.attr("min", this.argMin(cnt)).attr("max", this.argMax(cnt));
          }
 
-         frame.append("<h3>" + this.jsonnode.fullitemname + "</h3>");
-
-         let entryInfo = "<input id='" + cmdelemid + "_button' type='button' title='Execute' value='Execute'/><br/>";
-
-         for (let cnt=0;cnt<this.NumArgs();cnt++) {
-            let argname = this.ArgName(cnt);
-            let argkind = this.ArgKind(cnt);
-            let argdflt = this.ArgDflt(cnt);
-
-            let argid = cmdelemid + "_arg" + cnt;
-            let argwidth = (argkind=="int") ? "80px" : "170px";
-
-            entryInfo += "Arg: " + argname + " ";
-            entryInfo += "<input id='" + argid + "' style='width:" + argwidth + "' value='"+argdflt+"' argname = '" + argname + "'/>";
-            entryInfo += "<br/>";
-         }
-
-         entryInfo += "<div id='" + cmdelemid + "_res'/>";
-
-         frame.append(entryInfo);
-
-         let pthis = this;
-
-         $("#"+ cmdelemid + "_button").click(function() { pthis.invokeCommand(); });
-
-         for (let cnt=0;cnt<this.NumArgs();cnt++) {
-            let argid = cmdelemid + "_arg" + cnt;
-            let argkind = this.ArgKind(cnt);
-            let argmin = this.ArgMin(cnt);
-            let argmax = this.ArgMax(cnt);
-
-            if ((argkind=="int") && (argmin!=null) && (argmax!=null))
-               $("#"+argid).spinner({ min:argmin, max:argmax});
-         }
+         dom.append("div").classed("dabccmd_res", true);
       }
 
       painter.invokeCommand = function() {
          if (this.req) return;
 
-         let cmdelemid = this.selectDom().attr('id');
+         let dom = this.selectDom(),
+             resdiv = dom.select(".dabccmd_res"),
+             url = this.jsonnode.fullitemname + "/execute";
 
-         let resdiv = $("#" + cmdelemid + "_res");
          resdiv.html("<h5>Send command to server</h5>");
 
-         let url = this.jsonnode.fullitemname + "/execute";
-
-         for (let cnt=0;cnt<this.NumArgs();cnt++) {
-            let argid = cmdelemid + "_arg" + cnt;
-            let argkind = this.ArgKind(cnt);
-            let argmin = this.ArgMin(cnt);
-            let argmax = this.ArgMax(cnt);
-
-            let arginp = $("#"+argid);
-
-            if (cnt==0) url+="?"; else url+="&";
-
-            url += arginp.attr("argname");
+         for (let cnt = 0; cnt < this.numArgs(); cnt++) {
+            url += (cnt==0) ? "?" : "&";
+            url += this.argName(cnt);
             url += "=";
-            if ((argkind=="int") && (argmin!=null) && (argmax!=null))
-               url += arginp.spinner("value");
-            else
-               url += arginp.val();
+            url += dom.select(`.dabccmd_arg${cnt}`).property("value");
          }
 
          this.req = true;
 
          JSROOT.httpRequest(url, "object")
-             .then(res => resdiv.html("<h5>Get reply res=" + res['_Result_'] + "</h5>"))
+             .then(res => resdiv.html(`<h5>Get reply res=${res._Result_}</h5>`))
              .catch(() => resdiv.html("<h5>missing reply from server</h5>"))
              .finally(() => { this.req = false; });
       }
 
-      painter.ShowCommand();
+      painter.showCommand();
 
       painter.setTopPainter();
 
