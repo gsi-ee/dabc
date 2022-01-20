@@ -1,6 +1,6 @@
 const dabcScript = document.currentScript;
 
-JSROOT.define(["painter", "jquery", "hist"], (jsrp) => {
+JSROOT.define(["painter", "hist"], (jsrp) => {
 
    "use strict";
 
@@ -10,7 +10,7 @@ JSROOT.define(["painter", "jquery", "hist"], (jsrp) => {
 
    const DABC = {};
 
-   DABC.version = "2.11.0 19/01/2022";
+   DABC.version = "2.11.0 20/01/2022";
 
    DABC.source_dir = "";
 
