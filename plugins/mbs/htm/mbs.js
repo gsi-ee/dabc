@@ -23,7 +23,7 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
                    .then(reply => { console.log('Reply = ' + reply); return true; });
    }
 
-   MbsState.prototype.DabcParameterNew = function(par) {
+   MbsState.prototype.DabcParameter = function(par) {
       let pre = "../",
           suf = "/get.json",
           fullcom = pre + par + suf;
@@ -35,34 +35,6 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
                       return obj ? obj.value : null;
                   });
    }
-
-   MbsState.prototype.DabcParameter = function(par, callback) {
-      var xmlHttp = new XMLHttpRequest();
-      var pre = "../";
-      var suf = "/get.json";
-      var fullcom = pre + par + suf;
-      // console.log(fullcom);
-      xmlHttp.open('GET', fullcom, true);
-      xmlHttp.onreadystatechange = function() {
-
-         if (xmlHttp.readyState == 4) {
-            //console.log("DabcParameter request completed.");
-            var reply = JSON.parse(xmlHttp.responseText);
-             if (typeof reply != 'object') {
-                  console.log("non-object in json response from server");
-                  return;
-               }
-
-   //          var val= false;
-   //          val=(reply['value']==="true") ? true : false;
-             //console.log("response=%s, Reply= %s, value=%s", xmlHttp.responseText, reply, val);
-             //console.log("name=%s, value= %s state=%s", reply['_name'], reply['value'], val);
-            callback("true",reply['value']);
-         }
-      }
-      xmlHttp.send(null);
-   };
-
 
    MbsState.prototype.GosipCommand = function(cmd, command_callback) {
    // this is variation of code found in gosip polandsetup gui:
@@ -121,97 +93,29 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
       xmlHttp.send(null);
    }
 
-
-
-   MbsState.prototype.UpdateRunstate = function(ok, state){
-      //console.log("UpdateRunstate with ok=%s, value=%s", ok, state);
-      if (ok=="true") {
-         this.fRunning = (state==true);
-      } else {
-         console.log("UpdateRunstate failed.");
-      }
-   }
-
-   MbsState.prototype.UpdateFilestate = function(ok, state){
-
-      if (ok=="true") {
-         this.fFileOpen = (state==true);
-         } else {
-         console.log("UpdateFilestate failed.");
-      }
-      //console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
-   }
-
-   MbsState.prototype.UpdateSetupstate = function(ok, state){
-
-      if (ok=="true") {
-         this.fSetupLoaded = (state==true);
-         } else {
-         console.log("UpdateSetupstate failed.");
-      }
-      //console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
-   }
-
-   MbsState.prototype.UpdateHistoryDepth = function(ok, val){
-
-      if (ok=="true") {
-         MyDisplay.fLoggingHistory = val;
-         } else {
-         console.log("UpdateHistoryDepth failed.");
-      }
-      console.log("UpdateUpdateHistoryDepth with ok=%s, value=%s, loghistory=%d", ok, val, MyDisplay.fLoggingHistory);
-   }
-
-   MbsState.prototype.UpdateRateInterval = function(ok, val){
-
-      if (ok=="true") {
-         MyDisplay.fRateInterval = val;
-         } else {
-         console.log("UpdateRateInterval failed.");
-      }
-      console.log("UpdateRateInterval with ok=%s, value=%s, interval=%d", ok, val, MyDisplay.fRateInterval);
-   }
-
-
-
-   MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
-   // DABC states as strings:
-   //   "Halted"
-   //   "Ready"
-   //    "Running"
-   //    "Failure";
-   //    "Transition";
-
-
-      if (ok=="true") {
-         this.fDabcState = state;
-
-      } else {
-         console.log("UpdateDABCstate failed.");
-      }
-       //console.log("UpdateDABCstate with ok=%s, value=%s, dabcstate=%s", ok, state, this.fDabcState);
-       refreshcall();
-   }
-
-
-
-   MbsState.prototype.Update = function(callback){
-      var pthis = this;
+   MbsState.prototype.Update = function() {
 
       // TEST:
-      this.DabcParameter("MbsSetupLoaded", function(res,val) { pthis.UpdateSetupstate(res,val); });
-      this.DabcParameter("MbsAcqRunning", function(res,val) { pthis.UpdateRunstate(res,val); });
-      this.DabcParameter("MbsFileOpen",function(res,val) { pthis.UpdateFilestate(res,val); })
+      this.DabcParameter("MbsSetupLoaded").then(state => { this.fSetupLoaded = (state==true);})
+                                          .catch(() => console.log("UpdateSetupstate failed."));
+      this.DabcParameter("MbsAcqRunning").then(state => {this.fRunning = (state==true); })
+                                         .catch(() => console.log("UpdateRunstate failed."));
+      this.DabcParameter("MbsFileOpen").then(state => { this.fFileOpen = (state==true); })
+                                       .catch(() => console.log("UpdateFilestate failed."));
+      this.DabcParameter("MbsHistoryDepth").then(val => { MyDisplay.fLoggingHistory = val; })
+                                           .catch(() => console.log("UpdateHistoryDepth failed."));
 
-      this.DabcParameter("MbsHistoryDepth",function(res,val) { pthis.UpdateHistoryDepth(res,val); })
-      this.DabcParameter("MbsRateInterval",function(res,val) { pthis.UpdateRateInterval(res,val); })
+      this.DabcParameter("MbsRateInterval").then(val => { MyDisplay.fRateInterval = val; })
+                                           .catch(() => console.log("UpdateRateInterval failed."));
 
-   //
-      this.DabcParameter("../../web-mbs/App/State",function(res,val) { pthis.UpdateDABCstate(res,val, callback); })
-
-
-      //this.fDabcState="Running";
-      //callback(); // will be done when last parameter update response has been processed
+      // DABC states as strings:
+      //   "Halted"
+      //   "Ready"
+      //    "Running"
+      //    "Failure";
+      //    "Transition";
+      return this.DabcParameter("../../web-mbs/App/State").then(state => { this.fDabcState = state; })
+                                                          .catch(() => console.log("UpdateDABCstate failed."));
    }
 
 
@@ -235,9 +139,9 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
 
    // set up view elements of display:
    MbsDisplay.prototype.BuildView = function() {
-      var hpainter = new JSROOT.HierarchyPainter('root', null);
+      let hpainter = new JSROOT.HierarchyPainter('root', null),
+          disp = new JSROOT.CustomDisplay();
 
-      var disp = new JSROOT.CustomDisplay();
       disp.addFrame("EvRateDisplay", "EventRate");
       disp.addFrame("DatRateDisplay", "DataRate");
       disp.addFrame("SrvRateDisplay", "ServerRate");
@@ -334,7 +238,7 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
       $("#daq_log").scrollTop($("#daq_log")[0].scrollHeight - $("#daq_log").height());
       $("#file_log").scrollTop($("#file_log")[0].scrollHeight - $("#file_log").height());
 
-      this.fMbsState.Update(() => this.RefreshView());
+      this.fMbsState.Update().then(() => this.RefreshView());
    }
 
 
