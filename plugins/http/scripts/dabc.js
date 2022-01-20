@@ -1065,8 +1065,8 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
       // now we should produce TGraph from the object
 
-      let x = DABC.ExtractSeries("time", "time", obj, item.history);
-      let y = DABC.ExtractSeries("value", "number", obj, item.history);
+      let x = DABC.ExtractSeries("time", "time", obj, item.history),
+          y = DABC.ExtractSeries("value", "number", obj, item.history);
 
       for (let k in obj) delete obj[k];  // delete all object keys
 
@@ -1149,8 +1149,9 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       }
 
       painter.drawValue = function(val, force) {
-         let rect = this.selectDom().node().getBoundingClientRect();
-         let sz = Math.min(rect.height, rect.width);
+
+         let rect = this.selectDom().node().getBoundingClientRect(),
+             sz = Math.min(rect.height, rect.width);
 
          if ((sz > this.lastsz*1.2) || (sz < this.lastsz*0.9)) force = true;
 
@@ -1159,7 +1160,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
             this.gauge = null;
          }
 
-         this.lastval = val;
+         this.lastval = !val || !Number.isFinite(val) ? 0 : val;
 
          if (!this.gauge) {
             this.lastsz = sz;
@@ -1180,10 +1181,10 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
             else
                this.gauge.configure(config);
 
-            this.gauge.render(val);
+            this.gauge.render(this.lastval);
 
          } else {
-            this.gauge.redraw(val);
+            this.gauge.redraw(this.lastval);
          }
 
          // always set painter
