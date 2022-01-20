@@ -39,38 +39,32 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
    MbsState.prototype.GosipCommand = function(cmd, command_callback) {
    // this is variation of code found in gosip polandsetup gui:
 
-      var cmdurl="/GOSIP/Test/CmdGosip/execute";
-      var xmlHttp = new XMLHttpRequest();
-      var sfp=0;
-      var dev=0;
+      let cmdurl="/GOSIP/Test/CmdGosip/execute",
+          xmlHttp = new XMLHttpRequest(),
+          sfp = 0,
+          dev = 0,
 
-      var cmdtext = cmdurl + "?sfp=" + sfp + "&dev=" + dev;
-   //
-   //   if (log)
-       cmdtext += "&log=1";
-   //
+          cmdtext = cmdurl + "?sfp=" + sfp + "&dev=" + dev;
+
+      cmdtext += "&log=1";
       cmdtext += "&cmd=\'" + cmd + "\'";
-   //
       console.log(cmdtext);
-   //
       xmlHttp.open('GET', cmdtext, true);
-   //
-      var pthis = this;
 
       xmlHttp.onreadystatechange = function() {
          // console.log("onready change " + xmlHttp.readyState);
          if (xmlHttp.readyState == 4) {
-            var reply = JSON.parse(xmlHttp.responseText);
-            var ddd = "";
+            let reply = JSON.parse(xmlHttp.responseText), ddd = "";
+
             if (!reply || (reply["_Result_"] != 1)) {
-               command_callback(false, null,ddd);
+               command_callback(false, null, ddd);
                return;
             }
 
             if (reply['log'] != null) {
 
                // console.log("log length = " + Setup.fLogData.length);
-               for ( var i in reply['log']) {
+               for ( let i in reply['log']) {
 
                   if (reply['log'][i].search("\n") >= 0)
                      console.log("found 1");
@@ -407,8 +401,8 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
 
 
    MbsDisplay.prototype.SetStatusMessage= function(info) {
-      var d = new Date();
-      var txt = d.toLocaleString() + "  >" + info;
+      let d = new Date(),
+          txt = d.toLocaleString() + "  >" + info;
       document.getElementById("status_message").innerHTML = txt;
    }
 
@@ -428,8 +422,8 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
 
    $("#buttonStartAcquisition").button({showLabel: false, icon:  "ui-icon-play MyButtonStyle"}).click(
          function() {
-            var requestmsg = "Really Start Acquisition?";
-            var response = MyDisplay.Confirm(requestmsg);
+            let requestmsg = "Really Start Acquisition?",
+                response = MyDisplay.Confirm(requestmsg);
             if (!response)
                return;
 
@@ -442,8 +436,8 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
    $("#buttonStopAcquisition").button({showLabel: false, icon:  "ui-icon-stop MyButtonStyle"}).click(
          function() {
 
-            var requestmsg = "Really Stop Acquisition?";
-            var response = MyDisplay.Confirm(requestmsg);
+            let requestmsg = "Really Stop Acquisition?",
+                response = MyDisplay.Confirm(requestmsg);
             if (!response)
                return;
             MBS.DabcCommand("CmdMbs", "cmd=sto acq")
@@ -454,8 +448,8 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
 
 ////////// startup command will not work at the moment:
    $("#buttonStartupAcquisition").button({showLabel: false, icon:  "ui-icon-arrowthick-1-n MyButtonStyle"}).click(function() {
-      var requestmsg = "Really Initialize Acquisition?";
-      var response = MyDisplay.Confirm(requestmsg);
+      let requestmsg = "Really Initialize Acquisition?",
+          response = MyDisplay.Confirm(requestmsg);
       if (!response)
          return;
 
@@ -466,8 +460,8 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
    });
 
    $("#buttonShutdownAcquisition").button({showLabel: false, icon:  "ui-icon-arrowthick-1-s MyButtonStyle"}).click(function() {
-      var requestmsg = "Really Shut down Acquisition?";
-      var response = MyDisplay.Confirm(requestmsg);
+      let requestmsg = "Really Shut down Acquisition?",
+          response = MyDisplay.Confirm(requestmsg);
       if (!response)
          return;
 
@@ -490,12 +484,11 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
    $("#lmd_file_form").submit(
       function(event) {
 
-         var checked = MBS.fFileOpen;
+         let checked = MBS.fFileOpen;
 
          if (checked) {
-            var requestmsg = "Really Stop writing output file "
-               + MBS.fFileName + " ?";
-            var response = MyDisplay.Confirm(requestmsg);
+            let requestmsg = "Really Stop writing output file " + MBS.fFileName + " ?",
+                response = MyDisplay.Confirm(requestmsg);
             if (!response) {
                event.preventDefault();
                return;
@@ -506,10 +499,9 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
                .finally(() => MyDisplay.RefreshMonitor());
          }
          else {
-            var datafilename = document.getElementById("Filename").value;
-            var datafilelimit = document.getElementById("Filesize").value;
-            var options = "cmd= open file " + datafilename
-               + " size=" + datafilelimit;
+            let datafilename = document.getElementById("Filename").value,
+                datafilelimit = document.getElementById("Filesize").value,
+                options = "cmd= open file " + datafilename + " size=" + datafilelimit;
             if ($("#FileRFIO").is(':checked'))
                options += " -RFIO";
             else
@@ -517,8 +509,8 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
 
             if ($("#FileAutoMode").is(':checked'))
                options += " -AUTO";
-            var requestmsg = "Really Start writing output file with "  + options + " ?";
-            var response = MyDisplay.Confirm(requestmsg);
+            let requestmsg = "Really Start writing output file with "  + options + " ?",
+                response = MyDisplay.Confirm(requestmsg);
             if (!response) {
                event.preventDefault();
                return;
@@ -572,25 +564,17 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
 
       $( "#gosipcmd_form" ).submit(
             function(event) {
-               var sfp=0;
-               var dev=0;
-               var log=false;
-               var cmdpar=document.getElementById("commandGosip").value;
-               var requestmsg = "Really Execute  gosipcmd "+ cmdpar;
-               var response = MyDisplay.Confirm(requestmsg);
+               let cmdpar = document.getElementById("commandGosip").value,
+                   requestmsg = "Really Execute  gosipcmd "+ cmdpar,
+                   response = MyDisplay.Confirm(requestmsg);
                if (!response){
                   event.preventDefault();
                   return;
-                  }
-               MBS.GosipCommand(cmdpar, function(ok,
-                     logout, result) {
+               }
+               MBS.GosipCommand(cmdpar, function(ok, logout, result) {
                   MyDisplay.SetStatusMessage(ok ? "gosip command send."
                         : "gosip command FAILED.");
-                  if(ok)
-                     {
-                        document.getElementById("GosipLog").innerHTML += logout;
-                        //console.log(logout);
-                     }
+                  if(ok) document.getElementById("GosipLog").innerHTML += logout;
                   // NOTE: GosipLog is inner text div, but scrollbars are put to container gosip_log!
                   $("#gosip_log").scrollTop($("#gosip_log")[0].scrollHeight - $("#gosip_log").height());
                     //console.log("scrollheight="+ $("#gosip_log")[0].scrollHeight + ", height=" + $("#gosip_log").height() + ", scrolltop=" + $("#gosip_log").scrollTop());
@@ -601,22 +585,18 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
             });
 
 
-
       $("#buttonExecuteMBS").button({showLabel: false, icon:  "ui-icon-gear MyButtonStyle"});
 
 
       $( "#mbscmd_form" ).submit(
             function(event) {
-               var sfp=0;
-               var dev=0;
-               var log=false;
-               var cmdpar="cmd="+document.getElementById("commandMBS").value;
-               var requestmsg = "Really Execute  mbs command: "+ cmdpar;
-               var response = MyDisplay.Confirm(requestmsg);
+               let cmdpar = "cmd="+document.getElementById("commandMBS").value,
+                   requestmsg = "Really Execute  mbs command: "+ cmdpar,
+                   response = MyDisplay.Confirm(requestmsg);
                if (!response){
                   event.preventDefault();
                   return;
-                  }
+               }
 
                MBS.DabcCommand("CmdMbs", cmdpar)
                   .then(() => MyDisplay.SetStatusMessage("Send MBS command: "+cmdpar))
@@ -662,13 +642,12 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
 
        $("#ConfirmCommandToggle").checkboxradio({icon: false}).click(
             function() {
-               var doconfirm=$('#ConfirmCommandToggle').is(':checked');
+               let doconfirm = $('#ConfirmCommandToggle').is(':checked');
                MyDisplay.SetCommandConfirm(doconfirm);
                MyDisplay.RefreshView();
                console.log("Command confirm is " + doconfirm);
 
             });
-
 
 
     $('#Refreshtime').spinner({
@@ -727,15 +706,12 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
         minWidth: 400,
         start: function( event, ui ) {
            MyDisplay.fMiddleWidth=$("#file_log").width();
-           var middleleft=$("#file_log").position().left;
+           let middleleft = $("#file_log").position().left;
            MyDisplay.fMiddlerightPos=middleleft+MyDisplay.fMiddleWidth; // remember position of right edge middle column
            console.log("left="+middleleft+", right="+MyDisplay.fMiddlerightPos+", width="+MyDisplay.fMiddleWidth);
-
         },
 
         resize: function( event, ui ) {
-
-
            $("#file_log").css({
               left: (ui.size.width +2),
               right: MyDisplay.fMiddlerightPos,
@@ -771,8 +747,6 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
            $("#rate_container").css({
               left: MyDisplay.fMiddlerightPos +4
             });
-
-
            }
        });
 
@@ -827,7 +801,7 @@ JSROOT.require(['painter', 'hierarchy']).then(() => {
        });
 
    MyDisplay.ShowGosipPanel(false);
-    //MyDisplay.RefreshView();
+   //MyDisplay.RefreshView();
 
    MyDisplay.RefreshMonitor();
 
