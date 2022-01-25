@@ -1034,7 +1034,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
       let new_version = Number(obj._version);
 
-      let modified = (item.request_version != new_version);
+      // let modified = (item.request_version != new_version);
 
       item.request_version = new_version;
 
@@ -1048,8 +1048,8 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
          // join both arrays with history entries
          if ((item.history == null) || (arr.length >= item['hlimit']) || gap) {
             item.history = arr;
-         } else if (arr.length>0) {
-            modified = true;
+         } else if (arr.length > 0) {
+            // modified = true;
             let total = item.history.length + arr.length;
             if (total > item['hlimit'])
                item.history.splice(0, total - item['hlimit']);
@@ -1079,9 +1079,11 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
       let _title = item._title || item.fullitemname;
 
-      JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: _title,
+      JSROOT.extend(obj, { fName: item._name, fTitle: _title,
                            fX: x, fY: y, fNpoints: x.length,
                            fLineColor: 2, fLineWidth: 2 });
+      const kNotEditable = JSROOT.BIT(18);   // bit set if graph is non editable
+      obj.InvertBit(kNotEditable);
 
       let xrange = x[x.length-1] - x[0];
       obj.fHistogram.fTitle = obj.fTitle;
