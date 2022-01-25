@@ -21,6 +21,6 @@ if(Stream_FOUND)
    # file used in code relative to $DABCSYS, keep path for a while
    configure_file(src/stream_engine.cpp ${CMAKE_BINARY_DIR}/plugins/stream/src/stream_engine.cpp COPYONLY)
 
-   file(COPY icons DESTINATION ${CMAKE_BINARY_DIR}/plugins/stream)
+   file(COPY icons app DESTINATION ${CMAKE_BINARY_DIR}/plugins/stream)
 
 endif()
