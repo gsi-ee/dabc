@@ -2,6 +2,8 @@ DABC_INSTALL_HEADERS(http)
 
 find_package(ZLIB QUIET)
 
+list(APPEND extra_defs NO_SSL)
+
 if(ZLIB_FOUND)
    list(APPEND extra_libs ${ZLIB_LIBRARIES})
    list(APPEND extra_incl ${ZLIB_INCLUDE_DIRS})
