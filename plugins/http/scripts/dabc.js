@@ -1160,7 +1160,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
             this.gauge = null;
          }
 
-         this.lastval = !val || !Number.isFinite(val) ? 0 : val;
+         this.lastval = val;
 
          if (!this.gauge) {
             this.lastsz = sz;
