@@ -1099,16 +1099,16 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       obj.fHistogram.fXaxis.fTimeFormat = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
    }
 
-   DABC.DrawGauage = function(divid, obj, opt) {
+   DABC.DrawGauage = function(dom, obj, opt) {
 
-      // at this momemnt justgauge should be loaded
+      // at this momemnt gauge should be loaded
 
       if (typeof Gauge == 'undefined') {
          alert('gauge.js not loaded');
          return null;
       }
 
-      let painter = new JSROOT.BasePainter(divid);
+      let painter = new JSROOT.BasePainter(dom);
 
       painter.gauge = null;
       painter.min = 0;
@@ -1207,8 +1207,8 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
    // ==========================================================================================
 
-   DABC.DrawLog = function(divid, obj, opt) {
-      let painter = new JSROOT.BasePainter(divid);
+   DABC.DrawLog = function(dom, obj, opt) {
+      let painter = new JSROOT.BasePainter(dom);
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
 
@@ -1217,7 +1217,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       } else {
          painter.selectDom().html("<div></div>");
       }
-      // set divid after child element created - only then we could set painter
+      // set top painter after HTML element created
       painter.setTopPainter();
 
       painter.redrawObject = function(obj) {
@@ -1246,9 +1246,9 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
    }
 
 
-   DABC.DrawCommand = function(divid, obj, opt) {
+   DABC.DrawCommand = function(dom, obj, opt) {
 
-      let painter = new JSROOT.BasePainter(divid);
+      let painter = new JSROOT.BasePainter(dom);
 
       painter.jsonnode = obj;
 
@@ -1415,7 +1415,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
          let histo = menu.painter.getHisto(),
              binlbl = menu.painter.getAxisBinTip("x", histo.fXaxis, tip.binx-1);
 
-         let focusOnTdc = lbl => {
+         const focusOnTdc = lbl => {
             let tdc_name = "TDC_" + lbl.substr(2), tdc_item;
 
             JSROOT.hpainter.forEachItem(item => {
@@ -1424,7 +1424,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
             });
             if (tdc_item)
                JSROOT.hpainter.focusOnItem(tdc_item);
-         }
+         };
 
          if (binlbl && (typeof binlbl == "string") && (binlbl.indexOf("0x")==0))
             menu.add(`Focus on TDC ${binlbl}`, () => focusOnTdc(binlbl));
