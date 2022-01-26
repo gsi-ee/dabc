@@ -345,7 +345,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
       }
       // Remove duplicates.
       intersects = intersects.filter(function (item, pos) {return intersects.indexOf(item) === pos});
-      this._controls.ProcessMouseMove(intersects);
+      this._controls.processMouseMove(intersects);
    }
 
    /** @summary Update VR controllers
@@ -1441,7 +1441,7 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       this._controls.contextMenu = this.orbitContext.bind(this);
 
-      this._controls.ProcessMouseMove = function(intersects) {
+      this._controls.processMouseMove = function(intersects) {
 
          // painter already cleaned up, ignore any incoming events
          if (!painter.ctrl || !painter._controls) return;
@@ -1488,8 +1488,8 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
          return { name: resolve.obj.fName, title: resolve.obj.fTitle || resolve.obj._typename, lines: lines };
       }
 
-      this._controls.ProcessMouseLeave = function() {
-         this.ProcessMouseMove([]); // to disable highlight and reset browser
+      this._controls.processMouseLeave = function() {
+         this.processMouseMove([]); // to disable highlight and reset browser
       }
 
       this._controls.processDblClick = function() {
@@ -3245,15 +3245,15 @@ JSROOT.define(['d3', 'three', 'geobase', 'painter', 'base3d'], (d3, THREE, geo, 
 
       this.createToolbar();
 
-      if (this._clones)
-         return new Promise(resolveFunc => {
-            this._resolveFunc = resolveFunc;
-            this.showDrawInfo("Drawing geometry");
-            this.startDrawGeometry(true);
-         });
+      // just draw extras and complete drawing if there are no main model
+      if (!this._clones)
+         return this.completeDraw();
 
-      this.completeDraw();
-      return Promise.resolve(this);
+      return new Promise(resolveFunc => {
+         this._resolveFunc = resolveFunc;
+         this.showDrawInfo("Drawing geometry");
+         this.startDrawGeometry(true);
+      });
    }
 
    /** @summary methods show info when first geometry drawing is performed */
