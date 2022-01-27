@@ -1230,26 +1230,29 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
    // ==========================================================================================
 
-   DABC.DrawLog = function(dom, obj, opt) {
-      let painter = new JSROOT.BasePainter(dom);
-      painter.obj = obj;
-      painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
 
-      if (painter.history) {
-         painter.selectDom().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
-      } else {
-         painter.selectDom().html("<div></div>");
+   class DabcLogPainter extends JSROOT.BasePainter {
+      constructor(dom, obj, opt) {
+         super(dom);
+         this.obj = obj;
+         this.history = (opt!="last") && ('log' in obj); // by default draw complete history
+
+         if (this.history) {
+            this.selectDom().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
+         } else {
+            this.selectDom().html("<div></div>");
+         }
+         // set top painter after HTML element created
+         this.setTopPainter();
       }
-      // set top painter after HTML element created
-      painter.setTopPainter();
 
-      painter.redrawObject = function(obj) {
+      redrawObject(obj) {
          this.obj = obj;
          this.drawLog();
          return true;
       }
 
-      painter.drawLog = function() {
+      drawLog() {
          let html = "";
 
          if (this.history && ('log' in this.obj)) {
@@ -1262,6 +1265,12 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
          }
          this.selectDom().select("div").html(html);
       }
+
+   }
+
+   DABC.DrawLog = function(dom, obj, opt) {
+      let painter = new DabcLogPainter(dom, obj, opt);
+      console.log('Create DabcLogPainter');
 
       painter.drawLog();
 
