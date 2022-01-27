@@ -14,6 +14,8 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
    DABC.source_dir = "";
 
+   DABC.id_counter = 1;
+
    if (dabcScript && (typeof dabcScript.src == "string")) {
       const pos = dabcScript.src.indexOf("dabc.js");
       if (pos >= 0) {
@@ -1115,6 +1117,17 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
          this._units = "";
       }
 
+      getDomId() {
+         let elem = this.selectDom();
+         if (elem.empty()) return "";
+         let id = elem.attr("id");
+         if (!id) {
+            id = "dabc_element_" + DABC.id_counter++;
+            elem.attr("id", id);
+         }
+         return id;
+      }
+
       drawGauge(obj) {
          if (!obj) return;
 
@@ -1176,7 +1189,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
             if (this._units) config['units'] = this._units + "/s";
 
             if (!this.gauge)
-               this.gauge = new Gauge(this.selectDom().attr('id'), config);
+               this.gauge = new Gauge(this.getDomId(), config);
             else
                this.gauge.configure(config);
 
