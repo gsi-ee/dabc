@@ -1103,36 +1103,30 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       obj.fHistogram.fXaxis.fTimeFormat = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
    }
 
-   DABC.DrawGauage = function(dom, obj, opt) {
-
-      // at this momemnt gauge should be loaded
-
-      if (typeof Gauge == 'undefined') {
-         alert('gauge.js not loaded');
-         return null;
+   class GaugePainter extends JSROOT.BasePainter {
+      constructor(dom) {
+         super(dom);
+         this.gauge = null;
+         this.min = 0;
+         this.max = 1;
+         this.lastval = 0;
+         this.lastsz = 0;
+         this._title = "";
+         this._units = "";
       }
 
-      let painter = new JSROOT.BasePainter(dom);
-
-      painter.gauge = null;
-      painter.min = 0;
-      painter.max = 1;
-      painter.lastval = 0;
-      painter.lastsz = 0;
-      painter._title = "";
-
-      painter.draw = function(obj) {
+      drawGauge(obj) {
          if (!obj) return;
 
-         let val = Number(obj["value"]);
+         let val = Number(obj.value);
 
          if ('low' in obj) {
-            let min = Number(obj["low"]);
+            let min = Number(obj.low);
             if (Number.isFinite(min) && (min < this.min)) this.min = min;
          }
 
          if ('up' in obj) {
-            let max = Number(obj["up"]);
+            let max = Number(obj.up);
             if (Number.isFinite(max) && (max > this.max)) this.max = max;
          }
 
@@ -1148,11 +1142,12 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
          }
 
          this._title = obj._name || "gauge";
+         this._units = obj.units || "";
          val = JSROOT.Painter.floatToString(val,"5.3g");
          this.drawValue(val, redo);
       }
 
-      painter.drawValue = function(val, force) {
+      drawValue(val, force) {
 
          let rect = this.selectDom().node().getBoundingClientRect(),
              sz = Math.min(rect.height, rect.width);
@@ -1178,7 +1173,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
                minorTicks: 5
             };
 
-            if ('units' in obj) config['units'] = obj['units'] + "/s";
+            if (this._units) config['units'] = this._units + "/s";
 
             if (!this.gauge)
                this.gauge = new Gauge(this.selectDom().attr('id'), config);
@@ -1195,16 +1190,27 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
          this.setTopPainter();
       }
 
-      painter.checkResize = function() {
+      checkResize() {
          this.drawValue(this.lastval);
       }
 
-      painter.redrawObject = function(obj) {
-         this.draw(obj);
+      redrawObject(obj) {
+         this.drawGauge(obj);
          return true;
       }
+   }
 
-      painter.draw(obj);
+   DABC.DrawGauage = function(dom, obj, opt) {
+
+      // at this momemnt gauge should be loaded
+      if (typeof Gauge == 'undefined') {
+         alert('gauge.js not loaded');
+         return null;
+      }
+
+      let painter = new GaugePainter(dom);
+
+      painter.drawGauge(obj);
 
       return Promise.resolve(painter);
    }
