@@ -1270,46 +1270,29 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
    DABC.DrawLog = function(dom, obj, opt) {
       let painter = new DabcLogPainter(dom, obj, opt);
-      console.log('Create DabcLogPainter');
-
       painter.drawLog();
-
       return Promise.resolve(painter);
    }
 
-
-   DABC.DrawCommand = function(dom, obj, opt) {
-
-      let painter = new JSROOT.BasePainter(dom);
-
-      painter.jsonnode = obj;
-
-      painter.numArgs = function() {
-         if (this.jsonnode==null) return 0;
-         return this.jsonnode["numargs"];
+   class DabcCommandPainter extends JSROOT.BasePainter {
+      constructor(dom, obj) {
+         super(dom);
+         this.jsonnode = obj;
       }
 
-      painter.argName = function(n) {
-         return (n < this.numArgs()) ? this.jsonnode["arg"+n] : "";
-      }
+      numArgs() { return this.jsonnode ? this.jsonnode["numargs"] : 0; }
 
-      painter.argKind = function(n) {
-         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_kind"] : "";
-      }
+      argName(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n] : ""; }
 
-      painter.argDflt = function(n) {
-         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_dflt"] : "";
-      }
+      argKind(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_kind"] : ""; }
 
-      painter.argMin = function(n) {
-         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_min"] : null;
-      }
+      argDflt(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_dflt"] : ""; }
 
-      painter.argMax = function(n) {
-         return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_max"] : null;
-      }
+      argMin(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_min"] : null; }
 
-      painter.showCommand = function() {
+      argMax(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_max"] : null; }
+
+      showCommand() {
 
          let dom = this.selectDom();
 
@@ -1343,7 +1326,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
          dom.append("div").classed("dabccmd_res", true);
       }
 
-      painter.invokeCommand = function() {
+      invokeCommand() {
          if (this.req) return;
 
          let dom = this.selectDom(),
@@ -1366,6 +1349,11 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
              .catch(() => resdiv.html("<h5>missing reply from server</h5>"))
              .finally(() => { this.req = false; });
       }
+   }
+
+   DABC.DrawCommand = function(dom, obj, opt) {
+
+      let painter = new DabcCommandPainter(dom, obj, opt);
 
       painter.showCommand();
 
