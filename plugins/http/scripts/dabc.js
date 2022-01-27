@@ -1131,7 +1131,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       drawGauge(obj) {
          if (!obj) return;
 
-         let val = Number(obj.value);
+         let val = (obj.value === undefined) ? 0 : Number(obj.value);
 
          if ('low' in obj) {
             let min = Number(obj.low);
@@ -1156,7 +1156,12 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
          this._title = obj._name || "gauge";
          this._units = obj.units || "";
-         val = JSROOT.Painter.floatToString(val,"5.3g");
+         if ((obj.value === undefined) || (val == 0))
+            val = "0";
+         else if ((Math.round(val) == val) && (Math.abs(val) < 100000))
+            val = val.toString();
+         else
+            val = JSROOT.Painter.floatToString(val,"5.3g");
          this.drawValue(val, redo);
       }
 
