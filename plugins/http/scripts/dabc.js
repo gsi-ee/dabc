@@ -344,12 +344,13 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
    constructor(hpainter, itemname) {
 
+      let frame = hpainter.getDisplay().findFrame(itemname, true);
+
+      super(frame);
+
       this.hpainter = hpainter;
       this.itemname = itemname;
-      this.frame = hpainter.getDisplay().findFrame(itemname, true);
-
-      super(this.frame);
-
+      this.frame = frame;
       if (!this.frame) return;
 
       this.InputItems = [];
