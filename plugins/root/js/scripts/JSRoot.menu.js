@@ -485,7 +485,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
          let main_content =
             `<form>
                 <fieldset style="padding:0; border:0">
-                   <input type="${inp_type}" tabindex="0" value="${value}" style="width:100%;display:block" class="jsroot_dlginp"/>
+                   <input type="${inp_type}" tabindex="0" value="${value}" style="width:98%;display:block" class="jsroot_dlginp"/>
                </fieldset>
              </form>`;
 
@@ -521,7 +521,7 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
             arg.fValue = arg.fDefault;
             if (arg.fValue == '\"\"') arg.fValue = "";
             main_content += `<label for="${dlg_id}_inp${n}">${arg.fName}</label>
-                             <input type="text" tabindex="0" id="${dlg_id}_inp${n}" value="${arg.fValue}" style="width:100%;display:block"/>`;
+                             <input type="text" tabindex="${n}" id="${dlg_id}_inp${n}" value="${arg.fValue}" style="width:100%;display:block"/>`;
          }
 
          main_content += '</fieldset></form>';
@@ -834,21 +834,13 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
       /** @summary Run modal elements with standalone code */
       runModal(title, main_content, args) {
          if (!args) args = {};
-         let dlg_id = this.menuname + "_dialog",
-             old_dlg = document.getElementById(dlg_id),
-             old_blk = document.getElementById(dlg_id+"_block");
-         if (old_dlg) old_dlg.remove();
-         if (old_blk) old_blk.remove();
+         let dlg_id = this.menuname + "_dialog";
+         d3.select("#" + dlg_id).remove();
+         d3.select("#" + dlg_id+"_block").remove();
 
-         let block = document.createElement('div');
-         block.setAttribute('id', dlg_id+"_block");
-         block.className = "jsroot_dialog_block";
-         document.body.appendChild(block);
+         let block = d3.select('body').append('div').attr('id', dlg_id+"_block").attr("class", "jsroot_dialog_block");
 
-         let element = document.createElement('div');
-         element.setAttribute('id', dlg_id);
-         element.className = "jsroot_dialog";
-         element.innerHTML =
+         let element = d3.select('body').append('div').attr('id',dlg_id).attr("class","jsroot_dialog").style("width",(args.width || 450) + "px").html(
             `<div class="jsroot_dialog_body">
                <div class="jsroot_dialog_header">${title}</div>
                <div class="jsroot_dialog_content">${main_content}</div>
@@ -856,17 +848,26 @@ JSROOT.define(['d3', 'painter'], (d3, jsrp) => {
                   <button class="jsroot_dialog_button">Ok</button>
                   ${args.btns ? '<button class="jsroot_dialog_button">Cancel</button>' : ''}
               </div>
-             </div>`;
-         element.style.width = (args.width || 450) + "px";
-         document.body.appendChild(element);
+             </div>`);
 
          return new Promise(resolveFunc => {
-
-            d3.select(element).selectAll('.jsroot_dialog_button').on("click", evnt => {
-               resolveFunc(args.btns && (d3.select(evnt.target).text() == "Ok") ? element : null);
+            element.on("keyup", evnt => {
+               if ((evnt.keyCode == 13) || (evnt.keyCode == 27)) {
+                  evnt.preventDefault();
+                  resolveFunc(evnt.keyCode == 13 ? element.node() : null);
+                  element.remove();
+                  block.remove();
+               }
+            });
+            element.selectAll('.jsroot_dialog_button').on("click", evnt => {
+               resolveFunc(args.btns && (d3.select(evnt.target).text() == "Ok") ? element.node() : null);
                element.remove();
                block.remove();
             });
+
+            let f = element.select('.jsroot_dialog_content').select('input');
+            if (f.empty()) f = element.select('.jsroot_dialog_footer').select('button');
+            if (!f.empty()) f.node().focus();
          });
       }
 
