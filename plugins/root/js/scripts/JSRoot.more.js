@@ -2261,308 +2261,307 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /**
     * @summary Painter for TGraphPolargram objects.
     *
-    * @class
     * @memberof JSROOT
-    * @extends JSROOT.ObjectPainter
-    * @param {object|string} dom - DOM element for drawing or element id
-    * @param {object} polargram - object to draw
-    * @private
-    */
+    * @private */
 
-   function TGraphPolargramPainter(dom, polargram) {
-      ObjectPainter.call(this, dom, polargram);
-      this.$polargram = true; // indicate that this is polargram
-      this.zoom_rmin = this.zoom_rmax = 0;
-   }
+   class TGraphPolargramPainter extends ObjectPainter {
 
-   TGraphPolargramPainter.prototype = Object.create(ObjectPainter.prototype);
-
-   /** @summary Translate coordinates */
-   TGraphPolargramPainter.prototype.translate = function(angle, radius, keep_float) {
-      let _rx = this.r(radius), _ry = _rx/this.szx*this.szy,
-          pos = {
-            x: _rx * Math.cos(-angle - this.angle),
-            y: _ry * Math.sin(-angle - this.angle),
-            rx: _rx,
-            ry: _ry
-         };
-
-      if (!keep_float) {
-         pos.x = Math.round(pos.x);
-         pos.y = Math.round(pos.y);
-         pos.rx =  Math.round(pos.rx);
-         pos.ry =  Math.round(pos.ry);
-      }
-      return pos;
-   }
-
-   /** @summary format label for radius ticks */
-   TGraphPolargramPainter.prototype.format = function(radius) {
-
-      if (radius === Math.round(radius)) return radius.toString();
-      if (this.ndig>10) return radius.toExponential(4);
-
-      return radius.toFixed((this.ndig > 0) ? this.ndig : 0);
-   }
-
-   /** @summary Convert axis values to text */
-   TGraphPolargramPainter.prototype.axisAsText = function(axis, value) {
-
-      if (axis == "r") {
-         if (value === Math.round(value)) return value.toString();
-         if (this.ndig>10) return value.toExponential(4);
-         return value.toFixed(this.ndig+2);
+      /** @summary Create painter
+        * @param {object|string} dom - DOM element for drawing or element id
+        * @param {object} polargram - object to draw */
+      constructor(dom, polargram) {
+         super(dom, polargram);
+         this.$polargram = true; // indicate that this is polargram
+         this.zoom_rmin = this.zoom_rmax = 0;
       }
 
-      value *= 180/Math.PI;
-      return (value === Math.round(value)) ? value.toString() : value.toFixed(1);
-   }
+      /** @summary Translate coordinates */
+      translate(angle, radius, keep_float) {
+         let _rx = this.r(radius), _ry = _rx/this.szx*this.szy,
+             pos = {
+               x: _rx * Math.cos(-angle - this.angle),
+               y: _ry * Math.sin(-angle - this.angle),
+               rx: _rx,
+               ry: _ry
+            };
 
-   /** @summary Returns coordinate of frame - without using frame itself */
-   TGraphPolargramPainter.prototype.getFrameRect = function() {
-      let pp = this.getPadPainter(),
-          pad = pp.getRootPad(true),
-          w = pp.getPadWidth(),
-          h = pp.getPadHeight(),
-          rect = {};
-
-      if (pad) {
-         rect.szx = Math.round(Math.max(0.1, 0.5 - Math.max(pad.fLeftMargin, pad.fRightMargin))*w);
-         rect.szy = Math.round(Math.max(0.1, 0.5 - Math.max(pad.fBottomMargin, pad.fTopMargin))*h);
-      } else {
-         rect.szx = Math.round(0.5*w);
-         rect.szy = Math.round(0.5*h);
-      }
-
-      rect.width = 2*rect.szx;
-      rect.height = 2*rect.szy;
-      rect.midx = Math.round(w/2);
-      rect.midy = Math.round(h/2);
-      rect.x = rect.midx - rect.szx;
-      rect.y = rect.midy - rect.szy;
-
-      rect.hint_delta_x = rect.szx;
-      rect.hint_delta_y = rect.szy;
-
-      rect.transform = `translate(${rect.x},${rect.y})`;
-
-      return rect;
-   }
-
-   /** @summary Process mouse event */
-   TGraphPolargramPainter.prototype.mouseEvent = function(kind, evnt) {
-      let layer = this.getLayerSvg("primitives_layer"),
-          interactive = layer.select(".interactive_ellipse");
-      if (interactive.empty()) return;
-
-      let pnt = null;
-
-      if (kind !== 'leave') {
-         let pos = d3.pointer(evnt, interactive.node());
-         pnt = { x: pos[0], y: pos[1], touch: false };
-      }
-
-      this.processFrameTooltipEvent(pnt);
-   }
-
-   /** @summary Process mouse wheel event */
-   TGraphPolargramPainter.prototype.mouseWheel = function(evnt) {
-      evnt.stopPropagation();
-      evnt.preventDefault();
-
-      this.processFrameTooltipEvent(null); // remove all tooltips
-
-      let polar = this.getObject();
-
-      if (!polar) return;
-
-      let delta = evnt.wheelDelta ? -evnt.wheelDelta : (evnt.deltaY || evnt.detail);
-      if (!delta) return;
-
-      delta = (delta<0) ? -0.2 : 0.2;
-
-      let rmin = this.scale_rmin, rmax = this.scale_rmax, range = rmax - rmin;
-
-      // rmin -= delta*range;
-      rmax += delta*range;
-
-      if ((rmin<polar.fRwrmin) || (rmax>polar.fRwrmax)) rmin = rmax = 0;
-
-      if ((this.zoom_rmin != rmin) || (this.zoom_rmax != rmax)) {
-         this.zoom_rmin = rmin;
-         this.zoom_rmax = rmax;
-         this.redrawPad();
-      }
-   }
-
-   /** @summary Redraw polargram */
-   TGraphPolargramPainter.prototype.redraw = function() {
-      if (!this.isMainPainter()) return;
-
-      let polar = this.getObject(),
-          rect = this.getFrameRect();
-
-      this.createG();
-
-      this.draw_g.attr("transform", `translate(${rect.midx},${rect.midy})`);
-      this.szx = rect.szx;
-      this.szy = rect.szy;
-
-      this.scale_rmin = polar.fRwrmin;
-      this.scale_rmax = polar.fRwrmax;
-      if (this.zoom_rmin != this.zoom_rmax) {
-         this.scale_rmin = this.zoom_rmin;
-         this.scale_rmax = this.zoom_rmax;
-      }
-
-      this.r = d3.scaleLinear().domain([this.scale_rmin, this.scale_rmax]).range([ 0, this.szx ]);
-      this.angle = polar.fAxisAngle || 0;
-
-      let ticks = this.r.ticks(5),
-          nminor = Math.floor((polar.fNdivRad % 10000) / 100);
-
-      this.createAttLine({ attr: polar });
-      if (!this.gridatt) this.gridatt = new JSROOT.TAttLineHandler({ color: polar.fLineColor, style: 2, width: 1 });
-
-      let range = Math.abs(polar.fRwrmax - polar.fRwrmin);
-      this.ndig = (range <= 0) ? -3 : Math.round(Math.log10(ticks.length / range));
-
-      // verify that all radius labels are unique
-      let lbls = [], indx = 0;
-      while (indx<ticks.length) {
-         let lbl = this.format(ticks[indx]);
-         if (lbls.indexOf(lbl)>=0) {
-            if (++this.ndig>10) break;
-            lbls = []; indx = 0; continue;
-          }
-         lbls.push(lbl);
-         indx++;
-      }
-
-      let exclude_last = false;
-
-      if ((ticks[ticks.length-1] < polar.fRwrmax) && (this.zoom_rmin == this.zoom_rmax)) {
-         ticks.push(polar.fRwrmax);
-         exclude_last = true;
-      }
-
-      this.startTextDrawing(polar.fRadialLabelFont, Math.round(polar.fRadialTextSize * this.szy * 2));
-
-      for (let n=0;n<ticks.length;++n) {
-         let rx = this.r(ticks[n]), ry = rx/this.szx*this.szy;
-         this.draw_g.append("ellipse")
-             .attr("cx",0)
-             .attr("cy",0)
-             .attr("rx",Math.round(rx))
-             .attr("ry",Math.round(ry))
-             .style("fill", "none")
-             .call(this.lineatt.func);
-
-         if ((n < ticks.length-1) || !exclude_last)
-            this.drawText({ align: 23, x: Math.round(rx), y: Math.round(polar.fRadialTextSize * this.szy * 0.5),
-                            text: this.format(ticks[n]), color: this.getColor(polar.fRadialLabelColor), latex: 0 });
-
-         if ((nminor>1) && ((n < ticks.length-1) || !exclude_last)) {
-            let dr = (ticks[1] - ticks[0]) / nminor;
-            for (let nn = 1; nn < nminor; ++nn) {
-               let gridr = ticks[n] + dr*nn;
-               if (gridr > this.scale_rmax) break;
-               rx = this.r(gridr); ry = rx/this.szx*this.szy;
-               this.draw_g.append("ellipse")
-                   .attr("cx",0)
-                   .attr("cy",0)
-                   .attr("rx",Math.round(rx))
-                   .attr("ry",Math.round(ry))
-                   .style("fill", "none")
-                   .call(this.gridatt.func);
-            }
+         if (!keep_float) {
+            pos.x = Math.round(pos.x);
+            pos.y = Math.round(pos.y);
+            pos.rx =  Math.round(pos.rx);
+            pos.ry =  Math.round(pos.ry);
          }
+         return pos;
       }
 
-      this.finishTextDrawing();
+      /** @summary format label for radius ticks */
+      format(radius) {
 
-      let fontsize = Math.round(polar.fPolarTextSize * this.szy * 2);
-      this.startTextDrawing(polar.fPolarLabelFont, fontsize);
+         if (radius === Math.round(radius)) return radius.toString();
+         if (this.ndig>10) return radius.toExponential(4);
 
-      let nmajor = polar.fNdivPol % 100;
-      if ((nmajor !== 8) && (nmajor !== 3)) nmajor = 8;
-
-      lbls = (nmajor==8) ? ["0", "#frac{#pi}{4}", "#frac{#pi}{2}", "#frac{3#pi}{4}", "#pi", "#frac{5#pi}{4}", "#frac{3#pi}{2}", "#frac{7#pi}{4}"] : ["0", "#frac{2#pi}{3}", "#frac{4#pi}{3}"];
-      let aligns = [12, 11, 21, 31, 32, 33, 23, 13];
-
-      for (let n = 0; n < nmajor; ++n) {
-         let angle = -n*2*Math.PI/nmajor - this.angle;
-         this.draw_g.append("svg:path")
-             .attr("d",`M0,0L${Math.round(this.szx*Math.cos(angle))},${Math.round(this.szy*Math.sin(angle))}`)
-             .call(this.lineatt.func);
-
-         let aindx = Math.round(16 -angle/Math.PI*4) % 8; // index in align table, here absolute angle is important
-
-         this.drawText({ align: aligns[aindx],
-                         x: Math.round((this.szx+fontsize)*Math.cos(angle)),
-                         y: Math.round((this.szy + fontsize/this.szx*this.szy)*(Math.sin(angle))),
-                         text: lbls[n],
-                         color: this.getColor(polar.fPolarLabelColor), latex: 1 });
+         return radius.toFixed((this.ndig > 0) ? this.ndig : 0);
       }
 
-      this.finishTextDrawing();
+      /** @summary Convert axis values to text */
+      axisAsText(axis, value) {
 
-      nminor = Math.floor((polar.fNdivPol % 10000) / 100);
-
-      if (nminor > 1)
-         for (let n = 0; n < nmajor*nminor; ++n) {
-            if (n % nminor === 0) continue;
-            let angle = -n*2*Math.PI/nmajor/nminor - this.angle;
-            this.draw_g.append("svg:path")
-                .attr("d",`M0,0L${Math.round(this.szx*Math.cos(angle))},${Math.round(this.szy*Math.sin(angle))}`)
-                .call(this.gridatt.func);
+         if (axis == "r") {
+            if (value === Math.round(value)) return value.toString();
+            if (this.ndig>10) return value.toExponential(4);
+            return value.toFixed(this.ndig+2);
          }
 
-      if (!JSROOT.batch_mode)
-      return JSROOT.require(['interactive']).then(inter => {
-         inter.TooltipHandler.assign(this);
+         value *= 180/Math.PI;
+         return (value === Math.round(value)) ? value.toString() : value.toFixed(1);
+      }
 
+      /** @summary Returns coordinate of frame - without using frame itself */
+      getFrameRect() {
+         let pp = this.getPadPainter(),
+             pad = pp.getRootPad(true),
+             w = pp.getPadWidth(),
+             h = pp.getPadHeight(),
+             rect = {};
+
+         if (pad) {
+            rect.szx = Math.round(Math.max(0.1, 0.5 - Math.max(pad.fLeftMargin, pad.fRightMargin))*w);
+            rect.szy = Math.round(Math.max(0.1, 0.5 - Math.max(pad.fBottomMargin, pad.fTopMargin))*h);
+         } else {
+            rect.szx = Math.round(0.5*w);
+            rect.szy = Math.round(0.5*h);
+         }
+
+         rect.width = 2*rect.szx;
+         rect.height = 2*rect.szy;
+         rect.midx = Math.round(w/2);
+         rect.midy = Math.round(h/2);
+         rect.x = rect.midx - rect.szx;
+         rect.y = rect.midy - rect.szy;
+
+         rect.hint_delta_x = rect.szx;
+         rect.hint_delta_y = rect.szy;
+
+         rect.transform = `translate(${rect.x},${rect.y})`;
+
+         return rect;
+      }
+
+      /** @summary Process mouse event */
+      mouseEvent(kind, evnt) {
          let layer = this.getLayerSvg("primitives_layer"),
              interactive = layer.select(".interactive_ellipse");
+         if (interactive.empty()) return;
 
-         if (interactive.empty())
-            interactive = layer.append("g")
-                               .classed("most_upper_primitives", true)
-                               .append("ellipse")
-                               .classed("interactive_ellipse", true)
-                               .attr("cx",0)
-                               .attr("cy",0)
-                               .style("fill", "none")
-                               .style("pointer-events","visibleFill")
-                               .on('mouseenter', evnt => this.mouseEvent('enter', evnt))
-                               .on('mousemove', evnt => this.mouseEvent('move', evnt))
-                               .on('mouseleave', evnt => this.mouseEvent('leave', evnt));
+         let pnt = null;
 
-         interactive.attr("rx", this.szx).attr("ry", this.szy);
+         if (kind !== 'leave') {
+            let pos = d3.pointer(evnt, interactive.node());
+            pnt = { x: pos[0], y: pos[1], touch: false };
+         }
 
-         d3.select(interactive.node().parentNode).attr("transform", this.draw_g.attr("transform"));
-
-         if (JSROOT.settings.Zooming && JSROOT.settings.ZoomWheel)
-            interactive.on("wheel", evnt => this.mouseWheel(evnt));
-      });
-   }
-
-   /** @summary Draw TGraphPolargram
-     * @private */
-   jsrp.drawGraphPolargram = function(dom, polargram /*, opt*/) {
-
-      let main = jsrp.getElementMainPainter(dom);
-      if (main) {
-         if (main.getObject() === polargram) return main;
-         return Promise.reject(Error("Cannot superimpose TGraphPolargram with any other drawings"));
+         this.processFrameTooltipEvent(pnt);
       }
 
-      let painter = new TGraphPolargramPainter(dom, polargram);
-      return jsrp.ensureTCanvas(painter, false).then(() => {
-         painter.setAsMainPainter();
-         painter.redraw();
-         return painter;
-      });
+      /** @summary Process mouse wheel event */
+      mouseWheel(evnt) {
+         evnt.stopPropagation();
+         evnt.preventDefault();
+
+         this.processFrameTooltipEvent(null); // remove all tooltips
+
+         let polar = this.getObject();
+
+         if (!polar) return;
+
+         let delta = evnt.wheelDelta ? -evnt.wheelDelta : (evnt.deltaY || evnt.detail);
+         if (!delta) return;
+
+         delta = (delta<0) ? -0.2 : 0.2;
+
+         let rmin = this.scale_rmin, rmax = this.scale_rmax, range = rmax - rmin;
+
+         // rmin -= delta*range;
+         rmax += delta*range;
+
+         if ((rmin<polar.fRwrmin) || (rmax>polar.fRwrmax)) rmin = rmax = 0;
+
+         if ((this.zoom_rmin != rmin) || (this.zoom_rmax != rmax)) {
+            this.zoom_rmin = rmin;
+            this.zoom_rmax = rmax;
+            this.redrawPad();
+         }
+      }
+
+      /** @summary Redraw polargram */
+      redraw() {
+         if (!this.isMainPainter()) return;
+
+         let polar = this.getObject(),
+             rect = this.getFrameRect();
+
+         this.createG();
+
+         this.draw_g.attr("transform", `translate(${rect.midx},${rect.midy})`);
+         this.szx = rect.szx;
+         this.szy = rect.szy;
+
+         this.scale_rmin = polar.fRwrmin;
+         this.scale_rmax = polar.fRwrmax;
+         if (this.zoom_rmin != this.zoom_rmax) {
+            this.scale_rmin = this.zoom_rmin;
+            this.scale_rmax = this.zoom_rmax;
+         }
+
+         this.r = d3.scaleLinear().domain([this.scale_rmin, this.scale_rmax]).range([ 0, this.szx ]);
+         this.angle = polar.fAxisAngle || 0;
+
+         let ticks = this.r.ticks(5),
+             nminor = Math.floor((polar.fNdivRad % 10000) / 100);
+
+         this.createAttLine({ attr: polar });
+         if (!this.gridatt) this.gridatt = new JSROOT.TAttLineHandler({ color: polar.fLineColor, style: 2, width: 1 });
+
+         let range = Math.abs(polar.fRwrmax - polar.fRwrmin);
+         this.ndig = (range <= 0) ? -3 : Math.round(Math.log10(ticks.length / range));
+
+         // verify that all radius labels are unique
+         let lbls = [], indx = 0;
+         while (indx<ticks.length) {
+            let lbl = this.format(ticks[indx]);
+            if (lbls.indexOf(lbl)>=0) {
+               if (++this.ndig>10) break;
+               lbls = []; indx = 0; continue;
+             }
+            lbls.push(lbl);
+            indx++;
+         }
+
+         let exclude_last = false;
+
+         if ((ticks[ticks.length-1] < polar.fRwrmax) && (this.zoom_rmin == this.zoom_rmax)) {
+            ticks.push(polar.fRwrmax);
+            exclude_last = true;
+         }
+
+         this.startTextDrawing(polar.fRadialLabelFont, Math.round(polar.fRadialTextSize * this.szy * 2));
+
+         for (let n=0;n<ticks.length;++n) {
+            let rx = this.r(ticks[n]), ry = rx/this.szx*this.szy;
+            this.draw_g.append("ellipse")
+                .attr("cx",0)
+                .attr("cy",0)
+                .attr("rx",Math.round(rx))
+                .attr("ry",Math.round(ry))
+                .style("fill", "none")
+                .call(this.lineatt.func);
+
+            if ((n < ticks.length-1) || !exclude_last)
+               this.drawText({ align: 23, x: Math.round(rx), y: Math.round(polar.fRadialTextSize * this.szy * 0.5),
+                               text: this.format(ticks[n]), color: this.getColor(polar.fRadialLabelColor), latex: 0 });
+
+            if ((nminor>1) && ((n < ticks.length-1) || !exclude_last)) {
+               let dr = (ticks[1] - ticks[0]) / nminor;
+               for (let nn = 1; nn < nminor; ++nn) {
+                  let gridr = ticks[n] + dr*nn;
+                  if (gridr > this.scale_rmax) break;
+                  rx = this.r(gridr); ry = rx/this.szx*this.szy;
+                  this.draw_g.append("ellipse")
+                      .attr("cx",0)
+                      .attr("cy",0)
+                      .attr("rx",Math.round(rx))
+                      .attr("ry",Math.round(ry))
+                      .style("fill", "none")
+                      .call(this.gridatt.func);
+               }
+            }
+         }
+
+         this.finishTextDrawing();
+
+         let fontsize = Math.round(polar.fPolarTextSize * this.szy * 2);
+         this.startTextDrawing(polar.fPolarLabelFont, fontsize);
+
+         let nmajor = polar.fNdivPol % 100;
+         if ((nmajor !== 8) && (nmajor !== 3)) nmajor = 8;
+
+         lbls = (nmajor==8) ? ["0", "#frac{#pi}{4}", "#frac{#pi}{2}", "#frac{3#pi}{4}", "#pi", "#frac{5#pi}{4}", "#frac{3#pi}{2}", "#frac{7#pi}{4}"] : ["0", "#frac{2#pi}{3}", "#frac{4#pi}{3}"];
+         let aligns = [12, 11, 21, 31, 32, 33, 23, 13];
+
+         for (let n = 0; n < nmajor; ++n) {
+            let angle = -n*2*Math.PI/nmajor - this.angle;
+            this.draw_g.append("svg:path")
+                .attr("d",`M0,0L${Math.round(this.szx*Math.cos(angle))},${Math.round(this.szy*Math.sin(angle))}`)
+                .call(this.lineatt.func);
+
+            let aindx = Math.round(16 -angle/Math.PI*4) % 8; // index in align table, here absolute angle is important
+
+            this.drawText({ align: aligns[aindx],
+                            x: Math.round((this.szx+fontsize)*Math.cos(angle)),
+                            y: Math.round((this.szy + fontsize/this.szx*this.szy)*(Math.sin(angle))),
+                            text: lbls[n],
+                            color: this.getColor(polar.fPolarLabelColor), latex: 1 });
+         }
+
+         this.finishTextDrawing();
+
+         nminor = Math.floor((polar.fNdivPol % 10000) / 100);
+
+         if (nminor > 1)
+            for (let n = 0; n < nmajor*nminor; ++n) {
+               if (n % nminor === 0) continue;
+               let angle = -n*2*Math.PI/nmajor/nminor - this.angle;
+               this.draw_g.append("svg:path")
+                   .attr("d",`M0,0L${Math.round(this.szx*Math.cos(angle))},${Math.round(this.szy*Math.sin(angle))}`)
+                   .call(this.gridatt.func);
+            }
+
+         if (!JSROOT.batch_mode)
+         return JSROOT.require(['interactive']).then(inter => {
+            inter.TooltipHandler.assign(this);
+
+            let layer = this.getLayerSvg("primitives_layer"),
+                interactive = layer.select(".interactive_ellipse");
+
+            if (interactive.empty())
+               interactive = layer.append("g")
+                                  .classed("most_upper_primitives", true)
+                                  .append("ellipse")
+                                  .classed("interactive_ellipse", true)
+                                  .attr("cx",0)
+                                  .attr("cy",0)
+                                  .style("fill", "none")
+                                  .style("pointer-events","visibleFill")
+                                  .on('mouseenter', evnt => this.mouseEvent('enter', evnt))
+                                  .on('mousemove', evnt => this.mouseEvent('move', evnt))
+                                  .on('mouseleave', evnt => this.mouseEvent('leave', evnt));
+
+            interactive.attr("rx", this.szx).attr("ry", this.szy);
+
+            d3.select(interactive.node().parentNode).attr("transform", this.draw_g.attr("transform"));
+
+            if (JSROOT.settings.Zooming && JSROOT.settings.ZoomWheel)
+               interactive.on("wheel", evnt => this.mouseWheel(evnt));
+         });
+      }
+      /** @summary Draw TGraphPolargram */
+      static draw(dom, polargram /*, opt*/) {
+
+         let main = jsrp.getElementMainPainter(dom);
+         if (main) {
+            if (main.getObject() === polargram)
+               return Promise.resolve(main);
+            return Promise.reject(Error("Cannot superimpose TGraphPolargram with any other drawings"));
+         }
+
+         let painter = new TGraphPolargramPainter(dom, polargram);
+         return jsrp.ensureTCanvas(painter, false).then(() => {
+            painter.setAsMainPainter();
+            painter.redraw();
+            return painter;
+         });
+      }
+
    }
 
    // ==============================================================
@@ -2570,244 +2569,232 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /**
     * @summary Painter for TGraphPolar objects.
     *
-    * @class
     * @memberof JSROOT
-    * @extends JSROOT.ObjectPainter
-    * @param {object|string} dom - DOM element for drawing or element id
-    * @param {object} graph - object to draw
     * @private
     */
 
-   function TGraphPolarPainter(dom, graph) {
-      ObjectPainter.call(this, dom, graph);
-   }
+   class TGraphPolarPainter extends ObjectPainter {
 
-   TGraphPolarPainter.prototype = Object.create(ObjectPainter.prototype);
+      /** @summary Redraw TGraphPolar */
+      redraw() {
+         this.drawGraphPolar();
+      }
 
-   /** @summary Redraw TGraphPolar */
-   TGraphPolarPainter.prototype.redraw = function() {
-      this.drawGraphPolar();
-   }
+      /** @summary Decode options for drawing TGraphPolar */
+      decodeOptions(opt) {
 
-   /** @summary Decode options for drawing TGraphPolar */
-   TGraphPolarPainter.prototype.decodeOptions = function(opt) {
+         let d = new JSROOT.DrawOptions(opt || "L");
 
-      let d = new JSROOT.DrawOptions(opt || "L");
+         if (!this.options) this.options = {};
 
-      if (!this.options) this.options = {};
+         JSROOT.extend(this.options, {
+             mark: d.check("P"),
+             err: d.check("E"),
+             fill: d.check("F"),
+             line: d.check("L"),
+             curve: d.check("C")
+         });
 
-      JSROOT.extend(this.options, {
-          mark: d.check("P"),
-          err: d.check("E"),
-          fill: d.check("F"),
-          line: d.check("L"),
-          curve: d.check("C")
-      });
+         this.storeDrawOpt(opt);
+      }
 
-      this.storeDrawOpt(opt);
-   }
+      /** @summary Drawing TGraphPolar */
+      drawGraphPolar() {
+         let graph = this.getObject(),
+             main = this.getMainPainter();
 
-   /** @summary Drawing TGraphPolar */
-   TGraphPolarPainter.prototype.drawGraphPolar = function() {
-      let graph = this.getObject(),
-          main = this.getMainPainter();
+         if (!graph || !main || !main.$polargram) return;
 
-      if (!graph || !main || !main.$polargram) return;
+         if (this.options.mark) this.createAttMarker({ attr: graph });
+         if (this.options.err || this.options.line || this.options.curve) this.createAttLine({ attr: graph });
+         if (this.options.fill) this.createAttFill({ attr: graph });
 
-      if (this.options.mark) this.createAttMarker({ attr: graph });
-      if (this.options.err || this.options.line || this.options.curve) this.createAttLine({ attr: graph });
-      if (this.options.fill) this.createAttFill({ attr: graph });
+         this.createG();
 
-      this.createG();
+         this.draw_g.attr("transform", main.draw_g.attr("transform"));
 
-      this.draw_g.attr("transform", main.draw_g.attr("transform"));
+         let mpath = "", epath = "", lpath = "", bins = [];
 
-      let mpath = "", epath = "", lpath = "", bins = [];
+         for (let n = 0; n < graph.fNpoints; ++n) {
 
-      for (let n = 0; n < graph.fNpoints; ++n) {
+            if (graph.fY[n] > main.scale_rmax) continue;
 
-         if (graph.fY[n] > main.scale_rmax) continue;
+            if (this.options.err) {
+               let pos1 = main.translate(graph.fX[n], graph.fY[n] - graph.fEY[n]),
+                   pos2 = main.translate(graph.fX[n], graph.fY[n] + graph.fEY[n]);
+               epath += `M${pos1.x},${pos1.y}L${pos2.x},${pos2.y}`;
 
-         if (this.options.err) {
-            let pos1 = main.translate(graph.fX[n], graph.fY[n] - graph.fEY[n]),
-                pos2 = main.translate(graph.fX[n], graph.fY[n] + graph.fEY[n]);
-            epath += `M${pos1.x},${pos1.y}L${pos2.x},${pos2.y}`;
+               pos1 = main.translate(graph.fX[n] + graph.fEX[n], graph.fY[n]);
+               pos2 = main.translate(graph.fX[n] - graph.fEX[n], graph.fY[n]);
 
-            pos1 = main.translate(graph.fX[n] + graph.fEX[n], graph.fY[n]);
-            pos2 = main.translate(graph.fX[n] - graph.fEX[n], graph.fY[n]);
+               epath += `M${pos1.x},${pos1.y}A${pos2.rx},${pos2.ry},0,0,1,${pos2.x},${pos2.y}`;
+            }
 
-            epath += `M${pos1.x},${pos1.y}A${pos2.rx},${pos2.ry},0,0,1,${pos2.x},${pos2.y}`;
+            let pos = main.translate(graph.fX[n], graph.fY[n]);
+
+            if (this.options.mark) {
+               mpath += this.markeratt.create(pos.x, pos.y);
+            }
+
+            if (this.options.line || this.options.fill) {
+               lpath += (lpath ? "L" : "M") + pos.x + "," + pos.y;
+            }
+
+            if (this.options.curve) {
+               pos.grx = pos.x;
+               pos.gry = pos.y;
+               bins.push(pos);
+            }
          }
 
-         let pos = main.translate(graph.fX[n], graph.fY[n]);
+         if (this.options.fill && lpath)
+            this.draw_g.append("svg:path")
+                .attr("d", lpath + "Z")
+                .call(this.fillatt.func);
 
-         if (this.options.mark) {
-            mpath += this.markeratt.create(pos.x, pos.y);
+         if (this.options.line && lpath)
+            this.draw_g.append("svg:path")
+                .attr("d", lpath)
+                .style("fill", "none")
+                .call(this.lineatt.func);
+
+         if (this.options.curve && bins.length)
+            this.draw_g.append("svg:path")
+                    .attr("d", jsrp.buildSvgPath("bezier", bins).path)
+                    .style("fill", "none")
+                    .call(this.lineatt.func);
+
+         if (epath)
+            this.draw_g.append("svg:path")
+                .attr("d", epath)
+                .style("fill","none")
+                .call(this.lineatt.func);
+
+         if (mpath)
+            this.draw_g.append("svg:path")
+                  .attr("d", mpath)
+                  .call(this.markeratt.func);
+      }
+
+      /** @summary Create polargram object */
+      createPolargram() {
+         let polargram = JSROOT.create("TGraphPolargram"),
+             gr = this.getObject();
+
+         let rmin = gr.fY[0] || 0, rmax = rmin;
+         for (let n = 0; n < gr.fNpoints; ++n) {
+            rmin = Math.min(rmin, gr.fY[n] - gr.fEY[n]);
+            rmax = Math.max(rmax, gr.fY[n] + gr.fEY[n]);
          }
 
-         if (this.options.line || this.options.fill) {
-            lpath += (lpath ? "L" : "M") + pos.x + "," + pos.y;
+         polargram.fRwrmin = rmin - (rmax-rmin)*0.1;
+         polargram.fRwrmax = rmax + (rmax-rmin)*0.1;
+
+         return polargram;
+      }
+
+      /** @summary Provide tooltip at specified point */
+      extractTooltip(pnt) {
+         if (!pnt) return null;
+
+         let graph = this.getObject(),
+             main = this.getMainPainter(),
+             best_dist2 = 1e10, bestindx = -1, bestpos = null;
+
+         for (let n = 0; n < graph.fNpoints; ++n) {
+            let pos = main.translate(graph.fX[n], graph.fY[n]),
+                dist2 = (pos.x-pnt.x)*(pos.x-pnt.x) + (pos.y-pnt.y)*(pos.y-pnt.y);
+            if (dist2 < best_dist2) { best_dist2 = dist2; bestindx = n; bestpos = pos; }
          }
 
-         if (this.options.curve) {
-            pos.grx = pos.x;
-            pos.gry = pos.y;
-            bins.push(pos);
+         let match_distance = 5;
+         if (this.markeratt && this.markeratt.used) match_distance = this.markeratt.getFullSize();
+
+         if (Math.sqrt(best_dist2) > match_distance) return null;
+
+         let res = { name: this.getObject().fName, title: this.getObject().fTitle,
+                     x: bestpos.x, y: bestpos.y,
+                     color1: this.markeratt && this.markeratt.used ? this.markeratt.color : this.lineatt.color,
+                     exact: Math.sqrt(best_dist2) < 4,
+                     lines: [ this.getObjectHint() ],
+                     binindx: bestindx,
+                     menu_dist: match_distance,
+                     radius: match_distance
+                   };
+
+         res.lines.push("r = " + main.axisAsText("r", graph.fY[bestindx]));
+         res.lines.push("phi = " + main.axisAsText("phi",graph.fX[bestindx]));
+
+         if (graph.fEY && graph.fEY[bestindx])
+            res.lines.push("error r = " + main.axisAsText("r", graph.fEY[bestindx]));
+
+         if (graph.fEX && graph.fEX[bestindx])
+            res.lines.push("error phi = " + main.axisAsText("phi", graph.fEX[bestindx]));
+
+         return res;
+      }
+
+      /** @summary Show tooltip */
+      showTooltip(hint) {
+
+         if (!this.draw_g) return;
+
+         let ttcircle = this.draw_g.select(".tooltip_bin");
+
+         if (!hint) {
+            ttcircle.remove();
+            return;
          }
+
+         if (ttcircle.empty())
+            ttcircle = this.draw_g.append("svg:ellipse")
+                                .attr("class","tooltip_bin")
+                                .style("pointer-events","none");
+
+         hint.changed = ttcircle.property("current_bin") !== hint.binindx;
+
+         if (hint.changed)
+            ttcircle.attr("cx", hint.x)
+                  .attr("cy", hint.y)
+                  .attr("rx", Math.round(hint.radius))
+                  .attr("ry", Math.round(hint.radius))
+                  .style("fill", "none")
+                  .style("stroke", hint.color1)
+                  .property("current_bin", hint.binindx);
       }
 
-      if (this.options.fill && lpath)
-         this.draw_g.append("svg:path")
-             .attr("d", lpath + "Z")
-             .call(this.fillatt.func);
-
-      if (this.options.line && lpath)
-         this.draw_g.append("svg:path")
-             .attr("d", lpath)
-             .style("fill", "none")
-             .call(this.lineatt.func);
-
-      if (this.options.curve && bins.length)
-         this.draw_g.append("svg:path")
-                 .attr("d", jsrp.buildSvgPath("bezier", bins).path)
-                 .style("fill", "none")
-                 .call(this.lineatt.func);
-
-      if (epath)
-         this.draw_g.append("svg:path")
-             .attr("d", epath)
-             .style("fill","none")
-             .call(this.lineatt.func);
-
-      if (mpath)
-         this.draw_g.append("svg:path")
-               .attr("d", mpath)
-               .call(this.markeratt.func);
-   }
-
-   /** @summary Create polargram object
-     * @private */
-   TGraphPolarPainter.prototype.createPolargram = function() {
-      let polargram = JSROOT.create("TGraphPolargram"),
-          gr = this.getObject();
-
-      let rmin = gr.fY[0] || 0, rmax = rmin;
-      for (let n = 0; n < gr.fNpoints; ++n) {
-         rmin = Math.min(rmin, gr.fY[n] - gr.fEY[n]);
-         rmax = Math.max(rmax, gr.fY[n] + gr.fEY[n]);
+      /** @summary Process tooltip event */
+      processTooltipEvent(pnt) {
+         let hint = this.extractTooltip(pnt);
+         if (!pnt || !pnt.disabled) this.showTooltip(hint);
+         return hint;
       }
 
-      polargram.fRwrmin = rmin - (rmax-rmin)*0.1;
-      polargram.fRwrmax = rmax + (rmax-rmin)*0.1;
+      /** @summary Draw TGraphPolar */
+      static draw(dom, graph, opt) {
+         let painter = new TGraphPolarPainter(dom, graph);
+         painter.decodeOptions(opt);
 
-      return polargram;
-   }
+         let main = painter.getMainPainter();
+         if (main && !main.$polargram) {
+            console.error('Cannot superimpose TGraphPolar with plain histograms');
+            return null;
+         }
 
-   /** @summary Provide tooltip at specified point
-     * @private */
-   TGraphPolarPainter.prototype.extractTooltip = function(pnt) {
-      if (!pnt) return null;
+         let ppromise = Promise.resolve(main);
 
-      let graph = this.getObject(),
-          main = this.getMainPainter(),
-          best_dist2 = 1e10, bestindx = -1, bestpos = null;
+         if (!main) {
+            if (!graph.fPolargram)
+               graph.fPolargram = painter.createPolargram();
+            ppromise = JSROOT.draw(dom, graph.fPolargram, "");
+         }
 
-      for (let n = 0; n < graph.fNpoints; ++n) {
-         let pos = main.translate(graph.fX[n], graph.fY[n]),
-             dist2 = (pos.x-pnt.x)*(pos.x-pnt.x) + (pos.y-pnt.y)*(pos.y-pnt.y);
-         if (dist2 < best_dist2) { best_dist2 = dist2; bestindx = n; bestpos = pos; }
+         return ppromise.then(() => {
+            painter.addToPadPrimitives();
+            painter.drawGraphPolar();
+            return painter;
+         })
       }
-
-      let match_distance = 5;
-      if (this.markeratt && this.markeratt.used) match_distance = this.markeratt.getFullSize();
-
-      if (Math.sqrt(best_dist2) > match_distance) return null;
-
-      let res = { name: this.getObject().fName, title: this.getObject().fTitle,
-                  x: bestpos.x, y: bestpos.y,
-                  color1: this.markeratt && this.markeratt.used ? this.markeratt.color : this.lineatt.color,
-                  exact: Math.sqrt(best_dist2) < 4,
-                  lines: [ this.getObjectHint() ],
-                  binindx: bestindx,
-                  menu_dist: match_distance,
-                  radius: match_distance
-                };
-
-      res.lines.push("r = " + main.axisAsText("r", graph.fY[bestindx]));
-      res.lines.push("phi = " + main.axisAsText("phi",graph.fX[bestindx]));
-
-      if (graph.fEY && graph.fEY[bestindx])
-         res.lines.push("error r = " + main.axisAsText("r", graph.fEY[bestindx]));
-
-      if (graph.fEX && graph.fEX[bestindx])
-         res.lines.push("error phi = " + main.axisAsText("phi", graph.fEX[bestindx]));
-
-      return res;
-   }
-
-   /** @summary Show tooltip
-     * @private */
-   TGraphPolarPainter.prototype.showTooltip = function(hint) {
-
-      if (!this.draw_g) return;
-
-      let ttcircle = this.draw_g.select(".tooltip_bin");
-
-      if (!hint) {
-         ttcircle.remove();
-         return;
-      }
-
-      if (ttcircle.empty())
-         ttcircle = this.draw_g.append("svg:ellipse")
-                             .attr("class","tooltip_bin")
-                             .style("pointer-events","none");
-
-      hint.changed = ttcircle.property("current_bin") !== hint.binindx;
-
-      if (hint.changed)
-         ttcircle.attr("cx", hint.x)
-               .attr("cy", hint.y)
-               .attr("rx", Math.round(hint.radius))
-               .attr("ry", Math.round(hint.radius))
-               .style("fill", "none")
-               .style("stroke", hint.color1)
-               .property("current_bin", hint.binindx);
-   }
-
-   /** @summary Process tooltip event
-     * @private */
-   TGraphPolarPainter.prototype.processTooltipEvent = function(pnt) {
-      let hint = this.extractTooltip(pnt);
-      if (!pnt || !pnt.disabled) this.showTooltip(hint);
-      return hint;
-   }
-
-   /** @summary Draw TGraphPolar
-     * @private */
-   jsrp.drawGraphPolar = function(dom, graph, opt) {
-      let painter = new TGraphPolarPainter(dom, graph);
-      painter.decodeOptions(opt);
-
-      let main = painter.getMainPainter();
-      if (main && !main.$polargram) {
-         console.error('Cannot superimpose TGraphPolar with plain histograms');
-         return null;
-      }
-
-      let ppromise = Promise.resolve(main);
-
-      if (!main) {
-         if (!graph.fPolargram)
-            graph.fPolargram = painter.createPolargram();
-         ppromise = JSROOT.draw(dom, graph.fPolargram, "");
-      }
-
-      return ppromise.then(() => {
-         painter.addToPadPrimitives();
-         painter.drawGraphPolar();
-         return painter;
-      })
    }
 
    // ==============================================================
@@ -3506,248 +3493,246 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /**
     * @summary Painter for TMultiGraph object.
     *
-    * @class
     * @memberof JSROOT
-    * @extends JSROOT.ObjectPainter
-    * @param {object|string} dom - DOM element for drawing or element id
-    * @param {object} obj - TMultiGraph object to draw
     * @private
     */
 
-   function TMultiGraphPainter(dom, mgraph) {
-      ObjectPainter.call(this, dom, mgraph);
-      this.firstpainter = null;
-      this.autorange = false;
-      this.painters = []; // keep painters to be able update objects
-   }
+   class TMultiGraphPainter extends ObjectPainter {
 
-   TMultiGraphPainter.prototype = Object.create(ObjectPainter.prototype);
-
-   /** @summary Cleanup multigraph painter */
-   TMultiGraphPainter.prototype.cleanup = function() {
-      this.painters = [];
-      ObjectPainter.prototype.cleanup.call(this);
-   }
-
-   /** @summary Update multigraph object */
-   TMultiGraphPainter.prototype.updateObject = function(obj) {
-      if (!this.matchObjectType(obj)) return false;
-
-      let mgraph = this.getObject(),
-          graphs = obj.fGraphs,
-          pp = this.getPadPainter();
-
-      mgraph.fTitle = obj.fTitle;
-
-      let isany = false;
-      if (this.firstpainter) {
-         let histo = obj.fHistogram;
-         if (this.autorange && !histo)
-            histo = this.scanGraphsRange(graphs);
-
-         if (this.firstpainter.updateObject(histo)) isany = true;
+      /** @summary Create painter
+        * @param {object|string} dom - DOM element for drawing or element id
+        * @param {object} obj - TMultiGraph object to draw */
+      constructor(dom, mgraph) {
+         super(dom, mgraph);
+         this.firstpainter = null;
+         this.autorange = false;
+         this.painters = []; // keep painters to be able update objects
       }
 
-      for (let i = 0; i < graphs.arr.length; ++i) {
-         if (i<this.painters.length)
-            if (this.painters[i].updateObject(graphs.arr[i])) isany = true;
+      /** @summary Cleanup multigraph painter */
+      cleanup() {
+         this.painters = [];
+         super.cleanup();
       }
 
-      if (obj.fFunctions)
-         for (let i = 0; i < obj.fFunctions.arr.length; ++i) {
-            let func = obj.fFunctions.arr[i];
-            if (!func || !func._typename || !func.fName) continue;
-            let funcpainter = pp ? pp.findPainterFor(null, func.fName, func._typename) : null;
-            if (funcpainter) funcpainter.updateObject(func);
+      /** @summary Update multigraph object */
+      updateObject(obj) {
+         if (!this.matchObjectType(obj)) return false;
+
+         let mgraph = this.getObject(),
+             graphs = obj.fGraphs,
+             pp = this.getPadPainter();
+
+         mgraph.fTitle = obj.fTitle;
+
+         let isany = false;
+         if (this.firstpainter) {
+            let histo = obj.fHistogram;
+            if (this.autorange && !histo)
+               histo = this.scanGraphsRange(graphs);
+
+            if (this.firstpainter.updateObject(histo)) isany = true;
          }
 
-      return isany;
-   }
+         for (let i = 0; i < graphs.arr.length; ++i) {
+            if (i<this.painters.length)
+               if (this.painters[i].updateObject(graphs.arr[i])) isany = true;
+         }
 
-   /** @summary Scan graphs range
-     * @returns {object} histogram for axes drawing
-     * @private */
-   TMultiGraphPainter.prototype.scanGraphsRange = function(graphs, histo, pad) {
-      let mgraph = this.getObject(),
-          maximum, minimum, dx, dy, uxmin = 0, uxmax = 0, logx = false, logy = false,
-          time_display = false, time_format = "",
-          rw = {  xmin: 0, xmax: 0, ymin: 0, ymax: 0, first: true };
+         if (obj.fFunctions)
+            for (let i = 0; i < obj.fFunctions.arr.length; ++i) {
+               let func = obj.fFunctions.arr[i];
+               if (!func || !func._typename || !func.fName) continue;
+               let funcpainter = pp ? pp.findPainterFor(null, func.fName, func._typename) : null;
+               if (funcpainter) funcpainter.updateObject(func);
+            }
 
-      if (pad) {
-         logx = pad.fLogx;
-         logy = pad.fLogy;
-         rw.xmin = pad.fUxmin;
-         rw.xmax = pad.fUxmax;
-         rw.ymin = pad.fUymin;
-         rw.ymax = pad.fUymax;
-         rw.first = false;
+         return isany;
       }
-      if (histo) {
-         minimum = histo.fYaxis.fXmin;
-         maximum = histo.fYaxis.fXmax;
+
+      /** @summary Scan graphs range
+        * @returns {object} histogram for axes drawing */
+      scanGraphsRange(graphs, histo, pad) {
+         let mgraph = this.getObject(),
+             maximum, minimum, dx, dy, uxmin = 0, uxmax = 0, logx = false, logy = false,
+             time_display = false, time_format = "",
+             rw = {  xmin: 0, xmax: 0, ymin: 0, ymax: 0, first: true };
+
          if (pad) {
-            const padtoX = x => (pad.fLogx && (x < 50)) ? Math.exp(2.302585092994 * x) : x;
-            uxmin = padtoX(rw.xmin);
-            uxmax = padtoX(rw.xmax);
+            logx = pad.fLogx;
+            logy = pad.fLogy;
+            rw.xmin = pad.fUxmin;
+            rw.xmax = pad.fUxmax;
+            rw.ymin = pad.fUymin;
+            rw.ymax = pad.fUymax;
+            rw.first = false;
          }
-      } else {
-         this.autorange = true;
-
-         graphs.arr.forEach(gr => {
-            if (gr.fNpoints == 0) return;
-            if (rw.first) {
-               rw.xmin = rw.xmax = gr.fX[0];
-               rw.ymin = rw.ymax = gr.fY[0];
-               rw.first = false;
+         if (histo) {
+            minimum = histo.fYaxis.fXmin;
+            maximum = histo.fYaxis.fXmax;
+            if (pad) {
+               const padtoX = x => (pad.fLogx && (x < 50)) ? Math.exp(2.302585092994 * x) : x;
+               uxmin = padtoX(rw.xmin);
+               uxmax = padtoX(rw.xmax);
             }
-            for (let i = 0; i < gr.fNpoints; ++i) {
-               rw.xmin = Math.min(rw.xmin, gr.fX[i]);
-               rw.xmax = Math.max(rw.xmax, gr.fX[i]);
-               rw.ymin = Math.min(rw.ymin, gr.fY[i]);
-               rw.ymax = Math.max(rw.ymax, gr.fY[i]);
-            }
-         });
-
-         if (graphs.arr[0] && graphs.arr[0].fHistogram && graphs.arr[0].fHistogram.fXaxis.fTimeDisplay) {
-            time_display = true;
-            time_format = graphs.arr[0].fHistogram.fXaxis.fTimeFormat;
-         }
-
-         if (rw.xmin == rw.xmax) rw.xmax += 1.;
-         if (rw.ymin == rw.ymax) rw.ymax += 1.;
-         dx = 0.05 * (rw.xmax - rw.xmin);
-         dy = 0.05 * (rw.ymax - rw.ymin);
-         uxmin = rw.xmin - dx;
-         uxmax = rw.xmax + dx;
-         if (logy) {
-            if (rw.ymin <= 0) rw.ymin = 0.001 * rw.ymax;
-            minimum = rw.ymin / (1 + 0.5 * Math.log10(rw.ymax / rw.ymin));
-            maximum = rw.ymax * (1 + 0.2 * Math.log10(rw.ymax / rw.ymin));
          } else {
-            minimum = rw.ymin - dy;
-            maximum = rw.ymax + dy;
+            this.autorange = true;
+
+            graphs.arr.forEach(gr => {
+               if (gr.fNpoints == 0) return;
+               if (rw.first) {
+                  rw.xmin = rw.xmax = gr.fX[0];
+                  rw.ymin = rw.ymax = gr.fY[0];
+                  rw.first = false;
+               }
+               for (let i = 0; i < gr.fNpoints; ++i) {
+                  rw.xmin = Math.min(rw.xmin, gr.fX[i]);
+                  rw.xmax = Math.max(rw.xmax, gr.fX[i]);
+                  rw.ymin = Math.min(rw.ymin, gr.fY[i]);
+                  rw.ymax = Math.max(rw.ymax, gr.fY[i]);
+               }
+            });
+
+            if (graphs.arr[0] && graphs.arr[0].fHistogram && graphs.arr[0].fHistogram.fXaxis.fTimeDisplay) {
+               time_display = true;
+               time_format = graphs.arr[0].fHistogram.fXaxis.fTimeFormat;
+            }
+
+            if (rw.xmin == rw.xmax) rw.xmax += 1.;
+            if (rw.ymin == rw.ymax) rw.ymax += 1.;
+            dx = 0.05 * (rw.xmax - rw.xmin);
+            dy = 0.05 * (rw.ymax - rw.ymin);
+            uxmin = rw.xmin - dx;
+            uxmax = rw.xmax + dx;
+            if (logy) {
+               if (rw.ymin <= 0) rw.ymin = 0.001 * rw.ymax;
+               minimum = rw.ymin / (1 + 0.5 * Math.log10(rw.ymax / rw.ymin));
+               maximum = rw.ymax * (1 + 0.2 * Math.log10(rw.ymax / rw.ymin));
+            } else {
+               minimum = rw.ymin - dy;
+               maximum = rw.ymax + dy;
+            }
+            if (minimum < 0 && rw.ymin >= 0)
+               minimum = 0;
+            if (maximum > 0 && rw.ymax <= 0)
+               maximum = 0;
          }
-         if (minimum < 0 && rw.ymin >= 0)
-            minimum = 0;
-         if (maximum > 0 && rw.ymax <= 0)
-            maximum = 0;
+
+         if (uxmin < 0 && rw.xmin >= 0)
+            uxmin = logx ? 0.9 * rw.xmin : 0;
+         if (uxmax > 0 && rw.xmax <= 0)
+            uxmax = logx? 1.1 * rw.xmax : 0;
+
+         if (mgraph.fMinimum != -1111)
+            rw.ymin = minimum = mgraph.fMinimum;
+         if (mgraph.fMaximum != -1111)
+            rw.ymax = maximum = mgraph.fMaximum;
+
+         if (minimum < 0 && rw.ymin >= 0 && logy) minimum = 0.9 * rw.ymin;
+         if (maximum > 0 && rw.ymax <= 0 && logy) maximum = 1.1 * rw.ymax;
+         if (minimum <= 0 && logy) minimum = 0.001 * maximum;
+         if (!logy && minimum > 0 && minimum < 0.05*maximum) minimum = 0;
+         if (uxmin <= 0 && logx)
+            uxmin = (uxmax > 1000) ? 1 : 0.001 * uxmax;
+
+         // Create a temporary histogram to draw the axis (if necessary)
+         if (!histo) {
+            histo = JSROOT.create("TH1I");
+            histo.fTitle = mgraph.fTitle;
+            histo.fXaxis.fXmin = uxmin;
+            histo.fXaxis.fXmax = uxmax;
+            histo.fXaxis.fTimeDisplay = time_display;
+            if (time_display) histo.fXaxis.fTimeFormat = time_format;
+        }
+
+         histo.fYaxis.fXmin = minimum;
+         histo.fYaxis.fXmax = maximum;
+
+         return histo;
       }
 
-      if (uxmin < 0 && rw.xmin >= 0)
-         uxmin = logx ? 0.9 * rw.xmin : 0;
-      if (uxmax > 0 && rw.xmax <= 0)
-         uxmax = logx? 1.1 * rw.xmax : 0;
+      /** @summary draw speical histogram for axis
+        * @returns {Promise} when ready */
+      drawAxis(hopt) {
 
-      if (mgraph.fMinimum != -1111)
-         rw.ymin = minimum = mgraph.fMinimum;
-      if (mgraph.fMaximum != -1111)
-         rw.ymax = maximum = mgraph.fMaximum;
+         let mgraph = this.getObject(),
+             pp = this.getPadPainter(),
+             histo = this.scanGraphsRange(mgraph.fGraphs, mgraph.fHistogram, pp ? pp.getRootPad(true) : null);
 
-      if (minimum < 0 && rw.ymin >= 0 && logy) minimum = 0.9 * rw.ymin;
-      if (maximum > 0 && rw.ymax <= 0 && logy) maximum = 1.1 * rw.ymax;
-      if (minimum <= 0 && logy) minimum = 0.001 * maximum;
-      if (!logy && minimum > 0 && minimum < 0.05*maximum) minimum = 0;
-      if (uxmin <= 0 && logx)
-         uxmin = (uxmax > 1000) ? 1 : 0.001 * uxmax;
-
-      // Create a temporary histogram to draw the axis (if necessary)
-      if (!histo) {
-         histo = JSROOT.create("TH1I");
-         histo.fTitle = mgraph.fTitle;
-         histo.fXaxis.fXmin = uxmin;
-         histo.fXaxis.fXmax = uxmax;
-         histo.fXaxis.fTimeDisplay = time_display;
-         if (time_display) histo.fXaxis.fTimeFormat = time_format;
-     }
-
-      histo.fYaxis.fXmin = minimum;
-      histo.fYaxis.fXmax = maximum;
-
-      return histo;
-   }
-
-   /** @summary draw speical histogram for axis
-     * @returns {Promise} when ready */
-   TMultiGraphPainter.prototype.drawAxis = function(hopt) {
-
-      let mgraph = this.getObject(),
-          pp = this.getPadPainter(),
-          histo = this.scanGraphsRange(mgraph.fGraphs, mgraph.fHistogram, pp ? pp.getRootPad(true) : null);
-
-      // histogram painter will be first in the pad, will define axis and
-      // interactive actions
-      return JSROOT.draw(this.getDom(), histo, "AXIS" + hopt);
-   }
-
-   /** @summary method draws next function from the functions list  */
-   TMultiGraphPainter.prototype.drawNextFunction = function(indx) {
-
-      let mgraph = this.getObject();
-
-      if (!mgraph.fFunctions || (indx >= mgraph.fFunctions.arr.length))
-         return Promise.resolve(this);
-
-      return JSROOT.draw(this.getDom(), mgraph.fFunctions.arr[indx], mgraph.fFunctions.opt[indx])
-                  .then(() => this.drawNextFunction(indx+1));
-   }
-
-   /** @summary method draws next graph  */
-   TMultiGraphPainter.prototype.drawNextGraph = function(indx, opt) {
-
-      let graphs = this.getObject().fGraphs;
-
-      // at the end of graphs drawing draw functions (if any)
-      if (indx >= graphs.arr.length) {
-         this._pfc = this._plc = this._pmc = false; // disable auto coloring at the end
-         return this.drawNextFunction(0);
+         // histogram painter will be first in the pad, will define axis and
+         // interactive actions
+         return JSROOT.draw(this.getDom(), histo, "AXIS" + hopt);
       }
 
-      // if there is auto colors assignment, try to provide it
-      if (this._pfc || this._plc || this._pmc) {
-         let mp = this.getMainPainter();
-         if (mp && mp.createAutoColor) {
-            let icolor = mp.createAutoColor(graphs.arr.length);
-            if (this._pfc) graphs.arr[indx].fFillColor = icolor;
-            if (this._plc) graphs.arr[indx].fLineColor = icolor;
-            if (this._pmc) graphs.arr[indx].fMarkerColor = icolor;
+      /** @summary method draws next function from the functions list  */
+      drawNextFunction(indx) {
+
+         let mgraph = this.getObject();
+
+         if (!mgraph.fFunctions || (indx >= mgraph.fFunctions.arr.length))
+            return Promise.resolve(this);
+
+         return JSROOT.draw(this.getDom(), mgraph.fFunctions.arr[indx], mgraph.fFunctions.opt[indx])
+                     .then(() => this.drawNextFunction(indx+1));
+      }
+
+      /** @summary method draws next graph  */
+      drawNextGraph(indx, opt) {
+
+         let graphs = this.getObject().fGraphs;
+
+         // at the end of graphs drawing draw functions (if any)
+         if (indx >= graphs.arr.length) {
+            this._pfc = this._plc = this._pmc = false; // disable auto coloring at the end
+            return this.drawNextFunction(0);
          }
-      }
 
-      return JSROOT.draw(this.getDom(), graphs.arr[indx], graphs.opt[indx] || opt).then(subp => {
-         if (subp) this.painters.push(subp);
+         // if there is auto colors assignment, try to provide it
+         if (this._pfc || this._plc || this._pmc) {
+            let mp = this.getMainPainter();
+            if (mp && mp.createAutoColor) {
+               let icolor = mp.createAutoColor(graphs.arr.length);
+               if (this._pfc) graphs.arr[indx].fFillColor = icolor;
+               if (this._plc) graphs.arr[indx].fLineColor = icolor;
+               if (this._pmc) graphs.arr[indx].fMarkerColor = icolor;
+            }
+         }
 
-         return this.drawNextGraph(indx+1, opt);
-      });
-   }
+         return JSROOT.draw(this.getDom(), graphs.arr[indx], graphs.opt[indx] || opt).then(subp => {
+            if (subp) this.painters.push(subp);
 
-   /** @summary Draw TMultiGraph object
-     * @private */
-   jsrp.drawMultiGraph = function(dom, mgraph, opt) {
-
-      let painter = new TMultiGraphPainter(dom, mgraph),
-          d = new JSROOT.DrawOptions(opt);
-
-      d.check("3D"); d.check("FB"); // no 3D supported, FB not clear
-
-      painter._pfc = d.check("PFC");
-      painter._plc = d.check("PLC");
-      painter._pmc = d.check("PMC");
-
-      let hopt = "", checkhopt = ["USE_PAD_TITLE", "LOGXY", "LOGX", "LOGY", "LOGZ", "GRIDXY", "GRIDX", "GRIDY", "TICKXY", "TICKX", "TICKY"];
-      checkhopt.forEach(name => { if (d.check(name)) hopt += ";" + name; });
-
-      let promise = Promise.resolve(painter);
-      if (d.check("A") || !painter.getMainPainter())
-         promise = painter.drawAxis(hopt).then(fp => {
-            painter.firstpainter = fp;
-            fp.$secondary = true; // mark histogram painter as secondary
-            return painter;
+            return this.drawNextGraph(indx+1, opt);
          });
+      }
 
-      return promise.then(() => {
-         painter.addToPadPrimitives();
-         return painter.drawNextGraph(0, d.remain());
-      });
+      /** @summary Draw TMultiGraph object */
+      static draw(dom, mgraph, opt) {
+
+         let painter = new TMultiGraphPainter(dom, mgraph),
+             d = new JSROOT.DrawOptions(opt);
+
+         d.check("3D"); d.check("FB"); // no 3D supported, FB not clear
+
+         painter._pfc = d.check("PFC");
+         painter._plc = d.check("PLC");
+         painter._pmc = d.check("PMC");
+
+         let hopt = "", checkhopt = ["USE_PAD_TITLE", "LOGXY", "LOGX", "LOGY", "LOGZ", "GRIDXY", "GRIDX", "GRIDY", "TICKXY", "TICKX", "TICKY"];
+         checkhopt.forEach(name => { if (d.check(name)) hopt += ";" + name; });
+
+         let promise = Promise.resolve(painter);
+         if (d.check("A") || !painter.getMainPainter())
+            promise = painter.drawAxis(hopt).then(fp => {
+               painter.firstpainter = fp;
+               fp.$secondary = true; // mark histogram painter as secondary
+               return painter;
+            });
+
+         return promise.then(() => {
+            painter.addToPadPrimitives();
+            return painter.drawNextGraph(0, d.remain());
+         });
+      }
    }
 
    // =========================================================================================
@@ -3924,357 +3909,344 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /**
     * @summary Painter for TASImage object.
     *
-    * @class
     * @memberof JSROOT
-    * @extends JSROOT.ObjectPainter
-    * @param {object|string} dom - DOM element for drawing or element id
-    * @param {object} obj - TASImage object to draw
-    * @param {string} [opt] - string draw options
     * @private
     */
 
-   function TASImagePainter(dom, obj, opt) {
-      ObjectPainter.call(this, dom, obj, opt);
-      this.wheel_zoomy = true;
-   }
+   class TASImagePainter extends ObjectPainter {
 
-   TASImagePainter.prototype = Object.create(ObjectPainter.prototype);
+      /** @summary Decode options string  */
+      decodeOptions(opt) {
+         this.options = { Zscale: false };
 
-   /** @summary Decode options string  */
-   TASImagePainter.prototype.decodeOptions = function(opt) {
-      this.options = { Zscale: false };
-
-      if (opt && (opt.indexOf("z") >= 0)) this.options.Zscale = true;
-   }
-
-   /** @summary Create RGBA buffers
-     * @private */
-   TASImagePainter.prototype.createRGBA = function(nlevels) {
-      let obj = this.getObject();
-
-      if (!obj || !obj.fPalette) return null;
-
-      let rgba = new Array((nlevels+1) * 4), indx = 1, pal = obj.fPalette; // precaclucated colors
-
-      for(let lvl = 0; lvl <= nlevels; ++lvl) {
-         let l = 1.*lvl/nlevels;
-         while ((pal.fPoints[indx] < l) && (indx < pal.fPoints.length-1)) indx++;
-
-         let r1 = (pal.fPoints[indx] - l) / (pal.fPoints[indx] - pal.fPoints[indx-1]),
-             r2 = (l - pal.fPoints[indx-1]) / (pal.fPoints[indx] - pal.fPoints[indx-1]);
-
-         rgba[lvl*4]   = Math.min(255, Math.round((pal.fColorRed[indx-1] * r1 + pal.fColorRed[indx] * r2) / 256));
-         rgba[lvl*4+1] = Math.min(255, Math.round((pal.fColorGreen[indx-1] * r1 + pal.fColorGreen[indx] * r2) / 256));
-         rgba[lvl*4+2] = Math.min(255, Math.round((pal.fColorBlue[indx-1] * r1 + pal.fColorBlue[indx] * r2) / 256));
-         rgba[lvl*4+3] = Math.min(255, Math.round((pal.fColorAlpha[indx-1] * r1 + pal.fColorAlpha[indx] * r2) / 256));
+         if (opt && (opt.indexOf("z") >= 0)) this.options.Zscale = true;
       }
 
-      return rgba;
-   }
+      /** @summary Create RGBA buffers */
+      createRGBA(nlevels) {
+         let obj = this.getObject();
 
-   /** @summary Draw image
-     * @private */
-   TASImagePainter.prototype.drawImage = function() {
-      let obj = this.getObject(),
-          is_buf = false,
-          fp = this.getFramePainter(),
-          rect = fp ? fp.getFrameRect() : this.getPadPainter().getPadRect();
+         if (!obj || !obj.fPalette) return null;
 
-      if (obj._blob) {
-         // try to process blob data due to custom streamer
-         if ((obj._blob.length == 15) && !obj._blob[0]) {
-            obj.fImageQuality = obj._blob[1];
-            obj.fImageCompression = obj._blob[2];
-            obj.fConstRatio = obj._blob[3];
-            obj.fPalette = {
-                _typename: "TImagePalette",
-                fUniqueID: obj._blob[4],
-                fBits: obj._blob[5],
-                fNumPoints: obj._blob[6],
-                fPoints: obj._blob[7],
-                fColorRed: obj._blob[8],
-                fColorGreen: obj._blob[9],
-                fColorBlue: obj._blob[10],
-                fColorAlpha: obj._blob[11]
+         let rgba = new Array((nlevels+1) * 4), indx = 1, pal = obj.fPalette; // precaclucated colors
+
+         for(let lvl = 0; lvl <= nlevels; ++lvl) {
+            let l = 1.*lvl/nlevels;
+            while ((pal.fPoints[indx] < l) && (indx < pal.fPoints.length-1)) indx++;
+
+            let r1 = (pal.fPoints[indx] - l) / (pal.fPoints[indx] - pal.fPoints[indx-1]),
+                r2 = (l - pal.fPoints[indx-1]) / (pal.fPoints[indx] - pal.fPoints[indx-1]);
+
+            rgba[lvl*4]   = Math.min(255, Math.round((pal.fColorRed[indx-1] * r1 + pal.fColorRed[indx] * r2) / 256));
+            rgba[lvl*4+1] = Math.min(255, Math.round((pal.fColorGreen[indx-1] * r1 + pal.fColorGreen[indx] * r2) / 256));
+            rgba[lvl*4+2] = Math.min(255, Math.round((pal.fColorBlue[indx-1] * r1 + pal.fColorBlue[indx] * r2) / 256));
+            rgba[lvl*4+3] = Math.min(255, Math.round((pal.fColorAlpha[indx-1] * r1 + pal.fColorAlpha[indx] * r2) / 256));
+         }
+
+         return rgba;
+      }
+
+      /** @summary Draw image */
+      drawImage() {
+         let obj = this.getObject(),
+             is_buf = false,
+             fp = this.getFramePainter(),
+             rect = fp ? fp.getFrameRect() : this.getPadPainter().getPadRect();
+
+         this.wheel_zoomy = true;
+
+         if (obj._blob) {
+            // try to process blob data due to custom streamer
+            if ((obj._blob.length == 15) && !obj._blob[0]) {
+               obj.fImageQuality = obj._blob[1];
+               obj.fImageCompression = obj._blob[2];
+               obj.fConstRatio = obj._blob[3];
+               obj.fPalette = {
+                   _typename: "TImagePalette",
+                   fUniqueID: obj._blob[4],
+                   fBits: obj._blob[5],
+                   fNumPoints: obj._blob[6],
+                   fPoints: obj._blob[7],
+                   fColorRed: obj._blob[8],
+                   fColorGreen: obj._blob[9],
+                   fColorBlue: obj._blob[10],
+                   fColorAlpha: obj._blob[11]
+               };
+
+               obj.fWidth = obj._blob[12];
+               obj.fHeight = obj._blob[13];
+               obj.fImgBuf = obj._blob[14];
+
+               if ((obj.fWidth * obj.fHeight != obj.fImgBuf.length) ||
+                     (obj.fPalette.fNumPoints != obj.fPalette.fPoints.length)) {
+                  console.error('TASImage _blob decoding error', obj.fWidth * obj.fHeight, '!=', obj.fImgBuf.length, obj.fPalette.fNumPoints, "!=", obj.fPalette.fPoints.length);
+                  delete obj.fImgBuf;
+                  delete obj.fPalette;
+               }
+
+            } else if ((obj._blob.length == 3) && obj._blob[0]) {
+               obj.fPngBuf = obj._blob[2];
+               if (!obj.fPngBuf || (obj.fPngBuf.length != obj._blob[1])) {
+                  console.error('TASImage with png buffer _blob error', obj._blob[1], '!=', (obj.fPngBuf ? obj.fPngBuf.length : -1));
+                  delete obj.fPngBuf;
+               }
+            } else {
+               console.error('TASImage _blob len', obj._blob.length, 'not recognized');
+            }
+
+            delete obj._blob;
+         }
+
+         let url, constRatio = true;
+
+         if (obj.fImgBuf && obj.fPalette) {
+
+            is_buf = true;
+
+            let nlevels = 1000;
+            this.rgba = this.createRGBA(nlevels); // precaclucated colors
+
+            let min = obj.fImgBuf[0], max = obj.fImgBuf[0];
+            for (let k=1;k<obj.fImgBuf.length;++k) {
+               let v = obj.fImgBuf[k];
+               min = Math.min(v, min);
+               max = Math.max(v, max);
+            }
+
+            // does not work properly in Node.js, causes "Maximum call stack size exceeded" error
+            // min = Math.min.apply(null, obj.fImgBuf),
+            // max = Math.max.apply(null, obj.fImgBuf);
+
+            // create countor like in hist painter to allow palette drawing
+            this.fContour = {
+               arr: new Array(200),
+               rgba: this.rgba,
+               getLevels: function() { return this.arr; },
+               getPaletteColor: function(pal, zval) {
+                  if (!this.arr || !this.rgba) return "white";
+                  let indx = Math.round((zval - this.arr[0]) / (this.arr[this.arr.length-1] - this.arr[0]) * (this.rgba.length-4)/4) * 4;
+                  return "#" + jsrp.toHex(this.rgba[indx],1) + jsrp.toHex(this.rgba[indx+1],1) + jsrp.toHex(this.rgba[indx+2],1) + jsrp.toHex(this.rgba[indx+3],1);
+               }
             };
+            for (let k = 0; k < 200; k++)
+               this.fContour.arr[k] = min + (max-min)/(200-1)*k;
 
-            obj.fWidth = obj._blob[12];
-            obj.fHeight = obj._blob[13];
-            obj.fImgBuf = obj._blob[14];
+            if (min >= max) max = min + 1;
 
-            if ((obj.fWidth * obj.fHeight != obj.fImgBuf.length) ||
-                  (obj.fPalette.fNumPoints != obj.fPalette.fPoints.length)) {
-               console.error('TASImage _blob decoding error', obj.fWidth * obj.fHeight, '!=', obj.fImgBuf.length, obj.fPalette.fNumPoints, "!=", obj.fPalette.fPoints.length);
-               delete obj.fImgBuf;
-               delete obj.fPalette;
+            let xmin = 0, xmax = obj.fWidth, ymin = 0, ymax = obj.fHeight; // dimension in pixels
+
+            if (fp && (fp.zoom_xmin != fp.zoom_xmax)) {
+               xmin = Math.round(fp.zoom_xmin * obj.fWidth);
+               xmax = Math.round(fp.zoom_xmax * obj.fWidth);
             }
 
-         } else if ((obj._blob.length == 3) && obj._blob[0]) {
-            obj.fPngBuf = obj._blob[2];
-            if (!obj.fPngBuf || (obj.fPngBuf.length != obj._blob[1])) {
-               console.error('TASImage with png buffer _blob error', obj._blob[1], '!=', (obj.fPngBuf ? obj.fPngBuf.length : -1));
-               delete obj.fPngBuf;
+            if (fp && (fp.zoom_ymin != fp.zoom_ymax)) {
+               ymin = Math.round(fp.zoom_ymin * obj.fHeight);
+               ymax = Math.round(fp.zoom_ymax * obj.fHeight);
             }
-         } else {
-            console.error('TASImage _blob len', obj._blob.length, 'not recognized');
+
+            let canvas;
+
+            if (JSROOT.nodejs) {
+               try {
+                  const { createCanvas } = require('canvas');
+                  canvas = createCanvas(xmax - xmin, ymax - ymin);
+               } catch (err) {
+                  console.log('canvas is not installed');
+               }
+
+            } else {
+               canvas = document.createElement('canvas');
+               canvas.width = xmax - xmin;
+               canvas.height = ymax - ymin;
+            }
+
+            if (!canvas)
+               return Promise.resolve(null);
+
+            let context = canvas.getContext('2d'),
+                imageData = context.getImageData(0, 0, canvas.width, canvas.height),
+                arr = imageData.data;
+
+            for(let i = ymin; i < ymax; ++i) {
+               let dst = (ymax - i - 1) * (xmax - xmin) * 4,
+                   row = i * obj.fWidth;
+               for(let j = xmin; j < xmax; ++j) {
+                  let iii = Math.round((obj.fImgBuf[row + j] - min) / (max - min) * nlevels) * 4;
+                  // copy rgba value for specified point
+                  arr[dst++] = this.rgba[iii++];
+                  arr[dst++] = this.rgba[iii++];
+                  arr[dst++] = this.rgba[iii++];
+                  arr[dst++] = this.rgba[iii++];
+               }
+            }
+
+            context.putImageData(imageData, 0, 0);
+
+            url = canvas.toDataURL(); // create data url to insert into image
+
+            constRatio = obj.fConstRatio;
+
+         } else if (obj.fPngBuf) {
+            let pngbuf = "", btoa_func = JSROOT.nodejs ? require("btoa") : window.btoa;
+            if (typeof obj.fPngBuf == "string") {
+               pngbuf = obj.fPngBuf;
+            } else {
+               for (let k = 0; k < obj.fPngBuf.length; ++k)
+                  pngbuf += String.fromCharCode(obj.fPngBuf[k] < 0 ? 256 + obj.fPngBuf[k] : obj.fPngBuf[k]);
+            }
+
+            url = "data:image/png;base64," + btoa_func(pngbuf);
          }
 
-         delete obj._blob;
+         if (url)
+            this.createG(fp ? true : false)
+                .append("image")
+                .attr("href", url)
+                .attr("width", rect.width)
+                .attr("height", rect.height)
+                .attr("preserveAspectRatio", constRatio ? null : "none");
+
+         if (url && this.isMainPainter() && is_buf && fp)
+            return this.drawColorPalette(this.options.Zscale, true).then(() => {
+               fp.setAxesRanges(JSROOT.create("TAxis"), 0, 1, JSROOT.create("TAxis"), 0, 1, null, 0, 0);
+               fp.createXY({ ndim: 2, check_pad_range: false });
+               fp.addInteractivity();
+               return this;
+            });
+
+         return Promise.resolve(this);
       }
 
-      let url, constRatio = true;
+      /** @summary Checks if it makes sense to zoom inside specified axis range */
+      canZoomInside(axis,min,max) {
+         let obj = this.getObject();
 
-      if (obj.fImgBuf && obj.fPalette) {
+         if (!obj || !obj.fImgBuf)
+            return false;
 
-         is_buf = true;
+         if ((axis == "x") && ((max - min) * obj.fWidth > 3)) return true;
 
-         let nlevels = 1000;
-         this.rgba = this.createRGBA(nlevels); // precaclucated colors
+         if ((axis == "y") && ((max - min) * obj.fHeight > 3)) return true;
 
-         let min = obj.fImgBuf[0], max = obj.fImgBuf[0];
-         for (let k=1;k<obj.fImgBuf.length;++k) {
-            let v = obj.fImgBuf[k];
-            min = Math.min(v, min);
-            max = Math.max(v, max);
-         }
+         return false;
+      }
 
-         // does not work properly in Node.js, causes "Maximum call stack size exceeded" error
-         // min = Math.min.apply(null, obj.fImgBuf),
-         // max = Math.max.apply(null, obj.fImgBuf);
+      /** @summary Draw color palette
+        * @private */
+      drawColorPalette(enabled, can_move) {
 
-         // create countor like in hist painter to allow palette drawing
-         this.fContour = {
-            arr: new Array(200),
-            rgba: this.rgba,
-            getLevels: function() { return this.arr; },
-            getPaletteColor: function(pal, zval) {
-               if (!this.arr || !this.rgba) return "white";
-               let indx = Math.round((zval - this.arr[0]) / (this.arr[this.arr.length-1] - this.arr[0]) * (this.rgba.length-4)/4) * 4;
-               return "#" + jsrp.toHex(this.rgba[indx],1) + jsrp.toHex(this.rgba[indx+1],1) + jsrp.toHex(this.rgba[indx+2],1) + jsrp.toHex(this.rgba[indx+3],1);
-            }
-         };
-         for (let k = 0; k < 200; k++)
-            this.fContour.arr[k] = min + (max-min)/(200-1)*k;
-
-         if (min >= max) max = min + 1;
-
-         let xmin = 0, xmax = obj.fWidth, ymin = 0, ymax = obj.fHeight; // dimension in pixels
-
-         if (fp && (fp.zoom_xmin != fp.zoom_xmax)) {
-            xmin = Math.round(fp.zoom_xmin * obj.fWidth);
-            xmax = Math.round(fp.zoom_xmax * obj.fWidth);
-         }
-
-         if (fp && (fp.zoom_ymin != fp.zoom_ymax)) {
-            ymin = Math.round(fp.zoom_ymin * obj.fHeight);
-            ymax = Math.round(fp.zoom_ymax * obj.fHeight);
-         }
-
-         let canvas;
-
-         if (JSROOT.nodejs) {
-            try {
-               const { createCanvas } = require('canvas');
-               canvas = createCanvas(xmax - xmin, ymax - ymin);
-            } catch (err) {
-               console.log('canvas is not installed');
-            }
-
-         } else {
-            canvas = document.createElement('canvas');
-            canvas.width = xmax - xmin;
-            canvas.height = ymax - ymin;
-         }
-
-         if (!canvas)
+         if (!this.isMainPainter())
             return Promise.resolve(null);
 
-         let context = canvas.getContext('2d'),
-             imageData = context.getImageData(0, 0, canvas.width, canvas.height),
-             arr = imageData.data;
+         if (!this.draw_palette) {
+            let pal = JSROOT.create('TPave');
 
-         for(let i = ymin; i < ymax; ++i) {
-            let dst = (ymax - i - 1) * (xmax - xmin) * 4,
-                row = i * obj.fWidth;
-            for(let j = xmin; j < xmax; ++j) {
-               let iii = Math.round((obj.fImgBuf[row + j] - min) / (max - min) * nlevels) * 4;
-               // copy rgba value for specified point
-               arr[dst++] = this.rgba[iii++];
-               arr[dst++] = this.rgba[iii++];
-               arr[dst++] = this.rgba[iii++];
-               arr[dst++] = this.rgba[iii++];
+            JSROOT.extend(pal, { _typename: "TPaletteAxis", fName: "TPave", fH: null, fAxis: JSROOT.create('TGaxis'),
+                                  fX1NDC: 0.91, fX2NDC: 0.95, fY1NDC: 0.1, fY2NDC: 0.9, fInit: 1 } );
+
+            pal.fAxis.fChopt = "+";
+
+            this.draw_palette = pal;
+            this.fPalette = true; // to emulate behaviour of hist painter
+         }
+
+         let pal_painter = this.getPadPainter().findPainterFor(this.draw_palette);
+
+         if (!enabled) {
+            if (pal_painter) {
+               pal_painter.Enabled = false;
+               pal_painter.removeG(); // completely remove drawing without need to redraw complete pad
             }
+            return Promise.resolve(null);
          }
 
-         context.putImageData(imageData, 0, 0);
+         let frame_painter = this.getFramePainter();
 
-         url = canvas.toDataURL(); // create data url to insert into image
+         // keep palette width
+         if (can_move && frame_painter) {
+            let pal = this.draw_palette;
+            pal.fX2NDC = frame_painter.fX2NDC + 0.01 + (pal.fX2NDC - pal.fX1NDC);
+            pal.fX1NDC = frame_painter.fX2NDC + 0.01;
+            pal.fY1NDC = frame_painter.fY1NDC;
+            pal.fY2NDC = frame_painter.fY2NDC;
+         }
 
-         constRatio = obj.fConstRatio;
+         if (!pal_painter) {
+            let prev_name = this.selectCurrentPad(this.getPadName());
 
-      } else if (obj.fPngBuf) {
-         let pngbuf = "", btoa_func = JSROOT.nodejs ? require("btoa") : window.btoa;
-         if (typeof obj.fPngBuf == "string") {
-            pngbuf = obj.fPngBuf;
+            return JSROOT.draw(this.getDom(), this.draw_palette).then(pp => {
+               this.selectCurrentPad(prev_name);
+               // mark painter as secondary - not in list of TCanvas primitives
+               pp.$secondary = true;
+
+               // make dummy redraw, palette will be updated only from histogram painter
+               pp.redraw = function() {};
+
+               return this;
+            });
          } else {
-            for (let k = 0; k < obj.fPngBuf.length; ++k)
-               pngbuf += String.fromCharCode(obj.fPngBuf[k] < 0 ? 256 + obj.fPngBuf[k] : obj.fPngBuf[k]);
+            pal_painter.Enabled = true;
+            return pal_painter.drawPave("");
+         }
+      }
+
+      /** @summary Toggle colz draw option
+        * @private */
+      toggleColz() {
+         let obj = this.getObject(),
+             can_toggle = obj && obj.fPalette;
+
+         if (can_toggle) {
+            this.options.Zscale = !this.options.Zscale;
+            this.drawColorPalette(this.options.Zscale, true);
+         }
+      }
+
+      /** @summary Redraw image */
+      redraw(reason) {
+         let img = this.draw_g ? this.draw_g.select("image") : null,
+             fp = this.getFramePainter();
+
+         if (img && !img.empty() && (reason !== "zoom") && fp) {
+            img.attr("width", fp.getFrameWidth()).attr("height", fp.getFrameHeight());
+         } else {
+            this.drawImage();
+         }
+      }
+
+      /** @summary Process click on TASImage-defined buttons */
+      clickButton(funcname) {
+         if (!this.isMainPainter()) return false;
+
+         switch(funcname) {
+            case "ToggleColorZ": this.toggleColz(); break;
+            default: return false;
          }
 
-         url = "data:image/png;base64," + btoa_func(pngbuf);
+         return true;
       }
 
-      if (url)
-         this.createG(fp ? true : false)
-             .append("image")
-             .attr("href", url)
-             .attr("width", rect.width)
-             .attr("height", rect.height)
-             .attr("preserveAspectRatio", constRatio ? null : "none");
-
-      if (url && this.isMainPainter() && is_buf && fp)
-         return this.drawColorPalette(this.options.Zscale, true).then(() => {
-            fp.setAxesRanges(JSROOT.create("TAxis"), 0, 1, JSROOT.create("TAxis"), 0, 1, null, 0, 0);
-            fp.createXY({ ndim: 2, check_pad_range: false });
-            fp.addInteractivity();
-            return this;
-         });
-
-      return Promise.resolve(this);
-   }
-
-   /** @summary Checks if it makes sense to zoom inside specified axis range */
-   TASImagePainter.prototype.canZoomInside = function(axis,min,max) {
-      let obj = this.getObject();
-
-      if (!obj || !obj.fImgBuf)
-         return false;
-
-      if ((axis == "x") && ((max - min) * obj.fWidth > 3)) return true;
-
-      if ((axis == "y") && ((max - min) * obj.fHeight > 3)) return true;
-
-      return false;
-   }
-
-   /** @summary Draw color palette
-     * @private */
-   TASImagePainter.prototype.drawColorPalette = function(enabled, can_move) {
-
-      if (!this.isMainPainter())
-         return Promise.resolve(null);
-
-      if (!this.draw_palette) {
-         let pal = JSROOT.create('TPave');
-
-         JSROOT.extend(pal, { _typename: "TPaletteAxis", fName: "TPave", fH: null, fAxis: JSROOT.create('TGaxis'),
-                               fX1NDC: 0.91, fX2NDC: 0.95, fY1NDC: 0.1, fY2NDC: 0.9, fInit: 1 } );
-
-         pal.fAxis.fChopt = "+";
-
-         this.draw_palette = pal;
-         this.fPalette = true; // to emulate behaviour of hist painter
-      }
-
-      let pal_painter = this.getPadPainter().findPainterFor(this.draw_palette);
-
-      if (!enabled) {
-         if (pal_painter) {
-            pal_painter.Enabled = false;
-            pal_painter.removeG(); // completely remove drawing without need to redraw complete pad
+      /** @summary Fill pad toolbar for TASImage */
+      fillToolbar() {
+         let pp = this.getPadPainter(), obj = this.getObject();
+         if (pp && obj && obj.fPalette) {
+            pp.addPadButton("th2colorz", "Toggle color palette", "ToggleColorZ");
+            pp.showPadButtons();
          }
-         return Promise.resolve(null);
       }
 
-      let frame_painter = this.getFramePainter();
-
-      // keep palette width
-      if (can_move && frame_painter) {
-         let pal = this.draw_palette;
-         pal.fX2NDC = frame_painter.fX2NDC + 0.01 + (pal.fX2NDC - pal.fX1NDC);
-         pal.fX1NDC = frame_painter.fX2NDC + 0.01;
-         pal.fY1NDC = frame_painter.fY1NDC;
-         pal.fY2NDC = frame_painter.fY2NDC;
+      /** @summary Draw TASImage object */
+      static draw(dom, obj, opt) {
+         let painter = new TASImagePainter(dom, obj, opt);
+         painter.decodeOptions(opt);
+         return jsrp.ensureTCanvas(painter, false)
+                    .then(() => painter.drawImage())
+                    .then(() => {
+                        painter.fillToolbar();
+                        return painter;
+                    });
       }
-
-      if (!pal_painter) {
-         let prev_name = this.selectCurrentPad(this.getPadName());
-
-         return JSROOT.draw(this.getDom(), this.draw_palette).then(pp => {
-            this.selectCurrentPad(prev_name);
-            // mark painter as secondary - not in list of TCanvas primitives
-            pp.$secondary = true;
-
-            // make dummy redraw, palette will be updated only from histogram painter
-            pp.redraw = function() {};
-
-            return this;
-         });
-      } else {
-         pal_painter.Enabled = true;
-         return pal_painter.drawPave("");
-      }
-   }
-
-   /** @summary Toggle colz draw option
-     * @private */
-   TASImagePainter.prototype.toggleColz = function() {
-      let obj = this.getObject(),
-          can_toggle = obj && obj.fPalette;
-
-      if (can_toggle) {
-         this.options.Zscale = !this.options.Zscale;
-         this.drawColorPalette(this.options.Zscale, true);
-      }
-   }
-
-   /** @summary Redraw image
-     * @private */
-   TASImagePainter.prototype.redraw = function(reason) {
-      let img = this.draw_g ? this.draw_g.select("image") : null,
-          fp = this.getFramePainter();
-
-      if (img && !img.empty() && (reason !== "zoom") && fp) {
-         img.attr("width", fp.getFrameWidth()).attr("height", fp.getFrameHeight());
-      } else {
-         this.drawImage();
-      }
-   }
-
-   /** @summary Process click on TASImage-defined buttons
-     * @private */
-   TASImagePainter.prototype.clickButton = function(funcname) {
-      if (!this.isMainPainter()) return false;
-
-      switch(funcname) {
-         case "ToggleColorZ": this.toggleColz(); break;
-         default: return false;
-      }
-
-      return true;
-   }
-
-   /** @summary Fill pad toolbar for TASImage
-     * @private */
-   TASImagePainter.prototype.fillToolbar = function() {
-      let pp = this.getPadPainter(), obj = this.getObject();
-      if (pp && obj && obj.fPalette) {
-         pp.addPadButton("th2colorz", "Toggle color palette", "ToggleColorZ");
-         pp.showPadButtons();
-      }
-   }
-
-   /** @summary Draw TASImage object
-     * @private */
-   jsrp.drawASImage = function(dom, obj, opt) {
-      let painter = new TASImagePainter(dom, obj, opt);
-      painter.decodeOptions(opt);
-      return jsrp.ensureTCanvas(painter, false)
-                 .then(() => painter.drawImage())
-                 .then(() => {
-                     painter.fillToolbar();
-                     return painter;
-                 });
    }
 
    // ===================================================================================
@@ -4303,169 +4275,161 @@ JSROOT.define(['d3', 'painter', 'gpad'], (d3, jsrp) => {
    /**
     * @summary Painter class for TRatioPlot
     *
-    * @class
     * @memberof JSROOT
-    * @extends JSROOT.ObjectPainter
-    * @param {object|string} dom - DOM element for drawing or element id
-    * @param {object} ratio - TRatioPlot object
-    * @param {string} [opt] - draw options
     * @private
     */
 
-   function TRatioPlotPainter(dom, ratio, opt) {
-      ObjectPainter.call(this, dom, ratio, opt);
-   }
+   class TRatioPlotPainter extends ObjectPainter {
 
-   TRatioPlotPainter.prototype = Object.create(ObjectPainter.prototype);
+      /** @summary Set grids range */
+      setGridsRange(xmin, xmax) {
+         let ratio = this.getObject(),
+             pp = this.getPadPainter();
+         if (xmin === xmax) {
+            let low_p = pp.findPainterFor(ratio.fLowerPad, "lower_pad", "TPad"),
+                low_fp = low_p ? low_p.getFramePainter() : null;
+            if (!low_fp || !low_fp.x_handle) return;
+            xmin = low_fp.x_handle.full_min;
+            xmax = low_fp.x_handle.full_max;
+         }
 
-   /** @summary Set grids range */
-   TRatioPlotPainter.prototype.setGridsRange = function(xmin, xmax) {
-      let ratio = this.getObject(),
-          pp = this.getPadPainter();
-      if (xmin === xmax) {
-         let low_p = pp.findPainterFor(ratio.fLowerPad, "lower_pad", "TPad"),
-             low_fp = low_p ? low_p.getFramePainter() : null;
-         if (!low_fp || !low_fp.x_handle) return;
-         xmin = low_fp.x_handle.full_min;
-         xmax = low_fp.x_handle.full_max;
-      }
-
-      ratio.fGridlines.forEach(line => {
-         line.fX1 = xmin;
-         line.fX2 = xmax;
-      });
-   }
-
-   /** @summary Redraw TRatioPlot */
-   TRatioPlotPainter.prototype.redraw = function() {
-      let ratio = this.getObject(),
-          pp = this.getPadPainter();
-
-      let top_p = pp.findPainterFor(ratio.fTopPad, "top_pad", "TPad");
-      if (top_p) top_p.disablePadDrawing();
-
-      let up_p = pp.findPainterFor(ratio.fUpperPad, "upper_pad", "TPad"),
-          up_main = up_p ? up_p.getMainPainter() : null,
-          up_fp = up_p ? up_p.getFramePainter() : null,
-          low_p = pp.findPainterFor(ratio.fLowerPad, "lower_pad", "TPad"),
-          low_main = low_p ? low_p.getMainPainter() : null,
-          low_fp = low_p ? low_p.getFramePainter() : null,
-          lbl_size = 20, promise_up = Promise.resolve(true);
-
-      if (up_p && up_main && up_fp && low_fp && !up_p._ratio_configured) {
-         up_p._ratio_configured = true;
-         up_main.options.Axis = 0; // draw both axes
-
-         lbl_size = up_main.getHisto().fYaxis.fLabelSize;
-         if (lbl_size < 1) lbl_size = Math.round(lbl_size*Math.min(up_p.getPadWidth(), up_p.getPadHeight()));
-
-         let h = up_main.getHisto();
-         h.fXaxis.fLabelSize = 0; // do not draw X axis labels
-         h.fXaxis.fTitle = ""; // do not draw X axis title
-         h.fYaxis.fLabelSize = lbl_size;
-         h.fYaxis.fTitleSize = lbl_size;
-
-         up_p.getRootPad().fTicky = 1;
-
-         promise_up = up_p.redrawPad().then(() => {
-            up_fp.o_zoom = up_fp.zoom;
-            up_fp._ratio_low_fp = low_fp;
-            up_fp._ratio_painter = this;
-
-            up_fp.zoom = function(xmin,xmax,ymin,ymax,zmin,zmax) {
-               this._ratio_painter.setGridsRange(xmin, xmax);
-               this._ratio_low_fp.o_zoom(xmin,xmax);
-               return this.o_zoom(xmin,xmax,ymin,ymax,zmin,zmax);
-            }
-
-            up_fp.o_sizeChanged = up_fp.sizeChanged;
-            up_fp.sizeChanged = function() {
-               this.o_sizeChanged();
-               this._ratio_low_fp.fX1NDC = this.fX1NDC;
-               this._ratio_low_fp.fX2NDC = this.fX2NDC;
-               this._ratio_low_fp.o_sizeChanged();
-            }
-            return true;
+         ratio.fGridlines.forEach(line => {
+            line.fX1 = xmin;
+            line.fX2 = xmax;
          });
       }
 
-      return promise_up.then(() => {
+      /** @summary Redraw TRatioPlot */
+      redraw() {
+         let ratio = this.getObject(),
+             pp = this.getPadPainter();
 
-         if (!low_p || !low_main || !low_fp || !up_fp || low_p._ratio_configured)
-            return this;
+         let top_p = pp.findPainterFor(ratio.fTopPad, "top_pad", "TPad");
+         if (top_p) top_p.disablePadDrawing();
 
-         low_p._ratio_configured = true;
-         low_main.options.Axis = 0; // draw both axes
-         let h = low_main.getHisto();
-         h.fXaxis.fTitle = "x";
-         h.fXaxis.fLabelSize = lbl_size;
-         h.fXaxis.fTitleSize = lbl_size;
-         h.fYaxis.fLabelSize = lbl_size;
-         h.fYaxis.fTitleSize = lbl_size;
-         low_p.getRootPad().fTicky = 1;
+         let up_p = pp.findPainterFor(ratio.fUpperPad, "upper_pad", "TPad"),
+             up_main = up_p ? up_p.getMainPainter() : null,
+             up_fp = up_p ? up_p.getFramePainter() : null,
+             low_p = pp.findPainterFor(ratio.fLowerPad, "lower_pad", "TPad"),
+             low_main = low_p ? low_p.getMainPainter() : null,
+             low_fp = low_p ? low_p.getFramePainter() : null,
+             lbl_size = 20, promise_up = Promise.resolve(true);
 
-         low_p.forEachPainterInPad(objp => {
-            if (typeof objp.testEditable == 'function')
-               objp.testEditable(false);
-         });
+         if (up_p && up_main && up_fp && low_fp && !up_p._ratio_configured) {
+            up_p._ratio_configured = true;
+            up_main.options.Axis = 0; // draw both axes
 
-         let arr = [], currpad;
+            lbl_size = up_main.getHisto().fYaxis.fLabelSize;
+            if (lbl_size < 1) lbl_size = Math.round(lbl_size*Math.min(up_p.getPadWidth(), up_p.getPadHeight()));
 
-         if ((ratio.fGridlinePositions.length > 0) && (ratio.fGridlines.length < ratio.fGridlinePositions.length)) {
-            ratio.fGridlinePositions.forEach(gridy => {
-               let found = false;
-               ratio.fGridlines.forEach(line => {
-                  if ((line.fY1 == line.fY2) && (Math.abs(line.fY1 - gridy) < 1e-6)) found = true;
-               });
-               if (!found) {
-                  let line = JSROOT.create("TLine");
-                  line.fX1 = up_fp.scale_xmin;
-                  line.fX2 = up_fp.scale_xmax;
-                  line.fY1 = line.fY2 = gridy;
-                  line.fLineStyle = 2;
-                  ratio.fGridlines.push(line);
-                  if (currpad === undefined) currpad = this.selectCurrentPad(ratio.fLowerPad.fName);
-                  arr.push(JSROOT.draw(this.getDom(), line));
+            let h = up_main.getHisto();
+            h.fXaxis.fLabelSize = 0; // do not draw X axis labels
+            h.fXaxis.fTitle = ""; // do not draw X axis title
+            h.fYaxis.fLabelSize = lbl_size;
+            h.fYaxis.fTitleSize = lbl_size;
+
+            up_p.getRootPad().fTicky = 1;
+
+            promise_up = up_p.redrawPad().then(() => {
+               up_fp.o_zoom = up_fp.zoom;
+               up_fp._ratio_low_fp = low_fp;
+               up_fp._ratio_painter = this;
+
+               up_fp.zoom = function(xmin,xmax,ymin,ymax,zmin,zmax) {
+                  this._ratio_painter.setGridsRange(xmin, xmax);
+                  this._ratio_low_fp.o_zoom(xmin,xmax);
+                  return this.o_zoom(xmin,xmax,ymin,ymax,zmin,zmax);
                }
+
+               up_fp.o_sizeChanged = up_fp.sizeChanged;
+               up_fp.sizeChanged = function() {
+                  this.o_sizeChanged();
+                  this._ratio_low_fp.fX1NDC = this.fX1NDC;
+                  this._ratio_low_fp.fX2NDC = this.fX2NDC;
+                  this._ratio_low_fp.o_sizeChanged();
+               }
+               return true;
             });
          }
 
-         return Promise.all(arr).then(() => low_fp.zoom(up_fp.scale_xmin,  up_fp.scale_xmax)).then(() => {
+         return promise_up.then(() => {
 
-            low_fp.o_zoom = low_fp.zoom;
-            low_fp._ratio_up_fp = up_fp;
-            low_fp._ratio_painter = this;
+            if (!low_p || !low_main || !low_fp || !up_fp || low_p._ratio_configured)
+               return this;
 
-            low_fp.zoom = function(xmin,xmax,ymin,ymax,zmin,zmax) {
-               this._ratio_painter.setGridsRange(xmin, xmax);
-               this._ratio_up_fp.o_zoom(xmin,xmax);
-               return this.o_zoom(xmin,xmax,ymin,ymax,zmin,zmax);
+            low_p._ratio_configured = true;
+            low_main.options.Axis = 0; // draw both axes
+            let h = low_main.getHisto();
+            h.fXaxis.fTitle = "x";
+            h.fXaxis.fLabelSize = lbl_size;
+            h.fXaxis.fTitleSize = lbl_size;
+            h.fYaxis.fLabelSize = lbl_size;
+            h.fYaxis.fTitleSize = lbl_size;
+            low_p.getRootPad().fTicky = 1;
+
+            low_p.forEachPainterInPad(objp => {
+               if (typeof objp.testEditable == 'function')
+                  objp.testEditable(false);
+            });
+
+            let arr = [], currpad;
+
+            if ((ratio.fGridlinePositions.length > 0) && (ratio.fGridlines.length < ratio.fGridlinePositions.length)) {
+               ratio.fGridlinePositions.forEach(gridy => {
+                  let found = false;
+                  ratio.fGridlines.forEach(line => {
+                     if ((line.fY1 == line.fY2) && (Math.abs(line.fY1 - gridy) < 1e-6)) found = true;
+                  });
+                  if (!found) {
+                     let line = JSROOT.create("TLine");
+                     line.fX1 = up_fp.scale_xmin;
+                     line.fX2 = up_fp.scale_xmax;
+                     line.fY1 = line.fY2 = gridy;
+                     line.fLineStyle = 2;
+                     ratio.fGridlines.push(line);
+                     if (currpad === undefined) currpad = this.selectCurrentPad(ratio.fLowerPad.fName);
+                     arr.push(JSROOT.draw(this.getDom(), line));
+                  }
+               });
             }
 
-            low_fp.o_sizeChanged = low_fp.sizeChanged;
-            low_fp.sizeChanged = function() {
-               this.o_sizeChanged();
-               this._ratio_up_fp.fX1NDC = this.fX1NDC;
-               this._ratio_up_fp.fX2NDC = this.fX2NDC;
-               this._ratio_up_fp.o_sizeChanged();
-            }
-            return this;
+            return Promise.all(arr).then(() => low_fp.zoom(up_fp.scale_xmin,  up_fp.scale_xmax)).then(() => {
+
+               low_fp.o_zoom = low_fp.zoom;
+               low_fp._ratio_up_fp = up_fp;
+               low_fp._ratio_painter = this;
+
+               low_fp.zoom = function(xmin,xmax,ymin,ymax,zmin,zmax) {
+                  this._ratio_painter.setGridsRange(xmin, xmax);
+                  this._ratio_up_fp.o_zoom(xmin,xmax);
+                  return this.o_zoom(xmin,xmax,ymin,ymax,zmin,zmax);
+               }
+
+               low_fp.o_sizeChanged = low_fp.sizeChanged;
+               low_fp.sizeChanged = function() {
+                  this.o_sizeChanged();
+                  this._ratio_up_fp.fX1NDC = this.fX1NDC;
+                  this._ratio_up_fp.fX2NDC = this.fX2NDC;
+                  this._ratio_up_fp.o_sizeChanged();
+               }
+               return this;
+            });
          });
-      });
-   }
+      }
 
-   /** @summary Draw TRatioPlot
-     * @private */
-   jsrp.drawRatioPlot = function(dom, ratio, opt) {
-      let painter = new TRatioPlotPainter(dom, ratio, opt);
+      /** @summary Draw TRatioPlot */
+      static draw(dom, ratio, opt) {
+         let painter = new TRatioPlotPainter(dom, ratio, opt);
 
-      return jsrp.ensureTCanvas(painter, false).then(() => painter.redraw());
+         return jsrp.ensureTCanvas(painter, false).then(() => painter.redraw());
+      }
    }
 
    // ==================================================================================================
 
    JSROOT.TF1Painter = TF1Painter;
    JSROOT.TGraphPainter = TGraphPainter;
+   JSROOT.TGraphPolargramPainter = TGraphPolargramPainter;
    JSROOT.TGraphPolarPainter = TGraphPolarPainter;
    JSROOT.TMultiGraphPainter = TMultiGraphPainter;
    JSROOT.TSplinePainter = TSplinePainter;
