@@ -340,13 +340,15 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       return true;
    }
 
-   DABC.BnetPainter = function(hpainter, itemname) {
+   class BnetPainter extends JSROOT.BasePainter {
+
+   constructor(hpainter, itemname) {
 
       this.hpainter = hpainter;
       this.itemname = itemname;
       this.frame = hpainter.getDisplay().findFrame(itemname, true);
 
-      JSROOT.BasePainter.call(this, this.frame);
+      super(this.frame);
 
       if (!this.frame) return;
 
@@ -362,499 +364,498 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       this.inforeq = null;
    }
 
-   DABC.BnetPainter.prototype = Object.create(JSROOT.BasePainter.prototype);
+      cleanup(arg) {
+         super.cleanup(arg);
 
-   DABC.BnetPainter.prototype.cleanup = function(arg) {
-      JSROOT.BasePainter.prototype.cleanup.call(this, arg);
-
-      if (this.main_timer) {
-         clearInterval(this.main_timer);
-         delete this.main_timer;
-      }
-
-      delete this.hpainter;
-      delete this.frame;
-   }
-
-   DABC.BnetPainter.prototype.active = function() {
-      return this.hpainter && this.frame;
-   }
-
-   DABC.BnetPainter.prototype.makeLabel = function(attr, txt, sz) {
-      let lbl = "<label";
-      if (attr) lbl += " " + attr;
-      lbl +=">";
-      if (txt === undefined) txt = "<undef>"; else
-      if (txt === null) txt = "null"; else
-      if (typeof txt != 'string') txt = txt.toString();
-      if (txt.length > sz) txt = txt.substr(0, sz);
-      lbl += txt;
-      lbl += "</label>";
-
-      if (txt.length<sz) {
-         lbl += "<label>";
-         while (txt.length<sz) { txt += " "; lbl += " "; }
-         lbl += "</label>";
-      }
-
-      return lbl;
-   }
-
-   DABC.BnetPainter.prototype.refreshHtml = function(lastprefix) {
-
-      let html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
-
-      html += "<fieldset style='margin:5px'>" +
-              "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
-              "<button class='bnet_startrun dabc_btn' title='Start run, write files on all event builders'>Start</button>" +
-              "<select class='bnet_selectrun dabc_btn' style='width: 17em'>" +
-              "<option>NO_FILE</option>" +
-              "<option value='be'>Beam file</option>" +
-              "<option value='te'>Test file</option>" +
-              "<option value='co'>Cosmics file</option>" +
-              "<option value='md'>MDC file</option>" +
-              "<option value='ri'>RICH file</option>" +
-              "<option value='ec'>ECAL file</option>" +
-              "<option value='st'>Start file</option>" +
-              "<option value='rp'>RPC file</option>" +
-              "<option value='to'>TOF file</option>" +
-              "<option value='fw'>FW file</option>" +
-              "<option value='pt'>Pion Tracker file</option>" +
-              "<option value='fd'>Forward detector (all) file</option>" +
-              "<option value='fs'>Forward detector (sts only) file</option>" +
-              "<option value='fr'>Forward detector (rpc only) file</option>" +
-              "<option value='it'>Inner TOF file</option>" +
-              "<option value='tc'>TDC Calibration file</option>" +
-              "<option value='ct'>TDC Calibration test file</option>" +
-              "</select>" +
-              "<button class='bnet_stoprun dabc_btn' title='Stops run, close all opened files'>Stop</button>" +
-              "<button class='bnet_lastcalibr dabc_btn' title='Status of last calibration'>CALIBR</button>" +
-              "<button class='bnet_resetdaq dabc_btn' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
-              "<button class='bnet_totalrate dabc_btn' title='Total data rate'>0.00 MB/s</button>" +
-              "<button class='bnet_totalevents dabc_btn' title='Total build events'>0.0 Ev/s</button>" +
-              "<button class='bnet_lostevents dabc_btn' title='Total lost events'>0.0 Ev/s</button>" +
-              "<button class='bnet_frameclear dabc_btn' title='Clear drawings'>Clr</button>" +
-              "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
-              "<button class='bnet_histclear dabc_btn' title='Clear all histograms'>Hist</button>" +
-              "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
-              "<label class='bnet_runprefix_lbl' title='Current Run Prefix'>Prefix: </label>" +
-              "</fieldset>";
-
-      html += "<fieldset style='margin:5px'>" +
-              "<legend>Builder nodes</legend>" +
-              "<div style='display:flex;flex-direction:column;font-family:monospace'>";
-      html += "<div style='float:left' class='jsroot bnet_builders_header'>"
-      html += "<pre style='margin:0'>";
-      html += this.makeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
-              this.makeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 8) + "| " +
-              this.makeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 8) + "| " +
-              this.makeLabel("", "File local", 24) +  "| " +
-              this.makeLabel("class='bnet_item_label h_item' title='display local file sizes' itemname='__bld__/RunFileSize'", "Size", 8) + "| " +
-              this.makeLabel("", "File LTSM", 24) +  "| " +
-              this.makeLabel("class='bnet_item_label h_item' title='display LTSM file sizes' itemname='__bld__/LtsmFileSize'", "Size", 8);
-      html += "</pre>";
-      html += "</div>";
-      for (let node in this.BuilderItems) {
-         html += "<div style='float:left' class='jsroot bnet_builder" + node + "'>";
-         html += "<pre style='margin:0'>";
-         html += "<label>" + this.BuilderItems[node] + "</label>";
-         html += "</pre>";
-         html += "</div>";
-      }
-      html += "</div>" +
-              "</fieldset>";
-
-      html += "<fieldset style='margin:5px'>" +
-              "<legend>Input nodes</legend>" +
-              "<div style='display:flex;flex-direction:column;font-family:monospace'>";
-      html += "<div style='float:left' class='jsroot bnet_inputs_header'>"
-      html += "<pre style='margin:0'>";
-      html += this.makeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
-              this.makeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 8) + "| " +
-              this.makeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 8) + "| " +
-              this.makeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);
-      html += "</pre>";
-      html += "</div>";
-      for (let node in this.InputItems) {
-         html += "<div style='float:left' class='jsroot bnet_input" + node + "'>";
-         html += "<pre style='margin:0'>";
-         html += "<label>" + this.InputItems[node] + "</label>";
-         html += "</pre>";
-         html += "</div>";
-      }
-      html += "</div>" +
-              "</fieldset>";
-
-      html += "<fieldset class='bnet_trb_info' style='margin:5px;display:none'>" +
-              "<legend>Calibration</legend>" +
-              "<div class='bnet_hub_info'></div>" +
-              "<div class='bnet_tdc_calibr'></div>" +
-              "</fieldset>";
-
-      html += "</div>";
-
-      let painter = this, main = d3.select(this.frame).html(html),
-          ctrl_visible = JSROOT.decodeUrl().has("browser") ? "" : "none";
-
-      DABC.addDabcStyle(main);
-
-      main.classed("jsroot_fixed_frame", true);
-      main.selectAll(".bnet_trb_clear").on("click", () => this.displayCalItem(0, ""));
-
-      main.selectAll(".bnet_item_clear").on("click", () => this.clearDisplay());
-
-      main.select(".bnet_monitoring").on("click", () => {
-         let on = main.select(".bnet_monitoring").property('checked');
-         painter.hpainter.enableMonitoring(on);
-         painter.hpainter.updateItems();
-      });
-
-      main.selectAll(".bnet_item_label").on("click", function() {
-         painter.displayItem(d3.select(this).attr("itemname"));
-      });
-
-      let itemname = this.itemname;
-
-      main.select(".bnet_startrun").style("display", ctrl_visible).on("click", () => {
-         DABC.invokeCommand(itemname + "/StartRun", "tmout=60&prefix=" + main.select(".bnet_selectrun").property("value"));
-      });
-
-      main.select(".bnet_selectrun").style("display", ctrl_visible).property("value", lastprefix || undefined);
-
-      main.select(".bnet_stoprun").style("display", ctrl_visible).on("click", () => DABC.invokeCommand(itemname+"/StopRun", "tmout=60" ));
-
-      main.select(".bnet_lastcalibr").on("click", () => DABC.invokeCommand(itemname+"/RefreshRun", "tmout=60"));
-
-      main.select(".bnet_resetdaq").style("display", ctrl_visible).on("click", () => {
-         if (confirm("Really drop buffers on all BNET nodes"))
-            DABC.invokeCommand(itemname+"/ResetDAQ");
-      });
-
-      main.select(".bnet_totalrate").on("click", () => {
-         painter.displayItem("/"+itemname+"/DataRate");
-      });
-
-      main.select(".bnet_totalevents").on("click", () => {
-         painter.displayItem("/"+itemname+"/EventsRate");
-      });
-
-      main.select(".bnet_lostevents").on("click", () => {
-         painter.displayItem("/"+itemname+"/LostRate");
-      });
-
-      main.select(".bnet_frameclear").on("click", () => {
-         painter.displayCalItem(0, "");
-         painter.clearDisplay();
-      });
-
-      main.select(".bnet_histclear").style("display", ctrl_visible).on("click", () => {
-         painter.clearAllHistograms();
-      });
-
-      // set top painter after drawing
-      this.setTopPainter();
-   }
-
-   DABC.BnetPainter.prototype.clearDisplay = function() {
-      let frame = this.hpainter.getDisplay().findFrame("dabc_drawing");
-      if (frame) this.hpainter.getDisplay().cleanupFrame(frame);
-   }
-
-   DABC.BnetPainter.prototype.displayItem = function(itemname) {
-      let items = null, opt = "";
-
-      if (itemname.indexOf("__inp__")==0) {
-         items = this.InputItems;
-      } else if (itemname.indexOf("__bld__")==0) {
-         items = this.BuilderItems;
-      } else {
-         itemname = itemname.substr(1);
-         opt = "frameid:dabc_drawing";
-      }
-
-      if (items !== null) {
-         if (items.length<2) return;
-
-         let subitem = itemname.substr(7);
-         itemname = "";
-         for (let k=0;k<items.length;++k) {
-            itemname += (k>0 ? "," : "[") + items[k].substr(1) + subitem;
-            opt += (k>0 ? "," : "[") + "plc";
-            if (k==0) opt += "frameid:dabc_drawing";
+         if (this.main_timer) {
+            clearInterval(this.main_timer);
+            delete this.main_timer;
          }
 
-         itemname += ",$legend]";
-         opt += ",any]";
+         delete this.hpainter;
+         delete this.frame;
       }
 
-      this.clearDisplay();
-      this.hpainter.displayItems([itemname], [opt]);
-   }
-
-   DABC.BnetPainter.prototype.displayCalItem = function(hubid, itemname) {
-      this.CalibrHub = hubid;
-      this.CalibrItem = itemname;
-
-      d3.select(this.frame).select('.bnet_trb_info')
-                           .style("display", (itemname || hubid) ? null : "none")
-                           .select("legend").html("HUB: 0x" + hubid.toString(16));
-
-      d3.select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
-   }
-
-   DABC.BnetPainter.prototype.clearAllHistograms = function() {
-       for(let indx=0;indx<this.InputItems.length;++indx) {
-          let itemname = this.InputItems[indx],
-              info = this.InputInfo[indx];
-
-          if (!itemname || !info || !info.calibr) continue;
-
-          itemname = itemname.substr(1, itemname.lastIndexOf("/"));
-
-          for (let k=0;k<info.calibr.length;++k)
-             if (info.calibr[k])
-                JSROOT.httpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object");
-       }
-
-       setTimeout(() => this.hpainter.updateItems(false), 1000);
-   }
-
-   DABC.BnetPainter.prototype.getQualityColor = function(quality) {
-      if (quality <= 0.3) return "red";
-      if (quality < 0.7) return "yellow";
-      if (quality < 0.8) return "lightblue";
-      if (quality <= 0.9) return "green";
-      return "lightgreen";
-   }
-
-   DABC.BnetPainter.prototype.processReq = function(isbuild, indx, res) {
-      if (!res) return;
-
-      let frame = d3.select(this.frame), elem,
-          html = "", itemname = "", hadaqinfo = null, hadaqdata = null, hadaqevents = null, hadaqstate = null;
-
-      for (let n=0;n<res._childs.length;++n) {
-         let chld = res._childs[n];
-         if (chld._name == "HadaqData") hadaqdata = chld; else
-         if (chld._name == "HadaqEvents") hadaqevents = chld; else
-         if (chld._name == "HadaqInfo") hadaqinfo = chld; else
-         if (chld._name == "State") hadaqstate = chld;
+      active() {
+         return this.hpainter && this.frame;
       }
 
-      html += "<pre style='margin:0'>";
+      makeLabel(attr, txt, sz) {
+         let lbl = "<label";
+         if (attr) lbl += " " + attr;
+         lbl +=">";
+         if (txt === undefined) txt = "<undef>"; else
+         if (txt === null) txt = "null"; else
+         if (typeof txt != 'string') txt = txt.toString();
+         if (txt.length > sz) txt = txt.substr(0, sz);
+         lbl += txt;
+         lbl += "</label>";
 
-      if (isbuild) {
-         this.BuilderInfo[indx] = res;
-         elem = frame.select(".bnet_builder" + indx);
-         let col = this.getQualityColor(res.quality);
-         itemname = this.BuilderItems[indx];
-         let pos = itemname.lastIndexOf("/");
-         html += this.makeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
-                                "' title='Item: " + itemname + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
-      } else {
-         this.InputInfo[indx] = res;
-         elem = frame.select(".bnet_input" + indx);
-         let col = this.getQualityColor(res.quality);
-         itemname = this.InputItems[indx];
-         let title = "Item: " + itemname + "  State: " + hadaqstate.value;
-         if (res.progress) title += " progress:" + res.progress;
-         title += " cansend:[" + (res.queues || "-") + "]";
+         if (txt.length<sz) {
+            lbl += "<label>";
+            while (txt.length<sz) { txt += " "; lbl += " "; }
+            lbl += "</label>";
+         }
 
-         let pos = itemname.lastIndexOf("/");
-         html += this.makeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
-                                "' title='" + title + "'", this.InputNodes[indx].substr(7), 20);
+         return lbl;
       }
 
-      let prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
+      refreshHtml(lastprefix) {
 
-      html += "| " + this.makeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 8);
-      html += "| " + this.makeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 8);
+         let html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
 
-      if (isbuild) {
-         let fname = res.runname || "";
-         if (fname && (fname.lastIndexOf("/")>0))
-            fname = fname.substr(fname.lastIndexOf("/")+1);
+         html += "<fieldset style='margin:5px'>" +
+                 "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
+                 "<button class='bnet_startrun dabc_btn' title='Start run, write files on all event builders'>Start</button>" +
+                 "<select class='bnet_selectrun dabc_btn' style='width: 17em'>" +
+                 "<option>NO_FILE</option>" +
+                 "<option value='be'>Beam file</option>" +
+                 "<option value='te'>Test file</option>" +
+                 "<option value='co'>Cosmics file</option>" +
+                 "<option value='md'>MDC file</option>" +
+                 "<option value='ri'>RICH file</option>" +
+                 "<option value='ec'>ECAL file</option>" +
+                 "<option value='st'>Start file</option>" +
+                 "<option value='rp'>RPC file</option>" +
+                 "<option value='to'>TOF file</option>" +
+                 "<option value='fw'>FW file</option>" +
+                 "<option value='pt'>Pion Tracker file</option>" +
+                 "<option value='fd'>Forward detector (all) file</option>" +
+                 "<option value='fs'>Forward detector (sts only) file</option>" +
+                 "<option value='fr'>Forward detector (rpc only) file</option>" +
+                 "<option value='it'>Inner TOF file</option>" +
+                 "<option value='tc'>TDC Calibration file</option>" +
+                 "<option value='ct'>TDC Calibration test file</option>" +
+                 "</select>" +
+                 "<button class='bnet_stoprun dabc_btn' title='Stops run, close all opened files'>Stop</button>" +
+                 "<button class='bnet_lastcalibr dabc_btn' title='Status of last calibration'>CALIBR</button>" +
+                 "<button class='bnet_resetdaq dabc_btn' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
+                 "<button class='bnet_totalrate dabc_btn' title='Total data rate'>0.00 MB/s</button>" +
+                 "<button class='bnet_totalevents dabc_btn' title='Total build events'>0.0 Ev/s</button>" +
+                 "<button class='bnet_lostevents dabc_btn' title='Total lost events'>0.0 Ev/s</button>" +
+                 "<button class='bnet_frameclear dabc_btn' title='Clear drawings'>Clr</button>" +
+                 "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
+                 "<button class='bnet_histclear dabc_btn' title='Clear all histograms'>Hist</button>" +
+                 "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
+                 "<label class='bnet_runprefix_lbl' title='Current Run Prefix'>Prefix: </label>" +
+                 "</fieldset>";
 
-         html += "| " + this.makeLabel("title='Full name: " + res.runname + "'", fname, 24);
-         html += "| " + this.makeLabel(prefix + "RunFileSize'", ((res.runsize || 0)/1024/1024).toFixed(2), 8);
+         html += "<fieldset style='margin:5px'>" +
+                 "<legend>Builder nodes</legend>" +
+                 "<div style='display:flex;flex-direction:column;font-family:monospace'>";
+         html += "<div style='float:left' class='jsroot bnet_builders_header'>"
+         html += "<pre style='margin:0'>";
+         html += this.makeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
+                 this.makeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 8) + "| " +
+                 this.makeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 8) + "| " +
+                 this.makeLabel("", "File local", 24) +  "| " +
+                 this.makeLabel("class='bnet_item_label h_item' title='display local file sizes' itemname='__bld__/RunFileSize'", "Size", 8) + "| " +
+                 this.makeLabel("", "File LTSM", 24) +  "| " +
+                 this.makeLabel("class='bnet_item_label h_item' title='display LTSM file sizes' itemname='__bld__/LtsmFileSize'", "Size", 8);
+         html += "</pre>";
+         html += "</div>";
+         for (let node in this.BuilderItems) {
+            html += "<div style='float:left' class='jsroot bnet_builder" + node + "'>";
+            html += "<pre style='margin:0'>";
+            html += "<label>" + this.BuilderItems[node] + "</label>";
+            html += "</pre>";
+            html += "</div>";
+         }
+         html += "</div>" +
+                 "</fieldset>";
 
-         fname = res.ltsmname || "";
-         if (fname && (fname.lastIndexOf("/")>0))
-            fname = fname.substr(fname.lastIndexOf("/")+1);
+         html += "<fieldset style='margin:5px'>" +
+                 "<legend>Input nodes</legend>" +
+                 "<div style='display:flex;flex-direction:column;font-family:monospace'>";
+         html += "<div style='float:left' class='jsroot bnet_inputs_header'>"
+         html += "<pre style='margin:0'>";
+         html += this.makeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " +
+                 this.makeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 8) + "| " +
+                 this.makeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 8) + "| " +
+                 this.makeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);
+         html += "</pre>";
+         html += "</div>";
+         for (let node in this.InputItems) {
+            html += "<div style='float:left' class='jsroot bnet_input" + node + "'>";
+            html += "<pre style='margin:0'>";
+            html += "<label>" + this.InputItems[node] + "</label>";
+            html += "</pre>";
+            html += "</div>";
+         }
+         html += "</div>" +
+                 "</fieldset>";
 
-         html += "| " + this.makeLabel("title='Full name: " + res.ltsmname + "'", fname, 24);
-         html += "| " + this.makeLabel(prefix + "LtsmFileSize'", ((res.ltsmsize || 0)/1024/1024).toFixed(2), 8);
+         html += "<fieldset class='bnet_trb_info' style='margin:5px;display:none'>" +
+                 "<legend>Calibration</legend>" +
+                 "<div class='bnet_hub_info'></div>" +
+                 "<div class='bnet_tdc_calibr'></div>" +
+                 "</fieldset>";
 
-         // if (hadaqinfo) html += "| " + this.makeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
-      } else {
-         // info with HUBs and port numbers
-         let totallen = 0;
-         html += "|";
-         if (res.ports && res.hubs && (res.ports.length == res.hubs.length)) {
-            for (let k=0;k<res.ports.length;++k) {
-               if (this.CalibrHub == res.hubs[k])
-                  frame.select(".bnet_hub_info").html("<pre>" + res.hubs_info[k] + "</pre>");
-               let txt = "0x"+res.hubs[k].toString(16);
-               totallen += txt.length;
-               let title = "state:" + res.hubs_state[k] +
-                           " quality:" + res.hubs_quality[k] +
-                           " progr:" + res.hubs_progress[k] +
-                           " " + res.hubs_info[k];
-               let style = "background-color:" + this.getQualityColor(res.hubs_quality[k]);
-               let calitem = "";
-               if (res.calibr[k])
-                  calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
-               let attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='h_item bnet_trb_label'";
+         html += "</div>";
 
-               html += " " + this.makeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
-               // if (totallen>40) break;
+         let painter = this, main = d3.select(this.frame).html(html),
+             ctrl_visible = JSROOT.decodeUrl().has("browser") ? "" : "none";
+
+         DABC.addDabcStyle(main);
+
+         main.classed("jsroot_fixed_frame", true);
+         main.selectAll(".bnet_trb_clear").on("click", () => this.displayCalItem(0, ""));
+
+         main.selectAll(".bnet_item_clear").on("click", () => this.clearDisplay());
+
+         main.select(".bnet_monitoring").on("click", () => {
+            let on = main.select(".bnet_monitoring").property('checked');
+            painter.hpainter.enableMonitoring(on);
+            painter.hpainter.updateItems();
+         });
+
+         main.selectAll(".bnet_item_label").on("click", function() {
+            painter.displayItem(d3.select(this).attr("itemname"));
+         });
+
+         let itemname = this.itemname;
+
+         main.select(".bnet_startrun").style("display", ctrl_visible).on("click", () => {
+            DABC.invokeCommand(itemname + "/StartRun", "tmout=60&prefix=" + main.select(".bnet_selectrun").property("value"));
+         });
+
+         main.select(".bnet_selectrun").style("display", ctrl_visible).property("value", lastprefix || undefined);
+
+         main.select(".bnet_stoprun").style("display", ctrl_visible).on("click", () => DABC.invokeCommand(itemname+"/StopRun", "tmout=60" ));
+
+         main.select(".bnet_lastcalibr").on("click", () => DABC.invokeCommand(itemname+"/RefreshRun", "tmout=60"));
+
+         main.select(".bnet_resetdaq").style("display", ctrl_visible).on("click", () => {
+            if (confirm("Really drop buffers on all BNET nodes"))
+               DABC.invokeCommand(itemname+"/ResetDAQ");
+         });
+
+         main.select(".bnet_totalrate").on("click", () => {
+            painter.displayItem("/"+itemname+"/DataRate");
+         });
+
+         main.select(".bnet_totalevents").on("click", () => {
+            painter.displayItem("/"+itemname+"/EventsRate");
+         });
+
+         main.select(".bnet_lostevents").on("click", () => {
+            painter.displayItem("/"+itemname+"/LostRate");
+         });
+
+         main.select(".bnet_frameclear").on("click", () => {
+            painter.displayCalItem(0, "");
+            painter.clearDisplay();
+         });
+
+         main.select(".bnet_histclear").style("display", ctrl_visible).on("click", () => {
+            painter.clearAllHistograms();
+         });
+
+         // set top painter after drawing
+         this.setTopPainter();
+      }
+
+      clearDisplay() {
+         let frame = this.hpainter.getDisplay().findFrame("dabc_drawing");
+         if (frame) this.hpainter.getDisplay().cleanupFrame(frame);
+      }
+
+      displayItem(itemname) {
+         let items = null, opt = "";
+
+         if (itemname.indexOf("__inp__")==0) {
+            items = this.InputItems;
+         } else if (itemname.indexOf("__bld__")==0) {
+            items = this.BuilderItems;
+         } else {
+            itemname = itemname.substr(1);
+            opt = "frameid:dabc_drawing";
+         }
+
+         if (items !== null) {
+            if (items.length<2) return;
+
+            let subitem = itemname.substr(7);
+            itemname = "";
+            for (let k=0;k<items.length;++k) {
+               itemname += (k>0 ? "," : "[") + items[k].substr(1) + subitem;
+               opt += (k>0 ? "," : "[") + "plc";
+               if (k==0) opt += "frameid:dabc_drawing";
+            }
+
+            itemname += ",$legend]";
+            opt += ",any]";
+         }
+
+         this.clearDisplay();
+         this.hpainter.displayItems([itemname], [opt]);
+      }
+
+      displayCalItem(hubid, itemname) {
+         this.CalibrHub = hubid;
+         this.CalibrItem = itemname;
+
+         d3.select(this.frame).select('.bnet_trb_info')
+                              .style("display", (itemname || hubid) ? null : "none")
+                              .select("legend").html("HUB: 0x" + hubid.toString(16));
+
+         d3.select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
+      }
+
+      clearAllHistograms() {
+          for(let indx=0;indx<this.InputItems.length;++indx) {
+             let itemname = this.InputItems[indx],
+                 info = this.InputInfo[indx];
+
+             if (!itemname || !info || !info.calibr) continue;
+
+             itemname = itemname.substr(1, itemname.lastIndexOf("/"));
+
+             for (let k=0;k<info.calibr.length;++k)
+                if (info.calibr[k])
+                   JSROOT.httpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object");
+          }
+
+          setTimeout(() => this.hpainter.updateItems(false), 1000);
+      }
+
+      getQualityColor(quality) {
+         if (quality <= 0.3) return "red";
+         if (quality < 0.7) return "yellow";
+         if (quality < 0.8) return "lightblue";
+         if (quality <= 0.9) return "green";
+         return "lightgreen";
+      }
+
+      processReq(isbuild, indx, res) {
+         if (!res) return;
+
+         let frame = d3.select(this.frame), elem,
+             html = "", itemname = "", hadaqinfo = null, hadaqdata = null, hadaqevents = null, hadaqstate = null;
+
+         for (let n=0;n<res._childs.length;++n) {
+            let chld = res._childs[n];
+            if (chld._name == "HadaqData") hadaqdata = chld; else
+            if (chld._name == "HadaqEvents") hadaqevents = chld; else
+            if (chld._name == "HadaqInfo") hadaqinfo = chld; else
+            if (chld._name == "State") hadaqstate = chld;
+         }
+
+         html += "<pre style='margin:0'>";
+
+         if (isbuild) {
+            this.BuilderInfo[indx] = res;
+            elem = frame.select(".bnet_builder" + indx);
+            let col = this.getQualityColor(res.quality);
+            itemname = this.BuilderItems[indx];
+            let pos = itemname.lastIndexOf("/");
+            html += this.makeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
+                                   "' title='Item: " + itemname + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
+         } else {
+            this.InputInfo[indx] = res;
+            elem = frame.select(".bnet_input" + indx);
+            let col = this.getQualityColor(res.quality);
+            itemname = this.InputItems[indx];
+            let title = "Item: " + itemname + "  State: " + hadaqstate.value;
+            if (res.progress) title += " progress:" + res.progress;
+            title += " cansend:[" + (res.queues || "-") + "]";
+
+            let pos = itemname.lastIndexOf("/");
+            html += this.makeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col +
+                                   "' title='" + title + "'", this.InputNodes[indx].substr(7), 20);
+         }
+
+         let prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
+
+         html += "| " + this.makeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 8);
+         html += "| " + this.makeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 8);
+
+         if (isbuild) {
+            let fname = res.runname || "";
+            if (fname && (fname.lastIndexOf("/")>0))
+               fname = fname.substr(fname.lastIndexOf("/")+1);
+
+            html += "| " + this.makeLabel("title='Full name: " + res.runname + "'", fname, 24);
+            html += "| " + this.makeLabel(prefix + "RunFileSize'", ((res.runsize || 0)/1024/1024).toFixed(2), 8);
+
+            fname = res.ltsmname || "";
+            if (fname && (fname.lastIndexOf("/")>0))
+               fname = fname.substr(fname.lastIndexOf("/")+1);
+
+            html += "| " + this.makeLabel("title='Full name: " + res.ltsmname + "'", fname, 24);
+            html += "| " + this.makeLabel(prefix + "LtsmFileSize'", ((res.ltsmsize || 0)/1024/1024).toFixed(2), 8);
+
+            // if (hadaqinfo) html += "| " + this.makeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
+         } else {
+            // info with HUBs and port numbers
+            let totallen = 0;
+            html += "|";
+            if (res.ports && res.hubs && (res.ports.length == res.hubs.length)) {
+               for (let k=0;k<res.ports.length;++k) {
+                  if (this.CalibrHub == res.hubs[k])
+                     frame.select(".bnet_hub_info").html("<pre>" + res.hubs_info[k] + "</pre>");
+                  let txt = "0x"+res.hubs[k].toString(16);
+                  totallen += txt.length;
+                  let title = "state:" + res.hubs_state[k] +
+                              " quality:" + res.hubs_quality[k] +
+                              " progr:" + res.hubs_progress[k] +
+                              " " + res.hubs_info[k];
+                  let style = "background-color:" + this.getQualityColor(res.hubs_quality[k]);
+                  let calitem = "";
+                  if (res.calibr[k])
+                     calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
+                  let attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='h_item bnet_trb_label'";
+
+                  html += " " + this.makeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
+                  // if (totallen>40) break;
+               }
+            }
+
+            if (!totallen) html += " " + this.makeLabel("", "failure", 40);
+         }
+
+         html += "</pre>";
+
+         let painter = this,
+             main = elem.html(html);
+
+         main.selectAll(".bnet_item_label").on("click", function() {
+            painter.displayItem(d3.select(this).attr("itemname"));
+         });
+         main.selectAll(".bnet_trb_label").on("click", function() {
+            painter.displayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
+         });
+      }
+
+      processCalibrReq(res) {
+         if (!res) return;
+
+         this.CalibrInfo = res;
+
+         DABC.updateTrbStatus(d3.select(this.frame).select('.bnet_tdc_calibr'), res, this.hpainter, false);
+      }
+
+      sendInfoRequests() {
+         for (let n in this.InputItems)
+            JSROOT.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.processReq.bind(this, false, n));
+         for (let n in this.BuilderItems)
+            JSROOT.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.processReq.bind(this, true, n));
+         if (this.CalibrItem)
+            JSROOT.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(res => this.processCalibrReq(res));
+      }
+
+      processMainRequest(res) {
+
+         let dom = d3.select(this.frame);
+
+         dom.style('background-color', res ? null : "grey");
+
+         let chkbox = dom.select(".bnet_monitoring");
+         if (!chkbox.empty() && (chkbox.property('checked') != this.hpainter.isMonitoring()))
+            chkbox.property('checked', this.hpainter.isMonitoring());
+
+         if (!res) return;
+
+         let inp = null, bld = null, state = null, quality = null, drate, erate, lrate, ninp = [],
+             nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "", lastcalibr = null;
+         for (let k in res._childs) {
+            let elem = res._childs[k];
+            switch (elem._name) {
+               case "Inputs": inp = elem.value; ninp = elem.nodes; break;
+               case "Builders": bld = elem.value; nbld = elem.nodes; break;
+               case "LastPrefix": lastprefix = elem.value; break;
+               case "LastCalibr": lastcalibr = elem; break;
+               case "State": state = elem.value; break;
+               case "Quality": quality = elem.value; break;
+               case "DataRate": drate = elem.value; break;
+               case "EventsRate":  erate = elem.value; break;
+               case "LostRate":  lrate = elem.value; break;
+               case "RunIdStr": runid = elem.value; break;
+               case "RunPrefix": runprefix = elem.value; break;
             }
          }
 
-         if (!totallen) html += " " + this.makeLabel("", "failure", 40);
-      }
-
-      html += "</pre>";
-
-      let painter = this,
-          main = elem.html(html);
-
-      main.selectAll(".bnet_item_label").on("click", function() {
-         painter.displayItem(d3.select(this).attr("itemname"));
-      });
-      main.selectAll(".bnet_trb_label").on("click", function() {
-         painter.displayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
-      });
-   }
-
-   DABC.BnetPainter.prototype.processCalibrReq = function(res) {
-      if (!res) return;
-
-      this.CalibrInfo = res;
-
-      DABC.updateTrbStatus(d3.select(this.frame).select('.bnet_tdc_calibr'), res, this.hpainter, false);
-   }
-
-   DABC.BnetPainter.prototype.sendInfoRequests = function() {
-      for (let n in this.InputItems)
-         JSROOT.httpRequest(this.InputItems[n].substr(1) + "/get.json", "object").then(this.processReq.bind(this, false, n));
-      for (let n in this.BuilderItems)
-         JSROOT.httpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object").then(this.processReq.bind(this, true, n));
-      if (this.CalibrItem)
-         JSROOT.httpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object").then(res => this.processCalibrReq(res));
-   }
-
-   DABC.BnetPainter.prototype.processMainRequest = function(res) {
-
-      let dom = d3.select(this.frame);
-
-      dom.style('background-color', res ? null : "grey");
-
-      let chkbox = dom.select(".bnet_monitoring");
-      if (!chkbox.empty() && (chkbox.property('checked') != this.hpainter.isMonitoring()))
-         chkbox.property('checked', this.hpainter.isMonitoring());
-
-      if (!res) return;
-
-      let inp = null, bld = null, state = null, quality = null, drate, erate, lrate, ninp = [],
-          nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "", lastcalibr = null;
-      for (let k in res._childs) {
-         let elem = res._childs[k];
-         switch (elem._name) {
-            case "Inputs": inp = elem.value; ninp = elem.nodes; break;
-            case "Builders": bld = elem.value; nbld = elem.nodes; break;
-            case "LastPrefix": lastprefix = elem.value; break;
-            case "LastCalibr": lastcalibr = elem; break;
-            case "State": state = elem.value; break;
-            case "Quality": quality = elem.value; break;
-            case "DataRate": drate = elem.value; break;
-            case "EventsRate":  erate = elem.value; break;
-            case "LostRate":  lrate = elem.value; break;
-            case "RunIdStr": runid = elem.value; break;
-            case "RunPrefix": runprefix = elem.value; break;
+         if (state) {
+            let col = this.getQualityColor(quality || 0);
+            // col = "red";
+            //if (state=="Ready") col = "lightgreen"; else
+            //if (state=="Accumulating") col = "lightblue"; else
+            //if (state=="NoFile") col = "yellow";
+            dom.select(".bnet_state").text("Run control: " + state).style('background-color',col);
          }
-      }
 
-      if (state) {
-         let col = this.getQualityColor(quality || 0);
-         // col = "red";
-         //if (state=="Ready") col = "lightgreen"; else
-         //if (state=="Accumulating") col = "lightblue"; else
-         //if (state=="NoFile") col = "yellow";
-         dom.select(".bnet_state").text("Run control: " + state).style('background-color',col);
-      }
+         if (typeof drate == 'number')
+            dom.select(".bnet_totalrate").text(drate.toFixed(2) + " MB/s").style('background-color', (drate > 0) ? "lightgreen" : "yellow");
 
-      if (typeof drate == 'number')
-         dom.select(".bnet_totalrate").text(drate.toFixed(2) + " MB/s").style('background-color', (drate > 0) ? "lightgreen" : "yellow");
+         if (typeof erate == 'number')
+            dom.select(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").style('background-color', (erate > 0) ? "lightgreen" : "yellow");
 
-      if (typeof erate == 'number')
-         dom.select(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").style('background-color', (erate > 0) ? "lightgreen" : "yellow");
+         if (typeof lrate == 'number')
+            dom.select(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").style('background-color', (lrate > 0) ? "yellow" : "lightgreen");
 
-      if (typeof lrate == 'number')
-         dom.select(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").style('background-color', (lrate > 0) ? "yellow" : "lightgreen");
-
-      if (lastcalibr && (typeof lastcalibr.quality == 'number') && (typeof lastcalibr.time == 'string')) {
-         let quality = lastcalibr.quality || 1,
-             dt = new Date(lastcalibr.time), now = new Date(),
-             diff = (now.getTime() - dt.getTime())*1e-3, // seconds
-             info = "CALIBR", title = "Calibration ";
-         if (diff < 0) { info = "CHECK CALIBR"; if (quality>0.6) quality = 0.6; } else {
-            let hv = Math.floor(diff/3600),
-                h = hv.toString(),
-                m = Math.round((diff - hv)/60).toString();
-            if (m.length==1) m = "0"+m;
-            info = h+"h"+m+"m";
-            if (h>720) { if (quality>0.1) quality = 0.1; title = "To long time without calibration, "; } else
-            if (h>240) { if (quality>0.6) quality = 0.6; title = "Consider to peform calibration, "; }
+         if (lastcalibr && (typeof lastcalibr.quality == 'number') && (typeof lastcalibr.time == 'string')) {
+            let quality = lastcalibr.quality || 1,
+                dt = new Date(lastcalibr.time), now = new Date(),
+                diff = (now.getTime() - dt.getTime())*1e-3, // seconds
+                info = "CALIBR", title = "Calibration ";
+            if (diff < 0) { info = "CHECK CALIBR"; if (quality>0.6) quality = 0.6; } else {
+               let hv = Math.floor(diff/3600),
+                   h = hv.toString(),
+                   m = Math.round((diff - hv)/60).toString();
+               if (m.length==1) m = "0"+m;
+               info = h+"h"+m+"m";
+               if (h>720) { if (quality>0.1) quality = 0.1; title = "To long time without calibration, "; } else
+               if (h>240) { if (quality>0.6) quality = 0.6; title = "Consider to peform calibration, "; }
+            }
+            title += "last: " + lastcalibr.value;
+            dom.select(".bnet_lastcalibr").style('background-color', this.getQualityColor(quality)).attr("title", title).text(info);
          }
-         title += "last: " + lastcalibr.value;
-         dom.select(".bnet_lastcalibr").style('background-color', this.getQualityColor(quality)).attr("title", title).text(info);
+
+         dom.select(".bnet_runid_lbl").text(" RunId: " + runid);
+         dom.select(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
+
+         // run prefix should not be overwritten
+         //let sm = dom.select(".bnet_selectrun");
+         //if (runprefix && (sm.property("value") != runprefix)) {
+         //   sm.property("value", runprefix);
+         //}
+
+         if (!DABC.compareArrays(this.InputItems,inp)) {
+            this.InputItems = inp;
+            this.InputNodes = ninp;
+            this.InputInfo = [];
+            changed = true;
+         }
+
+         if (!DABC.compareArrays(this.BuilderItems,bld)) {
+            this.BuilderItems = bld;
+            this.BuilderNodes = nbld;
+            this.BuilderInfo = [];
+            changed = true;
+         }
+
+         if (changed) {
+            this.displayCalItem(0, "");
+            this.refreshHtml(lastprefix);
+            this.hpainter.reload(); // also refresh hpainter - most probably items are changed
+         }
+
+         this.sendInfoRequests();
       }
 
-      dom.select(".bnet_runid_lbl").text(" RunId: " + runid);
-      dom.select(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
-
-      // run prefix should not be overwritten
-      //let sm = dom.select(".bnet_selectrun");
-      //if (runprefix && (sm.property("value") != runprefix)) {
-      //   sm.property("value", runprefix);
-      //}
-
-      if (!DABC.compareArrays(this.InputItems,inp)) {
-         this.InputItems = inp;
-         this.InputNodes = ninp;
-         this.InputInfo = [];
-         changed = true;
+      sendMainRequest() {
+         if (this.mainreq) return;
+         this.mainreq = true;
+         JSROOT.httpRequest(this.itemname + "/get.json", "object")
+            .then(res => this.processMainRequest(res))
+            .catch(() => this.processMainRequest(null))
+            .finally(() => { this.mainreq = false; });
       }
-
-      if (!DABC.compareArrays(this.BuilderItems,bld)) {
-         this.BuilderItems = bld;
-         this.BuilderNodes = nbld;
-         this.BuilderInfo = [];
-         changed = true;
-      }
-
-      if (changed) {
-         this.displayCalItem(0, "");
-         this.refreshHtml(lastprefix);
-         this.hpainter.reload(); // also refresh hpainter - most probably items are changed
-      }
-
-      this.sendInfoRequests();
-   }
-
-   DABC.BnetPainter.prototype.sendMainRequest = function() {
-      if (this.mainreq) return;
-      this.mainreq = true;
-      JSROOT.httpRequest(this.itemname + "/get.json", "object")
-         .then(res => this.processMainRequest(res))
-         .catch(() => this.processMainRequest(null))
-         .finally(() => { this.mainreq = false; });
    }
 
    DABC.BnetControl = function(hpainter, itemname) {
       return hpainter.createCustomDisplay(itemname, "vert2").then(() => {
-         let painter = new DABC.BnetPainter(hpainter, itemname);
+         let painter = new BnetPainter(hpainter, itemname);
          if (painter.active()) {
             painter.refreshHtml();
             painter.main_timer = setInterval(() => painter.sendMainRequest(), 2000);
