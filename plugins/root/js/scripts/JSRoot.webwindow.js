@@ -8,7 +8,6 @@ JSROOT.define([], () => {
    /**
     * @summary Class emulating web socket with long-poll http requests
     *
-    * @class
     * @memberof JSROOT
     * @private
     */
@@ -180,7 +179,6 @@ JSROOT.define([], () => {
    /**
     * @summary Class re-playing socket data from stored protocol
     *
-    * @class
     * @memberof JSROOT
     * @private
     */
@@ -238,7 +236,6 @@ JSROOT.define([], () => {
    /**
     * @summary Client communication handle for RWebWindow.
     *
-    * @class
     * @memberof JSROOT
     * @desc Should be created with {@link JSROOT.connectWebWindow} function
     */
@@ -562,10 +559,8 @@ JSROOT.define([], () => {
                      // this is case of websocket
                      // console.log('Get Blob object - convert to buffer array');
                      let reader = new FileReader, qitem = this.reserveQueueItem();
-                     reader.onload = function(event) {
-                        // The file's text will be printed here
-                        this.markQueueItemDone(qitem, event.target.result, 0);
-                     };
+                     // The file's text will be printed here
+                     reader.onload = event => this.markQueueItemDone(qitem, event.target.result, 0);
                      reader.readAsArrayBuffer(msg, e.offset || 0);
                   } else {
                      // console.log('got array ' + (typeof msg) + ' len = ' + msg.byteLength);
