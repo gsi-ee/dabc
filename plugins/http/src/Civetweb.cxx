@@ -58,7 +58,8 @@ void http::Civetweb::OnThreadAssigned()
 
    std::string sport, sthrds;
 
-   if (fHttpPort.length()>0) sport = fHttpPort;
+   if (fHttpPort.length() > 0)
+      sport = fHttpPort;
    if (fHttpsPort.length()>0) {
       if (!sport.empty()) sport.append(",");
       sport.append(fHttpsPort);
@@ -68,7 +69,7 @@ void http::Civetweb::OnThreadAssigned()
    //std::string sport = dabc::format("%d", fHttpPort);
    DOUT0("Starting HTTP server on port(s) %s", sport.c_str());
 
-   const char *options[100];
+   const char *options[20];
    int op(0);
 
    options[op++] = "listening_ports";
@@ -87,7 +88,11 @@ void http::Civetweb::OnThreadAssigned()
       options[op++] = "authentication_domain";
       options[op++] = fAuthDomain.c_str();
    }
-   options[op++] = 0;
+
+   options[op++] = "enable_directory_listing";
+   options[op++] = "no";
+
+   options[op++] = nullptr;
 
    // fCallbacks.begin_request = http::Civetweb::begin_request_handler;
    fCallbacks.log_message = http::Civetweb::log_message_handler;
@@ -97,7 +102,7 @@ void http::Civetweb::OnThreadAssigned()
 
    mg_set_request_handler(fCtx,"/",http::Civetweb::begin_request_handler,0);
 
-   if (fCtx==0) EOUT("Fail to start civetweb on port %s", sport.c_str());
+   if (!fCtx) EOUT("Fail to start civetweb on port %s", sport.c_str());
 }
 
 int http::Civetweb::log_message_handler(const struct mg_connection *conn, const char *message)
