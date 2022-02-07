@@ -119,8 +119,8 @@ int http::Civetweb::log_message_handler(const struct mg_connection *conn, const 
 int http::Civetweb::begin_request_handler(struct mg_connection *conn, void* )
 {
    const struct mg_request_info *request_info = mg_get_request_info(conn);
-   http::Civetweb* server = (http::Civetweb*) (request_info ? request_info->user_data : 0);
-   if (server==0) return 0;
+   http::Civetweb* server = (http::Civetweb*) (request_info ? request_info->user_data : nullptr);
+   if (!server) return 0;
 
    DOUT3("BEGIN_REQ: uri:%s query:%s", request_info->local_uri, request_info->query_string);
 
@@ -139,13 +139,9 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn, void* )
       mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
                       "Content-Length: 0\r\n"
                       "Connection: close\r\n\r\n");
-   } else
-
-   if (content_type=="__file__") {
+   } else if (content_type=="__file__") {
       mg_send_file(conn, content_str.c_str());
-   } else
-
-   if (!content_bin.null()) {
+   } else if (!content_bin.null()) {
       mg_printf(conn,
                 "HTTP/1.1 200 OK\r\n"
                 "Content-Type: %s\r\n"
