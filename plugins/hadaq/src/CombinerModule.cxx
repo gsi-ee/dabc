@@ -104,8 +104,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fHadesTriggerType = Cfg(hadaq::xmlHadesTriggerType, cmd).AsBool(false);
    fHadesTriggerHUB = Cfg(hadaq::xmlHadesTriggerHUB, cmd).AsUInt(0x8800);
 
-   std::string ratesprefix = "Hadaq";
-
    for (unsigned n = 0; n < NumInputs(); n++) {
       fCfg.emplace_back();
       fCfg[n].Reset(true);
@@ -127,11 +125,12 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fPrefix = Cfg("FilePrefix", cmd).AsStr("no");
    fRunToOracle = Cfg("Runinfo2ora", cmd).AsBool(false);
 
-   fDataRateName = ratesprefix + "Data";
-   fEventRateName = ratesprefix + "Events";
-   fLostEventRateName = ratesprefix + "LostEvents";
-   fDataDroppedRateName = ratesprefix + "DroppedData";
-   fInfoName = ratesprefix + "Info";
+
+   fDataRateName = "HadaqData";
+   fEventRateName = "HadaqEvents";
+   fLostEventRateName = "HadaqLostEvents";
+   fDataDroppedRateName = "HadaqDroppedData";
+   fInfoName = "HadaqInfo";
 
    CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar(fEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
