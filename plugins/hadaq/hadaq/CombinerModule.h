@@ -53,73 +53,43 @@ namespace hadaq {
       protected:
 
       struct InputCfg {
-         hadaq::RawSubevent *subevnt; ///< actual subevent
-         hadaq::RawEvent  *evnt; ///< actual event
-         bool     has_data;      ///< when true, input has data (subevent or bunch of sub events)
-         uint32_t data_size;     ///< padded size of current subevent, required in output buffer
-         uint32_t fTrigNr;       ///< keeps current trigger sequence number
-         uint32_t fLastTrigNr;   ///< keeps previous trigger sequence number - used to control data lost
-         uint32_t fTrigTag;      ///< keeps current trigger tag
-         uint32_t fTrigType;     ///< current subevent trigger type
+         hadaq::RawSubevent *subevnt{nullptr}; ///< actual subevent
+         hadaq::RawEvent  *evnt{nullptr}; ///< actual event
+         bool     has_data{false};      ///< when true, input has data (subevent or bunch of sub events)
+         uint32_t data_size{0};     ///< padded size of current subevent, required in output buffer
+         uint32_t fTrigNr{0};       ///< keeps current trigger sequence number
+         uint32_t fLastTrigNr{0};   ///< keeps previous trigger sequence number - used to control data lost
+         uint32_t fTrigTag{0};      ///< keeps current trigger tag
+         uint32_t fTrigType{0};     ///< current subevent trigger type
          unsigned fErrorBitsCnt{0}; ///< number of subevents with non-zero error bits
          unsigned fHubId{0};     ///< subevent id from given input
          unsigned fUdpPort{0};    ///< if configured, port id
-         float fQueueLevel;      ///<  current input queue fill level
-         uint32_t fLastEvtBuildTrigId; ///< remember id of last build event
-         bool fDataError;        ///< indicates if subevent has data error bit set in header id
-         bool fEmpty;            ///< indicates if input has empty data
-         void* fInfo;            ///< Direct pointer on transport info, used only for debugging
-         int fQueueCapacity;     ///< capacity of input queue
-         int fNumCanRecv;        ///< Number buffers can be received
-         unsigned fLostTrig;     ///< number of lost triggers (never received by the combiner)
-         unsigned fDroppedTrig;  ///< number of dropped triggers (received but dropped by the combiner)
+         float fQueueLevel{0.};      ///<  current input queue fill level
+         uint32_t fLastEvtBuildTrigId{0}; ///< remember id of last build event
+         bool fDataError{false};        ///< indicates if subevent has data error bit set in header id
+         bool fEmpty{true};            ///< indicates if input has empty data
+         void *fInfo{nullptr};            ///< Direct pointer on transport info, used only for debugging
+         int fQueueCapacity{0};     ///< capacity of input queue
+         int fNumCanRecv{0};        ///< Number buffers can be received
+         unsigned fLostTrig{0};     ///< number of lost triggers (never received by the combiner)
+         unsigned fDroppedTrig{0};  ///< number of dropped triggers (received but dropped by the combiner)
          uint32_t  fTrigNumRing[HADAQ_RINGSIZE]; ///< values of last seen TU ID
-         unsigned  fRingCnt;     ///< where next value will be written
-         unsigned  fResort;       ///< enables resorting of events
+         unsigned  fRingCnt{0};     ///< where next value will be written
+         bool  fResort{false};       ///< enables resorting of events
          ReadIterator fIter;      ///< main iterator
          ReadIterator fResortIter; ///< additional iterator to check resort
-         int          fResortIndx;  ///< index of buffer in the queue used for resort iterator (-1 - off)
+         int          fResortIndx{-1};  ///< index of buffer in the queue used for resort iterator (-1 - off)
          std::string fCalibr;      ///< name of calibration module, used only in terminal
-         bool        fCalibrReq;   ///< when true, request was send
-         int         fCalibrProgr; ///< calibration progress
+         bool        fCalibrReq{false};   ///< when true, request was send
+         int         fCalibrProgr{0}; ///< calibration progress
          std::string fCalibrState; ///< calibration state
-         double      fCalibrQuality; ///< calibration quality
-         uint64_t    fHubLastSize; ///< last size
-         uint64_t    fHubPrevSize; ///< last size
-         int         fHubSizeTmCnt; ///< count how many time data was the same
+         double      fCalibrQuality{0.}; ///< calibration quality
+         uint64_t    fHubLastSize{0}; ///< last size
+         uint64_t    fHubPrevSize{0}; ///< last size
+         int         fHubSizeTmCnt{0}; ///< count how many time data was the same
 
 
-         InputCfg() :
-            subevnt(0),
-            evnt(0),
-            has_data(false),
-            data_size(0),
-            fTrigNr(0),
-            fLastTrigNr(0xffffffff),
-            fTrigTag(0),
-            fTrigType(0),
-            fQueueLevel(0),
-            fLastEvtBuildTrigId(0),
-            fDataError(false),
-            fEmpty(true),
-            fInfo(0),
-            fQueueCapacity(0),
-            fNumCanRecv(0),
-            fLostTrig(0),
-            fDroppedTrig(0),
-            fRingCnt(0),
-            fResort(false),
-            fIter(),
-            fResortIter(),
-            fResortIndx(-1),
-            fCalibr(),
-            fCalibrReq(false),
-            fCalibrProgr(0),
-            fCalibrState(),
-            fCalibrQuality(0.),
-            fHubLastSize(0),
-            fHubPrevSize(0),
-            fHubSizeTmCnt(0)
+         InputCfg()
          {
             for (int i=0;i<HADAQ_RINGSIZE;i++)
                fTrigNumRing[i]=0;
@@ -128,8 +98,8 @@ namespace hadaq {
          void Reset(bool complete = false)
          {
             // used to reset current subevent
-            subevnt = 0;
-            evnt = 0;
+            subevnt = nullptr;
+            evnt = nullptr;
             has_data = false;
             data_size = 0;
             fTrigNr = 0;
@@ -153,7 +123,8 @@ namespace hadaq {
             fResortIndx = -1;
          }
 
-         std::string TriggerRingAsStr(int RingSize) {
+         std::string TriggerRingAsStr(int RingSize)
+         {
             std::string sbuf;
 
             unsigned cnt = fRingCnt, prev = 0;
@@ -198,7 +169,7 @@ namespace hadaq {
 
          int                fFlushCounter;
          int32_t            fEBId; ///<  eventbuilder id <- node id
-         pid_t              fPID; ///<  process id of combiner module
+         // pid_t              fPID; ///<  process id of combiner module
          bool               fIsTerminating;
          bool               fSkipEmpty;     ///< skip empty subevents in final event, default true
 
