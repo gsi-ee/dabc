@@ -248,6 +248,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlData = 0.;
       fCtrlEvents = 0.;
       fCtrlLost = 0.;
+
       fCtrlInpNodesCnt = 0;
       fCtrlInpNodesExpect = 0;
       fCtrlBldNodesCnt = 0;
@@ -355,9 +356,13 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       while (iter.next()) {
          dabc::Hierarchy item = iter.ref();
          if (!item.HasField("_bnet")) {
-            if (item.IsName("HadaqData") && is_builder) fCtrlData += item.GetField("value").AsDouble(); else
-            if (item.IsName("HadaqEvents") && is_builder) fCtrlEvents += item.GetField("value").AsDouble(); else
-            if (item.IsName("HadaqLostEvents") && is_builder) fCtrlLost += item.GetField("value").AsDouble();
+            if (is_builder && item.IsName("HadaqData"))
+               fCtrlData += item.GetField("value").AsDouble();
+            else if (is_builder && item.IsName("HadaqEvents"))
+               fCtrlEvents += item.GetField("value").AsDouble();
+            else if (is_builder && item.IsName("HadaqLostEvents"))
+               fCtrlLost += item.GetField("value").AsDouble();
+
             continue;
          }
          // normally only that item should be used

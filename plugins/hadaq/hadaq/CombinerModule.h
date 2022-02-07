@@ -200,9 +200,9 @@ namespace hadaq {
          std::string        fEventRateName;
          std::string        fLostEventRateName;
          std::string        fInfoName;
-         std::string        fProblemName;
 
          enum { chkNone, chkActive, chkError, chkOk } fCheckBNETProblems{chkNone}; ///< check BNET input problems
+         std::string        fBNETProblem;  ///< current BNET problem, result in low quality
 
          uint64_t           fDataRateCnt;
          uint64_t           fDataDroppedRateCnt;

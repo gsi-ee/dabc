@@ -131,8 +131,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fLostEventRateName = "HadaqLostEvents";
    fDataDroppedRateName = "HadaqDroppedData";
    fInfoName = "HadaqInfo";
-   fProblemName = "HadaqProblem";
    fCheckBNETProblems = chkNone;
+   fBNETProblem = "";
 
    CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar(fEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
@@ -158,7 +158,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    }
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
-   CreatePar(fProblemName, "info").SetSynchron(true, 2., false).SetDebugLevel(0);
 
    if (IsName("Combiner"))
       PublishPars("$CONTEXT$/HadaqCombiner");
@@ -522,6 +521,11 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          qsz.push_back(len);
       }
       fBnetInfo = info;
+
+      if (!fBNETProblem.empty() && (node_quality > 0.1)) {
+         node_state = fBNETProblem;
+         node_quality = 0.1;
+      }
 
       if (node_state.empty()) {
          node_state = "Ready";
@@ -951,15 +955,11 @@ bool hadaq::CombinerModule::BuildEvent()
 
    if (((fCheckBNETProblems == chkActive) || (fCheckBNETProblems == chkOk)) && (fEventBuildTimeout > 0.) && fLastBuildTm.Expired(fEventBuildTimeout*0.5)) {
 
-      std::string errmsg;
-
       if (missing_inp >= 0)
-         errmsg = "no_data_" + std::to_string(missing_inp); // no data at input
+         fBNETProblem = "no_data_" + std::to_string(missing_inp); // no data at input
       else
-         errmsg = dabc::format("blocked_") + std::to_string(min_inp); // input with minimal event id, show event diff
+         fBNETProblem = dabc::format("blocked_") + std::to_string(min_inp); // input with minimal event id, show event diff
 
-      dabc::InfoParameter par = Par(fProblemName);
-      par.SetValue(errmsg);
       fCheckBNETProblems = chkError; // detect error, next time will check after drop all buffers
    }
 
@@ -1242,9 +1242,7 @@ bool hadaq::CombinerModule::BuildEvent()
       // Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
 
       if ((fCheckBNETProblems == chkActive) || (fCheckBNETProblems == chkError)) {
-
-         dabc::InfoParameter par = Par(fProblemName);
-         par.SetValue("");
+         fBNETProblem.clear();
          fCheckBNETProblems = chkOk; // no problems, event build normally, now wait for error, timeout relative to build time
       }
 
