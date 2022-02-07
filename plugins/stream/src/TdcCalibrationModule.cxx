@@ -467,8 +467,8 @@ bool stream::TdcCalibrationModule::retransmit()
                if (iter0.NextSubeventsBlock()) {
                   while (iter0.NextSubEvent()) {
                      if (iter0.subevnt()->GetPaddedSize() > iter0.rawdata_maxsize()) {
-                        EOUT("Creating TDCs HUB %u Wrong subevent header len %u maximial %u", fTrbProc->GetID(), iter0.subevnt()->GetPaddedSize(), iter0.rawdata_maxsize());
-                        break;
+                        EOUT("Creating TDCs HUB %u Wrong subevent header len %u maximal %u - SKIP BUFFER", fTrbProc->GetID(), iter0.subevnt()->GetPaddedSize(), iter0.rawdata_maxsize());
+                        return true; // SKIP BUFFER !!!!
                      }
 
                      fTrbProc->CollectMissingTDCs((hadaqs::RawSubevent *)iter0.subevnt(), ids);
@@ -529,14 +529,13 @@ bool stream::TdcCalibrationModule::retransmit()
                while (iter.NextSubEvent()) {
 
                   if (iter.subevnt()->GetPaddedSize() > iter.rawdata_maxsize()) {
-                     EOUT("TransferData HUB %u Wrong subevent header len %u maximial %u", fTrbProc->GetID(), iter.subevnt()->GetPaddedSize(), iter.rawdata_maxsize());
-                     break;
+                     EOUT("TransferData HUB %u Wrong subevent header len %u maximal %u - SKIP BUFFER", fTrbProc->GetID(), iter.subevnt()->GetPaddedSize(), iter.rawdata_maxsize());
+                     return true; // SKIP BUFFER !!!!
                   }
 
                   if (tgt && (tgtlen - reslen < iter.subevnt()->GetPaddedSize())) {
-                     EOUT("Not enough space for subevent sz %u in output buffer sz %u seg0 %u filled %u remains in src %u", iter.subevnt()->GetPaddedSize(), resbuf.GetTotalSize(), tgtlen, reslen, iter.remained_size());
-                     exit(4);
-                     return false;
+                     EOUT("Not enough space for subevent sz %u in output buffer sz %u seg0 %u filled %u remains in src %u - SKIP BUFFER", iter.subevnt()->GetPaddedSize(), resbuf.GetTotalSize(), tgtlen, reslen, iter.remained_size());
+                     return true; // SKIP BUFFER !!!!
                   }
 
                   unsigned sublen = 0;
@@ -550,8 +549,8 @@ bool stream::TdcCalibrationModule::retransmit()
                      hadaqs::RawSubevent *sub = (hadaqs::RawSubevent *) iter.subevnt();
 
                      if ((sub->Alignment()!=4) || !sub->IsSwapped()) {
-                        EOUT("UNEXPECTED TRB DATA FORMAT align %u swap %s - ABORT!!!\n", sub->Alignment(), DBOOL(sub->IsSwapped()));
-                        exit(7);
+                        EOUT("UNEXPECTED TRB DATA FORMAT align %u swap %s - SKIP BUFFER", sub->Alignment(), DBOOL(sub->IsSwapped()));
+                        return true; // SKIP BUFFER !!!!
                      }
 
                      sublen = fTrbProc->TransformSubEvent(sub, tgt, tgtlen - reslen, (fAutoTdcMode==0), fRecheckTdcs ? &newids : nullptr);
@@ -604,9 +603,11 @@ bool stream::TdcCalibrationModule::retransmit()
 
                // if (fProgress>0) fState = "Ready";
             }
-         } else {
-            if (buf.GetTypeId() != dabc::mbt_EOF)
-               EOUT("Error buffer type!!! %d", buf.GetTypeId());
+         } else if (buf.GetTypeId() != dabc::mbt_EOF) {
+
+            EOUT("Error buffer type!!! %d - SKIP BUFFER", buf.GetTypeId());
+
+            return true; // SKIP BUFFER !!!!
          }
       }
 
