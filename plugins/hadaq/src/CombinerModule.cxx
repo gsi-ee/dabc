@@ -806,7 +806,10 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
 bool hadaq::CombinerModule::DropAllInputBuffers()
 {
-   DOUT0("hadaq::CombinerModule::DropAllInputBuffers()...");
+   DOUT0("DropAllInputBuffers()...");
+
+   fLastDropTm.GetNow();
+   fAllFullDrops++;
 
    unsigned maxnumsubev(0), droppeddata(0);
 
@@ -948,9 +951,9 @@ bool hadaq::CombinerModule::BuildEvent()
            msg = dabc::format("No events were build since at least %.1f seconds,", fEventBuildTimeout);
         }
 
-        if (missing_inp >= 0) {
+        if (missing_inp >= 0)
            msg += dabc::format(" missing data on input %d url: %s,", missing_inp, FindPort(InputName(missing_inp)).Cfg("url").AsStr().c_str());
-        }
+
         msg += " drop all!";
 
         SetInfo(msg, true);
@@ -962,13 +965,10 @@ bool hadaq::CombinerModule::BuildEvent()
 
         DropAllInputBuffers();
 
-        fAllFullDrops++;
-
         if (fExtraDebug && fLastDebugTm.Expired(1.)) {
            DOUT1("Drop all buffers");
            fLastDebugTm.GetNow();
         }
-        fLastDropTm.GetNow();
 
         return false; // retry on next set of buffers
      }
@@ -1330,8 +1330,6 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
    } else if (cmd.IsName("HCMD_DropAllBuffers")) {
 
       DropAllInputBuffers();
-      fAllFullDrops++;
-      fLastDropTm.GetNow();
 
       if (fBNETsend && !fIsTerminating) {
          for (unsigned n = 0; n < NumInputs(); n++) {
