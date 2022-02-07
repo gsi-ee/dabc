@@ -131,6 +131,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fLostEventRateName = "HadaqLostEvents";
    fDataDroppedRateName = "HadaqDroppedData";
    fInfoName = "HadaqInfo";
+   fProblemName = "HadaqProblem";
+   fCheckBNETProblems = chkNone;
 
    CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar(fEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
@@ -156,6 +158,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    }
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
+   CreatePar(fProblemName, "info").SetSynchron(true, 2., false).SetDebugLevel(0);
 
    if (IsName("Combiner"))
       PublishPars("$CONTEXT$/HadaqCombiner");
@@ -295,8 +298,12 @@ void hadaq::CombinerModule::BeforeModuleStart()
    DOUT0(info.c_str());
    fLastDropTm.GetNow();
 
-   fLastProcTm.GetNow();
-   fLastBuildTm.GetNow();
+   fLastProcTm = fLastDropTm;
+   fLastBuildTm = fLastDropTm;
+
+   // activate BNET checks
+   if (fBNETsend)
+      fCheckBNETProblems = chkActive;
 
    // direct addon pointers can be used for terminal printout
    for (unsigned ninp=0;ninp<fCfg.size();ninp++) {
@@ -809,7 +816,11 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
    DOUT0("DropAllInputBuffers()...");
 
    fLastDropTm.GetNow();
+   fLastBuildTm = fLastDropTm;
    fAllFullDrops++;
+
+   if (fBNETsend)
+      fCheckBNETProblems = chkActive; // activate testing again
 
    unsigned maxnumsubev(0), droppeddata(0);
 
@@ -935,6 +946,22 @@ bool hadaq::CombinerModule::BuildEvent()
    int diff = incomplete_data ? 0 : CalcTrigNumDiff(mineventid, maxeventid);
 
 //   DOUT0("Min:%8u Max:%8u diff:%5d", mineventid, maxeventid, diff);
+
+   // check potential error
+
+   if (((fCheckBNETProblems == chkActive) || (fCheckBNETProblems == chkOk)) && (fEventBuildTimeout > 0.) && fLastBuildTm.Expired(fEventBuildTimeout*0.5)) {
+
+      std::string errmsg;
+
+      if (missing_inp >= 0)
+         errmsg = "no_data_" + std::to_string(missing_inp); // no data at input
+      else
+         errmsg = dabc::format("blocked_") + std::to_string(min_inp); // input with minimal event id, show event diff
+
+      dabc::InfoParameter par = Par(fProblemName);
+      par.SetValue(errmsg);
+      fCheckBNETProblems = chkError; // detect error, next time will check after drop all buffers
+   }
 
    ///////////////////////////////////////////////////////////////////////////////
    // check too large triggertag difference on input channels or very long delay in building,
@@ -1213,6 +1240,13 @@ bool hadaq::CombinerModule::BuildEvent()
       fAllRecvBytes += currentbytes;
       fDataRateCnt += currentbytes;
       // Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
+
+      if ((fCheckBNETProblems == chkActive) || (fCheckBNETProblems == chkError)) {
+
+         dabc::InfoParameter par = Par(fProblemName);
+         par.SetValue("");
+         fCheckBNETProblems = chkOk; // no problems, event build normally, now wait for error, timeout relative to build time
+      }
 
       fLastBuildTm.GetNow();
    } else {

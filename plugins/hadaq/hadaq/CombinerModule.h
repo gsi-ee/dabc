@@ -88,7 +88,6 @@ namespace hadaq {
          uint64_t    fHubPrevSize{0}; ///< last size
          int         fHubSizeTmCnt{0}; ///< count how many time data was the same
 
-
          InputCfg()
          {
             for (int i=0;i<HADAQ_RINGSIZE;i++)
@@ -201,6 +200,9 @@ namespace hadaq {
          std::string        fEventRateName;
          std::string        fLostEventRateName;
          std::string        fInfoName;
+         std::string        fProblemName;
+
+         enum { chkNone, chkActive, chkError, chkOk } fCheckBNETProblems{chkNone}; ///< check BNET input problems
 
          uint64_t           fDataRateCnt;
          uint64_t           fDataDroppedRateCnt;
