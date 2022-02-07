@@ -77,10 +77,12 @@ void http::Civetweb::OnThreadAssigned()
    options[op++] = "num_threads";
    options[op++] = sthrds.c_str();
 
+#ifndef NO_SSL
    if (!fSslCertif.empty()) {
       options[op++] = "ssl_certificate";
       options[op++] = fSslCertif.c_str(); // "ssl_cert.pem";
    }
+#endif
 
    if (!fAuthFile.empty() && !fAuthDomain.empty()) {
       options[op++] = "global_auth_file";
