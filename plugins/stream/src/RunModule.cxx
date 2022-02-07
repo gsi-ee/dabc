@@ -605,8 +605,8 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
    folder.SetField("EventsCount", (int64_t) fTotalEvnts);
    folder.SetField("StoreInfo", fProcMgr->GetStoreInfo());
 
-   for (unsigned n=0;n<hld->NumberOfTRB();n++) {
-      hadaq::TrbProcessor* trb = hld->GetTRB(n);
+   for (unsigned n = 0; n < hld->NumberOfTRB(); n++) {
+      hadaq::TrbProcessor *trb = hld->GetTRB(n);
       if (!trb) continue;
 
       dabc::Hierarchy item = folder.CreateHChild(trb->GetName());

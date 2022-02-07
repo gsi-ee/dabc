@@ -222,7 +222,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
                                                 std::string *res_state, std::vector<std::string> *res_msgs,
                                                 bool acknowledge_quality)
 {
-   if (item.null() || (trb==0)) return;
+   if (item.null() || !trb) return;
 
    item.SetField("trb", trb->GetID());
 
@@ -231,12 +231,12 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
    std::vector<double> tdc_quality;
    std::vector<std::string> status;
 
-   double p0(0), p1(1), worse_quality(1), worse_progress(1e10);
-   bool ready(true), explicitmode(true), is_any_progress(false);
+   double p0 = 0, p1 = 1, worse_quality = 1, worse_progress = 1e10;
+   bool ready = true, explicitmode = true, is_any_progress = false;
    std::string worse_status = "Ready"; // overall status from all TDCs
 
    for (unsigned n=0;n<trb->NumberOfTDC();n++) {
-      hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
+      hadaq::TdcProcessor *tdc = trb->GetTDCWithIndex(n);
 
       if (tdc) {
 
@@ -334,6 +334,14 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
       if (res_progress) *res_progress = (int) (fabs(worse_progress)*100);
       if (res_quality) *res_quality = worse_quality;
       if (res_state) *res_state = worse_status;
+   }
+}
+
+void stream::TdcCalibrationModule::CheckTransferQuality()
+{
+   if ((fNumBufProcessed > 10) && (fNumBufSkiped > 10) && (fNumBufSkiped > 0.1 * fNumBufProcessed) && (fQuality > 0.1)) {
+      fQuality = 0.1;
+      fState = "Cal_data_drop";
    }
 }
 
@@ -468,7 +476,8 @@ bool stream::TdcCalibrationModule::retransmit()
                   while (iter0.NextSubEvent()) {
                      if (iter0.subevnt()->GetPaddedSize() > iter0.rawdata_maxsize()) {
                         EOUT("Creating TDCs HUB %u Wrong subevent header len %u maximal %u - SKIP BUFFER", fTrbProc->GetID(), iter0.subevnt()->GetPaddedSize(), iter0.rawdata_maxsize());
-                        return true; // SKIP BUFFER !!!!
+                        fNumBufSkiped++;
+                        return true;
                      }
 
                      fTrbProc->CollectMissingTDCs((hadaqs::RawSubevent *)iter0.subevnt(), ids);
@@ -512,7 +521,7 @@ bool stream::TdcCalibrationModule::retransmit()
             // from here starts transformation of the data
 
             unsigned char* tgt = nullptr;
-            unsigned tgtlen(0), reslen(0);
+            unsigned tgtlen = 0, reslen = 0;
             dabc::Buffer resbuf;
             if (!fReplace) {
                resbuf = TakeBuffer();
@@ -530,12 +539,14 @@ bool stream::TdcCalibrationModule::retransmit()
 
                   if (iter.subevnt()->GetPaddedSize() > iter.rawdata_maxsize()) {
                      EOUT("TransferData HUB %u Wrong subevent header len %u maximal %u - SKIP BUFFER", fTrbProc->GetID(), iter.subevnt()->GetPaddedSize(), iter.rawdata_maxsize());
-                     return true; // SKIP BUFFER !!!!
+                     fNumBufSkiped++;
+                     return true;
                   }
 
                   if (tgt && (tgtlen - reslen < iter.subevnt()->GetPaddedSize())) {
                      EOUT("Not enough space for subevent sz %u in output buffer sz %u seg0 %u filled %u remains in src %u - SKIP BUFFER", iter.subevnt()->GetPaddedSize(), resbuf.GetTotalSize(), tgtlen, reslen, iter.remained_size());
-                     return true; // SKIP BUFFER !!!!
+                     fNumBufSkiped++;
+                     return true;
                   }
 
                   unsigned sublen = 0;
@@ -550,7 +561,8 @@ bool stream::TdcCalibrationModule::retransmit()
 
                      if ((sub->Alignment()!=4) || !sub->IsSwapped()) {
                         EOUT("UNEXPECTED TRB DATA FORMAT align %u swap %s - SKIP BUFFER", sub->Alignment(), DBOOL(sub->IsSwapped()));
-                        return true; // SKIP BUFFER !!!!
+                        fNumBufSkiped++;
+                        return true;
                      }
 
                      sublen = fTrbProc->TransformSubEvent(sub, tgt, tgtlen - reslen, (fAutoTdcMode==0), fRecheckTdcs ? &newids : nullptr);
@@ -599,6 +611,8 @@ bool stream::TdcCalibrationModule::retransmit()
 
                SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages);
 
+               CheckTransferQuality();
+
                // DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
 
                // if (fProgress>0) fState = "Ready";
@@ -606,12 +620,13 @@ bool stream::TdcCalibrationModule::retransmit()
          } else if (buf.GetTypeId() != dabc::mbt_EOF) {
 
             EOUT("Error buffer type!!! %d - SKIP BUFFER", buf.GetTypeId());
-
-            return true; // SKIP BUFFER !!!!
+            fNumBufSkiped++;
+            return true;
          }
       }
 
       Send(buf);
+      fNumBufProcessed++;
 
       return true;
    }
@@ -625,6 +640,9 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
    if (fOwnProcMgr && fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
 
    if (cmd.IsName("ResetTransportStat")) {
+      fNumBufProcessed = 0;
+      fNumBufSkiped = 0;
+
       if (fTrbProc)
          fTrbProc->ClearDAQHistos();
       // redirect command to real transport
@@ -641,6 +659,8 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       fEnableProgressUpdate = true;
 
       SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages, true);
+
+      CheckTransferQuality();
 
       RecordTRBStatus(true, logitem);
 
@@ -717,6 +737,8 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       fLogMessages.push_back(msg);
 
       SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages);
+
+      CheckTransferQuality();
 
       RecordTRBStatus(true, logitem);
 

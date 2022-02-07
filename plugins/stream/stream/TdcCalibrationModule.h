@@ -83,6 +83,8 @@ namespace stream {
       int fWarningCnt{0};                     ///< counter for warnings
       int fTotStatLimit{0};                   ///< limit for ToT statistic
       double fTotRMSLimit{0};                 ///< limit for ToT RMS calibration
+      int fNumBufProcessed{0};                ///< total number of processed buffers
+      int fNumBufSkiped{0};                   ///< total number of skiped buffers
 
       // dabc::Profiler fProfiler;               ///< profiler of build event performance
 
@@ -95,6 +97,8 @@ namespace stream {
       bool MatchTdcId(uint32_t tdcid);
 
       bool RecordTRBStatus(bool do_store, dabc::Hierarchy &logitem);
+
+      void CheckTransferQuality();
 
    public:
 
