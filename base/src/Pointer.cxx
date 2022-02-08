@@ -112,7 +112,7 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const void *src, BufferSize_t sz)
    if (!src) return 0;
 
    if (sz > fullsize()) {
-      EOUT("target pointer has no so much memory %lu", sz);
+      EOUT("target pointer has no so much memory %lu", (long unsigned) sz);
       sz = fullsize();
    }
 

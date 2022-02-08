@@ -89,7 +89,7 @@ bool dabc::InstallSignalHandlers()
 
    DABC_SigThrd = dabc::PosixThread::Self();
 
-   if (signal(SIGINT, DABC_GLOBAL_CtrlCHandler)==SIG_ERR) { 
+   if (signal(SIGINT, DABC_GLOBAL_CtrlCHandler)==SIG_ERR) {
       printf("Cannot change handler for SIGINT\n");
       return false;
    }
@@ -141,7 +141,7 @@ bool dabc::ConnectDabcNode(const std::string &nodeaddr)
 
    std::string fullname = MakeNodeName(nodeaddr);
    if (fullname.empty()) {
-      EOUT("Wrong address format %d", nodeaddr.c_str());
+      EOUT("Wrong address format %s", nodeaddr.c_str());
       return false;
    }
 
@@ -165,7 +165,7 @@ dabc::Hierarchy dabc::GetNodeHierarchy(const std::string &nodeaddr)
 
    std::string fullname = MakeNodeName(nodeaddr);
    if (fullname.empty()) {
-      EOUT("Wrong address format %d", nodeaddr.c_str());
+      EOUT("Wrong address format %s", nodeaddr.c_str());
       return res;
    }
 

@@ -752,7 +752,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    if (kind == kindGetlog) {
 
       if (logfile.empty())
-        logcmd = dabc::format("echo no logfile on node id %u  host %u", id, hostname.c_str());
+        logcmd = dabc::format("echo no logfile on node id %u  host %s", id, hostname.c_str());
      else {
 
         addcopycmd = true;

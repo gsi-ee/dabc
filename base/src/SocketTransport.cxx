@@ -174,8 +174,8 @@ do_compl:
       NetworkTransport::NetworkHeader* nethdr = (NetworkTransport::NetworkHeader*) rec->header;
 
       if (nethdr->typid == dabc::mbt_EOL) {
-         DOUT1("Receive buffer with EOL bufsize = %u resthdr = %u",
-                 nethdr->size, tr->GetFullHeaderSize() - sizeof(NetworkTransport::NetworkHeader));
+         DOUT1("Receive buffer with EOL bufsize = %u resthdr = %lu",
+                 nethdr->size, (long unsigned) (tr->GetFullHeaderSize() - sizeof(NetworkTransport::NetworkHeader)));
       }
 
       if (nethdr->kind & NetworkTransport::netot_HdrSend) {

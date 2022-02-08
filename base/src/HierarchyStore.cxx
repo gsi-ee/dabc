@@ -201,15 +201,15 @@ bool dabc::HierarchyStore::WriteExtractedData()
 
 dabc::HierarchyReading::HierarchyReading() :
    fBasePath(),
-   fIO(0)
+   fIO(nullptr)
 {
 }
 
 dabc::HierarchyReading::~HierarchyReading()
 {
-   if (fIO!=0) {
+   if (fIO) {
       delete fIO;
-      fIO = 0;
+      fIO = nullptr;
    }
 }
 
@@ -309,7 +309,7 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string &
 
       dabc::DateTime mindt(files.front()), maxdt(files.back());
 
-      DOUT0("DIR: %s mintm: %s maxtm: %s files %u", dirname.c_str(), mindt.AsJSString().c_str(), maxdt.AsJSString().c_str(), files.size());
+      DOUT0("DIR: %s mintm: %s maxtm: %s files %lu", dirname.c_str(), mindt.AsJSString().c_str(), maxdt.AsJSString().c_str(), (long unsigned) files.size());
 
       h.SetField("dabc:path", dirname);
       h.SetField("dabc:mindt", mindt);

@@ -954,7 +954,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
            DOUT4("Device %s of class %s already exists", devname.c_str(), classname.c_str());
            cmd_res = cmd_true;
         } else {
-           EOUT("Device %s has other class name %s than requested", devname.c_str(), dev.ClassName(), classname.c_str());
+           EOUT("Device %s has other class name %s than requested %s", devname.c_str(), dev.ClassName(), classname.c_str());
         }
       } else {
          FOR_EACH_FACTORY(

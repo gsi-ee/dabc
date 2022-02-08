@@ -1063,7 +1063,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
 
    if (itemid>0) {
       if (itemid>=fWorkers.size()) {
-         EOUT("Thrd:%p %s FALSE worker id:%u size:%u evnt:%s - ignore", this, GetName(), itemid, fWorkers.size(), evnt.asstring().c_str());
+         EOUT("Thrd:%p %s FALSE worker id:%u size:%lu evnt:%s - ignore", this, GetName(), itemid, (long unsigned) fWorkers.size(), evnt.asstring().c_str());
          return;
       }
 
@@ -1374,7 +1374,7 @@ void dabc::Thread::Print(int lvl)
 
    LockGuard guard(ThreadMutex());
 
-   dabc::lgr()->Debug(lvl, "file", 1, "func", dabc::format("   Workers vector size: %u", fWorkers.size()).c_str());
+   dabc::lgr()->Debug(lvl, "file", 1, "func", dabc::format("   Workers vector size: %lu", (long unsigned) fWorkers.size()).c_str());
 
    for (unsigned n=1;n<fWorkers.size();n++) {
       Worker* work = fWorkers[n]->work;

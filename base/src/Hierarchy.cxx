@@ -259,7 +259,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
             break;
       }
 
-      DOUT2("STORE %20s num_childs %u  store %6s  namesv %u nodevers %u childsvers %u", GetName(), NumChilds(), DBOOL(store_childs), fNamesVersion, fNodeVersion, fChildsVersion);
+      DOUT2("STORE %20s num_childs %u  store %6s  namesv %lu nodevers %lu childsvers %lu", GetName(), NumChilds(), DBOOL(store_childs), (long unsigned)fNamesVersion, (long unsigned)fNodeVersion, (long unsigned) fChildsVersion);
 
       uint64_t mask = (store_fields ? maskFieldsStored : 0) |
                       (store_childs ? maskChildsStored : 0) |

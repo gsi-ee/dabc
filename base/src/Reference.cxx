@@ -44,7 +44,7 @@ void dabc::Reference::SetObject(Object* obj, bool withmutex)
    if (obj->IncReference(withmutex))
       fObj = obj;
    else
-      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p"), DNAME(obj) );
+      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p", obj), obj->GetName() );
 }
 
 void dabc::Reference::Assign(const Reference& src)
