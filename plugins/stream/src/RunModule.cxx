@@ -131,7 +131,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
       }
 
       fInitFunc = dabc::Factory::FindSymbol("stream_engine");
-      if (fInitFunc==0) {
+      if (!fInitFunc) {
          EOUT("Fail to find stream_engine function in librunstream.so library");
          dabc::mgr.StopApplication();
          return;
@@ -200,6 +200,10 @@ void stream::RunModule::OnThreadAssigned()
       fProcMgr = new DabcProcMgr;
       fProcMgr->SetDefaultFill(fDefaultFill);
       fProcMgr->SetTop(fWorkerHierarchy, fParallel==0);
+
+      std::string src = "Source: ";
+      src += FindPort(InputName(0)).Cfg("url").AsStr();
+      fProcMgr->AddRunLog(src.c_str());
 
       func();
 
