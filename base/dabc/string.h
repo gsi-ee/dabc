@@ -20,8 +20,16 @@
 
 namespace dabc {
 
-   extern std::string format(const char *fmt, ...);
-   extern void formats(std::string& sbuf, const char *fmt, ...);
+   extern std::string format(const char *fmt, ...)
+   #if defined(__GNUC__) && !defined(__CINT__)
+    __attribute__((format(printf, 1, 2)))
+   #endif
+   ;
+   extern void formats(std::string& sbuf, const char *fmt, ...)
+   #if defined(__GNUC__) && !defined(__CINT__)
+     __attribute__((format(printf, 2, 3)))
+   #endif
+   ;
 
    /** \brief Convert size to string of form like 4.2 GB or 3.7 MB
     *
