@@ -118,7 +118,7 @@ unsigned user::Input::Read_Complete (dabc::Buffer& buf)
 
   if(!iter.FinishSubEvent(subsize))
   {
-    EOUT("user::Input() could not finish subevent with size:%d\n",subsize);
+    EOUT("user::Input() could not finish subevent with size:%ld\n", (long) subsize);
     return dabc::di_Error;
   }
   if(!iter.FinishEvent())
@@ -131,8 +131,8 @@ unsigned user::Input::Read_Complete (dabc::Buffer& buf)
    {
       if(fNumEvents % 10000 ==0)
       {
-         DOUT0 ("UserReadout has send %d events to input, last size:%d, return value:%d, total buffers size:%d\n",
-                 fNumEvents, subsize,res, buf.GetTotalSize());
+         DOUT0("UserReadout has send %d events to input, last size:%ld, return value:%d, total buffers size:%d\n",
+                 fNumEvents, (long) subsize,res, buf.GetTotalSize());
       }
    }
   fNumEvents++;
