@@ -1487,7 +1487,7 @@ void hadaq::CombinerModule::StoreRunInfoStart()
       fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
       fclose(fp);
    }
-   DOUT1("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime);
+   DOUT1("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), (long unsigned) fRunNumber, fEBId, filename.c_str(), ltime);
 
 }
 
@@ -1518,7 +1518,7 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
       fprintf(fp, "%s\n", Unit(fRunRecvBytes));
       fclose(fp);
    }
-   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fRunBuildEvents),Unit(fRunRecvBytes));
+   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), (long unsigned) fRunNumber, fEBId, filename.c_str(), ltime, Unit(fRunBuildEvents),Unit(fRunRecvBytes));
 
 }
 

@@ -173,7 +173,7 @@ bool hadaq::NewAddon::ReadUdp()
       std::string errmsg;
 
       if (res != msgsize) {
-         errmsg = dabc::format("Send buffer %d differ from message size %d - ignore it", res, msgsize);
+         errmsg = dabc::format("Send buffer %ld differ from message size %d - ignore it", (long) res, msgsize);
       } else
       if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32) != 0) {
          fTotalDiscard32Packet++;
@@ -183,7 +183,7 @@ bool hadaq::NewAddon::ReadUdp()
       if (!errmsg.empty()) {
          DOUT3("UDP:%d %s", fNPort, errmsg.c_str());
          if (fDebug && (dabc::lgr()->GetDebugLevel()>2)) {
-            errmsg = dabc::format("   Packet length %d", res);
+            errmsg = dabc::format("   Packet length %ld", (long) res);
             uint32_t* ptr = (uint32_t*) hadTu;
             for (unsigned n=0;n<res/4;n++) {
                if (n%8 == 0) {
