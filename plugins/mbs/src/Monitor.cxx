@@ -1343,7 +1343,7 @@ void mbs::DaqRemCmdWorker::ProcessNextMbsCommand()
 
    std::string mbscmd = fCmds.Front().GetStr("cmd");
    if (mbscmd.length() >= sizeof(fSendBuf.c_cmd)-1) {
-      EOUT("Send command too long %u", mbscmd.length());
+      EOUT("Send command too long %ld", (long) mbscmd.length());
       fCmds.Pop().Reply(dabc::cmd_false);
       ProcessNextMbsCommand();
       return;
@@ -1516,7 +1516,7 @@ void mbs::PrompterWorker::ProcessNextMbsCommand()
 
    std::string mbscmd = fCmds.Front().GetStr("cmd");
    if (mbscmd.length() >= sizeof(fSendBuf) - fPrefix.length()) {
-      EOUT("Send command too long %u", mbscmd.length());
+      EOUT("Send command too long %ld", (long) mbscmd.length());
       fCmds.Pop().ReplyBool(false);
       ProcessNextMbsCommand();
       return;

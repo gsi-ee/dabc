@@ -497,7 +497,7 @@ bool mbs::CombinerModule::BuildEvent()
       }
 
       if (!fOut.IsPlaceForEvent(subeventssize)) {
-         EOUT("Event size %u too big for buffer, skip event %u completely", subeventssize+ sizeof(mbs::EventHeader), buildevid);
+         EOUT("Event size %lu too big for buffer, skip event %u completely", (long unsigned) (subeventssize + sizeof(mbs::EventHeader)), buildevid);
       } else {
 
          if (copyMbsHdrId<0) {
