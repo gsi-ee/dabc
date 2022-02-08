@@ -367,7 +367,7 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
             uint16_t evnt = 0;
             if (wc->status != IBV_WC_SUCCESS) {
                evnt = WorkerAddon::evntVerbsError;
-               EOUT("Verbs error %s isrecv %s operid %u", StatusStr(wc->status), DBOOL(wc->opcode & IBV_WC_RECV), wc->wr_id);
+               EOUT("Verbs error %s isrecv %s operid %lu", StatusStr(wc->status), DBOOL(wc->opcode & IBV_WC_RECV), (long unsigned) wc->wr_id);
             }
             else
                if (wc->opcode & IBV_WC_RECV)

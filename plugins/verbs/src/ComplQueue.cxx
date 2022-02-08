@@ -80,8 +80,8 @@ int verbs::ComplQueue::Poll()
    }
 
    if (f_wc.status != IBV_WC_SUCCESS) {
-      EOUT("Completion error=%d %s  wr_id=%llu syndrom 0x%x qpnum=%x src_qp=%x",
-            f_wc.status, GetStrError(f_wc.status), f_wc.wr_id,
+      EOUT("Completion error=%d %s  wr_id=%lu syndrom 0x%x qpnum=%x src_qp=%x",
+            f_wc.status, GetStrError(f_wc.status), (long unsigned) f_wc.wr_id,
             f_wc.vendor_err, f_wc.qp_num, f_wc.src_qp);
       return 2;
    }
