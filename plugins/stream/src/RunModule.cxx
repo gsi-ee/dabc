@@ -152,10 +152,10 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    if (fParallel<=0) {
       CreateTimer("Update", 1.);
 
-      fWorkerHierarchy.CreateHChild("Status");
+      fWorkerHierarchy.CreateHChild("Status").SetField("_hidden", "true");
       fWorkerHierarchy.SetField("_player", "DABC.StreamControl");
 
-      CreatePar("EventsRate").SetRatemeter(false, 3.).SetUnits("Ev");
+      CreatePar("Events").SetRatemeter(false, 3.).SetUnits("Ev");
       CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
 
       dabc::CommandDefinition cmddef = fWorkerHierarchy.CreateHChild("Control/StartRootFile");
@@ -605,7 +605,7 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
 
    dabc::Hierarchy folder = fWorkerHierarchy.FindChild("Status");
 
-   folder.SetField("EventsRate", Par("EventsRate").GetField("value").AsDouble());
+   folder.SetField("EventsRate", Par("Events").GetField("value").AsDouble());
    folder.SetField("EventsCount", (int64_t) fTotalEvnts);
    folder.SetField("StoreInfo", fProcMgr->GetStoreInfo());
 
