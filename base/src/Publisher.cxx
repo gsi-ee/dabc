@@ -166,6 +166,9 @@ double dabc::Publisher::ProcessTimeout(double last_diff)
 {
 //   DOUT0("dabc::Publisher::ProcessTimerEvent");
 
+   // when application terminated - do not try to update any records
+   if (dabc::mgr.IsTerminated()) return -1;
+
    bool is_any_global(false);
    bool rebuild_global = fLocal.GetVersion() > fLastLocalVers;
 /*
