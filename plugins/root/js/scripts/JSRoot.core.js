@@ -467,6 +467,8 @@
             need[indx] = name.substr(5);
          else if (name == "2d")
             need[indx] = "painter";
+         else if ((name == "jq") || (name == "jq2d"))
+            need[indx] = "hierarchy";
          else if (name == "v6")
             need[indx] = "gpad";
          else if (name == "v7")
