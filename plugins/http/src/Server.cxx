@@ -43,7 +43,8 @@ const char* http::Server::GetMimeType(const char* path)
      {".shtm", 5, "text/html"},
      {".shtml", 6, "text/html"},
      {".css", 4, "text/css"},
-     {".js",  3, "application/x-javascript"},
+     {".js", 3, "application/x-javascript"},
+     {".mjs", 4, "text/javascript"},
      {".ico", 4, "image/x-icon"},
      {".jpeg", 5, "image/jpeg"},
      {".svg", 4, "image/svg+xml"},
@@ -80,20 +81,20 @@ const char* http::Server::GetMimeType(const char* path)
      {".avi", 4, "video/x-msvideo"},
      {".bmp", 4, "image/bmp"},
      {".ttf", 4, "application/x-font-ttf"},
-     {NULL,  0, NULL}
+     {nullptr, 0, nullptr}
    };
 
    int path_len = strlen(path);
 
-   for (int i = 0; builtin_mime_types[i].extension != NULL; i++) {
+   for (int i = 0; builtin_mime_types[i].extension != nullptr; i++) {
       if (path_len <= builtin_mime_types[i].ext_len) continue;
       const char* ext = path + (path_len - builtin_mime_types[i].ext_len);
       if (strcmp(ext, builtin_mime_types[i].extension) == 0) {
-        return builtin_mime_types[i].mime_type;
-     }
-  }
+         return builtin_mime_types[i].mime_type;
+      }
+   }
 
-  return "text/plain";
+   return "text/plain";
 }
 
 
@@ -310,7 +311,7 @@ bool http::Server::Process(const char* uri, const char* _query,
          return true;
       }
 
-   if (_query!=0) query = _query;
+   if (_query) query = _query;
 
    if (filename == "execute") {
       if (pathname.empty()) return false;
@@ -435,7 +436,7 @@ bool http::Server::Process(const char* uri, const char* _query,
       }
 
       // TODO: in some cases empty binary may be not an error
-      if (content_bin.null() && (content_str.length()==0)) {
+      if (content_bin.null() && (content_str.length() == 0)) {
          DOUT2("Is empty buffer is error for uri %s ?", uri);
          return false;
       }
@@ -447,7 +448,7 @@ bool http::Server::Process(const char* uri, const char* _query,
 #else
 
       unsigned long objlen = 0;
-      Bytef* objptr = 0;
+      Bytef* objptr = nullptr;
 
       if (!content_bin.null()) {
          objlen = content_bin.GetTotalSize();
