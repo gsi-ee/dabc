@@ -377,7 +377,7 @@ namespace dabc {
          /** Executes command in specified worker. Call allowed only from worker thread (therefore method protected).
           * Makes it easy to recognize caller thread and keep its event loop running.
           * Equivalent to dest->Execute(cmd). */
-         bool ExecuteIn(Worker* dest, Command cmd);
+         // bool ExecuteIn(Worker* dest, Command cmd);
 
          void CancelCommands();
 

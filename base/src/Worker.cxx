@@ -25,7 +25,7 @@
 #include "dabc/defines.h"
 
 dabc::WorkerAddon::WorkerAddon(const std::string &name) :
-   Object(0, name),
+   Object(nullptr, name),
    fWorker()
 {
    SetFlag(flAutoDestroy, true);
@@ -863,7 +863,8 @@ bool dabc::Worker::ReplyCommand(Command cmd)
  *  Method let thread event loop running.
  */
 
-bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
+/*
+bool dabc::Worker::ExecuteIn(dabc::Worker *dest, dabc::Command cmd)
 {
    // this is pointer of thread from which command is called
    ThreadRef thrd = thread();
@@ -873,6 +874,7 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
 
    return thrd()->RunCommandInTheThread(this, dest, cmd) > 0;
 }
+*/
 
 bool dabc::Worker::Execute(Command cmd, double tmout)
 {

@@ -514,9 +514,9 @@ void dabc::Thread::RunEventLoop(double tm)
 }
 
 
-int dabc::Thread::RunCommandInTheThread(Worker* caller, Worker* dest, Command cmd)
+int dabc::Thread::RunCommandInTheThread(Worker *caller, Worker *dest, Command cmd)
 {
-   if (cmd.null() || (dest==0)) {
+   if (cmd.null() || !dest) {
       cmd.ReplyFalse();
       return dabc::cmd_false;
    }
@@ -528,7 +528,7 @@ int dabc::Thread::RunCommandInTheThread(Worker* caller, Worker* dest, Command cm
       // if destructor is started, we can reject submission of all commands
       if (!_IsNormalState()) return cmd_ignore;
 
-      if (caller==0) caller = fExec;
+      if (!caller) caller = fExec;
    }
 
 
@@ -569,14 +569,14 @@ int dabc::Thread::RunCommandInTheThread(Worker* caller, Worker* dest, Command cm
             // account timeout, whait 0.5 second longer as specified timeout
             double tmout = cmd.TimeTillTimeout(0.5);
 
-            if (tmout==0.) {
+            if (tmout == 0.) {
                res = cmd_timedout;
                break;
             }
 
             DOUT3("ExecuteIn - cmd:%s singleLoop proc %u time %4.1f", cmd.GetName(), caller->fWorkerId, ((tmout<=0) ? 0.1 : tmout));
 
-            if (!SingleLoop(caller->fWorkerId, (tmout<=0) ? 0.1 : tmout)) {
+            if (!SingleLoop(caller->fWorkerId, (tmout <= 0.) ? 0.1 : tmout)) {
                // FIXME: one should cancel command in normal way
                res = cmd_false;
                break;
