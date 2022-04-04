@@ -35,7 +35,6 @@ dabc::WorkerAddon::~WorkerAddon()
 {
 }
 
-
 void dabc::WorkerAddon::ObjectCleanup()
 {
    fWorker.Release();
@@ -63,7 +62,7 @@ bool dabc::WorkerAddon::ActivateTimeout(double tmout_sec)
 {
    dabc::Worker* wrk = (dabc::Worker*) fWorker();
 
-   if (wrk==0) return false;
+   if (!wrk) return false;
 
    LockGuard lock(wrk->fThreadMutex);
 
@@ -106,7 +105,7 @@ dabc::Worker::Worker(Reference parent, const std::string &name) :
 }
 
 
-dabc::Worker::Worker(const ConstructorPair& pair) :
+dabc::Worker::Worker(const ConstructorPair &pair) :
    Object(pair),
    fThread(),
    fAddon(),
@@ -201,7 +200,8 @@ bool dabc::Worker::DestroyByOwnThread()
 
    ThreadRef thrd = thread();
 
-   if (thrd()==0) return false;
+   if (!thrd())
+      return false;
 
    if (IsLogging())
       DOUT0("Worker %p %s ask thread to destroy it ", this, GetName());
@@ -218,7 +218,7 @@ void dabc::Worker::ClearThreadRef()
       LockGuard lock(fThreadMutex);
       ref << fThread;
 
-      fThreadMutex = 0;
+      fThreadMutex = nullptr;
       fWorkerId = 0;
       fWorkerActive = false;
 //      fWorkerFiredEvents = 0;
@@ -305,7 +305,7 @@ bool dabc::Worker::MakeThreadForWorker(const std::string &thrdname)
 
    if (newname.empty()) {
       DOUT2("Thread name not specified - generate default, for a moment - processor name");
-      if (GetName() != 0) newname = GetName();
+      if (GetName()) newname = GetName();
    }
 
    if (newname.empty()) {
@@ -462,7 +462,7 @@ int dabc::Worker::ProcessCommand(Command cmd)
    // one can process such command later
    // synchronous command must be processed immediately
 
-   if ((fWorkerCommandsLevel>0) && !cmd.IsLastCallerSync()) {
+   if ((fWorkerCommandsLevel > 0) && !cmd.IsLastCallerSync()) {
       LockGuard lock(fThreadMutex);
       fWorkerCommands.Push(cmd, CommandsQueue::kindPostponed);
       return cmd_postponed;
@@ -880,7 +880,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
 {
    if (cmd.null()) return false;
 
-   if (tmout>0) cmd.SetTimeout(tmout);
+   if (tmout > 0.) cmd.SetTimeout(tmout);
 
    ThreadRef thrd;
    bool exe_direct(false);
@@ -905,7 +905,8 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
       }
    }
 
-   if (exe_direct) return ProcessCommand(cmd) > 0;
+   if (exe_direct)
+      return ProcessCommand(cmd) > 0;
 
    // if command was called not from the same thread,
    // find handle of caller thread to let run its event loop
@@ -1088,7 +1089,7 @@ bool dabc::Worker::PublishPars(const std::string &path)
    if (fWorkerHierarchy.null())
       fWorkerHierarchy.Create("Worker");
 
-   for (unsigned n=0;n<NumChilds();n++) {
+   for (unsigned n = 0; n < NumChilds(); n++) {
       Parameter par = dynamic_cast<ParameterContainer*> (GetChild(n));
       if (par.null()) continue;
 
@@ -1148,19 +1149,19 @@ bool dabc::WorkerRef::Submit(dabc::Command cmd)
 
 bool dabc::WorkerRef::Execute(Command cmd, double tmout)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
    return GetObject()->Execute(cmd, tmout);
 }
 
 bool dabc::WorkerRef::Execute(const std::string &cmd, double tmout)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
    return GetObject()->Execute(cmd, tmout);
 }
 
 dabc::Parameter dabc::WorkerRef::Par(const std::string &name) const
 {
-   if (GetObject()==0) return dabc::Parameter();
+   if (!GetObject()) return dabc::Parameter();
    return GetObject()->Par(name);
 }
 
@@ -1185,10 +1186,10 @@ bool dabc::WorkerRef::CanSubmitCommand() const
 
 bool dabc::WorkerRef::SyncWorker(double tmout)
 {
-   if (GetObject()==0) return true;
+   if (!GetObject()) return true;
 
    dabc::Command cmd("SyncWorker");
    cmd.SetPriority(dabc::Worker::priorityMinimum);
-   if (tmout>=0) cmd.SetTimeout(tmout);
+   if (tmout >= 0.) cmd.SetTimeout(tmout);
    return Execute(cmd) == cmd_true;
 }
