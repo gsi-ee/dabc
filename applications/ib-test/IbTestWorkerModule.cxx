@@ -2048,9 +2048,9 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    DOUT5("CPU utilization = %5.1f % ", cpu_stat.CPUutil()*100.);
 
    if (numsendpackets!=numcomplsend) {
-      EOUT("Mismatch %d between submitted %ld and completed send operations %ld",numsendpackets-numcomplsend, numsendpackets, numcomplsend);
+      EOUT("Mismatch %ld between submitted %ld and completed send operations %ld",numsendpackets-numcomplsend, numsendpackets, numcomplsend);
 
-      for (int lid=0;lid<NumLids(); lid++)
+      for (int lid = 0; lid < NumLids(); lid++)
         for (int node=0;node<NumNodes();node++) {
           if ((node==Node()) || !fActiveNodes[node]) continue;
           DOUT5("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d recvskp %d", lid, node, RecvQueue(lid,node), SendQueue(lid,node), recvskipcounter(lid, node));

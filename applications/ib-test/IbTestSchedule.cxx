@@ -374,7 +374,7 @@ void IbTestClusterRouting::GenerateFullTopology(int switchsize, bool manylids)
    if (switchsize==0) switchsize=36;
 
    if ((switchsize / 3) * 3 != switchsize) {
-      EOUT("Switch size %d cannot be divided by three therefore half-fat tree cannot be build, use 6 as default");
+      EOUT("Switch size %d cannot be divided by three therefore half-fat tree cannot be build, use 6 as default", switchsize);
       switchsize = 6;
    }
 
@@ -517,7 +517,7 @@ void IbTestClusterRouting::RemoveUndefinedRoutes()
    for (int nn=NumNodes()-1; nn>=0; nn--)
       if (!usage[nn]) ExcludeNode(nn);
 
-   DOUT0("Excluded %d nodes Remained %d %u", nexcluded, NumNodes(), fNodes.size());
+   DOUT0("Excluded %d nodes Remained %d %u", nexcluded, NumNodes(), (unsigned) fNodes.size());
 }
 
 void IbTestClusterRouting::BuildOptimalRoutes()
@@ -641,7 +641,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
 
 
 
-   DOUT0("");
+   DOUT0("%s", "");
    DOUT0("============================================================================");
    DOUT0("Printout of routes summary from single switch");
    DOUT0("  maximum number of routes from single switch is 24x%d x 24 = %d", NumLeafs()-1, 24*(NumLeafs()-1)*24);
@@ -684,7 +684,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
       }
    }
 
-   DOUT0("");
+   DOUT0("%s","");
    DOUT0("============================================================================");
    DOUT0("Printout of routes summary to single switch");
    DOUT0("  maximum number of routes to single switch is 24x%d x 24 = %d", (NumLeafs()-1), 24*(NumLeafs()-1)*24);
@@ -773,7 +773,7 @@ void IbTestClusterRouting::PrintDifferecne(IbTestClusterRouting& other)
 {
    DOUT0("======================");
 
-   DOUT0("Comparation of two routing tables with %d %d nodes", NumNodes(), other.NumNodes());
+   DOUT0("Comparison of two routing tables with %d %d nodes", NumNodes(), other.NumNodes());
 
    if (NumNodes() != other.NumNodes()) {
       EOUT("Number of nodes mismatch");
@@ -1284,7 +1284,7 @@ void IbTestSchedule::FillReceiveSchedule(IbTestSchedule& recv)
                slot2[recv].node = nsend;
                slot2[recv].lid = slot[nsend].lid;
             } else {
-               EOUT("In slot %d more than 1 sender to node ", nslot, recv);
+               EOUT("In slot %d more than 1 sender to node %d", nslot, recv);
             }
          }
    }
@@ -2145,7 +2145,7 @@ bool IbTestSchedule::TryToCompress(IbTestClusterRouting& routing, bool show, dou
       if (!can_move) {
 
          if (global_lst.size()>0) {
-            if (show) DOUT0("Roll back %u operations for slot %d num senders remains %d", global_lst.size(), nslot0, num_senders);
+            if (show) DOUT0("Roll back %u operations for slot %d num senders remains %d", (unsigned) global_lst.size(), nslot0, num_senders);
 //            if (nslot0>835) PrintSlotWithRouting(routing, nslot0);
          }
 
@@ -2513,7 +2513,7 @@ extern "C" void CompareRouting()
    }
 
    if (arr.size()<2) {
-      EOUT("Only %u files in the list", arr.size());
+      EOUT("Only %u files in the list", (unsigned) arr.size());
       return;
    }
 

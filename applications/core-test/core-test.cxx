@@ -230,7 +230,7 @@ class CoreTestApplication : public dabc::Application {
 
          CreatePar(dabc::xmlBufferSize).Dflt(1024);
 
-         DOUT0("Test application was build bufsize = %d", Par(dabc::xmlBufferSize).Value().AsInt());
+         DOUT0("Test application was build bufsize = %d", (int) Par(dabc::xmlBufferSize).Value().AsInt());
       }
 
       bool IsSync()
@@ -937,7 +937,7 @@ extern "C" void RunTimeTest()
    double dist3old = 0.;
    double dist4 = tm6 - tm5;
 
-   DOUT0("Slow Time = sec %d nsec = %ld", tm.tv_sec, tm.tv_nsec);
+   DOUT0("Slow Time = sec %ld nsec = %ld", (long) tm.tv_sec, (long) tm.tv_nsec);
    DOUT0("Interval: slow %6.5f fast %6.5f ", dist1, dist2);
    if ((dist1/dist2 > 1.05) || (dist1/dist2 < 0.95))
       EOUT("Too big difference between slow and fast time measurement");

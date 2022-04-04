@@ -69,7 +69,7 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       std::vector<std::string> gosipres;
       std::vector<std::string> gosiplog;
 
-      DOUT2("*** CmdGosip len %u ****", gosipcmd.size());
+      DOUT2("*** CmdGosip len %u ****", (unsigned) gosipcmd.size());
       for (unsigned n=0;n<gosipcmd.size();n++) {
 
          std::string currcmd = gosipcmd[n];
