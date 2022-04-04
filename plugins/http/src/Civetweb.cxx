@@ -129,7 +129,11 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn, void* )
    std::string filename;
 
    if (server->IsFileRequested(request_info->local_uri, filename)) {
-      mg_send_file(conn, filename.c_str());
+      const char *mime_type = http::Server::GetMimeType(filename.c_str());
+      if (mime_type)
+         mg_send_mime_file(conn, filename.c_str(), mime_type);
+      else
+         mg_send_file(conn, filename.c_str());
       return 1;
    }
 
