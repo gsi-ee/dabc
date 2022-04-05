@@ -10,7 +10,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
    const DABC = {};
 
-   DABC.version = "2.11.0 20/01/2022";
+   DABC.version = "2.11.x 4/04/2022";
 
    DABC.source_dir = "";
 
@@ -985,7 +985,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
 
    DABC.ExtractSeries = function(name, kind, obj, history) {
 
-      let ExtractField = function(node) {
+      const extractField = node => {
          if (!node || !(name in node)) return null;
 
          if (kind=="number") return Number(node[name]);
@@ -994,20 +994,20 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
             return d.getTime() / 1000.;
          }
          return node[name];
-      }
+      };
 
       // xml node must have attribute, which will be extracted
-      let val = ExtractField(obj);
+      let val = extractField(obj);
       if (val==null) return null;
 
       let arr = [];
       arr.push(val);
 
       if (history!=null)
-         for (let n=history.length-1;n>=0;n--) {
+         for (let n = history.length-1; n >= 0; n--) {
             // in any case stop iterating when see property delete
             if ("dabc:del" in history[n]) break;
-            let newval = ExtractField(history[n]);
+            let newval = extractField(history[n]);
             if (newval!=null) val = newval;
             arr.push(val);
          }
@@ -1016,7 +1016,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       return arr;
    }
 
-   function MakeItemRequest(h, item, fullpath, option) {
+   function makeItemRequest(h, item, fullpath, option) {
       item.fullitemname = fullpath;
       if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0";
       if (!('hlimit' in item)) item.hlimit = 100;
@@ -1026,7 +1026,7 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       return url;
    }
 
-   function AfterItemRequest(h, item, obj, option) {
+   function afterItemRequest(h, item, obj, option) {
       if (!obj) return;
 
       if (!('_history' in item) || (option=="gauge") || (option=='last')) {
@@ -1485,8 +1485,8 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       func: "<dummy>",
       opt: "line;gauge",
       monitor: 'always',
-      make_request: MakeItemRequest,
-      after_request: AfterItemRequest
+      make_request: makeItemRequest,
+      after_request: afterItemRequest
    });
 
    jsrp.addDrawFunc({
@@ -1495,15 +1495,15 @@ JSROOT.define(["painter", "hist"], (jsrp) => {
       func: DABC.DrawLog,
       opt: "log;last",
       monitor: 'always',
-      make_request: MakeItemRequest,
-      after_request: AfterItemRequest
+      make_request: makeItemRequest,
+      after_request: afterItemRequest
    });
 
    jsrp.addDrawFunc({
       name: "kind:DABC.Command",
       icon: DABC.source_dir + "../img/dabc.png",
-      make_request: MakeItemRequest,
-      after_request: AfterItemRequest,
+      make_request: makeItemRequest,
+      after_request: afterItemRequest,
       opt: "command",
       prereq: 'jq',
       monitor: 'never',
