@@ -3,12 +3,12 @@ cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 project(DABC)
 
 #---Set paths where to put the libraries, executables and headers------------------------------
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
 #--- where to search for cmake modules ----
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
 #--- Load some basic macros ---
 include(DabcBuildOptions)
@@ -27,3 +27,9 @@ get_property(__allHeaders GLOBAL PROPERTY DABC_HEADER_TARGETS)
 add_custom_target(move_headers ALL DEPENDS ${__allHeaders})
 
 DABC_SHOW_ENABLED_OPTIONS()
+
+install(TARGETS DabcBase DabcHadaq DabcMbs EXPORT dabcTargets)
+install(EXPORT dabcTargets
+        FILE dabcTargets.cmake
+        NAMESPACE dabc::
+        DESTINATION ${PROJECT_BINARY_DIR})

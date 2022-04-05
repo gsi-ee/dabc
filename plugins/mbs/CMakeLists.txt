@@ -10,4 +10,4 @@ DABC_EXECUTABLE(mbscmd
                 SOURCES utils/mbscmd.cxx
                 LIBRARIES DabcBase DabcMbs)
 
-file(COPY htm app DESTINATION ${CMAKE_BINARY_DIR}/plugins/mbs)
+file(COPY htm app DESTINATION ${PROJECT_BINARY_DIR}/plugins/mbs)
