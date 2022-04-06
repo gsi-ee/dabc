@@ -142,7 +142,7 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
 
    DOUT1("HTTPSYS = %s", fHttpSys.c_str());
 
-   fAutoLoad = Cfg("AutoLoad", cmd).AsStr("httpsys/scripts/dabc.js;httpsys/scripts/gauge.js;");
+   fAutoLoad = Cfg("AutoLoad", cmd).AsStr(""); // AsStr("/httpsys/scripts/dabc.js;/httpsys/scripts/gauge.js");
    fTopTitle = Cfg("TopTitle", cmd).AsStr("DABC online server");
    fBrowser = Cfg("Browser", cmd).AsStr("");
    fLayout = Cfg("Layout", cmd).AsStr("");
