@@ -108,13 +108,13 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
    fHttpSys = ".";
 
    const char* dabcsys = std::getenv("DABCSYS");
-   if (dabcsys!=0) {
+   if (dabcsys) {
 
       AddLocation(dabcsys, "dabcsys/");
       AddLocation(dabcsys, "${DABCSYS}/");
       AddLocation(dabc::format("%s/plugins/http", dabcsys), "httpsys/", "dabc_", "/files/");
 
-      fJsRootSys = dabc::format("%s/plugins/root/js", dabcsys);
+      fOwnJsRootSys = fJsRootSys = dabc::format("%s/plugins/root/js", dabcsys);
 
       fHttpSys = dabc::format("%s/plugins/http", dabcsys);
    }
@@ -138,11 +138,13 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
    if (!fJsRootSys.empty()) {
       AddLocation(fJsRootSys, "jsrootsys/", "root_", "/files/");
       DOUT1("JSROOTSYS = %s ", fJsRootSys.c_str());
+      if (fOwnJsRootSys.empty())
+         fOwnJsRootSys = fJsRootSys;
    }
 
    DOUT1("HTTPSYS = %s", fHttpSys.c_str());
 
-   fAutoLoad = Cfg("AutoLoad", cmd).AsStr(""); // AsStr("/httpsys/scripts/dabc.js;/httpsys/scripts/gauge.js");
+   fAutoLoad = Cfg("AutoLoad", cmd).AsStr(""); // AsStr("httpsys/scripts/dabc.js;httpsys/scripts/gauge.js");
    fTopTitle = Cfg("TopTitle", cmd).AsStr("DABC online server");
    fBrowser = Cfg("Browser", cmd).AsStr("");
    fLayout = Cfg("Layout", cmd).AsStr("");
@@ -287,7 +289,7 @@ bool http::Server::Process(const char* uri, const char* _query,
    }
 
    if (filename == "draw.htm") {
-      content_str = fJsRootSys + "/files/draw.htm";
+      content_str = fOwnJsRootSys + "/files/draw.htm";
       content_type = "__file__";
       return true;
    }
@@ -295,7 +297,7 @@ bool http::Server::Process(const char* uri, const char* _query,
    // check that filename starts with some special prefix, in such case redirect it to other location
 
    if (filename.empty() || (filename=="main.htm") || (filename=="index.htm")) {
-      content_str = fJsRootSys + "/files/online.htm";
+      content_str = fOwnJsRootSys + "/files/online.htm";
       content_type = "__file__";
       return true;
    }

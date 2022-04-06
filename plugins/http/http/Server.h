@@ -41,6 +41,7 @@ namespace http {
 
          std::vector<Location> fLocations; ///< different locations known to server
          std::string fHttpSys;      ///< location of http plugin, need to read special files
+         std::string fOwnJsRootSys; ///< location of internal JSROOT code, need to read special files
          std::string fJsRootSys;    ///< location of JSROOT code, need to read special files
          int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
