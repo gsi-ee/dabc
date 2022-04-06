@@ -1,5 +1,7 @@
 // taken from https://gist.github.com/tomerd/1499279
 
+let d3_select = JSROOT?.d3_select ?? d3?.select; // provided by bundle
+
 function Gauge(placeholderName, configuration)
 {
    this.placeholderName = placeholderName;
@@ -33,7 +35,7 @@ function Gauge(placeholderName, configuration)
 
    this.render = function(value)
    {
-      this.body = d3.select("#" + this.placeholderName)
+      this.body = d3_select("#" + this.placeholderName)
                      .append("svg:svg")
                      .attr("class", "gauge")
                      .attr("width", this.config.size)
