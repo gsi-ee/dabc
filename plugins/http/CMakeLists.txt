@@ -66,4 +66,4 @@ DABC_LINK_LIBRARY(DabcHttp
                  DEFINITIONS
                     ${extra_defs})
 
-file(COPY scripts modules jq img example.xml master.xml DESTINATION ${CMAKE_BINARY_DIR}/plugins/http)
+file(COPY scripts jq img example.xml master.xml DESTINATION ${CMAKE_BINARY_DIR}/plugins/http)
