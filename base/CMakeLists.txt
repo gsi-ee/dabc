@@ -18,4 +18,4 @@ DABC_EXECUTABLE(dabc_exe
                 SOURCES run/dabc_exe.cxx
                 LIBRARIES DabcBase)
 
-configure_file(run/dabc_run ${CMAKE_BINARY_DIR}/bin/dabc_run COPYONLY)
+configure_file(run/dabc_run ${PROJECT_BINARY_DIR}/bin/dabc_run COPYONLY)

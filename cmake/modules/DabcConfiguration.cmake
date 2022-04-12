@@ -1,8 +1,8 @@
 set(DABC_VERSION "2.11.0" CACHE STRING "DABC version" FORCE)
 
-set(DABC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include" CACHE STRING "DABC include dir" FORCE)
+set(DABC_INCLUDE_DIR "${PROJECT_BINARY_DIR}/include" CACHE STRING "DABC include dir" FORCE)
 
-set(DABC_LIBRARY_DIR "${CMAKE_BINARY_DIR}/lib" CACHE STRING "DABC include dir" FORCE)
+set(DABC_LIBRARY_DIR "${PROJECT_BINARY_DIR}/lib" CACHE STRING "DABC include dir" FORCE)
 
 set(DABC_LIBRARY "libDabcBase" CACHE STRING "DABC main library" FORCE)
 
@@ -46,22 +46,22 @@ else()
   set(DABC_DEBUGLEVEL 2)
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/DABCConfig.cmake.in
-               ${CMAKE_BINARY_DIR}/DABCConfig.cmake @ONLY NEWLINE_STYLE UNIX)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/DABCConfig.cmake.in
+               ${PROJECT_BINARY_DIR}/DABCConfig.cmake @ONLY NEWLINE_STYLE UNIX)
 
 if(extrachecks)
   set(DABC_EXTRA_CHECKS "#define DABC_EXTRA_CHECKS")
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/defines.h.in
-               ${CMAKE_BINARY_DIR}/include/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/defines.h.in
+               ${PROJECT_BINARY_DIR}/include/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
 
 if(APPLE)
-   configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in
-                  ${CMAKE_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
+   configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in
+                  ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
 else()
-   configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/dabclogin.linux.in
-                  ${CMAKE_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
+   configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.linux.in
+                  ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
 endif()
 
 foreach(lib pthread dl)
@@ -72,9 +72,9 @@ if(NOT APPLE)
    find_library(DABC_RT_LIBRARY rt)
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/modules/DabcMacros.cmake
-               ${CMAKE_BINARY_DIR}/DabcMacros.cmake COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/modules/DabcMacros.cmake
+               ${PROJECT_BINARY_DIR}/DabcMacros.cmake COPYONLY)
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/DABCUseFile.cmake.in
-               ${CMAKE_BINARY_DIR}/DABCUseFile.cmake @ONLY NEWLINE_STYLE UNIX)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/DABCUseFile.cmake.in
+               ${PROJECT_BINARY_DIR}/DABCUseFile.cmake @ONLY NEWLINE_STYLE UNIX)
 

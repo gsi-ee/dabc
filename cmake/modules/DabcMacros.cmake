@@ -21,11 +21,11 @@ function(DABC_INSTALL_HEADERS dir)
   foreach (include_file ${headers})
     string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "" fname ${include_file})
     set (src ${CMAKE_CURRENT_SOURCE_DIR}/${fname})
-    set (dst ${CMAKE_BINARY_DIR}/include/${fname})
+    set (dst ${PROJECT_BINARY_DIR}/include/${fname})
     add_custom_command(
       OUTPUT ${dst}
       COMMAND ${CMAKE_COMMAND} -E copy ${src} ${dst}
-      COMMENT "Copying header ${fname} to ${CMAKE_BINARY_DIR}/include"
+      COMMENT "Copying header ${fname} to ${PROJECT_BINARY_DIR}/include"
       DEPENDS ${src})
     list(APPEND dst_list ${dst})
   endforeach()
