@@ -149,14 +149,14 @@ namespace dabc {
          /** Default state machine command timeout */
          virtual int SMCommandTimeout() const { return 10; }
 
-         virtual void BuildFieldsMap(RecordFieldsMap* cont);
+         void BuildFieldsMap(RecordFieldsMap *cont) override;
 
          /** Timeout used by application to control stop state of modules and brake application */
-         virtual double ProcessTimeout(double);
+         double ProcessTimeout(double) override;
 
       public:
 
-         Application(const char* classname = nullptr);
+         Application(const char *classname = nullptr);
          virtual ~Application();
 
          static const char* StateParName() { return "State"; }
