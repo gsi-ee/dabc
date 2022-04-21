@@ -43,6 +43,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wall -W -Woverloaded-virtual -fsigned-char")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W")
+  set(DABC_CXX_FLAGS "-stdlib=libc++" CACHE STRING "DABC cxx flags" FORCE)
 endif()
 
 

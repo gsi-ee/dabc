@@ -13,6 +13,8 @@ if(ROOT_FOUND)
                             LINKDEF LinkDef.h
                             NOINSTALL)
 
+   message("ROOT LIBS ${ROOT_LIBRARIES}")
+
    DABC_EXECUTABLE(dabc_root
                 SOURCES utils/dabc_root.cxx
                 LIBRARIES DabcBase DabcRoot ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY} ${ROOT_XMLIO_LIBRARY})
