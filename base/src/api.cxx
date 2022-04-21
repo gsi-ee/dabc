@@ -51,7 +51,7 @@ bool dabc::CreateManager(const std::string &name, int cmd_port)
 dabc::Thread_t DABC_SigThrd = 0;
 int DABC_SigCnt = 0;
 
-void DABC_GLOBAL_CtrlCHandler(int number)
+void DABC_GLOBAL_CtrlCHandler(int /* number */)
 {
    if (DABC_SigThrd != dabc::PosixThread::Self()) return;
 
@@ -66,7 +66,7 @@ void DABC_GLOBAL_CtrlCHandler(int number)
    dabc::mgr()->ProcessCtrlCSignal();
 }
 
-void DABC_GLOBAL_SigPipeHandler(int number)
+void DABC_GLOBAL_SigPipeHandler(int /* number */)
 {
  // JAM2018:This was introduced to catch socket signals raised by external plugin libraries like LTSM/TSM client
  // note that DABC sockets have SIGPIPE disabled by default

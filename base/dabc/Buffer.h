@@ -71,22 +71,17 @@ namespace dabc {
       friend class MemoryPool;
 
       protected:
-         unsigned     fTypeId;       ///< buffer type, identifies content of the buffer
+         unsigned     fTypeId{0};       ///< buffer type, identifies content of the buffer
 
-         unsigned     fNumSegments;  ///< number of entries in segments list
-         unsigned     fCapacity;     ///< capacity of segments list
+         unsigned     fNumSegments{0};  ///< number of entries in segments list
+         unsigned     fCapacity{0};     ///< capacity of segments list
 
          Reference    fPool;         ///< reference on the memory pool (or other object, containing memory)
 
-         MemSegment*  fSegm;         ///< array of segments
+         MemSegment*  fSegm{nullptr};         ///< array of segments
 
          BufferContainer() :
-            Object(0, "", flAutoDestroy | flNoMutex),
-            fTypeId(0),
-            fNumSegments(0),
-            fCapacity(0),
-            fPool(),
-            fSegm(0)
+            Object(nullptr, "", flAutoDestroy | flNoMutex)
             {
               #ifdef DABC_EXTRA_CHECKS
                  DebugObject("Buffer", this, 1);

@@ -103,9 +103,9 @@ namespace dabc {
 
          /** Reimplement virtual method of ParameterContainer to block field change if object in non-init state.
           * In some situation change is allowed via fAllowedField  */
-         virtual bool _CanChangeField(const std::string&);
+         bool _CanChangeField(const std::string&) override;
 
-         virtual std::string DefaultFiledName() const;
+         std::string DefaultFiledName() const override;
 
          /** Change state of connection object.
           * State change can be observed by connection manager and
@@ -145,7 +145,7 @@ namespace dabc {
          }
 
       public:
-         virtual const char* ClassName() const { return "ConnectionObject"; }
+         const char* ClassName() const override { return "ConnectionObject"; }
 
          static const char* ObjectName() { return "Connection"; }
 

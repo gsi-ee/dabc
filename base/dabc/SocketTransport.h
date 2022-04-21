@@ -37,22 +37,22 @@ namespace dabc {
 
          typedef Queue<uint32_t> RecIdsQueue;
 
-         char*       fHeaders;
+         char*       fHeaders{nullptr};
          RecIdsQueue fSendQueue;
          RecIdsQueue fRecvQueue;
-         int         fRecvStatus;  ///< 0 - idle, 1 - header, 2 - front buffer from recv queue
-         uint32_t    fRecvRecid;   ///< if of the record, used for data receiving (status != 0)
-         int         fSendStatus;  ///< 0 - idle, 1 - sending
-         uint32_t    fSendRecid;   ///< id of the active send record
+         int         fRecvStatus{0};  ///< 0 - idle, 1 - header, 2 - front buffer from recv queue
+         uint32_t    fRecvRecid{0};   ///< if of the record, used for data receiving (status != 0)
+         int         fSendStatus{0};  ///< 0 - idle, 1 - sending
+         uint32_t    fSendRecid{0};   ///< id of the active send record
 
          std::string fMcastAddr;   ///< mcast address
 
-         virtual long Notify(const std::string&, int);
+         long Notify(const std::string&, int) override;
 
-         virtual void OnSendCompleted();
-         virtual void OnRecvCompleted();
+         void OnSendCompleted() override;
+         void OnRecvCompleted() override;
 
-         virtual void OnSocketError(int msg, const std::string &info);
+         void OnSocketError(int msg, const std::string &info) override;
 
       public:
          SocketNetworkInetrface(int fd, bool datagram = false);
@@ -61,9 +61,9 @@ namespace dabc {
          /** \brief Set mcast address, required to correctly close socket */
          void SetMCastAddr(const std::string addr) { fMcastAddr = addr; }
 
-         virtual void AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue);
-         virtual void SubmitSend(uint32_t recid);
-         virtual void SubmitRecv(uint32_t recid);
+         void AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue) override;
+         void SubmitSend(uint32_t recid) override;
+         void SubmitRecv(uint32_t recid) override;
    };
 }
 

@@ -63,27 +63,21 @@ namespace dabc {
             Worker       *worker{nullptr};      //! pointer on worker, do not use reference while worker will care about correct cleanup
             bool         *exe_ready{nullptr};   //! pointer on variable, which is used to indicate that execution is done
             CallerRec() = default;
-            CallerRec(Worker* w, bool* e) : worker(w), exe_ready(e) {}
-            CallerRec(const CallerRec& src) : worker(src.worker), exe_ready(src.exe_ready) {}
-
-            CallerRec& operator=(CallerRec& src)
-            {
-               worker = src.worker;
-               exe_ready = src.exe_ready;
-               return *this;
-            }
+            CallerRec(Worker *w, bool *e) : worker(w), exe_ready(e) {}
+            CallerRec(const CallerRec &src) : worker(src.worker), exe_ready(src.exe_ready) {}
+            CallerRec &operator=(const CallerRec &src) { worker = src.worker; exe_ready = src.exe_ready; return *this; }
          };
 
          std::list<CallerRec> fCallers;     ///< list of callers
          TimeStamp            fTimeout;     ///< absolute time when timeout will be expired
-         bool                 fCanceled;    ///< indicate if command was canceled ant not need to be executed further
+         bool                 fCanceled{false};    ///< indicate if command was canceled ant not need to be executed further
 
          // make destructor protected that nobody can delete command directly
          CommandContainer(const std::string &name = "Command");
 
          virtual ~CommandContainer();
 
-         virtual const char* ClassName() const { return "Command"; }
+         const char* ClassName() const override { return "Command"; }
    };
 
    /** \brief Represents command with its arguments
@@ -114,7 +108,7 @@ namespace dabc {
 
       protected:
 
-         virtual void CreateRecord(const std::string &name) { SetObject(new CommandContainer(name)); }
+         void CreateRecord(const std::string &name) override { SetObject(new CommandContainer(name)); }
 
       public:
          /** \brief Default constructor, creates empty reference on the command */

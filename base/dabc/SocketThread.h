@@ -55,14 +55,14 @@ namespace dabc {
 
       protected:
 
-         int           fSocket;                 ///< socket handle
-         bool          fDoingInput;             ///< true if input data are expected
-         bool          fDoingOutput;            ///< true if data need to be send
-         int           fIOPriority;             ///< priority of socket I/O events, default 1
-         bool          fDeliverEventsToWorker;  ///< if true, completion events will be delivered to the worker
-         bool          fDeleteWorkerOnClose;    ///< if true, worker will be deleted when socket closed or socket in error
+         int           fSocket{0};                     ///< socket handle
+         bool          fDoingInput{false};             ///< true if input data are expected
+         bool          fDoingOutput{false};            ///< true if data need to be send
+         int           fIOPriority{0};                 ///< priority of socket I/O events, default 1
+         bool          fDeliverEventsToWorker{false};  ///< if true, completion events will be delivered to the worker
+         bool          fDeleteWorkerOnClose{false};    ///< if true, worker will be deleted when socket closed or socket in error
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId &) override;
 
          /** \brief Call method to indicate that object wants to read data from the socket.
           * When it will be possible, worker get evntSocketRead event */
@@ -83,7 +83,6 @@ namespace dabc {
          bool IsDeleteWorkerOnClose() const { return fDeleteWorkerOnClose; }
          void SetDeleteWorkerOnClose(bool on = true) { fDeleteWorkerOnClose = on; }
 
-
       public:
 
          enum ESocketEvents {
@@ -102,8 +101,8 @@ namespace dabc {
          SocketAddon(int fd = -1);
          virtual ~SocketAddon();
 
-         virtual const char* ClassName() const { return "SocketAddon"; }
-         virtual std::string RequiredThrdClass() const { return typeSocketThread; }
+         const char* ClassName() const override { return "SocketAddon"; }
+         std::string RequiredThrdClass() const override { return typeSocketThread; }
 
          inline int Socket() const { return fSocket; }
          inline bool IsSocket() const { return Socket() >= 0; }

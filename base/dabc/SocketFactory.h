@@ -31,17 +31,17 @@ namespace dabc {
       public:
          SocketFactory(const std::string &name) : Factory(name) {}
 
-         virtual Reference CreateObject(const std::string &classname, const std::string &objname, Command cmd);
+         Reference CreateObject(const std::string &classname, const std::string &objname, Command cmd) override;
 
-         virtual Device* CreateDevice(const std::string &classname, const std::string &devname, Command cmd);
+         Device* CreateDevice(const std::string &classname, const std::string &devname, Command cmd) override;
 
-         virtual Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd);
+         Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd) override;
 
-         virtual Module* CreateTransport(const Reference& port, const std::string &typ, Command cmd);
+         Module* CreateTransport(const Reference& port, const std::string &typ, Command cmd) override;
 
       protected:
 
-         virtual void Initialize();
+         void Initialize() override;
 
    };
 

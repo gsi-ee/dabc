@@ -204,17 +204,17 @@ namespace dabc {
 
          void CloseOnError();
 
-         virtual bool StartTransport();
-         virtual bool StopTransport();
+         bool StartTransport() override;
+         bool StopTransport() override;
 
-         virtual void TransportCleanup();
+         void TransportCleanup() override;
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
-         virtual bool ProcessRecv(unsigned port);
-         virtual void ProcessTimerEvent(unsigned);
+         bool ProcessRecv(unsigned port) override;
+         void ProcessTimerEvent(unsigned) override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
       public:
 

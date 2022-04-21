@@ -41,12 +41,12 @@ namespace dabc {
           *  4 - show info for every cpu as ratemeters
           *  8 - show memory usage as ratemeter
           */
-         int             fKind;
+         int             fKind{0};
 
       public:
          CpuInfoModule(const std::string &name, dabc::Command cmd = nullptr, int kind = -1);
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned) override;
    };
 
 }

@@ -40,12 +40,12 @@ namespace dabc {
      // TODO: later ConfigIO should be non-transient reference on configuration class
 
       protected:
-         Configuration* fCfg;           ///< pointer on configuration object
+         Configuration* fCfg{nullptr};           ///< pointer on configuration object
 
-         XMLNodePointer_t fCurrItem;    ///< currently found item
-         XMLNodePointer_t fCurrChld;    ///< selected child in current item
-         bool             fCurrStrict;  ///< must have strict syntax match
-         int              fCgfId;       ///< special ID which can be used ${}# formula
+         XMLNodePointer_t fCurrItem{nullptr};    ///< currently found item
+         XMLNodePointer_t fCurrChld{nullptr};    ///< selected child in current item
+         bool             fCurrStrict{false};  ///< must have strict syntax match
+         int              fCgfId{0};       ///< special ID which can be used ${}# formula
 
          XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char* name);
 

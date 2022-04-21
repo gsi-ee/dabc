@@ -58,20 +58,14 @@ namespace dabc {
             QueueRec() : cmd(), kind(kindNone), id(0) {}
             QueueRec(const Command& _cmd, EKind _kind, uint32_t _id) : cmd(_cmd), kind(_kind), id(_id) {}
             QueueRec(const QueueRec& src) : cmd(src.cmd), kind(src.kind), id(src.id) {}
-            QueueRec& operator=(const QueueRec& src)
-            {
-               cmd = src.cmd;
-               kind = src.kind;
-               id = src.id;
-               return *this;
-            }
+            QueueRec& operator=(const QueueRec& src) { cmd = src.cmd; kind = src.kind; id = src.id; return *this; }
          };
 
          typedef std::list<QueueRec> QueueRecsList;
 
          QueueRecsList     fList;
-         EKind             fKind;
-         uint32_t          fIdCounter;
+         EKind             fKind{kindNone};
+         uint32_t          fIdCounter{0};
 
       public:
          /** Normal constructor */

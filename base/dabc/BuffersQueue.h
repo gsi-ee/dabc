@@ -41,9 +41,9 @@ namespace dabc {
       protected:
          std::vector<dabc::Buffer> vect;
 
-         unsigned front;
-         unsigned tail;
-         unsigned size;
+         unsigned front{0};
+         unsigned tail{0};
+         unsigned size{0};
 
       public:
          BuffersQueue(unsigned capacity) :

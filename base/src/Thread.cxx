@@ -86,17 +86,18 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
       }
 
       /** Just workaround to check if execution is still performed */
-      bool DirtyWorkaround() {
+      bool DirtyWorkaround()
+      {
          if (fWorkerCommandsLevel <= 0) return false;
          fThread.Release();
-         fThreadMutex = 0;
+         fThreadMutex = nullptr;
          return true;
       }
 
 
-      virtual const char* ClassName() const { return "Thread"; }
+      const char* ClassName() const  override { return "Thread"; }
 
-      virtual int ExecuteCommand(Command cmd)
+      int ExecuteCommand(Command cmd) override
       {
          int res = cmd_ignore;
 
@@ -108,7 +109,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          return res;
       }
 
-      virtual bool Find(ConfigIO &cfg)
+      bool Find(ConfigIO &cfg) override
       {
          while (cfg.FindItem(xmlThreadNode)) {
             // DOUT0("Worker found thread node");
@@ -117,11 +118,11 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          return false;
       }
 
-      virtual void BeforeHierarchyScan(Hierarchy& h)
+      void BeforeHierarchyScan(Hierarchy &) override
       {
       }
 
-      virtual double ProcessTimeout(double last_diff)
+      double ProcessTimeout(double) override
       {
          // timeout is used to update published hierarchy
          if (!fPublish || fThread.null()) return -1;

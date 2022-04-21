@@ -35,7 +35,7 @@ namespace dabc {
       friend class ConfigIO;
 
       protected:
-         XMLNodePointer_t    fSelected; // selected context node
+         XMLNodePointer_t    fSelected{nullptr}; // selected context node
 
          std::string         fMgrHost;
          int                 fMgrPort;

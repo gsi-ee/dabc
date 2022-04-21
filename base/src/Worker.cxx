@@ -848,12 +848,12 @@ int dabc::Worker::PreviewCommand(Command cmd)
 }
 
 
-int dabc::Worker::ExecuteCommand(Command cmd)
+int dabc::Worker::ExecuteCommand(Command)
 {
    return cmd_false;
 }
 
-bool dabc::Worker::ReplyCommand(Command cmd)
+bool dabc::Worker::ReplyCommand(Command)
 {
    return true;
 }
