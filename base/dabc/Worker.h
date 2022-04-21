@@ -55,9 +55,9 @@ namespace dabc {
       protected:
          Reference  fWorker;
 
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
-         virtual void ProcessEvent(const EventId&) {}
+         virtual void ProcessEvent(const EventId &) {}
 
          /** This is way to delete worker with addon inclusive */
          void DeleteWorker();
@@ -83,7 +83,7 @@ namespace dabc {
 
       public:
 
-         virtual const char* ClassName() const { return "WorkerAddon"; }
+         const char *ClassName() const override { return "WorkerAddon"; }
 
          virtual std::string RequiredThrdClass() const { return std::string(); }
 
