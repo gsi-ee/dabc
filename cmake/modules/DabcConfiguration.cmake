@@ -37,6 +37,15 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 11)
 endif()
 
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow -Wall -W -Woverloaded-virtual -fsigned-char")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wall -W -Woverloaded-virtual -fsigned-char")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W")
+endif()
+
+
 set(DABC_CXX_STANDARD "${CMAKE_CXX_STANDARD}" CACHE STRING "DABC cxx standard" FORCE)
 
 if(debug)
