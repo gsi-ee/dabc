@@ -44,7 +44,7 @@ dabc::CpuInfoModule::CpuInfoModule(const std::string &name, dabc::Command cmd, i
 //      CreatePar("NumThreads").SetInt(0);
 }
 
-void dabc::CpuInfoModule::ProcessTimerEvent(unsigned timer)
+void dabc::CpuInfoModule::ProcessTimerEvent(unsigned)
 {
    if (!fStat.Measure()) {
       EOUT("Cannot measure CPU statistic");

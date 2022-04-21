@@ -86,10 +86,10 @@ namespace dabc {
          bool          fInsideMainLoop{false};
 
          /** Internal - entrance function for main loop execution. */
-         virtual void DoWorkerMainLoop();
+         void DoWorkerMainLoop() override;
 
          /** Internal - function executed after leaving main loop. */
-         virtual void DoWorkerAfterMainLoop();
+         void DoWorkerAfterMainLoop() override;
 
          /* Internal - central method for blocking functionality.
           * Block main loop and waits for dedicated event.
@@ -107,7 +107,7 @@ namespace dabc {
          int PreviewCommand(Command cmd) override;
 
          /** Internal - central method of events processing */
-         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
+         void ProcessItemEvent(ModuleItem* item, uint16_t evid) override;
 
       protected:
 
@@ -116,7 +116,7 @@ namespace dabc {
          void StopUntilRestart();
 
          /** Internal DABC method. Called when module will be destroyed */
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
          /** Normal constructor */
          ModuleSync(const std::string &name, Command cmd = nullptr);
@@ -195,7 +195,7 @@ namespace dabc {
       public:
 
          /** Returns class name */
-         virtual const char* ClassName() const { return "ModuleSync"; }
+         const char* ClassName() const override { return "ModuleSync"; }
 
    };
 }

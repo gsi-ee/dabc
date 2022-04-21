@@ -500,7 +500,7 @@ void dabc::SocketCommandClient::SendCommand(dabc::Command cmd, bool asreply)
 }
 
 
-double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
+double dabc::SocketCommandClient::ProcessTimeout(double)
 {
    double next_tmout = 1.;
 
@@ -704,7 +704,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
    return dabc::Worker::ExecuteCommand(cmd);
 }
 
-double dabc::SocketCommandChannel::ProcessTimeout(double last_diff)
+double dabc::SocketCommandChannel::ProcessTimeout(double)
 {
    return -1;
 }

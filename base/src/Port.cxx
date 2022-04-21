@@ -194,8 +194,9 @@ bool dabc::Port::SubmitCommandToTransport(Command cmd)
 bool dabc::Port::TryNextReconnect(bool caused_by_error, bool can_disconnect)
 {
 //   if (!caused_by_error) return false;
+   (void) caused_by_error;
 
-   if ((fReconnectPeriod>0) && ((fReconnectLimit < 0) || (fReconnectLimit-- > 0))) return true;
+   if ((fReconnectPeriod > 0) && ((fReconnectLimit < 0) || (fReconnectLimit-- > 0))) return true;
 
    SetDoingReconnect(false);
 

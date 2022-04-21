@@ -143,7 +143,7 @@ int dabc::SocketAddon::TakeSocketError()
    return myerrno;
 }
 
-void dabc::SocketAddon::OnSocketError(int msg, const std::string &info)
+void dabc::SocketAddon::OnSocketError(int msg, const std::string &)
 {
    if (IsDeliverEventsToWorker()) {
       DOUT2("Addon:%p Connection closed - worker should process", this);

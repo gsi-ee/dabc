@@ -164,7 +164,7 @@ void dabc::InputTransport::TransportCleanup()
 }
 
 
-void dabc::InputTransport::ProcessTimerEvent(unsigned timer)
+void dabc::InputTransport::ProcessTimerEvent(unsigned)
 {
    if (fInpState == inpInitTimeout)
       ChangeState(inpInit);

@@ -156,13 +156,14 @@ void dabc::Publisher::InvalidateGlobal()
 {
    fLastLocalVers = 0;
 
-   for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
-      if (!iter->local) iter->lastglvers = 0;
+   for (auto &item: fPublishers) {
+      if (!item.local)
+         item.lastglvers = 0;
    }
 }
 
 
-double dabc::Publisher::ProcessTimeout(double last_diff)
+double dabc::Publisher::ProcessTimeout(double)
 {
 //   DOUT0("dabc::Publisher::ProcessTimerEvent");
 

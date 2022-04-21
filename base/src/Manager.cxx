@@ -45,15 +45,15 @@ namespace dabc {
       public:
          StdManagerFactory(const std::string &name) : Factory(name) { }
 
-         virtual Module* CreateModule(const std::string &classname, const std::string &modulename, Command cmd);
+         Module* CreateModule(const std::string &classname, const std::string &modulename, Command cmd) override;
 
-         virtual Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
+         Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
 
-         virtual Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd);
+         Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd) override;
 
-         virtual DataOutput* CreateDataOutput(const std::string &typ);
+         DataOutput* CreateDataOutput(const std::string &typ) override;
 
-         virtual DataInput* CreateDataInput(const std::string &typ);
+         DataInput* CreateDataInput(const std::string &typ) override;
    };
 
 
@@ -66,12 +66,13 @@ namespace dabc {
     */
    struct DependPair {
       Reference src; ///< reference on object which want to be informed when DependPair#tgt object is deleted
-      Object* tgt;   ///< when this object deleted, DependPair#src will be informed
-      int fire;      ///< how to proceed pair 0 - remain, 1 - inform src, 2 - just delete
+      Object* tgt{nullptr};   ///< when this object deleted, DependPair#src will be informed
+      int fire{0};      ///< how to proceed pair 0 - remain, 1 - inform src, 2 - just delete
 
-      DependPair() : src(), tgt(0), fire(0) {}
+      DependPair() = default;
       DependPair(Object* _src, Object* _tgt) : src(_src), tgt(_tgt), fire(0) {}
-      DependPair(const DependPair& d) : src(d.src), tgt(d.tgt), fire(d.fire) {}
+      DependPair(const DependPair &d) : src(d.src), tgt(d.tgt), fire(d.fire) {}
+      DependPair &operator=(const DependPair &d) { src = d.src; tgt = d.tgt; fire = d.fire; return *this; }
    };
 
    class DependPairList : public std::list<DependPair> {};
@@ -111,9 +112,9 @@ namespace dabc {
 
    class BlockingOutput : public DataOutput {
       protected:
-         double    fBlockTm;
-         bool      fSleep;
-         int       fErrCounter;  ///< counter till error
+         double    fBlockTm{0};
+         bool      fSleep{false};
+         int       fErrCounter{0};  ///< counter till error
 
       public:
          BlockingOutput(const dabc::Url& url) :
@@ -160,7 +161,7 @@ dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string &classname
    if (classname == "dabc::RepeaterModule")
       return new dabc::RepeaterModule(modulename, cmd);
 
-   return 0;
+   return nullptr;
 }
 
 dabc::Reference dabc::StdManagerFactory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
@@ -174,7 +175,8 @@ dabc::Reference dabc::StdManagerFactory::CreateObject(const std::string &classna
 
 dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd)
 {
-   dabc::Thread* thrd = 0;
+   dabc::Thread* thrd = nullptr;
+   (void) thrddev;
 
    if (classname.empty() || (classname == typeThread))
       thrd = new Thread(parent, thrdname, cmd);

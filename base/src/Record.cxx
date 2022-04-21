@@ -219,7 +219,7 @@ void dabc::HStore::SetField(const char *field, const char *value)
    }
 }
 
-void dabc::HStore::CloseNode(const char * nodename)
+void dabc::HStore::CloseNode(const char * /* nodename */)
 {
    // called when node should be closed
    // depending from number of childs different json format is applied
@@ -1631,7 +1631,7 @@ void dabc::RecordContainer::SetFieldsMap(RecordFieldsMap* newmap)
    if (fFields==0) fFields = new RecordFieldsMap;
 }
 
-void dabc::RecordContainer::Print(int lvl)
+void dabc::RecordContainer::Print(int /* lvl */)
 {
    DOUT1("%s : %s", ClassName(), GetName());
 

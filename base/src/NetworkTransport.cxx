@@ -456,18 +456,18 @@ void dabc::NetworkTransport::ProcessInputEvent(unsigned port)
    SubmitAllowedSendOperations();
 }
 
-void dabc::NetworkTransport::ProcessOutputEvent(unsigned indx)
+void dabc::NetworkTransport::ProcessOutputEvent(unsigned)
 {
    // when consumer take buffers from the queue, one can try to submit more recv operations
    FillRecvQueue();
 }
 
-void dabc::NetworkTransport::ProcessPoolEvent(unsigned pool)
+void dabc::NetworkTransport::ProcessPoolEvent(unsigned)
 {
    FillRecvQueue();
 }
 
-void dabc::NetworkTransport::ProcessTimerEvent(unsigned timer)
+void dabc::NetworkTransport::ProcessTimerEvent(unsigned)
 {
    FillRecvQueue();
 }

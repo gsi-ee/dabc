@@ -72,7 +72,8 @@ dabc::Device* dabc::SocketFactory::CreateDevice(const std::string &classname,
 
 dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd)
 {
-   dabc::Thread* thrd = 0;
+   (void) thrddev;
+   dabc::Thread* thrd = nullptr;
 
    if (classname == typeSocketThread)
       thrd = new SocketThread(parent, thrdname, cmd);
@@ -88,9 +89,9 @@ dabc::Module* dabc::SocketFactory::CreateTransport(const Reference& ref, const s
    if (url.IsValid() && (url.GetProtocol()=="udp") && !port.null()) {
 
       int fhandle = dabc::SocketThread::CreateUdp();
-      if (fhandle<0) return 0;
+      if (fhandle<0) return nullptr;
 
-      SocketNetworkInetrface* addon = 0;
+      SocketNetworkInetrface* addon = nullptr;
 
       if (port.IsOutput()) {
 
@@ -102,16 +103,16 @@ dabc::Module* dabc::SocketFactory::CreateTransport(const Reference& ref, const s
 
          int udp_port = dabc::SocketThread::BindUdp(fhandle, url.GetPort());
 
-         if (udp_port<=0) {
+         if (udp_port <= 0) {
             dabc::SocketThread::CloseUdp(fhandle);
-            return 0;
+            return nullptr;
          }
 
          bool mcast = url.HasOption("mcast");
 
          if (mcast && !dabc::SocketThread::AttachMulticast(fhandle, url.GetHostName())) {
             dabc::SocketThread::CloseUdp(fhandle);
-            return 0;
+            return nullptr;
          }
 
          addon = new SocketNetworkInetrface(fhandle, true);
@@ -133,5 +134,3 @@ dabc::Module* dabc::SocketFactory::CreateTransport(const Reference& ref, const s
 
    return dabc::Factory::CreateTransport(port, typ, cmd);
 }
-
-
