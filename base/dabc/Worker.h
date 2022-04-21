@@ -171,13 +171,13 @@ namespace dabc {
 
 
          /** \brief Inherited method from Object, invoked at the moment when worker requested to be destroyed by its thread */
-         virtual bool DestroyByOwnThread();
+         bool DestroyByOwnThread() override;
 
          /** \brief Central cleanup method for worker */
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
          /** \brief Method to clear object reference, will be called from thread context (when possible) */
-         virtual void ObjectDestroyed(Object*) {}
+         void ObjectDestroyed(Object *) override {}
 
          /** \brief Method indicates if worker is running in the thread and accepts normal events.
           * All events accepted by the worker will be delivered and processed.
@@ -213,7 +213,7 @@ namespace dabc {
          Worker(Reference parent, const std::string &name);
          virtual ~Worker();
 
-         virtual const char* ClassName() const { return "Worker"; }
+         const char* ClassName() const override { return "Worker"; }
 
          /** Method returns name of required thread class for processor.
            * If returns empty string, any thread class is sufficient. */
@@ -391,7 +391,7 @@ namespace dabc {
          // called comes from the thread context
          virtual void OnThreadAssigned() {}
 
-         virtual bool Find(ConfigIO &cfg);
+         bool Find(ConfigIO &cfg) override;
 
          virtual Parameter CreatePar(const std::string &name, const std::string &kind = "");
 
