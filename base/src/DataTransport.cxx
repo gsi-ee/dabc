@@ -20,7 +20,7 @@
 
 dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner) :
    dabc::Transport(cmd, inpport, 0),
-   fInput(0),
+   fInput(nullptr),
    fInputOwner(false),
    fInpState(inpInit),
    fCurrentBuf(),
@@ -32,7 +32,7 @@ dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, 
    fReconnect(),
    fStopRequested(false)
 {
-   if (inp!=0) SetDataInput(inp, owner);
+   if (inp) SetDataInput(inp, owner);
 
    CreateTimer("SysTimer");
 //   DOUT5("Create InputTransport %s", GetName());

@@ -60,30 +60,30 @@ namespace dabc {
    class ModuleSync : public Module {
       private:
          /** Flag indicates if timeout exception should be generated. */
-         bool           fTmoutExcept;
+         bool           fTmoutExcept{false};
 
          /** Flag indicates if disconnect exception should be generated. */
-         bool           fDisconnectExcept;
+         bool           fDisconnectExcept{false};
 
          /** Flag indicates if commands will be executed synchronously.
           * When true, all commands submitted to the module, executed inside ModuleWorking() method  */
-         bool           fSyncCommands;
+         bool           fSyncCommands{false};
 
          /** List of commands, submitted to the module */
-         CommandsQueue* fNewCommands;
+         CommandsQueue* fNewCommands{nullptr};
 
          /** Current item, waiting for the event.
           * It should be input/output port or pool handle. */
-         ModuleItem*   fWaitItem;
+         ModuleItem*   fWaitItem{nullptr};
 
          /** Internal variable, used in wait event */
-         uint16_t      fWaitId;
+         uint16_t      fWaitId{0};
 
          /** Result of event waiting */
-         bool          fWaitRes;
+         bool          fWaitRes{false};
 
          /** Flag indicates if main loop is executing */
-         bool          fInsideMainLoop;
+         bool          fInsideMainLoop{false};
 
          /** Internal - entrance function for main loop execution. */
          virtual void DoWorkerMainLoop();
@@ -104,7 +104,7 @@ namespace dabc {
          void AsyncProcessCommands();
 
          /** Internal - preview command before execution */
-         virtual int PreviewCommand(Command cmd);
+         int PreviewCommand(Command cmd) override;
 
          /** Internal - central method of events processing */
          virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);

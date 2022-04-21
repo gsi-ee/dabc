@@ -51,21 +51,21 @@ namespace dabc {
 
          Device(const std::string &name);
 
-         virtual bool Find(ConfigIO &cfg);
+         bool Find(ConfigIO &) override;
 
          /** Returns device mutex - it is just object mutex */
          Mutex* DeviceMutex() const { return ObjectMutex(); }
 
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
       public:
          virtual ~Device();
 
-         virtual int ExecuteCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
 
-         virtual Transport* CreateTransport(Command cmd, const Reference& port) { return 0; }
+         virtual Transport* CreateTransport(Command /* cmd */, const Reference & /* port */) { return nullptr; }
 
-         virtual const char* ClassName() const { return dabc::typeDevice; }
+         const char* ClassName() const override { return dabc::typeDevice; }
    };
 
 

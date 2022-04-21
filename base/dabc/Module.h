@@ -24,7 +24,6 @@
 #include "dabc/Port.h"
 #endif
 
-
 namespace dabc {
 
    class Manager;
@@ -51,18 +50,18 @@ namespace dabc {
 
       protected:
 
-         bool                       fRunState;      ///< true if module in the running state
-         std::vector<ModuleItem*>   fItems;         ///< map for fast search of module items
-         std::vector<InputPort*>    fInputs;        ///< array of input ports
-         std::vector<OutputPort*>   fOutputs;       ///< array of output ports
-         std::vector<PoolHandle*>   fPools;         ///< array of pools
-         std::vector<Timer*>        fTimers;        ///< array of timers
-         std::vector<ModuleItem*>   fUsers;         ///< array of user items
-         unsigned                   fSysTimerIndex; ///< index of timer, which will be used with module itself
-         bool                       fAutoStop;      ///< module will automatically stop when all i/o ports will be disconnected
-         dabc::Reference            fDfltPool;      ///< direct reference on memory pool, used when no pool handles are not created
-         std::string                fInfoParName;   ///< full name of parameter, used as info
-         std::string                fPublishPars;   ///< path where module pars will be published
+         bool                       fRunState{false};      ///< true if module in the running state
+         std::vector<ModuleItem*>   fItems;                ///< map for fast search of module items
+         std::vector<InputPort*>    fInputs;               ///< array of input ports
+         std::vector<OutputPort*>   fOutputs;              ///< array of output ports
+         std::vector<PoolHandle*>   fPools;                ///< array of pools
+         std::vector<Timer*>        fTimers;               ///< array of timers
+         std::vector<ModuleItem*>   fUsers;                ///< array of user items
+         unsigned                   fSysTimerIndex{0};     ///< index of timer, which will be used with module itself
+         bool                       fAutoStop{false};      ///< module will automatically stop when all i/o ports will be disconnected
+         dabc::Reference            fDfltPool;             ///< direct reference on memory pool, used when no pool handles are not created
+         std::string                fInfoParName;          ///< full name of parameter, used as info
+         std::string                fPublishPars;          ///< path where module pars will be published
 
       private:
 
@@ -74,9 +73,9 @@ namespace dabc {
 
          Buffer TakeDfltBuffer();
 
-         inline PoolHandle* Pool(unsigned n = 0) const { return n < fPools.size() ? fPools[n] : 0; }
-         inline OutputPort* Output(unsigned n = 0) const { return n < fOutputs.size() ? fOutputs[n] : 0; }
-         inline InputPort* Input(unsigned n = 0) const { return n < fInputs.size() ? fInputs[n] : 0; }
+         inline PoolHandle* Pool(unsigned n = 0) const { return n < fPools.size() ? fPools[n] : nullptr; }
+         inline OutputPort* Output(unsigned n = 0) const { return n < fOutputs.size() ? fOutputs[n] : nullptr; }
+         inline InputPort* Input(unsigned n = 0) const { return n < fInputs.size() ? fInputs[n] : nullptr; }
 
 
       protected:
@@ -84,23 +83,23 @@ namespace dabc {
          /** \brief Inherited method, called during module destroy.
           *
           * Used to stop module if it is still running. */
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
          virtual bool DoStop();
          virtual bool DoStart();
 
-         virtual void OnThreadAssigned();
-         virtual int PreviewCommand(Command cmd);
+         void OnThreadAssigned() override;
+         int PreviewCommand(Command cmd) override;
 
          virtual void SetModulePriority(int pri = -1);
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual bool Find(ConfigIO &cfg);
+         bool Find(ConfigIO &) override;
 
-         virtual void BuildFieldsMap(RecordFieldsMap* cont);
+         void BuildFieldsMap(RecordFieldsMap *) override;
 
          /** \brief Starts execution of the module code */
          bool Start();
@@ -204,7 +203,7 @@ namespace dabc {
          { return EventId(evntUser, 0, indx < fUsers.size() ? fUsers[indx]->ItemId() : 0); }
 
 
-         virtual Parameter CreatePar(const std::string &name, const std::string &kind = "");
+         Parameter CreatePar(const std::string &name, const std::string &kind = "") override;
 
          void SetInfoParName(const std::string &name);
 
@@ -229,7 +228,7 @@ namespace dabc {
          // Any other arguments (cmd_postponed) means that execution
          // will be postponed in the module itself
          // User must call Module::ExecuteCommand() to enable processing of standard commands
-         virtual int ExecuteCommand(Command cmd) { return dabc::Worker::ExecuteCommand(cmd); }
+         int ExecuteCommand(Command cmd)  override { return dabc::Worker::ExecuteCommand(cmd); }
 
 
          // This is place of user code when command completion is arrived
@@ -237,7 +236,7 @@ namespace dabc {
          // If returns true, command object will be delete automatically,
          // otherwise ownership delegated to user.
          // In that case command must be at some point replied - means user should call cmd.Reply(res) method.
-         virtual bool ReplyCommand(Command cmd) { return dabc::Worker::ReplyCommand(cmd); }
+         bool ReplyCommand(Command cmd)  override { return dabc::Worker::ReplyCommand(cmd); }
 
 
          // these two methods called before start and after stop of module
@@ -249,13 +248,13 @@ namespace dabc {
          virtual void ModuleCleanup() {}
 
          // generic users event processing function
-         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid) {}
+         virtual void ProcessItemEvent(ModuleItem * /* item */, uint16_t /* evid */) {}
 
-         virtual void ProcessConnectionActivated(const std::string &name, bool on) {}
+         virtual void ProcessConnectionActivated(const std::string & /* name */, bool /* on */) {}
 
       public:
 
-         virtual const char* ClassName() const { return "Module"; }
+         const char* ClassName() const override { return "Module"; }
 
          std::string GetInfoParName() const;
 
@@ -277,8 +276,6 @@ namespace dabc {
       DABC_REFERENCE(ModuleRef, WorkerRef, Module)
 
       friend class Manager;
-
-      protected:
 
       public:
 

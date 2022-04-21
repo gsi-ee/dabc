@@ -33,12 +33,12 @@ namespace dabc {
       private:
          /** Activate module [internal].
           * Generates appropriate number of events for each input, output and pool handle */
-         virtual bool DoStart();
+         bool DoStart() override;
 
          /** Generic event processing method [internal].
           * Here all events are processed and delivered to the user.
           * Made private to exclude possibility to redefine it */
-         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
+         void ProcessItemEvent(ModuleItem* item, uint16_t evid) override;
 
       protected:
          /** Constructor of ModuleAsync class.
@@ -155,15 +155,15 @@ namespace dabc {
            * \details Can be reimplemented by the user.
            * Called when input/output port or pool handle are connected or disconnected diregard
            * of running state of the module */
-         virtual void ProcessConnectEvent(const std::string &name, bool on) {}
+         virtual void ProcessConnectEvent(const std::string & /* name */, bool /* on */) {}
 
          /** \brief Method called by framework when timer event is produced.
            * \details Can be reimplemented by the user. */
-         virtual void ProcessTimerEvent(unsigned timer) {}
+         virtual void ProcessTimerEvent(unsigned /* timer */) {}
 
          /** \brief Method called by framework when custom user event is produced.
            * \details Can be reimplemented by the user. */
-         virtual void ProcessUserEvent(unsigned item) {}
+         virtual void ProcessUserEvent(unsigned /* item */) {}
 
 
          // Level 2: One could process each buffer
@@ -172,22 +172,22 @@ namespace dabc {
          /** \brief Method called by framework when at least one buffer available in input port.
           * \details Can be reimplemented by the user.
           * Method should return true is user want method to be called again for next buffer in input port */
-         virtual bool ProcessRecv(unsigned port = 0) { return false; }
+         virtual bool ProcessRecv(unsigned /* port */ = 0) { return false; }
 
          /** \brief Method called by framework when at least one buffer can be send to output port.
           * \details Can be reimplemented by the user.
           * Method should return true is user want method to be called again for next possibility to send buffer */
-         virtual bool ProcessSend(unsigned port = 0) { return false; }
+         virtual bool ProcessSend(unsigned /* port */ = 0) { return false; }
 
          /** \brief Method called by framework when at least one buffer available in pool handle.
           * \details Can be reimplemented by the user.
           * Method should return true is user want method to be called again for next buffer in pool handle */
-         virtual bool ProcessBuffer(unsigned pool = 0) { return false; }
+         virtual bool ProcessBuffer(unsigned /* pool */ = 0) { return false; }
 
       public:
 
          /** \brief Returns class name of the object */
-         virtual const char* ClassName() const { return "ModuleAsync"; }
+         const char* ClassName() const override { return "ModuleAsync"; }
 
    };
 

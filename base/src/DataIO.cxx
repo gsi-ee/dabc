@@ -49,7 +49,7 @@ dabc::Buffer dabc::DataInput::ReadBuffer()
 
 // ======================================================
 
-dabc::DataOutput::DataOutput(const dabc::Url& url) :
+dabc::DataOutput::DataOutput(const dabc::Url &) :
    fInfoName()
 {
 }

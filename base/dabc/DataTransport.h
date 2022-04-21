@@ -73,24 +73,24 @@ namespace dabc {
 
       protected:
 
-         DataInput         *fInput;             //!< input object
-         bool               fInputOwner;        //!< if true, fInput object must be destroyed
-         EInputStates       fInpState;          //!< state of transport
-         Buffer             fCurrentBuf;        //!< currently used buffer
-         unsigned           fNextDataSize;      //!< indicate that input has data, but there is no buffer of required size
-         unsigned           fPoolChangeCounter; //!<
+         DataInput         *fInput{nullptr};             //!< input object
+         bool               fInputOwner{false};          //!< if true, fInput object must be destroyed
+         EInputStates       fInpState{inpInit};          //!< state of transport
+         Buffer             fCurrentBuf;                 //!< currently used buffer
+         unsigned           fNextDataSize{0};            //!< indicate that input has data, but there is no buffer of required size
+         unsigned           fPoolChangeCounter{0};       //!<
          MemoryPoolRef      fPoolRef;
-         unsigned           fExtraBufs;         //!< number of extra buffers provided to the transport addon
-         bool               fActivateWorkaround;  //!< special flag for hadaq transport
-         std::string        fReconnect;         //!< when specified, tried to reconnect
-         bool               fStopRequested;     //!< if true transport will be stopped when next suitable state is achieved
+         unsigned           fExtraBufs{0};               //!< number of extra buffers provided to the transport addon
+         bool               fActivateWorkaround{false};  //!< special flag for hadaq transport
+         std::string        fReconnect;                  //!< when specified, tried to reconnect
+         bool               fStopRequested{false};       //!< if true transport will be stopped when next suitable state is achieved
 
 
          /** Method can be used in custom transport to start pool monitoring */
          void RequestPoolMonitoring();
 
-         virtual bool StartTransport();
-         virtual bool StopTransport();
+         bool StartTransport() override;
+         bool StopTransport() override;
 
          void ChangeState(EInputStates state);
 
@@ -105,19 +105,19 @@ namespace dabc {
 
          void CloseInput();
 
-         virtual void TransportCleanup();
+         void TransportCleanup() override;
 
-         virtual bool ProcessSend(unsigned port);
+         bool ProcessSend(unsigned port) override;
 
-         virtual bool ProcessBuffer(unsigned pool);
+         bool ProcessBuffer(unsigned pool) override;
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
-         virtual int ExecuteCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
 
       public:
 
-         InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp = 0, bool owner = false);
+         InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput *inp = nullptr, bool owner = false);
          virtual ~InputTransport();
 
          /** Assign input object, set addon if exists */
@@ -127,7 +127,7 @@ namespace dabc {
          void EnableReconnect(const std::string &reconn);
 
          // in implementation user can get informed when something changed in the memory pool
-         virtual void ProcessPoolChanged(MemoryPool* pool) {}
+         virtual void ProcessPoolChanged(MemoryPool */* pool */) {}
 
          // This method MUST be called by transport, when Read_Start returns di_CallBack
          // It is only way to "restart" event loop in the transport
