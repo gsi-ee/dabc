@@ -10,9 +10,9 @@ set(DABC_BASESUB_S
 )
 DABC_EXECUTABLE(dabc_xml
                 SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S}
-                LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY})
+                LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY})
 
-DABC_LINK_LIBRARY(DabcBase LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_dl_LIBRARY})
+DABC_LINK_LIBRARY(DabcBase LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_dl_LIBRARY} ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY})
 
 DABC_EXECUTABLE(dabc_exe
                 SOURCES run/dabc_exe.cxx

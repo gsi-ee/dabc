@@ -78,7 +78,11 @@ foreach(lib pthread dl)
 endforeach()
 
 if(NOT APPLE)
-   find_library(DABC_RT_LIBRARY rt)
+   find_library(DABC_rt_LIBRARY rt)
+   if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+      find_library(DABC_m_LIBRARY m)
+      find_library(DABC_cpp_LIBRARY "c++")
+   endif()
 endif()
 
 configure_file(${PROJECT_SOURCE_DIR}/cmake/modules/DabcMacros.cmake
