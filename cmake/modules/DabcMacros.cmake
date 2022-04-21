@@ -87,16 +87,21 @@ endfunction()
 #                   LIBRARIES lib1 lib2        : direct linked libraries
 #                   DEFINITIONS def1 def2      : library definitions
 #                   DEPENDENCIES dep1 dep2     : dependencies
+#                   CHECKSTD                   : check if libc++ should be linked for clang
 #
 #)
 function(DABC_EXECUTABLE exename)
-   cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
+   cmake_parse_arguments(ARG "CHECKSTD" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
 
    add_executable(${exename} ${ARG_SOURCES})
 
    target_compile_definitions(${exename} PRIVATE ${ARG_DEFINITIONS} ${DABC_DEFINES})
 
-   target_link_libraries(${exename} ${ARG_LIBRARIES})
+   if(NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL Clang AND ARG_CHECKSTD)
+      find_library(cpp_LIBRARY "c++")
+   endif()
+
+   target_link_libraries(${exename} ${ARG_LIBRARIES} ${cpp_LIBRARY})
 
    if(CMAKE_PROJECT_NAME STREQUAL DABC)
      list(APPEND ARG_DEPENDENCIES move_headers)
