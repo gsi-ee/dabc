@@ -40,22 +40,22 @@ namespace dabc {
 
          virtual Handle fopen(const char* fname, const char* mode, const char* = nullptr) { return (Handle) ::fopen(fname, mode); }
 
-         virtual void fclose(Handle f) { if (f!=0) ::fclose((FILE*)f); }
+         virtual void fclose(Handle f) { if (f) ::fclose((FILE*)f); }
 
          virtual size_t fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f)
-           { return ((f==0) || (ptr==0)) ? 0 : ::fwrite(ptr, sz, nmemb, (FILE*) f); }
+           { return (!f || !ptr) ? 0 : ::fwrite(ptr, sz, nmemb, (FILE*) f); }
 
          virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f)
-           { return ((f==0) || (ptr==0)) ? 0 : ::fread(ptr, sz, nmemb, (FILE*) f); }
+           { return (!f || !ptr) ? 0 : ::fread(ptr, sz, nmemb, (FILE*) f); }
 
          virtual bool feof(Handle f)
-           { return f==0 ? false : ::feof((FILE*)f)>0; }
+           { return !f ? false : ::feof((FILE*)f) > 0; }
 
          virtual bool fflush(Handle f)
-         { return f==0 ? false : ::fflush((FILE*)f)==0; }
+         { return !f ? false : ::fflush((FILE*)f) == 0; }
 
          virtual bool fseek(Handle f, long int offset, bool relative = true)
-         { return f==0 ? false : ::fseek((FILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0; }
+         { return !f ? false : ::fseek((FILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0; }
 
          /** Produce list of files, object must be explicitly destroyed with ref.Destroy call
           * One could decide if files or directories should be listed */
@@ -64,10 +64,16 @@ namespace dabc {
          virtual bool mkdir(const char* path);
 
          /** Method returns file-specific int parameter */
-         virtual int GetFileIntPar(Handle h, const char* parname) { return 0; }
+         virtual int GetFileIntPar(Handle /* h */, const char * /* parname */) { return 0; }
 
          /** Method returns file-specific string parameter */
-         virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int sbuflen) { if (sbuf) *sbuf = 0; return false; }
+         virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int /* sbuflen */)
+         {
+            (void) h;
+            (void) parname;
+            if (sbuf) *sbuf = 0;
+            return false;
+         }
 
    };
 
@@ -83,10 +89,10 @@ namespace dabc {
 
    class BasicFile {
       protected:
-         FileInterface* io;              //!  interface to the file system
-         bool iowoner;                   //!  if true, io object owned by file
-         FileInterface::Handle fd;       //!  file descriptor
-         bool  fReadingMode;             //!  reading/writing mode
+         FileInterface* io{nullptr};              //!  interface to the file system
+         bool iowoner{false};                     //!  if true, io object owned by file
+         FileInterface::Handle fd{nullptr};       //!  file descriptor
+         bool  fReadingMode{false};               //!  reading/writing mode
 
          bool CloseBasicFile()
          {
@@ -98,16 +104,12 @@ namespace dabc {
 
          void CheckIO()
          {
-            if (io==0) { io = new FileInterface; iowoner = true; }
+            if (!io) { io = new FileInterface; iowoner = true; }
          }
 
       public:
 
-         BasicFile() :
-            io(0),
-            iowoner(false),
-            fd(0),
-            fReadingMode(false)
+         BasicFile()
          {
          }
 
@@ -122,11 +124,11 @@ namespace dabc {
          {
             CloseBasicFile();
             if (iowoner && io) delete io;
-            io = 0; iowoner = false;
+            io = nullptr; iowoner = false;
          }
 
          // returns true if file is opened
-         inline bool isOpened() const { return (io!=0) && (fd!=0); }
+         inline bool isOpened() const { return io && fd; }
 
          inline bool isReading() const { return isOpened() && fReadingMode; }
 
@@ -138,7 +140,7 @@ namespace dabc {
          int GetIntPar(const char* parname) { return io ? io->GetFileIntPar(fd, parname) : 0; }
 
          /** Return string file parameter */
-         bool GetStrPar(const char* parname, char* sbuf, int sbuflen) { return io ? io->GetFileStrPar(fd, parname, sbuf, sbuflen) : false; }
+         bool GetStrPar(const char *parname, char *sbuf, int sbuflen) { return io ? io->GetFileStrPar(fd, parname, sbuf, sbuflen) : false; }
 
          /** Returns true when RFIO is used */
          bool IsRFIO() { return GetIntPar("RFIO") > 0; }

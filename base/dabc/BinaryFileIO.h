@@ -45,7 +45,7 @@ namespace dabc {
          bool CloseFile();
 
       public:
-         BinaryFileInput(const dabc::Url& url);
+         BinaryFileInput(const dabc::Url &url);
          virtual ~BinaryFileInput();
 
          virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd);

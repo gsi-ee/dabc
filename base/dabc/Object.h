@@ -172,13 +172,13 @@ namespace dabc {
             flTopXmlLevel    = 0x1000   ///< object (or folder) can be found on top xml level in the Context
          };
 
-         unsigned           fObjectFlags;    ///< flag, protected by the mutex
-         Reference          fObjectParent;   ///< reference on the parent object
-         std::string        fObjectName;     ///< object name
-         Mutex*             fObjectMutex;    ///< mutex protects all private property of the object
-         int                fObjectRefCnt;   ///< accounts how many references existing on the object, __thread safe__
-         ReferencesVector*  fObjectChilds;   ///< list of the child objects
-         int                fObjectBlock;    ///< counter for blocking calls, as long as non-zero, non of child can be removed
+         unsigned           fObjectFlags{0};          ///< flag, protected by the mutex
+         Reference          fObjectParent;            ///< reference on the parent object
+         std::string        fObjectName;              ///< object name
+         Mutex             *fObjectMutex{nullptr};    ///< mutex protects all private property of the object
+         int                fObjectRefCnt{0};         ///< accounts how many references existing on the object, __thread safe__
+         ReferencesVector  *fObjectChilds{nullptr};   ///< list of the child objects
+         int                fObjectBlock{0};          ///< counter for blocking calls, as long as non-zero, non of child can be removed
 
          /** \brief Return value of selected flag, __not thread safe__  */
          inline bool GetFlag(unsigned fl) const { return (fObjectFlags & fl) != 0; }
@@ -425,7 +425,7 @@ namespace dabc {
 
          /** \brief Fill fields map, which is relevant for the object
           * Objects hierarchy produced from dabc::Manager */
-         virtual void BuildFieldsMap(RecordFieldsMap* cont) {}
+         virtual void BuildFieldsMap(RecordFieldsMap *) {}
 
          // operations with object name (and info) are __not thread safe__
          // therefore, in the case when object name must be changed,
@@ -453,15 +453,15 @@ namespace dabc {
          static bool NameMatchM(const std::string &name, const std::string &mask);
 
 #ifdef DABC_EXTRA_CHECKS
-         static void DebugObject(const char* classname = nullptr, Object *instance = nullptr, int kind = 0);
+         static void DebugObject(const char *classname = nullptr, Object *instance = nullptr, int kind = 0);
 #endif
 
       protected:
          /** \brief Changes object name. Should not be used if any references exists on the object */
-         void SetName(const char* name);
+         void SetName(const char *name);
 
          /** \brief Changes object name disregard of existing references */
-         void SetNameDirect(const char* name);
+         void SetNameDirect(const char *name);
 
          /** \brief Method should be used by the object to delete itself */
          void DeleteThis();

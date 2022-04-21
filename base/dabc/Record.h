@@ -64,9 +64,9 @@ namespace dabc {
 
          bool verify_size(uint64_t pos, uint64_t sz);
 
-         virtual bool write(const void* src, uint64_t len) { return false; }
-         virtual bool read(void* tgt, uint64_t len) { return false; }
-         virtual bool shift(uint64_t len) { return false; }
+         virtual bool write(const void * /* src */, uint64_t /* len */) { return false; }
+         virtual bool read(void * /* tgt */, uint64_t /* len */) { return false; }
+         virtual bool shift(uint64_t /* len */) { return false; }
          /** \brief return number of bytes, written or read from the stream */
          virtual uint64_t size() const { return 0; }
 
@@ -101,28 +101,26 @@ namespace dabc {
    /** \brief special class only to define how many data will be written to the stream */
    class sizestream : public iostream {
       protected:
-         uint64_t fLength;
+         uint64_t fLength{0};
 
       public:
 
-         sizestream() :
-            iostream(false),
-            fLength(0)
+         sizestream() : iostream(false)
          {
          }
 
          virtual ~sizestream() {}
 
-         virtual uint64_t size() const { return fLength; }
-         virtual uint64_t maxstoresize() const { return 0xffffffffLLU; }
+         uint64_t size() const override { return fLength; }
+         uint64_t maxstoresize() const  override { return 0xffffffffLLU; }
 
-         virtual bool is_real() const { return false; }
+         bool is_real() const  override { return false; }
 
-         virtual bool shift(uint64_t len) { fLength += len; return true; }
+         bool shift(uint64_t len) override  { fLength += len; return true; }
 
-         virtual bool write(const void* src, uint64_t len) { fLength += len; return true; }
+         bool write(const void *src, uint64_t len) override  { (void)src; fLength += len; return true; }
 
-         virtual bool read(void* tgt, uint64_t len) { return true; }
+         bool read(void */* tgt */, uint64_t /* len */) override { return true; }
 
    };
 
@@ -132,22 +130,22 @@ namespace dabc {
 
    class memstream : public iostream {
       protected:
-         char* fMem;
-         uint64_t fLength;
-         char* fCurr;
-         uint64_t fRemains;
+         char *fMem{nullptr};
+         uint64_t fLength{0};
+         char *fCurr{nullptr};
+         uint64_t fRemains{0};
 
-         virtual uint64_t tmpbuf_size() const { return fRemains; }
-         virtual char* tmpbuf() const { return fCurr; }
+         uint64_t tmpbuf_size() const  override { return fRemains; }
+         char* tmpbuf() const  override { return fCurr; }
 
       public:
 
-         virtual uint64_t size() const { return fCurr - fMem; }
-         virtual uint64_t maxstoresize() const { return fRemains; }
+         uint64_t size() const  override { return fCurr - fMem; }
+         uint64_t maxstoresize() const  override { return fRemains; }
 
-         virtual bool shift(uint64_t len);
-         virtual bool write(const void* src, uint64_t len);
-         virtual bool read(void* tgt, uint64_t len);
+         bool shift(uint64_t len) override;
+         bool write(const void* src, uint64_t len) override;
+         bool read(void* tgt, uint64_t len) override;
 
          memstream(bool isinp, char* buf, uint64_t len) :
             iostream(isinp),
@@ -178,21 +176,23 @@ namespace dabc {
    /** \brief class, used for direct store of records in JSON/XML form */
    class HStore {
       protected:
-         unsigned          fMask;
+         unsigned          fMask{0};
          std::string       buf;
-         int               lvl;
+         int               lvl{0};
          std::vector<int>  numflds;
          std::vector<int>  numchilds;
-         uint64_t          fVersion;
-         unsigned          fHLimit;
-         bool              first_node;
+         uint64_t          fVersion{0};
+         unsigned          fHLimit{0};
+         bool              first_node{false};
 
          unsigned compact() const { return mask() & storemask_Compact; }
 
          void NewLine()
          {
-            if (compact()<2) buf.append("\n"); else
-            if (compact()<3) buf.append(" ");
+            if (compact() < 2)
+               buf.append("\n");
+            else if (compact() < 3)
+               buf.append(" ");
          }
 
          bool isxml() { return (mask() & storemask_AsXML) != 0; }
@@ -377,7 +377,7 @@ namespace dabc {
 
          FieldsMap fMap;
 
-         bool   fChanged;               ///< true when field was removed
+         bool   fChanged{false};               ///< true when field was removed
 
          void clear() { fMap.clear(); }
 
@@ -444,7 +444,7 @@ namespace dabc {
       friend class RecordFieldsMap;
 
       protected:
-         RecordFieldsMap* fFields;
+         RecordFieldsMap *fFields{nullptr};
 
          RecordContainer(const std::string &name, unsigned flags = flIsOwner);
 
@@ -481,9 +481,9 @@ namespace dabc {
 
          virtual ~RecordContainer();
 
-         virtual const char* ClassName() const { return "Record"; }
+         const char* ClassName() const override { return "Record"; }
 
-         virtual void Print(int lvl = 0);
+         void Print(int lvl = 0) override;
 
          RecordFieldsMap& Fields() const { return *fFields; }
    };

@@ -76,7 +76,7 @@ namespace dabc {
          bool ActivateTimeout(double tmout_sec);
 
          // analog to Worker::ProcessTimeout
-         virtual double ProcessTimeout(double last_diff) { return -1.; }
+         virtual double ProcessTimeout(double /* last_diff */) { return -1.; }
 
          /** Light-weight command interface, which can be used from worker */
          virtual long Notify(const std::string&, int) { return 0; }
@@ -323,7 +323,7 @@ namespace dabc {
          // Return value: <0 - no new timeout is required
          //               =0 - provide timeout as soon as possible
          //               >0 - activate timeout after this interval
-         virtual double ProcessTimeout(double last_diff) { return -1.; }
+         virtual double ProcessTimeout(double /* last_diff */) { return -1.; }
 
          inline bool _IsFireEvent() const
          {
@@ -410,7 +410,7 @@ namespace dabc {
          bool UnregisterForParameterEvent(const std::string &mask);
 
          /** Interface method to retrieve subscribed parameter events */
-         virtual void ProcessParameterEvent(const ParameterEvent &evnt) {}
+         virtual void ProcessParameterEvent(const ParameterEvent &) {}
 
          /** \brief Return reference on publisher.
           * First time publisher is searched in objects hierarchy and reference
@@ -434,7 +434,7 @@ namespace dabc {
 
          /** \brief Method called before publisher makes next snapshot of hierarchy.
           *  Worker is able to make any kind of changes   */
-         virtual void BeforeHierarchyScan(Hierarchy& h) {}
+         virtual void BeforeHierarchyScan(Hierarchy &) {}
 
       private:
 

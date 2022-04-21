@@ -65,7 +65,7 @@ namespace dabc {
 
          /** Returns addon, provided by data input
           * If specified, supposed that I/O object is double-deriver from DataInput and Addon */
-         virtual WorkerAddon* Read_GetAddon() { return 0; }
+         virtual WorkerAddon *Read_GetAddon() { return nullptr; }
 
       public:
 
@@ -79,7 +79,7 @@ namespace dabc {
           * \param[in] wrk  reference on input port
           * \param[in] cmd  reference on command object
           * \returns        false when method fails */
-         virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd) { return true; }
+         virtual bool Read_Init(const WorkerRef &, const Command &) { return true; }
 
 
          /** \brief Defines required buffer size for next operation
@@ -100,7 +100,7 @@ namespace dabc {
           *   - di_Ok               - buffer must be filled in Read_Complete call
           *   - di_CallBack         - input will do readout and activate transport via callback
           *   - di_Error (or other) - error, skip buffer */
-         virtual unsigned Read_Start(Buffer& buf) { return di_Ok; }
+         virtual unsigned Read_Start(Buffer &) { return di_Ok; }
 
          /** \brief Complete reading of the buffer from source,
           *
@@ -111,7 +111,7 @@ namespace dabc {
           *   - di_Error         - error, skip buffer and close input
           *   - di_Repeat        - not ready, call again as soon as possible
           *   - di_RepeatTimeOut - not ready, call again after timeout */
-         virtual unsigned Read_Complete(Buffer& buf) { return di_EndOfStream; }
+         virtual unsigned Read_Complete(Buffer &) { return di_EndOfStream; }
 
          /** \brief Provide timeout value
           *
@@ -121,11 +121,10 @@ namespace dabc {
           * specified timeout will be used before next operation will be done */
          virtual double Read_Timeout() { return 0.1; }
 
-
          /** \brief Provide timeout value
           *
           * Take statistic from DataInput object */
-         virtual bool Read_Stat(dabc::Command cmd) { return false; }
+         virtual bool Read_Stat(dabc::Command) { return false; }
 
          /** \brief Reads complete buffer
           *
@@ -162,11 +161,11 @@ namespace dabc {
       protected:
          std::string         fInfoName;     // parameter name for info settings
 
-         DataOutput(const dabc::Url& url);
+         DataOutput(const dabc::Url &url);
 
          /** Returns addon, provided by data output
           * If specified, supposed that I/O object is double-derived from DataOutput and Addon */
-         virtual WorkerAddon* Write_GetAddon() { return 0; }
+         virtual WorkerAddon *Write_GetAddon() { return nullptr; }
 
          /** Show info for data output
           * Returns true if value was just printed on the output */
@@ -203,7 +202,7 @@ namespace dabc {
           *    do_Error  - error
           *    do_Skip   - buffer must be skipped
           *    do_Close  - output is closed  */
-         virtual unsigned Write_Buffer(Buffer& buf) { return do_Ok; }
+         virtual unsigned Write_Buffer(Buffer &) { return do_Ok; }
 
          /** Complete writing of the buffer.
           * Return values:
@@ -223,13 +222,13 @@ namespace dabc {
          bool WriteBuffer(Buffer& buf);
 
          /** Fill different statistic parameters into provided command */
-         virtual bool Write_Stat(dabc::Command cmd) { return false; }
+         virtual bool Write_Stat(dabc::Command) { return false; }
 
          /** Returns true if output object can be reinitialized for recover error */
          virtual bool Write_Retry() { return false; }
 
          /** Method used to restart output - like recreate new output file */
-         virtual bool Write_Restart(dabc::Command cmd) { return false; }
+         virtual bool Write_Restart(dabc::Command) { return false; }
 
    };
 
@@ -249,10 +248,10 @@ namespace dabc {
       protected:
          std::string          fFileName;
          dabc::Reference      fFilesList;
-         dabc::FileInterface* fIO;
+         dabc::FileInterface *fIO{nullptr};
          std::string          fCurrentName;
-         bool                 fLoop; //!< read file(s) in endless loop
-         double               fReduce; //!< factor to reduce buffer size when reading
+         bool                 fLoop{false}; //!< read file(s) in endless loop
+         double               fReduce{0.};  //!< factor to reduce buffer size when reading
 
          bool InitFilesList();
          bool TakeNextFileName();
@@ -269,9 +268,9 @@ namespace dabc {
 
          void SetIO(dabc::FileInterface* io);
 
-         virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd);
+         bool Read_Init(const WorkerRef& wrk, const Command& cmd) override;
 
-         virtual bool Read_Stat(dabc::Command cmd);
+         bool Read_Stat(dabc::Command cmd) override;
    };
 
    // ============================================================================
@@ -288,18 +287,18 @@ namespace dabc {
       protected:
 
          std::string          fFileName;
-         int                  fSizeLimitMB;
+         int                  fSizeLimitMB{0};
          std::string          fFileExtens;
 
-         dabc::FileInterface* fIO;
+         dabc::FileInterface *fIO{nullptr};
 
-         int                  fCurrentFileNumber;
+         int                  fCurrentFileNumber{0};
          std::string          fCurrentFileName;
-         long                 fCurrentFileSize;
+         long                 fCurrentFileSize{0};
 
-         long                 fTotalFileSize;
-         long                 fTotalNumBufs;
-         long                 fTotalNumEvents;
+         long                 fTotalFileSize{0};
+         long                 fTotalNumBufs{0};
+         long                 fTotalNumEvents{0};
 
          void ProduceNewFileName();
          const std::string &CurrentFileName() const { return fCurrentFileName; }
@@ -319,13 +318,13 @@ namespace dabc {
 
          virtual ~FileOutput();
 
-         void SetIO(dabc::FileInterface* io);
+         void SetIO(dabc::FileInterface *io);
 
-         virtual std::string ProvideInfo();
+         std::string ProvideInfo() override;
 
-         virtual bool Write_Init();
+         bool Write_Init() override;
 
-         virtual bool Write_Stat(dabc::Command cmd);
+         bool Write_Stat(dabc::Command cmd) override;
    };
 
 }
