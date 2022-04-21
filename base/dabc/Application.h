@@ -100,27 +100,27 @@ namespace dabc {
 
          std::string        fAppClass;
 
-         ExternalFunction*  fInitFunc;
+         ExternalFunction  *fInitFunc{nullptr};
 
-         bool               fAnyModuleWasRunning; ///< indicate when any module was running, than once can automatically stop application
+         bool               fAnyModuleWasRunning{false}; ///< indicate when any module was running, than once can automatically stop application
 
-         bool               fSelfControl;   ///< when true, application itself decide when stop main loop
+         bool               fSelfControl{false};   ///< when true, application itself decide when stop main loop
 
-         double             fConnTimeout;   ///< time for connecting all modules, default 5s
-         bool               fConnDebug;     ///< period of connection debug mode for connections, default false
+         double             fConnTimeout{0.};   ///< time for connecting all modules, default 5s
+         bool               fConnDebug{false};     ///< period of connection debug mode for connections, default false
 
          std::vector<std::string> fAppDevices;   ///< list of devices, created by application
          std::vector<std::string> fAppPools;     ///< list of pools, created by application
          std::vector<std::string> fAppModules;   ///< list of modules, created by application
 
-         virtual int ExecuteCommand(Command cmd);
-         virtual bool ReplyCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
+         bool ReplyCommand(Command cmd) override;
 
          /** \brief Method called at thread assignment - application may switch into running state */
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
          /** \brief Cleanup application */
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
          /** Directly changes value of the state parameter */
          void SetAppState(const std::string &name);
@@ -163,9 +163,9 @@ namespace dabc {
 
          std::string GetState() const { return Par(StateParName()).Value().AsStr(); }
 
-         virtual bool Find(ConfigIO &cfg);
+         bool Find(ConfigIO &cfg) override;
 
-         virtual const char* ClassName() const { return fAppClass.c_str(); }
+         const char* ClassName() const override { return fAppClass.c_str(); }
    };
 
    // ________________________________________________________________________________
@@ -197,8 +197,6 @@ namespace dabc {
       bool AddObject(const std::string &kind, const std::string &name);
 
    };
-
-
 
 }
 
