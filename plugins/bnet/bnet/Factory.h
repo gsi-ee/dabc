@@ -11,12 +11,11 @@ namespace bnet {
       public:
          Factory(const std::string &name);
 
-         virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
+         dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
 
-         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
+         dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
    };
 
 }
-
 
 #endif

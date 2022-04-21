@@ -22,20 +22,17 @@
 namespace user
 {
 
-class Factory: public dabc::Factory
-{
-public:
+   class Factory : public dabc::Factory
+   {
+      public:
 
-  Factory (const std::string name) :
-      dabc::Factory (name)
-  {
-  }
-  virtual dabc::DataInput* CreateDataInput(const std::string& typ);
+        Factory (const std::string name) : dabc::Factory (name) { }
 
+        dabc::DataInput* CreateDataInput(const std::string& typ) override;
 
-  virtual void Initialize();
+        void Initialize() override;
 
-};
+   };
 
 }    // namespace
 

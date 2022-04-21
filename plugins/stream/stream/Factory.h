@@ -30,9 +30,9 @@ namespace stream {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
+         dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
 
-         virtual dabc::Module* CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd);
+         dabc::Module *CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd) override;
 
    };
 

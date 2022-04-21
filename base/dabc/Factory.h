@@ -50,41 +50,43 @@ namespace dabc {
 
       public:
          Factory(const std::string &name);
+         virtual ~Factory() {}
 
          /** Factory method to create application */
-         virtual Application* CreateApplication(const std::string &classname, Command cmd) { return nullptr; }
+         virtual Application* CreateApplication(const std::string & /* classname */, Command) { return nullptr; }
 
          /** Factory method to create object */
-         virtual Reference CreateObject(const std::string &classname, const std::string &objname, Command cmd) { return nullptr; }
+         virtual Reference CreateObject(const std::string & /* classname */, const std::string & /* objname */, Command) { return nullptr; }
 
          /** Factory method to create device */
-         virtual Device* CreateDevice(const std::string &classname, const std::string &devname, Command cmd) { return nullptr; }
+         virtual Device* CreateDevice(const std::string & /* classname */, const std::string & /* devname */, Command) { return nullptr; }
 
          /** Factory method to create thread */
-         virtual Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd) { return Reference(); }
+         virtual Reference CreateThread(Reference /* parent */, const std::string & /* classname */,
+                                        const std::string & /* thrdname */, const std::string & /* thrddev */, Command) { return Reference(); }
 
          /** Factory method to create module */
-         virtual Module* CreateModule(const std::string &classname, const std::string &modulename, Command cmd) { return nullptr; }
+         virtual Module* CreateModule(const std::string & /* classname */, const std::string & /* modulename */, Command) { return nullptr; }
 
          /** Factory method to create transport */
-         virtual Module* CreateTransport(const Reference& port, const std::string &typ, Command cmd);
+         virtual Module* CreateTransport(const Reference &port, const std::string &typ, Command cmd);
 
          /** Factory method to create data input */
-         virtual DataInput* CreateDataInput(const std::string &typ) { return nullptr; }
+         virtual DataInput* CreateDataInput(const std::string & /* typ */) { return nullptr; }
 
          /** Factory method to create data output */
-         virtual DataOutput* CreateDataOutput(const std::string &typ) { return nullptr; }
+         virtual DataOutput* CreateDataOutput(const std::string & /* typ */) { return nullptr; }
 
          /** Factory method to create arbitrary object kind */
-         virtual void* CreateAny(const std::string &classname, const std::string &objname, Command cmd) { return nullptr; }
+         virtual void* CreateAny(const std::string & /* classname */, const std::string & /* objname */, Command) { return nullptr; }
 
          static bool LoadLibrary(const std::string &fname);
 
          static void* FindSymbol(const std::string &symbol);
 
-         static bool CreateManager(const std::string &name = "mgr", Configuration* cfg = nullptr);
+         static bool CreateManager(const std::string &name = "mgr", Configuration *cfg = nullptr);
 
-         virtual const char* ClassName() const { return "Factory"; }
+         const char* ClassName() const override { return "Factory"; }
 
       protected:
 
@@ -105,7 +107,7 @@ namespace dabc {
 
    class FactoryPlugin {
       public:
-         FactoryPlugin(dabc::Factory* f);
+         FactoryPlugin(dabc::Factory *);
    };
 
 }

@@ -32,9 +32,9 @@ namespace ezca {
 
          Factory(const std::string &name);
 
-         virtual dabc::DataInput* CreateDataInput(const std::string &typ);
+         dabc::DataInput* CreateDataInput(const std::string &typ) override;
 
-         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
+         dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
    };
 
 }

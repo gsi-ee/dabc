@@ -32,8 +32,8 @@ namespace saftdabc {
 
          Factory(const std::string &name);
 
-         dabc::Device* CreateDevice (const std::string &classname, const std::string &devname,
-             dabc::Command cmd);
+         dabc::Device *CreateDevice (const std::string &classname, const std::string &devname,
+             dabc::Command cmd) override;
 
    };
 

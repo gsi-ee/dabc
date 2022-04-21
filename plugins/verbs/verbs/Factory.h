@@ -30,13 +30,13 @@ namespace verbs {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
+         dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
 
-         virtual dabc::Device* CreateDevice(const std::string &classname,
-                                            const std::string &devname,
-                                            dabc::Command cmd);
+         dabc::Device* CreateDevice(const std::string &classname,
+                                    const std::string &devname,
+                                    dabc::Command cmd) override;
 
-         virtual dabc::Reference CreateThread(dabc::Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, dabc::Command cmd);
+         dabc::Reference CreateThread(dabc::Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, dabc::Command cmd) override;
    };
 }
 

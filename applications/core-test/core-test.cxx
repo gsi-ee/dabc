@@ -262,14 +262,14 @@ class CoreTestFactory : public dabc::Factory  {
 
       CoreTestFactory(const std::string &name) : dabc::Factory(name) {}
 
-      virtual dabc::Application* CreateApplication(const std::string &classname, dabc::Command cmd)
+      dabc::Application *CreateApplication(const std::string &classname, dabc::Command cmd) override
       {
          if (classname == "CoreTestApp")
             return new CoreTestApplication();
          return dabc::Factory::CreateApplication(classname, cmd);
       }
 
-      virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
+      dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override
       {
          if (classname == "TestModuleAsync")
             return new TestModuleAsync(modulename, cmd);
@@ -277,7 +277,7 @@ class CoreTestFactory : public dabc::Factory  {
          if (classname == "TestModuleSync")
             return new TestModuleSync(modulename, cmd);
 
-         return 0;
+         return nullptr;
       }
 };
 

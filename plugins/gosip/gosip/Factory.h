@@ -30,9 +30,7 @@ namespace gosip {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
-
-      protected:
+         dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
 
    };
 

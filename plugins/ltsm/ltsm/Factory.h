@@ -26,7 +26,7 @@ namespace ltsm {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual void* CreateAny(const std::string &classname, const std::string &objname, dabc::Command cmd);
+         void *CreateAny(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
    };
 
 }

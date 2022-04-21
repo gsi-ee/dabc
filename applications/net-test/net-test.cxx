@@ -248,7 +248,7 @@ class NetTestFactory : public dabc::Factory  {
 
       NetTestFactory(const std::string &name) : dabc::Factory(name) {}
 
-      virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
+      dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override
       {
          if (classname == "NetTestSenderModule")
             return new NetTestSenderModule(modulename, cmd);
@@ -259,7 +259,7 @@ class NetTestFactory : public dabc::Factory  {
          if (classname == "NetTestSpecialModule")
             return new NetTestSpecialModule(modulename, cmd);
 
-         return 0;
+         return nullptr;
       }
 };
 

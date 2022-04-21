@@ -14,8 +14,6 @@
 #ifndef DABC_ROOT_Factory
 #define DABC_ROOT_Factory
 
-#ifndef __CINT__
-
 #ifndef DABC_Factory
 #include "dabc/Factory.h"
 #endif
@@ -26,11 +24,11 @@ namespace mbs_root {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::DataInput* CreateDataInput(const std::string &typ);
+         dabc::DataInput* CreateDataInput(const std::string &typ) override;
 
-         virtual dabc::DataOutput* CreateDataOutput(const std::string &typ);
+         dabc::DataOutput* CreateDataOutput(const std::string &typ) override;
    };
 
 }
-#endif
+
 #endif

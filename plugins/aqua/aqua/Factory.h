@@ -31,7 +31,7 @@ namespace aqua {
          Factory(const std::string &name) : dabc::Factory(name) {}
 
          /** Factory method to create data output */
-         virtual dabc::DataOutput* CreateDataOutput(const std::string &typ);
+         dabc::DataOutput* CreateDataOutput(const std::string &typ) override;
    };
 
 }

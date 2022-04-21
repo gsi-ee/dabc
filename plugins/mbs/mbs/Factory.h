@@ -30,17 +30,15 @@ namespace mbs {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
+         dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
 
-         virtual dabc::Module* CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd);
+         dabc::Module *CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd) override;
 
-         virtual dabc::DataInput* CreateDataInput(const std::string &typ);
+         dabc::DataInput *CreateDataInput(const std::string &typ) override;
 
-         virtual dabc::DataOutput* CreateDataOutput(const std::string &typ);
+         dabc::DataOutput *CreateDataOutput(const std::string &typ) override;
 
-         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
-
-      protected:
+         dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
 
    };
 

@@ -63,7 +63,7 @@ class IbTestApplication : public dabc::Application {
       virtual bool CreateAppModules()
       {
          std::string devclass = Par("NetDevice").Value().AsStr();
-         
+
          if (!dabc::mgr.CreateDevice(devclass, "NetDev")) return false;
 
          int connect_packet_size = 1024 + dabc::mgr.NumNodes() * Par("TestNumLids").Value().AsInt() * sizeof(IbTestConnRec);
@@ -86,7 +86,7 @@ class IbTestApplication : public dabc::Application {
 
             dabc::mgr.Connect(port1, port2).SetOptional(dabc::mgr()->NodeId()==0);
          }
-         
+
          return true;
       }
 
@@ -115,7 +115,7 @@ class IbTestFactory : public dabc::Factory  {
 
       IbTestFactory(const std::string &name) : dabc::Factory(name) {}
 
-      virtual dabc::Application* CreateApplication(const std::string &classname, dabc::Command cmd)
+      dabc::Application *CreateApplication(const std::string &classname, dabc::Command cmd) override
       {
          if (classname == "IbTestApp")
             return new IbTestApplication();
@@ -124,13 +124,12 @@ class IbTestFactory : public dabc::Factory  {
       }
 
 
-      virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
+      dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override
       {
          if (classname == "IbTestWorkerModule")
             return new IbTestWorkerModule(modulename, cmd);
 
-
-         return 0;
+         return nullptr;
       }
 };
 

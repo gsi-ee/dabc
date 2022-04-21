@@ -27,13 +27,13 @@ namespace root {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual void Initialize();
+         void Initialize() override;
 
-         virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
+         dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
 
-         virtual dabc::DataInput* CreateDataInput(const std::string&);
+         dabc::DataInput *CreateDataInput(const std::string &) override;
 
-         virtual dabc::DataOutput* CreateDataOutput(const std::string&);
+         dabc::DataOutput* CreateDataOutput(const std::string &) override;
    };
 
 }
