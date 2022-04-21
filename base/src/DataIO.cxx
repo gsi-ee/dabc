@@ -68,9 +68,9 @@ bool dabc::DataOutput::ShowInfo(int lvl, const std::string &info)
 
    if (par.null()) {
       if (lvl < 0)
-         EOUT(info.c_str());
+         EOUT("%s", info.c_str());
       else
-         DOUT0(info.c_str());
+         DOUT0("%s", info.c_str());
       return true;
    }
 

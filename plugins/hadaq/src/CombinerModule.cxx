@@ -294,7 +294,7 @@ void hadaq::CombinerModule::BeforeModuleStart()
          GetName(), (int) fRunNumber, NumInputs(), NumOutputs(), fFlushTimeout);
 
    SetInfo(info, true);
-   DOUT0(info.c_str());
+   DOUT0("%s", info.c_str());
    fLastDropTm.GetNow();
 
    fLastProcTm = fLastDropTm;
@@ -321,7 +321,7 @@ void hadaq::CombinerModule::AfterModuleStop()
        GetName(), (int) fAllBuildEvents, (int) fAllDiscEvents , (int) fAllDroppedData, (int) fAllRecvBytes ,(int) fRunDataErrors ,(int) fRunTagErrors);
 
    SetInfo(info, true);
-   DOUT0(info.c_str());
+   DOUT0("%s", info.c_str());
 
    // when BNET receiver module stopped, lead to application stop
    if (fBNETrecv) dabc::mgr.StopApplication();
@@ -984,7 +984,7 @@ bool hadaq::CombinerModule::BuildEvent()
         msg += " drop all!";
 
         SetInfo(msg, true);
-        DOUT0(msg.c_str());
+        DOUT0("%s", msg.c_str());
 
 #ifdef HADAQ_DEBUG
       fprintf(stderr, "DROP ALL\n");
