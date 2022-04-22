@@ -12,7 +12,7 @@ bnet::Factory::Factory(const std::string &name) :
 {
 }
 
-dabc::Reference bnet::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
+dabc::Reference bnet::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command)
 {
    if (classname == "TestEventsProducer")
       return new bnet::TestEventsProducer(objname);

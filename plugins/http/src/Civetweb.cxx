@@ -112,6 +112,7 @@ int http::Civetweb::log_message_handler(const struct mg_connection *conn, const 
    //const struct mg_context *ctx = mg_get_context(conn);
    //http::Civetweb* server = (http::Civetweb*) mg_get_user_data(ctx);
 
+   (void) conn;
    EOUT("civetweb: %s",message);
 
    return 0;

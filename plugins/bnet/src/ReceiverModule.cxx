@@ -11,17 +11,17 @@ bnet::ReceiverModule::~ReceiverModule()
 }
 
 
-bool bnet::ReceiverModule::ProcessRecv(unsigned port)
+bool bnet::ReceiverModule::ProcessRecv(unsigned)
 {
    return false;
 }
 
-bool bnet::ReceiverModule::ProcessSend(unsigned port)
+bool bnet::ReceiverModule::ProcessSend(unsigned)
 {
    return false;
 }
 
-void bnet::ReceiverModule::ProcessTimerEvent(unsigned timer)
+void bnet::ReceiverModule::ProcessTimerEvent(unsigned)
 {
 }
 

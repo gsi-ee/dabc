@@ -27,7 +27,7 @@ bool bnet::SenderModule::ProcessData()
    return false;
 }
 
-void bnet::SenderModule::ProcessTimerEvent(unsigned timer)
+void bnet::SenderModule::ProcessTimerEvent(unsigned)
 {
 }
 
