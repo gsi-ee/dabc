@@ -316,7 +316,7 @@ namespace dabc {
 
          struct ParamRec {
             Parameter par;  ///< reference on the parameter
-            int event;
+            int event{0};
 
             ParamRec() : par(), event(0) {}
             ParamRec(Parameter p, int e) : par(p), event(e) {}
@@ -338,37 +338,37 @@ namespace dabc {
          };
 
          TimeStamp            fMgrStoppedTime;  ///< indicate when manager mainloop was stopped
-         bool                 fAppFinished;     ///< when true, reply from application was received
+         bool                 fAppFinished{false};     ///< when true, reply from application was received
 
          // FIXME: revise usage of manager mutex, it is not necessary everywhere
-         Mutex                *fMgrMutex; // main mutex to protect manager queues
+         Mutex                *fMgrMutex{nullptr}; // main mutex to protect manager queues
 
-         ReferencesVector     *fDestroyQueue;
+         ReferencesVector     *fDestroyQueue{nullptr};
          // FIXME: use stl containers while RecordsQueue uses memcpy for struct with virtual table
          RecordsQueue<ParamRec> fParsQueue;
 
          // TODO: timed parameters should be seen in the special manager folder ?
-         ReferencesVector     *fTimedPars;
+         ReferencesVector     *fTimedPars{nullptr};
 
          /** list of workers, registered for receiving of parameter events
           * Used only from manager thread, therefore not protected with mutex */
-         ParamEventReceiverList*  fParEventsReceivers;
+         ParamEventReceiverList*  fParEventsReceivers{nullptr};
 
          // TODO: dependency pairs should be seen in special manager folder
-         DependPairList       *fDepend; // list of objects dependencies
+         DependPairList       *fDepend{nullptr}; // list of objects dependencies
 
-         Configuration        *fCfg;
+         Configuration        *fCfg{nullptr};
          std::string           fCfgHost;
 
-         int                   fNodeId;
-         int                   fNumNodes;
+         int                   fNodeId{0};
+         int                   fNumNodes{0};
 
          /** \brief Identifier for the current application
           * Only set when control instance is created
           * Depending on configuration, includes server port number or just process id */
          std::string           fLocalAddress;
 
-         ThreadsLayout         fThrLayout; ///< defines distribution of threads
+         ThreadsLayout         fThrLayout{layoutBalanced}; ///< defines distribution of threads
 
          std::string fLastCreatedDevName;  ///< name of last created device, automatically used for connection establishing
 
@@ -446,20 +446,20 @@ namespace dabc {
 
          // virtual methods from Worker
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual int PreviewCommand(Command cmd);
-         virtual int ExecuteCommand(Command cmd);
-         virtual bool ReplyCommand(Command cmd);
+         int PreviewCommand(Command) override;
+         int ExecuteCommand(Command) override;
+         bool ReplyCommand(Command) override;
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
       public:
 
-         Manager(const std::string &managername, Configuration* cfg = 0);
+         Manager(const std::string &managername, Configuration *cfg = nullptr);
          virtual ~Manager();
 
-         virtual const char* ClassName() const { return "Manager"; }
+         const char* ClassName() const  override { return "Manager"; }
 
           // candidates for protected
 
@@ -482,7 +482,7 @@ namespace dabc {
          /** Return nodes id of local node */
          int NodeId() const { return fNodeId; }
          /** Returns number of nodes in the cluster FIXME:probably must be removed*/
-         int NumNodes() { return fNumNodes; }
+         int NumNodes() const { return fNumNodes; }
 
          /** \brief Return address of current application */
          std::string GetLocalAddress();
@@ -502,7 +502,7 @@ namespace dabc {
          Configuration* cfg() const { return fCfg; }
 
          /** Displays on std output list of running threads and modules */
-         virtual void Print(int lvl = 0);
+         void Print(int lvl = 0) override;
 
          /** Delete derived from Object class object in manager thread.
            * Useful as replacement of call "delete this;" */
@@ -535,7 +535,7 @@ namespace dabc {
          void ProcessCtrlCSignal();
          void ProcessPipeSignal();
 
-         virtual bool Find(ConfigIO &cfg);
+         bool Find(ConfigIO &cfg) override;
 
          // ------------ access to factories method -------------
 

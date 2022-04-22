@@ -126,6 +126,8 @@ bool dabc::Transport::InfoExpected() const
 
 void dabc::Transport::ProvideInfo(int lvl, const std::string &info)
 {
+   (void) lvl;
+
    if (fTransportInfoName.empty()) return;
 
    InfoParameter par = dabc::mgr.FindPar(fTransportInfoName);
@@ -238,5 +240,3 @@ bool dabc::Transport::StopTransport()
 
    return ModuleAsync::Stop();
 }
-
-
