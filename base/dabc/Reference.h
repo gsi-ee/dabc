@@ -77,7 +77,7 @@ namespace dabc {
 
       protected:
 
-         Object*    fObj;       ///< pointer on the object
+         Object*    fObj{nullptr};       ///< pointer on the object
 
          Mutex* ObjectMutex() const;
 

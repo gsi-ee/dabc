@@ -118,7 +118,7 @@ namespace dabc {
                delete[] fQueue;
                fCapacity = 0;
                fQueue = nullptr;
-               fBorder = 0;
+               fBorder = nullptr;
             }
 
             if (capacity>0) {
@@ -135,8 +135,8 @@ namespace dabc {
           * queue into externally allocated array */
          virtual void CopyTo(T* tgt)
          {
-            if (fSize>0) {
-               if (fHead>fTail) {
+            if (fSize > 0) {
+               if (fHead > fTail) {
                   memcpy((void *)tgt, (const void *)fTail, (fHead - fTail) * sizeof(T));
                } else {
                   unsigned sz = fBorder - fTail;
@@ -428,7 +428,7 @@ namespace dabc {
 
          void PopOnly() { Front().reset(); Parent::PopOnly(); }
 
-         virtual void CopyTo(T* tgt)
+         void CopyTo(T* tgt) override
          {
             for (unsigned n=0; n<Size(); n++)
                *tgt++ = Item(n);
@@ -460,7 +460,7 @@ namespace dabc {
          /** Helper methods to preallocate memory in each record in the queue */
          void AllocateRecs(unsigned rec_capacity)
          {
-            for (unsigned n=0;n<Capacity();n++)
+            for (unsigned n = 0; n < Capacity(); n++)
                Parent::QueueItem(n)->allocate(rec_capacity);
          }
 

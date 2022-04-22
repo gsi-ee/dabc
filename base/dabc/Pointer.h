@@ -36,11 +36,11 @@ namespace dabc {
       friend class Buffer;
 
       protected:
-         Buffer            fBuf;      ///< we keep reference on the buffer, could be only used in same thread
-         unsigned          fSegm;     ///< segment id
-         unsigned char*    fPtr;      ///< pointer on the raw buffer
-         BufferSize_t      fRawSize;  ///< size of contiguous memory, pointed by fPtr
-         BufferSize_t      fFullSize; ///< full size of memory from pointer till the end
+         Buffer            fBuf;           ///< we keep reference on the buffer, could be only used in same thread
+         unsigned          fSegm{0};       ///< segment id
+         unsigned char*    fPtr{nullptr};  ///< pointer on the raw buffer
+         BufferSize_t      fRawSize{0};    ///< size of contiguous memory, pointed by fPtr
+         BufferSize_t      fFullSize{0};   ///< full size of memory from pointer till the end
 
          void long_shift(BufferSize_t sz);
 
@@ -77,7 +77,7 @@ namespace dabc {
          inline Pointer(const Buffer& buf, unsigned pos = 0, unsigned len = 0) :
             fBuf(),
             fSegm(0),
-            fPtr(0),
+            fPtr(nullptr),
             fRawSize(0),
             fFullSize(0)
          {
@@ -112,8 +112,8 @@ namespace dabc {
             fPtr = src.fPtr;
             fRawSize = src.fRawSize;
             fFullSize = src.fFullSize;
-            if (pos>0) shift(pos);
-            if (fullsz>0) setfullsize(fullsz);
+            if (pos > 0) shift(pos);
+            if (fullsz > 0) setfullsize(fullsz);
          }
 
          inline void reset(const Buffer& src, BufferSize_t pos = 0, BufferSize_t fullsz = 0)
@@ -126,7 +126,7 @@ namespace dabc {
                fPtr = (unsigned char*) fBuf.SegmentPtr(0);
                fRawSize = fBuf.SegmentSize(0);
             } else {
-               fPtr = 0;
+               fPtr = nullptr;
                fRawSize = 0;
             }
             if (pos>0) shift(pos);
@@ -137,7 +137,7 @@ namespace dabc {
          {
             fBuf.Release();
             fSegm = 0;
-            fPtr = 0;
+            fPtr = nullptr;
             fRawSize = 0;
             fFullSize = 0;
          }
@@ -152,12 +152,11 @@ namespace dabc {
 
          inline BufferSize_t shift(BufferSize_t sz) throw()
          {
-            if (sz<fRawSize) {
+            if (sz < fRawSize) {
                fPtr += sz;
                fRawSize -= sz;
                fFullSize -= sz;
-            } else
-            if (sz>fFullSize) {
+            } else if (sz > fFullSize) {
                sz = fFullSize;
                reset();
             } else
@@ -167,7 +166,7 @@ namespace dabc {
 
          void setfullsize(BufferSize_t sz)
          {
-            if (fFullSize>sz) {
+            if (fFullSize > sz) {
                fFullSize = sz;
                if (fRawSize>sz) fRawSize = sz;
             }

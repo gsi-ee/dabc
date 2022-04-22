@@ -64,25 +64,25 @@ namespace dabc {
          };
 
       protected:
-         unsigned           fQueueCapacity;     ///< configured capacity of the queue
-         Parameter          fRate;              ///< parameter for rate calculations
-         EventsProducing    fSignal;            ///< which kinds of signals will be produced
-         LocalTransportRef  fQueue;             ///< queue with buffers
-         std::string        fBindName;          ///< name of bind port (when input and output connected to same transport)
-         std::string        fRateName;          ///< name of rate parameter, which should be assigned to port
-         unsigned           fMaxLoopLength;     ///< maximum length of single event-processing loop
-         double             fReconnectPeriod;   ///< defines how often reconnect for port should be tried, -1 disable reconnect
-         int                fReconnectLimit;    ///< number of reconnect attempts, default 10
-         bool               fDoingReconnect;    ///< true if reconnection is now active
-         std::string        fOnError;           ///< that to do in case of error
+         unsigned           fQueueCapacity{0};      ///< configured capacity of the queue
+         Parameter          fRate;                  ///< parameter for rate calculations
+         EventsProducing    fSignal{SignalNone};    ///< which kinds of signals will be produced
+         LocalTransportRef  fQueue;                 ///< queue with buffers
+         std::string        fBindName;              ///< name of bind port (when input and output connected to same transport)
+         std::string        fRateName;              ///< name of rate parameter, which should be assigned to port
+         unsigned           fMaxLoopLength{0};      ///< maximum length of single event-processing loop
+         double             fReconnectPeriod{0};    ///< defines how often reconnect for port should be tried, -1 disable reconnect
+         int                fReconnectLimit{0};     ///< number of reconnect attempts, default 10
+         bool               fDoingReconnect{false}; ///< true if reconnection is now active
+         std::string        fOnError;               ///< that to do in case of error
 
 
          /** \brief Inherited method, should cleanup everything */
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
-         virtual void DoStart();
-         virtual void DoStop();
-         virtual void DoCleanup();
+         void DoStart() override;
+         void DoStop() override;
+         void DoCleanup() override;
 
          Port(int kind, Reference parent,
                   const std::string &name,
@@ -175,7 +175,7 @@ namespace dabc {
 
       public:
 
-         virtual const char* ClassName() const { return "Port"; }
+         const char* ClassName() const override { return "Port"; }
 
          virtual bool IsInput() const { return false; }
          virtual bool IsOutput() const { return false; }
@@ -248,15 +248,13 @@ namespace dabc {
       friend class ModuleSync;
 
       private:
-         InputPort(Reference parent,
-                   const std::string &name,
-                   unsigned queuesize);
+         InputPort(Reference parent, const std::string &name, unsigned queuesize);
 
       protected:
 
          virtual ~InputPort();
 
-         virtual unsigned NumStartEvents();
+         unsigned NumStartEvents() override;
 
          /** Defines how many buffers can be received */
          inline unsigned NumCanRecv() { return fQueue.Size(); }
@@ -284,9 +282,9 @@ namespace dabc {
 
       public:
 
-         virtual const char* ClassName() const { return "InputPort"; }
+         const char* ClassName() const override { return "InputPort"; }
 
-         virtual bool IsInput() const { return true; }
+         bool IsInput() const override { return true; }
    };
 
 
@@ -306,17 +304,15 @@ namespace dabc {
 
       private:
 
-         bool   fSendallFlag; // flag, used by SendToAllOutputs to mark, which output must be used for sending
+         bool   fSendallFlag{false}; // flag, used by SendToAllOutputs to mark, which output must be used for sending
 
-         OutputPort(Reference parent,
-                   const std::string &name,
-                   unsigned queuesize);
+         OutputPort(Reference parent, const std::string &name, unsigned queuesize);
 
       protected:
 
          virtual ~OutputPort();
 
-         virtual unsigned NumStartEvents();
+         unsigned NumStartEvents() override;
 
          /** Returns number of buffer which can be put to the queue */
          unsigned NumCanSend() const { return fQueue.NumCanSend(); }
@@ -330,9 +326,9 @@ namespace dabc {
 
       public:
 
-         virtual const char* ClassName() const { return "OutputPort"; }
+         const char* ClassName() const override { return "OutputPort"; }
 
-         virtual bool IsOutput() const { return true; }
+         bool IsOutput() const override { return true; }
 
    };
 
@@ -354,29 +350,26 @@ namespace dabc {
 
          Reference     fPool;
 
-         PoolHandle(Reference parent,
-                    Reference pool,
-                    const std::string &name,
-                    unsigned queuesize);
+         PoolHandle(Reference parent, Reference pool, const std::string &name, unsigned queuesize);
 
       protected:
 
 
          virtual ~PoolHandle();
 
-         virtual void DoCleanup()
+         void DoCleanup() override
          {
             fPool.Release();
             Port::DoCleanup();
          }
 
-         virtual void ObjectCleanup()
+         void ObjectCleanup() override
          {
             fPool.Release();
             Port::ObjectCleanup();
          }
 
-         virtual unsigned NumStartEvents();
+         unsigned NumStartEvents() override;
 
          // inline MemoryPool* Pool() const { return fPool(); }
 
@@ -404,9 +397,9 @@ namespace dabc {
 
       public:
 
-         virtual const char* ClassName() const { return "PoolHandle"; }
+         const char* ClassName() const override { return "PoolHandle"; }
 
-         virtual bool IsInput() const { return true; }
+         bool IsInput() const override { return true; }
    };
 
 }

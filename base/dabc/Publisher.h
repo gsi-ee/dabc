@@ -88,30 +88,30 @@ namespace dabc {
    };
 
    struct PublisherEntry {
-      unsigned id;          // unique id in the worker
-      std::string path;     // absolute path in hierarchy
-      std::string worker;   // worker which is manages hierarchy
-      std::string fulladdr;  // address, used to identify producer of the hierarchy branch
-      void* hier;           // local hierarchy pointer, one not allowed to use it from publisher
-      uint64_t version;     // last requested version
-      uint64_t lastglvers;  // last version, used to build global
-      bool local;           // is entry from local node
-      bool mgrsubitem;      // if true, belongs to manager hierarchy
-      int  errcnt;          // counter of consequent errors
-      bool waiting_publisher; // indicate if next request is submitted
-      Hierarchy rem;        // remote hierarchy
-      HierarchyStore* store; // store object for the registered hierarchy
+      unsigned id{0};                 // unique id in the worker
+      std::string path;               // absolute path in hierarchy
+      std::string worker;             // worker which is manages hierarchy
+      std::string fulladdr;           // address, used to identify producer of the hierarchy branch
+      void* hier{nullptr};            // local hierarchy pointer, one not allowed to use it from publisher
+      uint64_t version{0};            // last requested version
+      uint64_t lastglvers{0};         // last version, used to build global
+      bool local{false};              // is entry from local node
+      bool mgrsubitem{false};         // if true, belongs to manager hierarchy
+      int  errcnt{0};                 // counter of consequent errors
+      bool waiting_publisher{false};  // indicate if next request is submitted
+      Hierarchy rem;                  // remote hierarchy
+      HierarchyStore* store{nullptr}; // store object for the registered hierarchy
 
       PublisherEntry() :
-         id(0), path(), worker(), fulladdr(), hier(0),
+         id(0), path(), worker(), fulladdr(), hier(nullptr),
          version(0), lastglvers(0), local(true), mgrsubitem(false),
-         errcnt(0), waiting_publisher(false), rem(), store(0) {}
+         errcnt(0), waiting_publisher(false), rem(), store(nullptr) {}
 
       // implement copy constructor to avoid any extra copies which are not necessary
       PublisherEntry(const PublisherEntry& src) :
-         id(src.id), path(), worker(), fulladdr(), hier(0),
+         id(src.id), path(), worker(), fulladdr(), hier(nullptr),
          version(0), lastglvers(0), local(true), mgrsubitem(false),
-         errcnt(0), waiting_publisher(false), rem(), store(0) {}
+         errcnt(0), waiting_publisher(false), rem(), store(nullptr) {}
 
       ~PublisherEntry();
 
@@ -124,14 +124,14 @@ namespace dabc {
    };
 
    struct SubscriberEntry {
-      unsigned id;          // unique id in the worker
-      std::string path;     // absolute path in hierarchy
-      std::string worker;   // worker which is manages hierarchy
-      bool local;           // is entry from local node
-      int hlimit;           // history limit -1 - DNS, 0 - no history
-      Hierarchy fEntry;     // entry which is provided to the worker as result
-      uint64_t version;     // last version provided to subscriber
-      bool waiting_worker;  // when enabled, we are waiting while worker process entry
+      unsigned id{0};              // unique id in the worker
+      std::string path;            // absolute path in hierarchy
+      std::string worker;          // worker which is manages hierarchy
+      bool local{false};           // is entry from local node
+      int hlimit{0};               // history limit -1 - DNS, 0 - no history
+      Hierarchy fEntry;            // entry which is provided to the worker as result
+      uint64_t version{0};         // last version provided to subscriber
+      bool waiting_worker{false};  // when enabled, we are waiting while worker process entry
 
       SubscriberEntry() :
          id(0), path(), worker(), local(true),
@@ -153,7 +153,7 @@ namespace dabc {
 
          Hierarchy fLocal;   ///! this is hierarchy only for entries from local modules
 
-         uint64_t fLastLocalVers; ///! last local version, used to build global list
+         uint64_t fLastLocalVers{0}; ///! last local version, used to build global list
 
          typedef std::list<PublisherEntry> PublishersList;
 
@@ -163,24 +163,24 @@ namespace dabc {
 
          SubscribersList fSubscribers;
 
-         unsigned fCnt;            ///! counter for new records
+         unsigned fCnt{0};            ///! counter for new records
 
          std::string fMgrPath;     ///! path for manager
          Hierarchy   fMgrHiearchy; ///! this is manager hierarchy, published by ourselfs
 
          std::string fStoreDir;   ///! directory to store data
          std::string fStoreSel;   ///! selected hierarchy path for storage like 'MBS' or 'FESA/server'
-         int         fFileLimit;  ///! maximum size of store file, in MB
-         int         fTimeLimit;  ///! maximum time of store file, in seconds
-         double      fStorePeriod; ///! how often storage is triggered
+         int         fFileLimit{0};  ///! maximum size of store file, in MB
+         int         fTimeLimit{0};  ///! maximum time of store file, in seconds
+         double      fStorePeriod{0}; ///! how often storage is triggered
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual int ExecuteCommand(Command cmd);
+         int ExecuteCommand(Command) override;
 
-         virtual bool ReplyCommand(Command cmd);
+         bool ReplyCommand(Command cmd) override;
 
          dabc::Command CreateExeCmd(const std::string &path, const std::string &query, dabc::Command tgt = nullptr);
 
@@ -213,7 +213,7 @@ namespace dabc {
 
          static const char* DfltName() { return "/publ"; }
 
-         virtual const char* ClassName() const { return "Publisher"; }
+         const char* ClassName() const override { return "Publisher"; }
    };
 
    // ==============================================================

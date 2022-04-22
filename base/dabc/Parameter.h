@@ -60,39 +60,38 @@ namespace dabc {
 
          std::string   fKind;         ///< specified kind of parameter (int, double, info, ratemeter), to be used by reference to decide if object can be assigned
          TimeStamp     fLastChangeTm; ///< last time when parameter was modified
-         double        fInterval;     ///< how often modified events are produced TODO: should we move it in the normal record field?
-         bool          fAsynchron;    ///< indicates if parameter can produce events asynchronous to the modification of parameter itself
+         double        fInterval{0};  ///< how often modified events are produced TODO: should we move it in the normal record field?
+         bool          fAsynchron{false};  ///< indicates if parameter can produce events asynchronous to the modification of parameter itself
                                       ///< it is a case for ratemeters
-         EStatistic    fStatistic;    ///< indicates if statistic is calculated: 0 - off, 1 - rate, 2 - average
-         double        fRateValueSum; ///< sum of values
-         double        fRateTimeSum;  ///< sum of time
-         double        fRateNumSum;   ///< sum of accumulated counts
-         bool          fMonitored;    ///< if true parameter change event will be delivered to the worker
-         bool          fRecorded;     ///< if true, parameter changes should be reported to worker where it will be recorded
-         bool          fWaitWorker;   ///< if true, waiting confirmation from worker
-         bool          fAttrModified; ///< indicate if attribute was modified since last parameter event
-         bool          fDeliverAllEvents; ///< if true, any modification event will be delivered, default off
-         int           fRateWidth;    ///< display width of rate variable
-         int           fRatePrec;     ///< display precision of rate variable
-
+         EStatistic    fStatistic{kindNone};    ///< indicates if statistic is calculated: 0 - off, 1 - rate, 2 - average
+         double        fRateValueSum{0}; ///< sum of values
+         double        fRateTimeSum{0};  ///< sum of time
+         double        fRateNumSum{0};   ///< sum of accumulated counts
+         bool          fMonitored{false};    ///< if true parameter change event will be delivered to the worker
+         bool          fRecorded{false};     ///< if true, parameter changes should be reported to worker where it will be recorded
+         bool          fWaitWorker{false};   ///< if true, waiting confirmation from worker
+         bool          fAttrModified{false}; ///< indicate if attribute was modified since last parameter event
+         bool          fDeliverAllEvents{false}; ///< if true, any modification event will be delivered, default off
+         int           fRateWidth{0};    ///< display width of rate variable
+         int           fRatePrec{0};     ///< display precision of rate variable
 
          virtual std::string DefaultFiledName() const;
 
-         virtual bool HasField(const std::string &name) const
+         bool HasField(const std::string &name) const override
          { LockGuard guard(ObjectMutex()); return RecordContainer::HasField(name); }
 
-         virtual bool RemoveField(const std::string &name)
+         bool RemoveField(const std::string &name) override
          { LockGuard guard(ObjectMutex()); return RecordContainer::RemoveField(name); }
 
-         virtual unsigned NumFields() const
+         unsigned NumFields() const override
            { LockGuard guard(ObjectMutex()); return RecordContainer::NumFields(); }
 
-         virtual std::string FieldName(unsigned cnt) const
+         std::string FieldName(unsigned cnt) const override
             { LockGuard guard(ObjectMutex()); return RecordContainer::FieldName(cnt); }
 
-         virtual RecordField GetField(const std::string &name) const;
+         RecordField GetField(const std::string &name) const override;
 
-         virtual bool SetField(const std::string &name, const RecordField& v);
+         bool SetField(const std::string &name, const RecordField& v) override;
 
          /** Method called from manager thread when parameter configured as asynchronous.
           * It is done intentionally to avoid situation that in non-deterministic way event processing
@@ -106,11 +105,11 @@ namespace dabc {
          inline void Modified() { FireParEvent(parModified); }
 
          /** Method allows in derived classes to block changes of some fields */
-         virtual bool _CanChangeField(const std::string&) { return true; }
+         virtual bool _CanChangeField(const std::string &) { return true; }
 
          void FireParEvent(int id);
 
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
          bool _CalcRate(double& value, std::string& svalue);
 
@@ -134,7 +133,7 @@ namespace dabc {
          void FireModified(const std::string &svalue);
 
          /** \brief Save parameter attributes into container */
-         virtual void BuildFieldsMap(RecordFieldsMap* cont);
+         void BuildFieldsMap(RecordFieldsMap* cont) override;
 
          /** \brief Get confirmation from worker, which monitor parameters changes.
           * One use such call to allow next generation of event */
@@ -142,7 +141,7 @@ namespace dabc {
 
       public:
 
-         virtual const char* ClassName() const { return "Parameter"; }
+         const char* ClassName() const override { return "Parameter"; }
 
          const std::string &Kind() const;
    };

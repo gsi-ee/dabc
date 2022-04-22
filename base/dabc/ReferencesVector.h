@@ -34,7 +34,7 @@ namespace dabc {
 
          typedef std::vector<Reference> refs_vector;
 
-         refs_vector* fVector;  ///< vector with references
+         refs_vector* fVector{nullptr};  ///< vector with references
 
          void ExpandVector();
 
@@ -65,10 +65,10 @@ namespace dabc {
 
          /** \brief Returns pointer on the object */
          inline Object* GetObject(unsigned n) const
-            { return (n<GetSize()) ? fVector->at(n).GetObject() : 0; }
+            { return (n < GetSize()) ? fVector->at(n).GetObject() : nullptr; }
 
          /** \brief Returns new reference on object with index n */
-         inline Reference Get(unsigned n) const { return Reference(n<GetSize() ? fVector->at(n).GetObject() : 0); }
+         inline Reference Get(unsigned n) const { return Reference(n < GetSize() ? fVector->at(n).GetObject() : nullptr); }
 
          /** \brief Returns new reference on object with index n */
          inline Reference operator[](unsigned n) const { return Get(n); }
