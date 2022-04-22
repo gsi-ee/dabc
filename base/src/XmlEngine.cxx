@@ -412,14 +412,14 @@ const char* dabc::Xml::GetAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // returns value of attribute for xmlnode
 
-   if (xmlnode==0) return 0;
+   if (!xmlnode) return nullptr;
    SXmlAttr_t* attr = ((SXmlNode_t*)xmlnode)->fAttr;
    while (attr!=0) {
       if (strcmp(SXmlAttr_t::Name(attr),name)==0)
          return SXmlAttr_t::Name(attr) + strlen(name) + 1;
       attr = attr->fNext;
    }
-   return 0;
+   return nullptr;
 }
 
 //______________________________________________________________________________
@@ -427,7 +427,7 @@ int dabc::Xml::GetIntAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // returns value of attribute as integer
 
-   if (xmlnode==0) return 0;
+   if (!xmlnode) return 0;
    int res = 0;
    const char* attr = GetAttr(xmlnode, name);
    if (attr) sscanf(attr, "%d", &res);
@@ -441,10 +441,10 @@ dabc::XMLAttrPointer_t dabc::Xml::NewAttr(XMLNodePointer_t xmlnode, XMLNsPointer
    // creates new attribute for xmlnode,
    // namespaces are not supported for attributes
 
-   if (xmlnode==0) return 0;
+   if (!xmlnode) return nullptr;
 
-   int namelen(name != 0 ? strlen(name) : 0);
-   int valuelen(value != 0 ? strlen(value) : 0);
+   int namelen = name ? strlen(name) : 0;
+   int valuelen = value ? strlen(value) : 0;
    SXmlAttr_t* attr = (SXmlAttr_t*) AllocateAttr(namelen, valuelen, xmlnode);
 
    char* attrname = SXmlAttr_t::Name(attr);
@@ -519,7 +519,7 @@ dabc::XMLAttrPointer_t dabc::Xml::GetFirstAttr(XMLNodePointer_t xmlnode)
 {
    // return first attribute in the list, namespace (if exists) will be skipped
 
-   if (xmlnode==0) return 0;
+   if (!xmlnode) return nullptr;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
    SXmlAttr_t* attr = node->fAttr;
@@ -533,7 +533,7 @@ dabc::XMLAttrPointer_t dabc::Xml::GetNextAttr(XMLAttrPointer_t xmlattr)
 {
    // return next attribute in the list
 
-   if (xmlattr==0) return 0;
+   if (!xmlattr) return nullptr;
 
    return (XMLAttrPointer_t) ((SXmlAttr_t*) xmlattr)->fNext;
 }
@@ -543,7 +543,7 @@ const char* dabc::Xml::GetAttrName(XMLAttrPointer_t xmlattr)
 {
    // return name of the attribute
 
-   if (xmlattr==0) return 0;
+   if (!xmlattr) return nullptr;
 
    return SXmlAttr_t::Name(xmlattr);
 
@@ -554,7 +554,7 @@ const char* dabc::Xml::GetAttrValue(XMLAttrPointer_t xmlattr)
 {
    // return value of attribute
 
-   if (xmlattr==0) return 0;
+   if (!xmlattr) return nullptr;
 
    const char* attrname = SXmlAttr_t::Name(xmlattr);
    return attrname + strlen(attrname) + 1;
@@ -566,11 +566,11 @@ dabc::XMLNodePointer_t dabc::Xml::NewChild(XMLNodePointer_t parent, XMLNsPointer
 {
    // create new child element for parent node
 
-   int namelen(name!=0 ? strlen(name) : 0);
+   int namelen = name ? strlen(name) : 0;
 
    SXmlNode_t* node = (SXmlNode_t*) AllocateNode(namelen, parent);
 
-   if (namelen>0)
+   if (namelen > 0)
       strncpy(SXmlNode_t::Name(node), name, namelen+1);
    else
       *SXmlNode_t::Name(node) = 0;
@@ -598,13 +598,13 @@ dabc::XMLNsPointer_t dabc::Xml::NewNS(XMLNodePointer_t xmlnode, const char* refe
    // namespace attribute will be always the first in list of node attributes
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
-   if (name==0) name = SXmlNode_t::Name(node);
+   if (!name) name = SXmlNode_t::Name(node);
    int namelen = strlen(name);
    char* nsname = new char[namelen+7];
    snprintf(nsname, namelen+7, "xmlns:%s", name);
 
    SXmlAttr_t* first = node->fAttr;
-   node->fAttr = 0;
+   node->fAttr = nullptr;
 
    SXmlAttr_t* nsattr = (SXmlAttr_t*) NewAttr(xmlnode, 0, nsname, reference);
 
@@ -621,7 +621,7 @@ dabc::XMLNsPointer_t dabc::Xml::GetNS(XMLNodePointer_t xmlnode)
 {
    // return namespace attribute  (if exists)
 
-   if (xmlnode==0) return 0;
+   if (!xmlnode) return nullptr;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
    return (XMLNsPointer_t) node->fNs;
@@ -634,7 +634,7 @@ const char* dabc::Xml::GetNSName(XMLNsPointer_t ns)
 
    const char* nsname = GetAttrName((XMLAttrPointer_t)ns);
 
-   if ((nsname!=0) && (strncmp(nsname,"xmlns:",6)==0)) nsname+=6;
+   if (nsname && (strncmp(nsname,"xmlns:",6)==0)) nsname += 6;
 
    return nsname;
 }
@@ -653,7 +653,7 @@ void dabc::Xml::AddChild(XMLNodePointer_t parent, XMLNodePointer_t child)
 {
    // add child element to xmlnode
 
-   if ((parent==0) || (child==0)) return;
+   if (!parent || !child) return;
    SXmlNode_t* pnode = (SXmlNode_t*) parent;
    SXmlNode_t* cnode = (SXmlNode_t*) child;
    cnode->fParent = pnode;
@@ -673,7 +673,7 @@ void dabc::Xml::AddChildFirst(XMLNodePointer_t parent, XMLNodePointer_t child)
 {
    // add node as first child
 
-   if ((parent==0) || (child==0)) return;
+   if (!parent || !child) return;
    SXmlNode_t* pnode = (SXmlNode_t*) parent;
    SXmlNode_t* cnode = (SXmlNode_t*) child;
    cnode->fParent = pnode;
@@ -681,7 +681,7 @@ void dabc::Xml::AddChildFirst(XMLNodePointer_t parent, XMLNodePointer_t child)
    cnode->fNext = pnode->fChild;
    pnode->fChild = cnode;
 
-   if (pnode->fLastChild==0) pnode->fLastChild = cnode;
+   if (pnode->fLastChild == nullptr) pnode->fLastChild = cnode;
 }
 
 
@@ -894,11 +894,11 @@ const char* dabc::Xml::GetNodeContent(XMLNodePointer_t xmlnode)
 {
    // get contents (if any) of xml node
 
-   if (xmlnode==0) return 0;
+   if (!xmlnode) return nullptr;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
-   if (node->fChild==0) return 0;
+   if (!node->fChild) return nullptr;
    const char* childname = SXmlNode_t::Name(node->fChild);
-   if ((childname==0) || (*childname != 0)) return 0;
+   if (!childname || (*childname != 0)) return nullptr;
    return childname + 1;
 }
 
@@ -907,9 +907,9 @@ dabc::XMLNodePointer_t dabc::Xml::GetChild(XMLNodePointer_t xmlnode)
 {
    // returns first child of xml node
 
-   SXmlNode_t* res = xmlnode==0 ? 0 :((SXmlNode_t*) xmlnode)->fChild;
+   SXmlNode_t* res = !xmlnode ? nullptr :((SXmlNode_t*) xmlnode)->fChild;
    // skip content node
-   if ((res!=0) && (*SXmlNode_t::Name(res) == 0)) res = res->fNext;
+   if (res && (*SXmlNode_t::Name(res) == 0)) res = res->fNext;
    return (XMLNodePointer_t) res;
 }
 
@@ -918,7 +918,7 @@ dabc::XMLNodePointer_t dabc::Xml::GetParent(XMLNodePointer_t xmlnode)
 {
    // returns parent of xmlnode
 
-   return xmlnode==0 ? 0 : (XMLNodePointer_t) ((SXmlNode_t*) xmlnode)->fParent;
+   return !xmlnode ? nullptr : (XMLNodePointer_t) ((SXmlNode_t*) xmlnode)->fParent;
 }
 
 //______________________________________________________________________________
@@ -926,7 +926,7 @@ dabc::XMLNodePointer_t dabc::Xml::GetNext(XMLNodePointer_t xmlnode)
 {
    // return next to xmlnode node
 
-   return xmlnode==0 ? 0 : (XMLNodePointer_t) ((SXmlNode_t*) xmlnode)->fNext;
+   return !xmlnode ? nullptr : (XMLNodePointer_t) ((SXmlNode_t*) xmlnode)->fNext;
 }
 
 //______________________________________________________________________________
@@ -1063,7 +1063,7 @@ dabc::XMLNodePointer_t dabc::Xml::DocGetRootElement(XMLDocPointer_t xmldoc)
 {
    // returns root node of document
 
-   if (xmldoc==0) return 0;
+   if (!xmldoc) return nullptr;
 
    XMLNodePointer_t xmlnode = (XMLNodePointer_t) ((SXmlDoc_t*)xmldoc)->fRootNode;
 
@@ -1079,9 +1079,9 @@ dabc::XMLDocPointer_t dabc::Xml::ParseFile(const char* filename, bool showerr)
 {
    // parses content of file and tries to produce xml structures
 
-   if ((filename==0) || (strlen(filename)==0)) return 0;
+   if (!filename || (strlen(filename)==0)) return nullptr;
    XmlInputStream inp(true, filename, 100000);
-   if (inp.IsBad()) { EOUT("File %s not found", filename); return 0; }
+   if (inp.IsBad()) { EOUT("File %s not found", filename); return nullptr; }
    return ParseStream(&inp, showerr);
 }
 
@@ -1090,7 +1090,7 @@ dabc::XMLDocPointer_t dabc::Xml::ParseString(const char* xmlstring, bool showerr
 {
    // parses content of string and tries to produce xml structures
 
-   if ((xmlstring==0) || (strlen(xmlstring)==0)) return 0;
+   if (!xmlstring || (strlen(xmlstring) == 0)) return nullptr;
    XmlInputStream inp(false, xmlstring, 100000);
    return ParseStream(&inp, showerr);
 }
@@ -1100,9 +1100,9 @@ dabc::XMLDocPointer_t dabc::Xml::ParseStream(XmlInputStream* inp, bool showerr)
 {
    // parses content of the stream and tries to produce xml structures
 
-   if (inp == 0) return 0;
+   if (!inp) return nullptr;
 
-   XMLDocPointer_t xmldoc = NewDoc(0);
+   XMLDocPointer_t xmldoc = NewDoc(nullptr);
 
    bool success = false;
 
@@ -1125,7 +1125,7 @@ dabc::XMLDocPointer_t dabc::Xml::ParseStream(XmlInputStream* inp, bool showerr)
    if (!success) {
       if (showerr) DisplayError(resvalue, inp->CurrentLine());
       FreeDoc(xmldoc);
-      return 0;
+      return nullptr;
    }
 
    return xmldoc;
@@ -1136,17 +1136,17 @@ bool dabc::Xml::ValidateVersion(XMLDocPointer_t xmldoc, const char* version)
 {
    // check that first node is xml processing instruction with correct xml version number
 
-   if (xmldoc==0) return false;
+   if (!xmldoc) return false;
 
    XMLNodePointer_t vernode = GetChild((XMLNodePointer_t) ((SXmlDoc_t*) xmldoc)->fRootNode);
-   if (vernode==0) return false;
+   if (!vernode) return false;
 
    if (((SXmlNode_t*) vernode)->fType!=kXML_PI_NODE) return false;
    if (strcmp(GetNodeName(vernode), "xml")!=0) return false;
 
    const char* value = GetAttr(vernode,"version");
-   if (value==0) return false;
-   if (version==0) version = "1.0";
+   if (!value) return false;
+   if (!version) version = "1.0";
 
    return strcmp(version,value)==0;
 }
@@ -1160,7 +1160,7 @@ void dabc::Xml::SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int l
    // if (layout>0) each node will be started from new line,
    // and number of spaces will correspond to structure depth.
 
-   if ((res==0) || (xmlnode==0)) return;
+   if (!res || !xmlnode) return;
 
    XmlOutputStream out(res, 10000);
 
@@ -1172,7 +1172,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadSingleNode(const char* src)
 {
    // read single xml node from provided string
 
-   if (src==0) return 0;
+   if (!src) return nullptr;
 
    XmlInputStream inp(false, src, 10000);
 
@@ -1180,10 +1180,10 @@ dabc::XMLNodePointer_t dabc::Xml::ReadSingleNode(const char* src)
 
    XMLNodePointer_t xmlnode = ReadNode(0, &inp, resvalue);
 
-   if (resvalue<=0) {
+   if (resvalue <= 0) {
       DisplayError(resvalue, inp.CurrentLine());
       FreeNode(xmlnode);
-      return 0;
+      return nullptr;
    }
 
    return xmlnode;
@@ -1194,9 +1194,9 @@ char* dabc::Xml::Makestr(const char* str)
 {
    // creates char* variable with copy of provided string
 
-   if (str==0) return 0;
+   if (!str) return nullptr;
    int len = strlen(str);
-   if (len==0) return 0;
+   if (len==0) return nullptr;
    char* res = new char[len+1];
    strncpy(res, str, len+1);
    return res;
@@ -1207,7 +1207,7 @@ char* dabc::Xml::Makenstr(const char* str, int len)
 {
    // creates char* variable with copy of len symbols from provided string
 
-   if ((str==0) || (len==0)) return 0;
+   if (!str || (len == 0)) return nullptr;
    char* res = new char[len+1];
    strncpy(res, str, len);
    *(res+len) = 0;
@@ -1225,14 +1225,14 @@ dabc::XMLNodePointer_t dabc::Xml::AllocateNode(int namelen, XMLNodePointer_t par
    if (!node) return nullptr;
 
    node->fType = kXML_NODE;
-   node->fParent = 0;
-   node->fNs = 0;
-   node->fAttr = 0;
-   node->fChild = 0;
-   node->fLastChild = 0;
-   node->fNext = 0;
+   node->fParent = nullptr;
+   node->fNs = nullptr;
+   node->fAttr = nullptr;
+   node->fChild = nullptr;
+   node->fLastChild = nullptr;
+   node->fNext = nullptr;
 
-   if (parent!=0)
+   if (parent)
       AddChild(parent, (XMLNodePointer_t) node);
 
    return (XMLNodePointer_t) node;
@@ -1269,14 +1269,14 @@ dabc::XMLNsPointer_t dabc::Xml::FindNs(XMLNodePointer_t xmlnode, const char* nam
    // define if namespace of that name exists for xmlnode
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
-   while (node!=0) {
-      if (node->fNs!=0) {
+   while (node) {
+      if (node->fNs) {
          const char* nsname = SXmlAttr_t::Name(node->fNs) + 6;
          if (strcmp(nsname, name)==0) return node->fNs;
       }
       node = node->fParent;
    }
-   return 0;
+   return nullptr;
 }
 
 //______________________________________________________________________________
@@ -1285,13 +1285,13 @@ void dabc::Xml::TruncateNsExtension(XMLNodePointer_t xmlnode)
    // removes namespace extension of nodename
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
-   if (node==0) return;
+   if (!node) return;
    char* colon = strchr(SXmlNode_t::Name(node),':');
-   if (colon==0) return;
+   if (!colon) return;
 
    char* copyname = SXmlNode_t::Name(node);
 
-   while (*colon!=0)
+   while (*colon)
      *(copyname++) = *(++colon);
 }
 
@@ -1335,11 +1335,11 @@ void dabc::Xml::OutputValue(char* value, XmlOutputStream* out)
    // if symbols '<' '&' '>' '"' appears in the string, they
    // will be encoded to appropriate xml symbols: &lt, &amp, &gt, &quot
 
-   if (value==0) return;
+   if (!value) return;
 
    char* last = value;
-   char* find = 0;
-   while ((find=strpbrk(last,"<&>\"\'")) !=0 ) {
+   char* find = nullptr;
+   while ((find = strpbrk(last,"<&>\"\'")) != nullptr) {
       char symb = *find;
       *find = 0;
       out->Write(last);
@@ -1351,7 +1351,7 @@ void dabc::Xml::OutputValue(char* value, XmlOutputStream* out)
       else if (symb=='\'') out->Write("&apos;");
       else                 out->Write("&quot;");
    }
-   if (*last!=0)
+   if (*last)
       out->Write(last);
 }
 
@@ -1360,11 +1360,11 @@ void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int lay
 {
    // stream data of xmlnode to output
 
-   if (xmlnode==0) return;
+   if (!xmlnode) return;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
    // this is output for content
-   if (*SXmlNode_t::Name(node) == 0 ) {
+   if (*SXmlNode_t::Name(node) == 0) {
       out->Write(SXmlNode_t::Name(node)+1);
       return;
    }
@@ -1379,8 +1379,7 @@ void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int lay
       out->Write("-->");
       if (layout>0) out->Put('\n');
       return;
-   } else
-   if (node->fType==kXML_RAWLINE) {
+   } else if (node->fType==kXML_RAWLINE) {
       out->Write(SXmlNode_t::Name(node));
       if (layout>0) out->Put('\n');
       return;
@@ -1460,8 +1459,8 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
 
    resvalue = 0;
 
-   if (inp==0) return 0;
-   if (!inp->SkipSpaces()) { resvalue = -1; return 0; }
+   if (!inp) return nullptr;
+   if (!inp->SkipSpaces()) { resvalue = -1; return nullptr; }
    SXmlNode_t* parent = (SXmlNode_t*) xmlparent;
 
    SXmlNode_t* node = 0;
@@ -1469,7 +1468,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
    // process comments before we start to analyze any node symbols
    while (inp->CheckFor("<!--")) {
       int commentlen = inp->SearchFor("-->");
-      if (commentlen < 0) { resvalue = -10; return 0; }
+      if (commentlen < 0) { resvalue = -10; return nullptr; }
 
       if (!inp->SkipComments()) {
          node = (SXmlNode_t*) AllocateNode(commentlen, xmlparent);
@@ -1490,48 +1489,48 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
    if (*inp->fCurrent!='<') {
       // here should be reading of element content
       // only one entry for content is supported, only before any other childs
-      if ((parent==0) || (parent->fChild!=0)) { resvalue = -2; return 0; }
+      if (!parent || parent->fChild) { resvalue = -2; return nullptr; }
       int contlen = inp->LocateContent();
-      if (contlen<0) return 0;
+      if (contlen < 0) return nullptr;
 
       SXmlNode_t* contnode = (SXmlNode_t*) AllocateNode(contlen+1, xmlparent);
       char* contptr = SXmlNode_t::Name(contnode);
       *contptr = 0;
       contptr++;
       UnpackSpecialCharacters(contptr, inp->fCurrent, contlen);
-      if (!inp->ShiftCurrent(contlen)) return 0;
+      if (!inp->ShiftCurrent(contlen)) return nullptr;
       resvalue = 2;
       return contnode;
    } else
       // skip "<" symbol
-      if (!inp->ShiftCurrent()) return 0;
+      if (!inp->ShiftCurrent()) return nullptr;
 
    if (*inp->fCurrent=='/') {
       // this is a starting of closing node
-      if (!inp->ShiftCurrent()) return 0;
-      if (!inp->SkipSpaces()) return 0;
+      if (!inp->ShiftCurrent()) return nullptr;
+      if (!inp->SkipSpaces()) return nullptr;
       int len = inp->LocateIdentifier();
-      if (len<=0) { resvalue = -3; return 0; }
+      if (len <= 0) { resvalue = -3; return nullptr; }
 
-      if (parent==0) { resvalue = -4; return 0; }
+      if (!parent) { resvalue = -4; return nullptr; }
 
-      if (strncmp(SXmlNode_t::Name(parent), inp->fCurrent, len)!=0) {
+      if (strncmp(SXmlNode_t::Name(parent), inp->fCurrent, len) != 0) {
          resvalue = -5;
-         return 0;
+         return nullptr;
       }
 
-      if (!inp->ShiftCurrent(len)) return 0;
+      if (!inp->ShiftCurrent(len)) return nullptr;
 
-      if (!inp->SkipSpaces())   return 0;
-      if (*inp->fCurrent!='>')  return 0;
-      if (!inp->ShiftCurrent()) return 0;
+      if (!inp->SkipSpaces())   return nullptr;
+      if (*inp->fCurrent!='>')  return nullptr;
+      if (!inp->ShiftCurrent()) return nullptr;
 
       if (parent->fNs!=0)
          TruncateNsExtension((XMLNodePointer_t)parent);
 
       inp->SkipSpaces(true); // locate start of next string
       resvalue = 1;
-      return 0;
+      return nullptr;
    }
 
    EXmlNodeType nodetype = kXML_NODE;
@@ -1540,15 +1539,15 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
 
    // this is case of processing instructions node
    if (*inp->fCurrent=='?') {
-      if (!inp->ShiftCurrent()) return 0;
+      if (!inp->ShiftCurrent()) return nullptr;
       nodetype = kXML_PI_NODE;
       canhaschilds = false;
       endsymbol = '?';
    }
 
-   if (!inp->SkipSpaces()) return 0;
+   if (!inp->SkipSpaces()) return nullptr;
    int len = inp->LocateIdentifier();
-   if (len<=0) return 0;
+   if (len <= 0) return nullptr;
    node = (SXmlNode_t*) AllocateNode(len, xmlparent);
    char* nameptr = SXmlNode_t::Name(node);
    node->fType = nodetype;
@@ -1564,47 +1563,51 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
       *colon =':';
    }
 
-   if (!inp->ShiftCurrent(len)) return 0;
+   if (!inp->ShiftCurrent(len)) return nullptr;
 
    do {
-      if (!inp->SkipSpaces()) return 0;
+      if (!inp->SkipSpaces()) return nullptr;
 
       char nextsymb = *inp->fCurrent;
 
       if (nextsymb==endsymbol) {  // this is end of short node like <node ... />
-         if (!inp->ShiftCurrent()) return 0;
+         if (!inp->ShiftCurrent()) return nullptr;
          if (*inp->fCurrent=='>') {
-            if (!inp->ShiftCurrent()) return 0;
+            if (!inp->ShiftCurrent()) return nullptr;
 
-            if (node->fNs!=0)
+            if (node->fNs)
                TruncateNsExtension((XMLNodePointer_t) node);
 
             inp->SkipSpaces(true); // locate start of next string
             resvalue = 2;
             return node;
-         } else return 0;
+         } else {
+            return nullptr;
+         }
       } else
       if (nextsymb=='>') { // this is end of parent node, lets find all childs
-         if (!canhaschilds) { resvalue = -11; return 0; }
+         if (!canhaschilds) { resvalue = -11; return nullptr; }
 
-         if (!inp->ShiftCurrent()) return 0;
+         if (!inp->ShiftCurrent()) return nullptr;
 
          do {
             ReadNode(node, inp, resvalue);
-         } while (resvalue==2);
+         } while (resvalue == 2);
 
-         if (resvalue==1) {
+         if (resvalue == 1) {
             resvalue = 2;
             return node;
-         } else return 0;
+         } else {
+            return nullptr;
+         }
       } else {
          int attrlen = inp->LocateIdentifier();
-         if (attrlen<=0) { resvalue = -6; return 0; }
+         if (attrlen <= 0) { resvalue = -6; return nullptr; }
 
          char* valuestart = inp->fCurrent+attrlen;
 
          int valuelen = inp->LocateAttributeValue(valuestart);
-         if (valuelen<3) { resvalue = -7; return 0; }
+         if (valuelen < 3) { resvalue = -7; return nullptr; }
 
          SXmlAttr_t* attr = (SXmlAttr_t*) AllocateAttr(attrlen, valuelen-3, (XMLNodePointer_t) node);
 
@@ -1615,18 +1618,18 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
          attrname++;
          UnpackSpecialCharacters(attrname, valuestart+2, valuelen-3);
 
-         if (!inp->ShiftCurrent(attrlen+valuelen)) return 0;
+         if (!inp->ShiftCurrent(attrlen+valuelen)) return nullptr;
 
          attrname = SXmlAttr_t::Name(attr);
 
          if ((strlen(attrname)>6) && (strstr(attrname,"xmlns:")==attrname)) {
             if (strcmp(SXmlNode_t::Name(node), attrname + 6)!=0) {
                resvalue = -8;
-               //return 0;
+               //return nullptr;
             }
             if (node->fNs!=0) {
                resvalue = -9;
-               //return 0;
+               //return nullptr;
             }
             node->fNs = attr;
          }
