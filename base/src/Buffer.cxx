@@ -82,7 +82,7 @@ dabc::Reference dabc::Buffer::GetPool() const
 
 dabc::MemoryPool* dabc::Buffer::PoolPtr() const
 {
-   if (null()) return 0;
+   if (null()) return nullptr;
 
    return dynamic_cast<MemoryPool*> (GetObject()->fPool());
 }
@@ -224,7 +224,7 @@ bool dabc::Buffer::Prepend(Buffer& src, bool moverefs) throw()
 
 bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs)
 {
-   if (src.null() || (src.GetTotalSize()==0)) return true;
+   if (src.null() || (src.GetTotalSize() == 0)) return true;
 
    if (null()) {
       if (moverefs)
@@ -238,7 +238,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs)
 
    // if we have buffer assigned to the pool and its differ from
    // source object we need deep copy to be able extend refs array
-   if ((PoolPtr()!=0) && (src.PoolPtr()!=PoolPtr())) {
+   if (PoolPtr() && (src.PoolPtr() != PoolPtr())) {
 
       // first new memory allocated in our pool
       ownbuf = PoolPtr()->TakeBuffer(src.GetTotalSize());

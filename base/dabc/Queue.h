@@ -233,7 +233,7 @@ namespace dabc {
             }
 
             EOUT("No more space in fixed queue size = %d", fSize);
-            return 0;
+            return nullptr;
          }
 
 
@@ -250,7 +250,7 @@ namespace dabc {
 
          void PopOnly()
          {
-            if (fSize>0) {
+            if (fSize > 0) {
                fSize--;
                if (++fTail==fBorder) fTail = fQueue;
             }
@@ -293,7 +293,7 @@ namespace dabc {
             #ifdef DABC_EXTRA_CHECKS
             if (indx>=fSize) {
                EOUT("Wrong item index %u", indx);
-               return 0;
+               return nullptr;
             }
             #endif
             T* item = fTail + indx;
@@ -343,7 +343,7 @@ namespace dabc {
 
          void* pop()
          {
-            if (size()==0) return 0;
+            if (size()==0) return nullptr;
             void* res = back();
             pop_back();
             return res;
@@ -454,7 +454,7 @@ namespace dabc {
                T* item = &Item(n);
                if (item->id()==id) return item;
             }
-            return 0;
+            return nullptr;
          }
 
          /** Helper methods to preallocate memory in each record in the queue */

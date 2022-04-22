@@ -195,38 +195,38 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindItemMatch(XMLNodePointer_t& lastmat
                                                        const char* sub2,
                                                        const char* sub3)
 {
-   if (sub1==0) return 0;
+   if (!sub1) return nullptr;
 
    XMLNodePointer_t subnode = Xml::GetChild(node);
-   while (subnode!=0) {
+   while (subnode) {
       if (IsNodeName(subnode, sub1)) {
-         if (sub2==0) {
+         if (!sub2) {
             if (lastmatch==0) return subnode;
             if (lastmatch==subnode) lastmatch = 0;
          } else {
             XMLNodePointer_t res = FindItemMatch(lastmatch, subnode, sub2, sub3, 0);
-            if (res!=0) return res;
+            if (res) return res;
          }
       }
 
       subnode = Xml::GetNext(subnode);
    }
 
-   return 0;
+   return nullptr;
 }
 
 bool dabc::ConfigBase::NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mask)
 {
-   if ((node==0) || (mask==0)) return false;
+   if (!node || !mask) return false;
 
    if (!IsNodeName(node, Xml::GetNodeName(mask))) return false;
 
    // this code compares attributes of two nodes and verify that they are matching
    XMLAttrPointer_t xmlattr = Xml::GetFirstAttr(node);
 
-   bool isanyattr(xmlattr!=0), isanywildcard(false);
+   bool isanyattr = xmlattr != nullptr, isanywildcard = false;
 
-   while (xmlattr!=0) {
+   while (xmlattr) {
 
       const char* attrname = Xml::GetAttrName(xmlattr);
 
@@ -262,23 +262,22 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
 
    XMLNodePointer_t nextmatch = FindItemMatch(lastmatch, node, sub1, sub2, sub3);
 
-   if (nextmatch!=0) return nextmatch;
-
+   if (nextmatch) return nextmatch;
 
    XMLNodePointer_t subfolder = Xml::GetChild(RootNode());
 
-   while (subfolder!=0) {
+   while (subfolder) {
       if (NodeMaskMatch(node, subfolder)) {
 
          nextmatch = FindItemMatch(lastmatch, subfolder, sub1, sub2, sub3);
 
-         if (nextmatch!=0) return nextmatch;
+         if (nextmatch) return nextmatch;
       }
 
       subfolder = Xml::GetNext(subfolder);
    }
 
-   return 0;
+   return nullptr;
 }
 
 std::string dabc::ConfigBase::GetNodeValue(XMLNodePointer_t node)
@@ -336,7 +335,7 @@ unsigned dabc::ConfigBase::NumNodes()
    if (!IsOk()) return 0;
 
    XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
-   if (rootnode==0) return 0;
+   if (!rootnode) return 0;
    XMLNodePointer_t node = Xml::GetChild(rootnode);
    unsigned cnt = 0;
    while (node!=0) {
@@ -349,18 +348,18 @@ unsigned dabc::ConfigBase::NumNodes()
 std::string dabc::ConfigBase::NodeName(unsigned id)
 {
    XMLNodePointer_t contnode = FindContext(id);
-   if (contnode == 0) return std::string("");
+   if (!contnode) return std::string("");
    const char* host = Xml::GetAttr(contnode, xmlHostAttr);
-   if (host == 0) return std::string("");
+   if (!host) return std::string("");
    return ResolveEnv(host);
 }
 
 int dabc::ConfigBase::NodePort(unsigned id)
 {
    XMLNodePointer_t contnode = FindContext(id);
-   if (contnode == 0) return 0;
+   if (!contnode) return 0;
    const char* sbuf = Xml::GetAttr(contnode, xmlPortAttr);
-   if (sbuf == 0) return 0;
+   if (!sbuf) return 0;
    std::string s = ResolveEnv(sbuf);
    if (s.empty()) return 0;
    int res = 0;
@@ -397,13 +396,13 @@ bool dabc::ConfigBase::IsWildcard(const char* str)
 
 dabc::XMLNodePointer_t dabc::ConfigBase::RootNode()
 {
-   if (fDoc==0) return 0;
+   if (!fDoc) return nullptr;
    return Xml::DocGetRootElement(fDoc);
 }
 
 bool dabc::ConfigBase::IsContextNode(XMLNodePointer_t node)
 {
-   if (node==0) return false;
+   if (!node) return false;
 
    if (!IsNodeName(node, xmlContext)) return false;
 

@@ -45,7 +45,7 @@ namespace dabc {
          /** \brief return number of bytes which are directly available in temporary buffer */
          virtual uint64_t tmpbuf_size() const { return 0; }
          /** \brief return temporary buffer */
-         virtual char* tmpbuf() const { return 0; }
+         virtual char* tmpbuf() const { return nullptr; }
 
          iostream() : fInput(false) { }
          iostream(bool isinp) : fInput(isinp) { }
