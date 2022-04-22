@@ -46,6 +46,11 @@ dabc::Buffer dabc::ModuleAsync::PoolQueueItem(unsigned poolindex, unsigned nbuf)
    return dabc::Buffer();
 }
 
+#if defined(__GNUC__) && (__GNUC__ >= 11)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
 {
     switch (evid) {
@@ -81,6 +86,11 @@ void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
           break;
     }
 }
+
+#if defined(__GNUC__) && (__GNUC__ >= 11)
+#pragma GCC diagnostic pop
+#endif
+
 
 bool dabc::ModuleAsync::DoStart()
 {

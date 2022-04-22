@@ -589,7 +589,7 @@ bool dabc::Manager::ProcessParameterEvents()
 
       if (checkadd) {
          rec.par()->SetCleanupBit();
-         if (fTimedPars==0)
+         if (!fTimedPars)
             fTimedPars = new ReferencesVector;
          if (!fTimedPars->HasObject(rec.par())) {
             Reference ref = rec.par;
@@ -601,7 +601,7 @@ bool dabc::Manager::ProcessParameterEvents()
          fTimedPars->Remove(rec.par());
          if (fTimedPars->GetSize()==0) {
             delete fTimedPars;
-            fTimedPars = 0;
+            fTimedPars = nullptr;
          }
       }
 
@@ -683,10 +683,10 @@ void dabc::Manager::ProcessEvent(const EventId& evnt)
 
 bool dabc::Manager::IsAnyModuleRunning()
 {
-   Module* m = 0;
+   Module* m = nullptr;
    Iterator iter(this);
 
-   while (iter.next_cast(m, m==0)) {
+   while (iter.next_cast(m, !m)) {
       if (m->IsRunning()) return true;
    }
 
@@ -747,7 +747,7 @@ void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool 
 {
    itemname.clear();
 
-   if (ptr==0) return;
+   if (!ptr) return;
 
    if (!compact) itemname = "/";
    ptr->FillFullName(itemname, this);
@@ -1116,10 +1116,10 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
 
    if (cmd.IsName(CmdCreateAny::CmdName())) {
-      void* res = 0;
+      void* res = nullptr;
       FOR_EACH_FACTORY(
          res = factory->CreateAny(cmd.GetStr("ClassName"), cmd.GetStr("ObjectName"), cmd);
-         if (res != 0) break;
+         if (res) break;
       )
       cmd.SetPtr("ObjectPtr", res);
       cmd_res = cmd_true;
@@ -1149,10 +1149,10 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName(CmdCreateDataInput::CmdName())) {
       std::string kind = cmd.GetStr("Kind");
-      DataInput* res = 0;
+      DataInput* res = nullptr;
       FOR_EACH_FACTORY(
          res = factory->CreateDataInput(kind);
-         if (res != 0) break;
+         if (res) break;
       )
       cmd.SetPtr("DataInput", res);
       cmd_res = cmd_true;
@@ -1192,12 +1192,12 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName("Print")) {
       dabc::Iterator iter1(GetThreadsFolder());
-      Thread* thrd = 0;
+      Thread* thrd = nullptr;
       while (iter1.next_cast(thrd, false))
          DOUT1("Thrd: %s", thrd->GetName());
 
       dabc::Iterator iter2(this);
-      Module* m = 0;
+      Module* m = nullptr;
       while (iter2.next_cast(m, false))
          DOUT1("Module: %s", m->GetName());
    } else
@@ -1553,7 +1553,7 @@ double dabc::Manager::ProcessTimeout(double last_diff)
    return 1.;
 }
 
-dabc::Manager* dabc::Manager::fInstance = 0;
+dabc::Manager* dabc::Manager::fInstance = nullptr;
 int dabc::Manager::fInstanceId = 0;
 
 dabc::Factory* dabc::Manager::fFirstFactories[10];
@@ -1561,7 +1561,7 @@ int dabc::Manager::fFirstFactoriesId;
 
 void dabc::Manager::ProcessFactory(Factory* factory)
 {
-   if (factory==0) return;
+   if (!factory) return;
 
    DOUT2("Instantiate factory %s", factory->GetName());
 
@@ -1641,7 +1641,7 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
       return;
    }
 
-   if (runtime>0)
+   if (runtime > 0)
       DOUT0("Application mainloop will run for %3.1f s", runtime);
    else
       DOUT0("Application mainloop is now running");

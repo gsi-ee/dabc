@@ -381,17 +381,17 @@ void dabc::Average::Show(const char* name, bool showextr)
 
 void dabc::Average::ShowHist()
 {
-   if ((hist==0) || (nhist==0)) return;
+   if (!hist || (nhist==0)) return;
 
-   long sum0(0);
-   for (int n=0;n<nhist+2;n++) sum0+=hist[n];
-   if (sum0<=0) sum0=1;
+   long sum_h0 = 0;
+   for (int n = 0; n < nhist+2; n++) sum_h0 += hist[n];
+   if (sum_h0 <= 0) sum_h0 = 1;
 
-   DOUT1("Below %5.2f cnt = %3ld %5.1f", hist_min, hist[0], 100.*hist[0]/sum0);
-   long sum1 = hist[0];
-   for (int n=1;n<=nhist;n++) {
-      sum1+=hist[n];
-      DOUT1("Bin%02d x:%5.2f = %3ld %5.1f", n, (n - 0.5) / nhist * (hist_max-hist_min) + hist_min, hist[n], 100.*sum1/sum0);
+   DOUT1("Below %5.2f cnt = %3ld %5.1f", hist_min, hist[0], 100.*hist[0]/sum_h0);
+   long sum_h1 = hist[0];
+   for (int n = 1; n <= nhist; n++) {
+      sum_h1 += hist[n];
+      DOUT1("Bin%02d x:%5.2f = %3ld %5.1f", n, (n - 0.5) / nhist * (hist_max-hist_min) + hist_min, hist[n], 100.*sum_h1/sum_h0);
    }
    DOUT1("Over %5.2f cnt = %3ld", hist_max, hist[nhist+1]);
 }
