@@ -37,8 +37,8 @@ namespace dabc {
       protected:
          BinaryFile          fFile;
 
-         uint64_t            fCurrentBufSize;
-         uint64_t            fCurrentBufType;
+         uint64_t            fCurrentBufSize{0};
+         uint64_t            fCurrentBufType{0};
 
          bool OpenNextFile();
 
@@ -48,10 +48,10 @@ namespace dabc {
          BinaryFileInput(const dabc::Url &url);
          virtual ~BinaryFileInput();
 
-         virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd);
+         bool Read_Init(const WorkerRef& wrk, const Command& cmd) override;
 
-         virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(Buffer& buf);
+         unsigned Read_Size() override;
+         unsigned Read_Complete(Buffer& buf) override;
 
   };
 
@@ -77,9 +77,9 @@ namespace dabc {
          BinaryFileOutput(const dabc::Url& url);
          virtual ~BinaryFileOutput();
 
-         virtual bool Write_Init();
+         bool Write_Init() override;
 
-         virtual unsigned Write_Buffer(Buffer& buf);
+         unsigned Write_Buffer(Buffer& buf) override;
    };
 
 }

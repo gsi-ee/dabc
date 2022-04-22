@@ -139,11 +139,11 @@ namespace dabc {
          ReferencesVector   fRecs;
 
          Command            fConnCmd;          ///< actual global command for connections establishing/closing
-         int                fDoingConnection;  ///< flag indicates that about connection activity: 0 - nothing, -1 - closing, 1 - establishing
-         int                fConnCounter;      ///< counter for issued connections
-         bool               fWasAnyRequest;    ///< is any request was submitted
-         int                fNumGetConn;       ///< number of connections which should be processed by manager
-         bool               fConnDebug;        ///< extra debug output during running connections
+         int                fDoingConnection{0};  ///< flag indicates that about connection activity: 0 - nothing, -1 - closing, 1 - establishing
+         int                fConnCounter{0};      ///< counter for issued connections
+         bool               fWasAnyRequest{false};    ///< is any request was submitted
+         int                fNumGetConn{0};       ///< number of connections which should be processed by manager
+         bool               fConnDebug{false};        ///< extra debug output during running connections
          dabc::TimeStamp    fConnDebugTm;      ///< time to check debug output
 
          /** \brief Analyze reply of the command, send to the device */
@@ -166,16 +166,16 @@ namespace dabc {
          void CheckDebugOutput(const std::string &msg = "");
 
          /** \brief Destroy all connections, if necessary - request to cleanup custom data by device */
-         virtual void ModuleCleanup();
+         void ModuleCleanup() override;
 
          /** \brief Process changes in connection recs */
-         virtual void ProcessParameterEvent(const ParameterEvent& evnt);
+         void ProcessParameterEvent(const ParameterEvent& evnt) override;
 
-         virtual int ExecuteCommand(Command cmd);
-         virtual bool ReplyCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
+         bool ReplyCommand(Command cmd) override;
 
          /** \brief Check status of connections establishing. Return interval for next timeout */
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
       public:
 

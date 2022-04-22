@@ -300,7 +300,7 @@ namespace dabc {
 
       protected:
          // by this we indicate that only parameter specified as info can be referenced
-         virtual const char* ParReferenceKind() { return infokind(); }
+         const char* ParReferenceKind() override { return infokind(); }
 
       public:
 

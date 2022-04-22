@@ -247,7 +247,7 @@ namespace dabc {
       void SetAllowedField(const std::string &name = "");
 
       /** Indicates that only connection kind can be assigned to the reference */
-      virtual const char* ParReferenceKind() { return "connection"; }
+      const char* ParReferenceKind() override { return "connection"; }
 
    };
 

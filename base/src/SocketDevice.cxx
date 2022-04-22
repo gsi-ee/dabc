@@ -110,12 +110,12 @@ namespace dabc {
             DeleteWorker();
          }
 
-         virtual void OnSocketError(int, const std::string&)
+         void OnSocketError(int, const std::string&) override
          {
             FinishWork(false);
          }
 
-         virtual void OnThreadAssigned()
+         void OnThreadAssigned() override
          {
             dabc::SocketIOAddon::OnThreadAssigned();
 
@@ -147,7 +147,7 @@ namespace dabc {
             }
          }
 
-         virtual void OnSendCompleted()
+         void OnSendCompleted() override
          {
             switch (fState) {
                case stServerProto:
@@ -165,7 +165,7 @@ namespace dabc {
             }
          }
 
-         virtual void OnRecvCompleted()
+         void OnRecvCompleted() override
          {
             switch (fState) {
                case stServerProto:
@@ -235,7 +235,7 @@ std::string dabc::SocketDevice::StartServerAddon()
 
    SocketServerAddon* serv = dynamic_cast<SocketServerAddon*> (fAddon());
 
-   if (serv == 0) {
+   if (!serv) {
 
       int port0 = fBindPort, portmin(7000), portmax(9000);
       if (port0 > 0) portmin = portmax = 0;

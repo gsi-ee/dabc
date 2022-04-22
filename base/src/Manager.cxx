@@ -79,21 +79,12 @@ namespace dabc {
 
 
    struct ParamEventReceiverRec {
-      WorkerRef    recv;          ///< only workers can be receiver of the parameters events
-      std::string  remote_recv;   ///< address of remote receiver of parameter events
-      bool         only_change;   ///< specify if only parameter-change events are produced
-      std::string  name_mask;     ///< mask only for parameter names, useful when only specific names are interested
-      std::string  fullname_mask; ///< mask for parameter full names, necessary when full parameter name is important
-      int          queue;         ///< number of parameters events submitted, if bigger than some limit events will be skipped
-
-      ParamEventReceiverRec() :
-         recv(),
-         remote_recv(),
-         only_change(false),
-         name_mask(),
-         fullname_mask(),
-         queue(0)
-      {}
+      WorkerRef    recv;               ///< only workers can be receiver of the parameters events
+      std::string  remote_recv;        ///< address of remote receiver of parameter events
+      bool         only_change{false}; ///< specify if only parameter-change events are produced
+      std::string  name_mask;          ///< mask only for parameter names, useful when only specific names are interested
+      std::string  fullname_mask;      ///< mask for parameter full names, necessary when full parameter name is important
+      int          queue{0};           ///< number of parameters events submitted, if bigger than some limit events will be skipped
 
       bool match(const std::string &parname, int event, const std::string &fullname)
       {
@@ -128,7 +119,7 @@ namespace dabc {
             fErrCounter = url.GetOptionInt("err", 0);
          }
 
-         unsigned Write_Buffer(Buffer& buf)
+         unsigned Write_Buffer(Buffer& buf) override
          {
             buf.Release();
             if (fErrCounter > 0)
