@@ -24,7 +24,7 @@ http::Civetweb::Civetweb(const std::string &name, dabc::Command cmd) :
    fAuthFile(),
    fAuthDomain(),
    fSslCertif(),
-   fCtx(0)
+   fCtx(nullptr)
 {
    fHttpPort = Cfg("port", cmd).AsStr("8090");
    fHttpsPort = Cfg("ports", cmd).AsStr();
@@ -45,9 +45,9 @@ http::Civetweb::Civetweb(const std::string &name, dabc::Command cmd) :
 
 http::Civetweb::~Civetweb()
 {
-   if (fCtx!=0) {
+   if (fCtx) {
       mg_stop(fCtx);
-      fCtx = 0;
+      fCtx = nullptr;
    }
 }
 
