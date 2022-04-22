@@ -102,8 +102,10 @@ dabc::FileInput::FileInput(const dabc::Url& url) :
    fLoop(url.HasOption("loop")),
    fReduce(url.GetOptionDouble("reduce",1.))
 {
-   if (fReduce>1.) fReduce = 1; else
-   if (fReduce<0.01) fReduce = 0.01;
+   if (fReduce > 1.)
+      fReduce = 1;
+   else if (fReduce < 0.01)
+      fReduce = 0.01;
 }
 
 dabc::FileInput::~FileInput()
@@ -116,7 +118,7 @@ dabc::FileInput::~FileInput()
    }
 }
 
-void dabc::FileInput::SetIO(dabc::FileInterface* io)
+void dabc::FileInput::SetIO(dabc::FileInterface *io)
 {
    if (fIO) {
       EOUT("File interface object already assigned");
@@ -133,7 +135,7 @@ bool dabc::FileInput::InitFilesList()
    if (fFileName.find_first_of("*?") != std::string::npos) {
       fFilesList = fIO->fmatch(fFileName.c_str());
    } if (!ext.empty() && (ext.length() < fFileName.length()) && (fFileName.rfind(ext) == fFileName.length() - ext.length())) {
-      fFilesList = new dabc::Object(0, "FilesList");
+      fFilesList = new dabc::Object(nullptr, "FilesList");
       std::ifstream filein(fFileName);
       std::string line;
       while (std::getline(filein, line)) {
@@ -141,7 +143,7 @@ bool dabc::FileInput::InitFilesList()
             new dabc::Object(fFilesList(), line);
       }
    } else {
-      fFilesList = new dabc::Object(0, "FilesList");
+      fFilesList = new dabc::Object(nullptr, "FilesList");
       new dabc::Object(fFilesList(), fFileName);
    }
 

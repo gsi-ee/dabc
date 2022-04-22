@@ -1601,7 +1601,7 @@ void dabc::RecordFieldsMap::ApplyDiff(const RecordFieldsMap& diff)
 
 
 dabc::RecordContainer::RecordContainer(const std::string &name, unsigned flags) :
-   Object(0, name, flags | flAutoDestroy),
+   Object(nullptr, name, flags | flAutoDestroy),
    fFields(new RecordFieldsMap)
 {
 }
@@ -1614,7 +1614,7 @@ dabc::RecordContainer::RecordContainer(Reference parent, const std::string &name
 
 dabc::RecordContainer::~RecordContainer()
 {
-   delete fFields; fFields = 0;
+   delete fFields; fFields = nullptr;
 }
 
 dabc::RecordFieldsMap* dabc::RecordContainer::TakeFieldsMap()
@@ -1628,14 +1628,14 @@ void dabc::RecordContainer::SetFieldsMap(RecordFieldsMap* newmap)
 {
    delete fFields;
    fFields = newmap;
-   if (fFields==0) fFields = new RecordFieldsMap;
+   if (!fFields) fFields = new RecordFieldsMap;
 }
 
 void dabc::RecordContainer::Print(int /* lvl */)
 {
    DOUT1("%s : %s", ClassName(), GetName());
 
-   for (unsigned n=0;n<fFields->NumFields();n++) {
+   for (unsigned n = 0; n < fFields->NumFields(); n++) {
       std::string name = fFields->FieldName(n);
       std::string value = fFields->Field(name).AsStr();
       DOUT1("   %s = %s", name.c_str(), value.c_str());

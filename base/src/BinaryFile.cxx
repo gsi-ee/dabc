@@ -95,7 +95,7 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
 
          if ((select_files && !S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK)==0)) ||
             (!select_files && S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK | X_OK)==0))) {
-            if (!res) res = new dabc::Object(0, "FilesList");
+            if (!res) res = new dabc::Object(nullptr, "FilesList");
             new dabc::Object(res, fullitemname);
          }
       }

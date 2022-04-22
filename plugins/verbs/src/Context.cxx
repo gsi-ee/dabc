@@ -46,7 +46,7 @@ int null_gid(union ibv_gid *gid)
 // *******************************************************************
 
 verbs::PoolRegistry::PoolRegistry(ContextRef ctx, dabc::MemoryPool* pool) :
-   dabc::Object(0, pool->GetName()),
+   dabc::Object(nullptr, pool->GetName()),
    fContext(ctx),
    fPool(pool),
    fLastChangeCounter(0),
@@ -79,7 +79,7 @@ void verbs::PoolRegistry::ObjectDestroyed(dabc::Object* obj)
    if (obj == fPool) {
       EOUT("!!!!!!!!! Hard error - memory pool %s destroyed behind the scene", fPool->GetName());
       CleanMRStructure();
-      fPool = 0;
+      fPool = nullptr;
       DeleteThis();
    }
 }

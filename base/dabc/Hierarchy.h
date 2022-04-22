@@ -67,7 +67,7 @@ namespace dabc {
          bool        fCrossBoundary{false};   ///< flag set when recover from binary, indicates that history is complete for specified version
 
          HistoryContainer() :
-            Object(0,"cont", flAutoDestroy | flIsOwner),
+            Object(nullptr,"cont", flAutoDestroy | flIsOwner),
             fEnabled(false),
             fChildsEnabled(false),
             fPrev(nullptr),

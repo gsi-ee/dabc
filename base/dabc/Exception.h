@@ -23,7 +23,7 @@
 #endif
 
 namespace dabc {
-  
+
    enum ExceptionKind {
       ex_None,        // type is undefined
       ex_Stop,        // stop exception
@@ -60,7 +60,7 @@ namespace dabc {
          ExceptionKind fKind;
          std::string fWhat;
          std::string fItem;
-     
+
      public:
          Exception() throw();
 
@@ -87,6 +87,6 @@ namespace dabc {
          bool IsHierarchy() const { return kind() == ex_Hierarchy; }
    };
 
-};
+}
 
 #endif

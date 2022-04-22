@@ -52,7 +52,7 @@ void* dabc::Factory::FindSymbol(const std::string &symbol)
 }
 
 dabc::Factory::Factory(const std::string &name) :
-   Object(0, name)
+   Object(nullptr, name)
 {
    DOUT2("Factory %s is created", GetName());
 }
@@ -64,11 +64,11 @@ dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::s
 
    if (portref.IsInput()) {
       dabc::DataInput* inp = CreateDataInput(typ);
-      if (inp==0) return 0;
+      if (!inp) return nullptr;
       if (!inp->Read_Init(portref, cmd)) {
          EOUT("Input object %s cannot be initialized", typ.c_str());
          delete inp;
-         return 0;
+         return nullptr;
       }
 
       dabc::InputTransport* tr = new dabc::InputTransport(cmd, portref, inp, true);
@@ -85,13 +85,13 @@ dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::s
       if (!out->Write_Init()) {
          EOUT("Output object %s cannot be initialized", typ.c_str());
          delete out;
-         return 0;
+         return nullptr;
       }
       DOUT3("Creating output transport for port %p", portref());
       return new dabc::OutputTransport(cmd, portref, out, true);
    }
 
-   return 0;
+   return nullptr;
 }
 
 

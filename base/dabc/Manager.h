@@ -264,9 +264,9 @@ namespace dabc {
    template<class T>
    class CleanupEnvelope : public Object {
       protected:
-         T* fObj;
+         T *fObj{nullptr};
       public:
-         CleanupEnvelope(T* obj) : Object(0, "noname"), fObj(obj) {}
+         CleanupEnvelope(T* obj) : Object(nullptr, "noname"), fObj(obj) {}
          virtual ~CleanupEnvelope() { delete fObj; }
    };
 
