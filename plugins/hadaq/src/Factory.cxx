@@ -144,11 +144,11 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    }
 
    int nport = url.GetPort();
-   if (nport<=0) { EOUT("Port not specified"); return 0; }
+   if (nport<=0) { EOUT("Port not specified"); return nullptr; }
 
    int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
    int fd = NewAddon::OpenUdp(url.GetHostName(), nport, rcvbuflen);
-   if (fd<=0) { EOUT("Cannot open UDP socket for %s", url.GetHostNameWithPort().c_str()); return 0; }
+   if (fd<=0) { EOUT("Cannot open UDP socket for %s", url.GetHostNameWithPort().c_str()); return nullptr; }
 
    int mtu = url.GetOptionInt("mtu", 64512);
    int maxloop = url.GetOptionInt("maxloop", 100);

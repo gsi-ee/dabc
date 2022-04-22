@@ -211,16 +211,16 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
 
 TEpicsProc::VariableHist* TEpicsProc::FindVariable(const char* name)
 {
-   if ((name==0) || (strlen(name)==0)) return 0;
+   if (!name || (strlen(name)==0)) return nullptr;
    for (unsigned n=0;n<all_hists.size();n++)
       if (all_hists[n].IsName(name)) return & all_hists[n];
 
-   return 0;
+   return nullptr;
 }
 
 TEpicsProc::VariableHist* TEpicsProc::CreateHist(const char* varname)
 {
-   if ((varname==0) || (strlen(varname)==0)) return 0;
+   if (!varname || (strlen(varname)==0)) return nullptr;
 
    const char* dirname = "EPICS";
    Double_t range = CBM_EPIX_STATRANGE;

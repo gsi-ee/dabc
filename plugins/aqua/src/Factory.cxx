@@ -31,5 +31,5 @@ dabc::DataOutput* aqua::Factory::CreateDataOutput(const std::string &typ)
       return new aqua::ClientOutput(url);
    }
 
-   return 0;
+   return nullptr;
 }

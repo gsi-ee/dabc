@@ -20,7 +20,7 @@ dabc::Reference bnet::Factory::CreateObject(const std::string &classname, const 
    if (classname == "TestEventsIterator")
       return new bnet::TestEventsIterator(objname);
 
-   return 0;
+   return nullptr;
 }
 
 dabc::Module* bnet::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
@@ -34,5 +34,5 @@ dabc::Module* bnet::Factory::CreateModule(const std::string &classname, const st
    if (classname == "bnet::ReceiverModule")
       return new bnet::ReceiverModule(modulename, cmd);
 
-   return 0;
+   return nullptr;
 }

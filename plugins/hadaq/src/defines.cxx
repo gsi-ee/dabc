@@ -52,7 +52,7 @@ void hadaq::RawEvent::InitHeader(uint32_t id)
 
 hadaq::RawSubevent* hadaq::RawEvent::FirstSubevent()
 {
-   if (GetSize() - sizeof(hadaq::RawEvent) < sizeof(hadaq::RawSubevent)) return 0;
+   if (GetSize() - sizeof(hadaq::RawEvent) < sizeof(hadaq::RawSubevent)) return nullptr;
 
    return (hadaq::RawSubevent*) ((char*) this + sizeof(hadaq::RawEvent));
 }
@@ -65,11 +65,11 @@ uint32_t hadaq::RawEvent::AllSubeventsSize()
 
 hadaq::RawSubevent* hadaq::RawEvent::NextSubevent(RawSubevent* prev)
 {
-   if (prev == 0) return FirstSubevent();
+   if (!prev) return FirstSubevent();
 
    char* next = (char*) prev + prev->GetPaddedSize();
 
-   if (next >= (char*) this + GetSize()) return 0;
+   if (next >= (char*) this + GetSize()) return nullptr;
 
    return (hadaq::RawSubevent*) next;
 }
