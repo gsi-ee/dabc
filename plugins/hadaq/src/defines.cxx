@@ -37,7 +37,7 @@ void hadaq::RawEvent::InitHeader(uint32_t id)
    SetId(id);
    SetSize(sizeof(hadaq::RawEvent));
    // timestamp at creation of structure:
-   time_t tempo = time(NULL);
+   time_t tempo = time(nullptr);
    struct tm* gmTime = gmtime(&tempo);
    uint32_t date = 0, clock = 0;
    date |= gmTime->tm_year << 16;

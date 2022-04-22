@@ -53,7 +53,7 @@ void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
    } else {
 
 /*      char sbuf[100], etag[100];
-      time_t curtime = time(NULL);
+      time_t curtime = time(nullptr);
       strftime(sbuf, sizeof(sbuf), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&curtime));
       snprintf(etag, sizeof(etag), "\"%lx.%ld\"",
                (unsigned long) curtime, (long) length);
@@ -175,8 +175,8 @@ void* http::FastCgi::RunFunc(void* args)
          const char *contentLength = FCGX_GetParam("CONTENT_LENGTH", request.envp);
          int len = 0;
 
-         if (contentLength != NULL)
-             len = strtol(contentLength, NULL, 10);
+         if (contentLength)
+             len = strtol(contentLength, nullptr, 10);
 
          if (len <= 0) {
              FCGX_FPrintF(request.out, "No data from standard input.<p>\n");
@@ -200,7 +200,7 @@ void* http::FastCgi::RunFunc(void* args)
          FCGX_FPrintF(request.out, "<p>\n");
 
          FCGX_FPrintF(request.out, "Environment:<br/><pre>");
-         for(char** envp = request.envp; *envp != NULL; envp++) {
+         for(char** envp = request.envp; *envp != nullptr; envp++) {
              FCGX_FPrintF(request.out, "%s\n", *envp);
          }
          FCGX_FPrintF(request.out, "</pre><p>");

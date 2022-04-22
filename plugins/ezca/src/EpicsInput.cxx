@@ -221,7 +221,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
 
 
    rec.SetEventId(fEventNumber);
-   rec.SetEventTime(time(NULL));
+   rec.SetEventTime(time(nullptr));
 
    mbs::WriteIterator iter(buf);
 
@@ -270,7 +270,7 @@ std::string ezca::EpicsInput::CA_ErrorString()
    std::string res;
 
    char *error_msg_buff(0);
-   ezcaGetErrorString(NULL, &error_msg_buff);
+   ezcaGetErrorString(nullptr, &error_msg_buff);
    if (error_msg_buff!=0) res = error_msg_buff;
    ezcaFree(error_msg_buff);
 

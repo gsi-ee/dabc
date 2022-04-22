@@ -66,7 +66,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          return ModuleAsync::ExecuteCommand(cmd);
       }
 
-      virtual bool ProcessSend(unsigned nout)
+      bool ProcessSend(unsigned nout) override
       {
 //         DOUT1("Process output event");
 
@@ -100,7 +100,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          return false;
       }
 
-      void BeforeModuleStart()
+      void BeforeModuleStart() override
       {
          DOUT0("NetTestSenderModule starting");
 
@@ -120,7 +120,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          dabc::mgr.Submit(Assign(cmd));
       }
 
-      virtual bool ReplyCommand(dabc::Command cmd)
+      bool ReplyCommand(dabc::Command cmd) override
       {
          double tmout = cmd.TimeTillTimeout();
          if (fSendCnt != (unsigned) dabc::mgr.NodeId())
@@ -133,7 +133,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          return true;
       }
 
-      void AfterModuleStop()
+      void AfterModuleStop() override
       {
          DOUT2("SenderModule finish");
       }
@@ -142,7 +142,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
 class NetTestReceiverModule : public dabc::ModuleAsync {
    protected:
-      int                  fSleepTime;
+      int                  fSleepTime{0};
 
    public:
       NetTestReceiverModule(const std::string &name, dabc::Command cmd) :

@@ -106,7 +106,7 @@ if (url.HasOption("ltsmFSQDestination"))
       char buf[128];
       struct timeval tv;
       struct tm tm_res;
-      gettimeofday(&tv, NULL);
+      gettimeofday(&tv, nullptr);
       strftime(buf, 128, "%y/%j/", localtime_r(&tv.tv_sec, &tm_res));
       DOUT0("ltsm::FileInterface uses year day path %s",buf);
       std::string insertpath(buf);

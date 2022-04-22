@@ -334,55 +334,55 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
 
    strncpy(c_line, options.c_str(), sizeof(c_line)-1);
 
-   if (strstr (c_line, "-nst") != NULL )
+   if (strstr (c_line, "-nst") != nullptr )
      bStreams_n = 1;
-   if (strstr (c_line, "-rst") != NULL )
+   if (strstr (c_line, "-rst") != nullptr )
      bStreams_r = 1;
-   if (strstr (c_line, "-nsst") != NULL )
+   if (strstr (c_line, "-nsst") != nullptr )
      bSrvStreams_n = 1;
-   if (strstr (c_line, "-rsst") != NULL )
+   if (strstr (c_line, "-rsst") != nullptr )
      bSrvStreams_r = 1;
-   if (strstr (c_line, "-est") != NULL )
+   if (strstr (c_line, "-est") != nullptr )
      bStreamsFree = 1;
-   if (strstr (c_line, "-fst") != NULL )
+   if (strstr (c_line, "-fst") != nullptr )
      bStreamsFilled = 1;
-   if (strstr (c_line, "-kst") != NULL )
+   if (strstr (c_line, "-kst") != nullptr )
      bStreamsSrv = 1;
-   if (strstr (c_line, "-nbu") != NULL )
+   if (strstr (c_line, "-nbu") != nullptr )
      bBuffers_n = 1;
-   if (strstr (c_line, "-rbu") != NULL )
+   if (strstr (c_line, "-rbu") != nullptr )
      bBuffers_r = 1;
-   if (strstr (c_line, "-nsbu") != NULL )
+   if (strstr (c_line, "-nsbu") != nullptr )
      bSrvBuffers_n = 1;
-   if (strstr (c_line, "-rsbu") != NULL )
+   if (strstr (c_line, "-rsbu") != nullptr )
      bSrvBuffers_r = 1;
-   if (strstr (c_line, "-nev") != NULL )
+   if (strstr (c_line, "-nev") != nullptr )
      bEvents_n = 1;
-   if (strstr (c_line, "-rev") != NULL )
+   if (strstr (c_line, "-rev") != nullptr )
      bEvents_r = 1;
-   if (strstr (c_line, "-nsev") != NULL )
+   if (strstr (c_line, "-nsev") != nullptr )
      bSrvEvents_n = 1;
-   if (strstr (c_line, "-rsev") != NULL )
+   if (strstr (c_line, "-rsev") != nullptr )
      bSrvEvents_r = 1;
-   if (strstr (c_line, "-nda") != NULL )
+   if (strstr (c_line, "-nda") != nullptr )
      bData_n = 1;
-   if (strstr (c_line, "-rda") != NULL )
+   if (strstr (c_line, "-rda") != nullptr )
      bData_r = 1;
-   if (strstr (c_line, "-nsda") != NULL )
+   if (strstr (c_line, "-nsda") != nullptr )
      bSrvData_n = 1;
-   if (strstr (c_line, "-rsda") != NULL )
+   if (strstr (c_line, "-rsda") != nullptr )
      bSrvData_r = 1;
-   if (strstr (c_line, "-sfi") != NULL )
+   if (strstr (c_line, "-sfi") != nullptr )
      bFileData = 1;
-   if (strstr (c_line, "-ffi") != NULL )
+   if (strstr (c_line, "-ffi") != nullptr )
      bFileFilled = 1;
-   if (strstr (c_line, "-rfi") != NULL )
+   if (strstr (c_line, "-rfi") != nullptr )
      bFileData_r = 1;
-   if (strstr (c_line, "-nfi") != NULL )
+   if (strstr (c_line, "-nfi") != nullptr )
      bFilename = 1;
-   if (strstr (c_line, "-ifi") != NULL )
+   if (strstr (c_line, "-ifi") != nullptr )
      bFileIndex = 1;
-   if (strstr (c_line, "-mbs") != NULL )
+   if (strstr (c_line, "-mbs") != nullptr )
    {
      // printf ("-mbs              # mbs part\n");
      bStreams_n = 1;
@@ -397,7 +397,7 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      bData_n = 1;
      bData_r = 1;
    }
-   if (strstr (c_line, "-u") != NULL )
+   if (strstr (c_line, "-u") != nullptr )
    {
      // printf ("-user             # default selection\n");
      bEvents_n = 1;
@@ -411,7 +411,7 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      bFileData_r = 1;
      bFileIndex = 1;
    }
-   if (strstr (c_line, "-fi") != NULL )
+   if (strstr (c_line, "-fi") != nullptr )
    {
      //printf ("-fi[le]           # all file switches\n");
      bFilename = 1;
@@ -419,7 +419,7 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      bFileFilled = 1;
      bFileData_r = 1;
    }
-   if (strstr (c_line, "-st") != NULL )
+   if (strstr (c_line, "-st") != nullptr )
    {
      // printf ("-st[reams]        # stream usage\n");
      bStreamsFree = 1;
@@ -427,7 +427,7 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
      bStreamsSrv = 1;
      bSrvStreams_r = 1;
    }
-   if (strstr (c_line, "-se") != NULL )
+   if (strstr (c_line, "-se") != nullptr )
    {
      // printf ("-se[rver]         # all server switches\n");
      if (new_daqst->bh_running[SYS__event_serv])
@@ -445,7 +445,7 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
        bSrvStreams_n = 1;
      }
    }
-   if (strstr (c_line, "-ra") != NULL )
+   if (strstr (c_line, "-ra") != nullptr )
    {
      // printf ("-ra[tes]          # all rates\n");
      bStreams_r = 1;

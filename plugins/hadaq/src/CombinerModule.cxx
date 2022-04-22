@@ -1505,7 +1505,7 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
    // only exception: when eventbuilder is discarded we use termination time!
    time_t t;
    if(onexit || (newrunid==0))
-      t = time(NULL);
+      t = time(nullptr);
    else
       t = newrunid + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
    char ltime[20];            /* local time */

@@ -241,7 +241,7 @@ std::string ezca::Monitor::CA_ErrorString()
    std::string res;
 
    char *error_msg_buff(0);
-   ezcaGetErrorString(NULL, &error_msg_buff);
+   ezcaGetErrorString(nullptr, &error_msg_buff);
    if (error_msg_buff!=0) res = error_msg_buff;
    ezcaFree(error_msg_buff);
 

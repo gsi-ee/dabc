@@ -252,7 +252,7 @@ std::string dabc::replace_all(const std::string &str, const std::string &match, 
 
 dabc::NumericLocale::NumericLocale() : fPrev()
 {
-   char *loc = setlocale(LC_NUMERIC, NULL);
+   char *loc = setlocale(LC_NUMERIC, nullptr);
    if (loc && (strcmp(loc, "C") != 0)) {
       fPrev = loc;
       setlocale(LC_NUMERIC, "C");

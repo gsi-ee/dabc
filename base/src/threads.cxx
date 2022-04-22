@@ -364,7 +364,7 @@ void dabc::PosixThread::Start(Runnable* run)
       if (CPU_ISSET(cpu, &fCpuSet)) isany = true;
 
    if (!isany) {
-      pthread_create(&fThrd, NULL, StartTRunnable, run);
+      pthread_create(&fThrd, nullptr, StartTRunnable, run);
    } else {
       pthread_attr_t attr;
       pthread_attr_init(&attr);
@@ -383,7 +383,7 @@ void dabc::PosixThread::Start(StartRoutine* func, void* args)
 {
    if (func==0) return;
 
-   pthread_create(&fThrd, NULL, func, args);
+   pthread_create(&fThrd, nullptr, func, args);
 }
 
 void dabc::PosixThread::Join()

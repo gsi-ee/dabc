@@ -51,7 +51,7 @@ void mbs::MonitorSlowControl::ProcessTimerEvent(unsigned timer)
 
 unsigned mbs::MonitorSlowControl::GetNextEventTime()
 {
-   return time(NULL);
+   return time(nullptr);
 }
 
 

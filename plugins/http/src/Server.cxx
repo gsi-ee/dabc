@@ -460,7 +460,7 @@ bool http::Server::Process(const char* uri, const char* _query,
          objptr = (Bytef*) content_str.c_str();
       }
 
-      unsigned long objcrc = crc32(0, NULL, 0);
+      unsigned long objcrc = crc32(0, nullptr, 0);
       objcrc = crc32(objcrc, objptr, objlen);
 
       // reserve place for header plus space required for the target buffer

@@ -63,6 +63,6 @@ std::string hadaq::FormatFilename (uint32_t runid, uint16_t ebid)
 uint32_t hadaq::CreateRunId()
 {
    struct timeval tv;
-   gettimeofday(&tv, NULL);
+   gettimeofday(&tv, nullptr);
    return tv.tv_sec - hadaq::HADAQ_TIMEOFFSET;
 }
