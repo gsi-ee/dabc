@@ -44,9 +44,9 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string &classname, 
          if (nport <= 0) nport = dabc::defaultDabcPort;
 
          addon = dabc::SocketThread::CreateServerAddon(host, nport);
-         if (addon == 0) {
+         if (!addon) {
             EOUT("Cannot open cmd socket on port %d", nport);
-            return 0;
+            return nullptr;
          }
          addon->SetDeliverEventsToWorker(true);
 
@@ -57,7 +57,7 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string &classname, 
       return new SocketCommandChannel(objname, addon, cmd);
    }
 
-   return 0;
+   return nullptr;
 }
 
 
@@ -67,7 +67,7 @@ dabc::Device* dabc::SocketFactory::CreateDevice(const std::string &classname,
    if (classname == dabc::typeSocketDevice)
       return new SocketDevice(devname, cmd);
 
-   return 0;
+   return nullptr;
 }
 
 dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd)

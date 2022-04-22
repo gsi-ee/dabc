@@ -136,7 +136,7 @@ unsigned dabc::MemoryPool::fDfltBufSize = 4096;
 
 dabc::MemoryPool::MemoryPool(const std::string &name, bool withmanager) :
    dabc::ModuleAsync(std::string(withmanager ? "" : "#") + name),
-   fMem(0),
+   fMem(nullptr),
    fAlignment(fDfltAlignment),
    fReqests(),
    fPending(16),  // size 16 is preliminary and always can be extended
@@ -172,7 +172,7 @@ bool dabc::MemoryPool::Find(ConfigIO &cfg)
 bool dabc::MemoryPool::SetAlignment(unsigned align)
 {
    LockGuard lock(ObjectMutex());
-   if (fMem!=0) return false;
+   if (fMem) return false;
    fAlignment = align;
    return true;
 }
@@ -210,7 +210,7 @@ bool dabc::MemoryPool::Assign(bool isowner, const std::vector<void*>& bufs, cons
 {
    LockGuard lock(ObjectMutex());
 
-   if (fMem!=0) return false;
+   if (fMem) return false;
 
    if ((bufs.size() != sizes.size()) || (bufs.size()==0)) return false;
 
@@ -226,7 +226,7 @@ bool dabc::MemoryPool::Release() throw()
 
    if (fMem) {
       delete fMem;
-      fMem = 0;
+      fMem = nullptr;
       fChangeCounter++;
    }
 
@@ -245,23 +245,23 @@ unsigned dabc::MemoryPool::GetNumBuffers() const
 {
    LockGuard lock(ObjectMutex());
 
-   return (fMem==0) ? 0 : fMem->fNumber;
+   return !fMem ? 0 : fMem->fNumber;
 }
 
 unsigned dabc::MemoryPool::GetBufferSize(unsigned id) const
 {
    LockGuard lock(ObjectMutex());
 
-   return (fMem==0) || (id>=fMem->fNumber) ? 0 : fMem->fArr[id].size;
+   return !fMem || (id >= fMem->fNumber) ? 0 : fMem->fArr[id].size;
 }
 
 unsigned dabc::MemoryPool::GetMaxBufSize() const
 {
    LockGuard lock(ObjectMutex());
 
-   if (fMem==0) return 0;
+   if (!fMem) return 0;
 
-   unsigned max(0);
+   unsigned max = 0;
 
    for (unsigned id=0;id<fMem->fNumber;id++)
       if (fMem->fArr[id].size > max) max = fMem->fArr[id].size;
@@ -273,7 +273,7 @@ unsigned dabc::MemoryPool::GetMinBufSize() const
 {
    LockGuard lock(ObjectMutex());
 
-   if (fMem==0) return 0;
+   if (!fMem) return 0;
 
    unsigned min(0);
 

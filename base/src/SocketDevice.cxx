@@ -285,7 +285,7 @@ dabc::NewConnectRec* dabc::SocketDevice::_FindRec(const char* connid)
       if (rec->IsConnId(connid)) return rec;
    }
 
-   return 0;
+   return nullptr;
 }
 
 bool dabc::SocketDevice::CleanupRecs(double tmout)

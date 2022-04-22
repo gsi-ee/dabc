@@ -463,7 +463,7 @@ void* dabc::Thread::MainLoop()
 
    DOUT3("*** Thrd:%s Leaving MainLoop", GetName());
 
-   return 0;
+   return nullptr;
 }
 
 bool dabc::Thread::SingleLoop(unsigned workerid, double tmout_user)

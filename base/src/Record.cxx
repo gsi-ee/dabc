@@ -80,7 +80,7 @@ bool dabc::iostream::write_str(const std::string &str)
    if (sz > maxstoresize()) {
       EOUT("Cannot store string in the buffer sz %lu  maxsize %lu  pos %lu real %s",
             (long unsigned) sz, (long unsigned) maxstoresize(), (long unsigned) size(), DBOOL(is_real()));
-      return 0;
+      return false;
    }
 
    uint64_t pos = size();

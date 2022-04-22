@@ -81,7 +81,7 @@ dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::s
 
    if (portref.IsOutput()) {
       dabc::DataOutput* out = CreateDataOutput(typ);
-      if (out==0) return 0;
+      if (!out) return nullptr;
       if (!out->Write_Init()) {
          EOUT("Output object %s cannot be initialized", typ.c_str());
          delete out;

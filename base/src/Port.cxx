@@ -244,13 +244,13 @@ dabc::PortRef dabc::PortRef::GetBindPort()
 {
    std::string name;
    if (GetObject()) name = GetObject()->GetBindName();
-   if (name.empty()) return 0;
+   if (name.empty()) return nullptr;
    return GetModule().FindChild(name.c_str());
 }
 
 bool dabc::PortRef::IsConnected()
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
    dabc::Command cmd("IsPortConnected");
    cmd.SetStr("Port", GetObject()->GetName());
    return GetModule().Execute(cmd) == cmd_true;

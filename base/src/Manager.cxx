@@ -195,7 +195,7 @@ dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string &t
       return new dabc::BlockingOutput(url);
    }
 
-   return 0;
+   return nullptr;
 }
 
 dabc::DataInput* dabc::StdManagerFactory::CreateDataInput(const std::string &typ)
@@ -205,7 +205,7 @@ dabc::DataInput* dabc::StdManagerFactory::CreateDataInput(const std::string &typ
       return new dabc::BinaryFileInput(url);
    }
 
-   return 0;
+   return nullptr;
 }
 
 
@@ -703,11 +703,11 @@ dabc::Reference dabc::Manager::FindItem(const std::string &name, bool islocal)
    if (islocal) {
       itemname = name;
    } else {
-      if (!DecomposeAddress(name, islocal, server, itemname)) return 0;
-      if (!islocal) return 0;
+      if (!DecomposeAddress(name, islocal, server, itemname)) return nullptr;
+      if (!islocal) return nullptr;
    }
 
-   if (itemname.empty()) return 0;
+   if (itemname.empty()) return nullptr;
 
    return FindChildRef(itemname.c_str());
 }
@@ -2225,7 +2225,7 @@ void* dabc::ManagerRef::CreateAny(const std::string &classname, const std::strin
    cmd.SetStr("ClassName", classname);
    cmd.SetStr("ObjectName", objname);
 
-   if (Execute(cmd) != cmd_true) return 0;
+   if (Execute(cmd) != cmd_true) return nullptr;
 
    return cmd.GetPtr("ObjectPtr");
 }
@@ -2264,9 +2264,9 @@ dabc::DataInput* dabc::ManagerRef::CreateDataInput(const std::string &kind)
 {
    CmdCreateDataInput cmd;
    cmd.SetStr("Kind", kind);
-   if (!Execute(cmd)) return 0;
+   if (!Execute(cmd)) return nullptr;
 
-   return (dabc::DataInput*) cmd.GetPtr("DataInput");
+   return (dabc::DataInput *) cmd.GetPtr("DataInput");
 }
 
 void dabc::ManagerRef::Sleep(double tmout, const char* prefix)

@@ -363,7 +363,7 @@ dabc::ConnectionRequestFull dabc::ConnectionManager::FindConnection(const std::s
       if (req.match(local, remote)) return req;
    }
 
-   return 0;
+   return nullptr;
 }
 
 

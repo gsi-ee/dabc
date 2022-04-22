@@ -156,7 +156,7 @@ long dabc::CpuStatistic::GetProcVirtMem()
    snprintf(fname, sizeof(fname), "/proc/%d/status", id);
 
    FILE* f = fopen(fname,"r");
-   if (f==0) return 0;
+   if (!f) return 0;
    char buf[256];
 
    long sz = 0;

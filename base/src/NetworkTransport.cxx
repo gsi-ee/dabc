@@ -188,7 +188,7 @@ int dabc::NetworkTransport::PackHeader(uint32_t recid)
 
    NetworkHeader* hdr = (NetworkHeader*) fRecs[recid].header;
 
-   if (hdr==0) return 0;
+   if (!hdr) return 0;
 
    hdr->chkword = 123;
    hdr->kind = fRecs[recid].kind;
