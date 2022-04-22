@@ -83,18 +83,18 @@ namespace dabc {
 
    class MutexPtr {
       protected:
-         pthread_mutex_t*  fMutex;
+         pthread_mutex_t*  fMutex{nullptr};
       public:
          inline MutexPtr(pthread_mutex_t& mutex) : fMutex(&mutex) {}
          inline MutexPtr(pthread_mutex_t* mutex) : fMutex(mutex) {}
          inline MutexPtr(const Mutex& mutex) : fMutex((pthread_mutex_t*)&(mutex.fMutex)) {}
-         inline MutexPtr(const Mutex* mutex) : fMutex(mutex ? (pthread_mutex_t*) &(mutex->fMutex) : 0) {}
+         inline MutexPtr(const Mutex* mutex) : fMutex(mutex ? (pthread_mutex_t*) &(mutex->fMutex) : nullptr) {}
          inline MutexPtr(const MutexPtr& src) : fMutex(src.fMutex) {}
 
          inline ~MutexPtr() {}
 
-         bool null() const { return fMutex == 0; }
-         void clear() { fMutex = 0; }
+         bool null() const { return fMutex == nullptr; }
+         void clear() { fMutex = nullptr; }
 
          inline void Lock() { if (fMutex) pthread_mutex_lock(fMutex); }
          inline void Unlock() { if (fMutex) pthread_mutex_unlock(fMutex); }
@@ -175,7 +175,7 @@ namespace dabc {
         {
            if (fMutex.null()) return true;
 
-           int cnt=1000000;
+           int cnt = 1000000;
            while (cnt-->0)
               if (fMutex.TryLock()) return true;
 
@@ -214,9 +214,9 @@ namespace dabc {
 
    class UnlockGuard {
      protected:
-        pthread_mutex_t* fMutex;
+        pthread_mutex_t* fMutex{nullptr};
      public:
-        inline UnlockGuard(const Mutex* mutex) : fMutex(mutex ? (pthread_mutex_t*) &(mutex->fMutex) : 0)
+        inline UnlockGuard(const Mutex* mutex) : fMutex(mutex ? (pthread_mutex_t*) &(mutex->fMutex) : nullptr)
         {
            if (fMutex) pthread_mutex_unlock(fMutex);
         }
@@ -239,14 +239,14 @@ namespace dabc {
 
    class IntGuard {
       private:
-         int*  fInt;
+         int*  fInt{nullptr};
 
       public:
          inline IntGuard(const int* value) { fInt = (int*) value; if (fInt) (*fInt)++; }
          inline IntGuard(const int& value) { fInt = (int*) &value; (*fInt)++; }
          inline ~IntGuard() { if (fInt) (*fInt)--; }
 
-         inline int* ptr() { return fInt; }
+         inline int *ptr() { return fInt; }
    };
 
 
@@ -261,10 +261,10 @@ namespace dabc {
    class Condition {
       protected:
          Mutex           fInternCondMutex;
-         Mutex*          fCondMutex;
+         Mutex*          fCondMutex{nullptr};
          pthread_cond_t  fCond;
-         long int        fFiredCounter;
-         bool            fWaiting;
+         long int        fFiredCounter{0};
+         bool            fWaiting{false};
       public:
          Condition(Mutex* ext_mtx = nullptr);
          virtual ~Condition();

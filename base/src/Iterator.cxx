@@ -44,35 +44,35 @@ dabc::Iterator::~Iterator()
 dabc::Object* dabc::Iterator::next(bool goinside)
 {
    if (fCurrent()==0) {
-      fCurrent = fTop;    
+      fCurrent = fTop;
       fIndexes.clear();
       fFolders.Clear();
    } else {
-   
+
       int sz = fIndexes.size();
       bool doagain = true;
-      
+
       Reference child;
 
       if (goinside && (fCurrent()!=0) && ((fMaxLevel<0) || (sz<fMaxLevel)))
          child = fCurrent()->GetChildRef(0);
 
-      if (child()!=0) {
+      if (!child.null()) {
          fIndexes.resize(sz+1);
          fIndexes[sz] = 0;
          fFolders.Add(fCurrent);
          fCurrent = child;
-      } else 
+      } else
 
-      while (doagain) { 
-         
+      while (doagain) {
+
          if (sz==0) { fCurrent.Release(); break; }
-         
+
          fIndexes[sz-1]++;
 
-         Reference child = fFolders.GetObject(sz-1)->GetChildRef(fIndexes[sz-1]);
+         child = fFolders.GetObject(sz-1)->GetChildRef(fIndexes[sz-1]);
 
-         if (child()!=0) {
+         if (!child.null()) {
             doagain = false;
             fCurrent = child;
          } else {
@@ -82,9 +82,9 @@ dabc::Object* dabc::Iterator::next(bool goinside)
          }
       }
    }
-   
+
    if (fCurrent()) fFullName = fCurrent()->ItemName(false);
-    
+
    return fCurrent();
 }
 
@@ -97,7 +97,7 @@ dabc::Object* dabc::Iterator::parent(unsigned lvl)
 void dabc::Iterator::PrintHieararchy(Reference ref)
 {
    dabc::Iterator iter(ref);
-   while (iter.next()) 
+   while (iter.next())
       DOUT0("%*s %s", iter.level()*2, "", iter.name());
 }
 

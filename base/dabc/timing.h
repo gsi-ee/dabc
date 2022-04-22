@@ -42,7 +42,7 @@ namespace dabc {
       friend class Profiler;
 
       protected:
-         double fValue;  ///< time since start of the application in seconds
+         double fValue{0};  ///< time since start of the application in seconds
 
          static bool gFast;  ///< indicates if fast or slow method is used for time measurement
 
@@ -189,8 +189,8 @@ namespace dabc {
 
    class DateTime {
       protected:
-         unsigned tv_sec;   // GMT time in seconds, since 1.1.1970
-         unsigned tv_nsec;  // fractional part of time in nanoseconds
+         unsigned tv_sec{0};   // GMT time in seconds, since 1.1.1970
+         unsigned tv_nsec{0};  // fractional part of time in nanoseconds
       public:
          DateTime() : tv_sec(0), tv_nsec(0) {}
 

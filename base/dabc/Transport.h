@@ -47,11 +47,11 @@ namespace dabc {
          };
 
          DeviceRef        fTransportDevice;    //!< device, used to create transport
-         ETransportState  fTransportState;
-         bool             fIsInputTransport;
-         bool             fIsOutputTransport;
+         ETransportState  fTransportState{stInit};
+         bool             fIsInputTransport{false};
+         bool             fIsOutputTransport{false};
          std::string      fTransportInfoName;
-         double           fTransportInfoInterval;
+         double           fTransportInfoInterval{0};
          TimeStamp        fTransportInfoTm;
 
          ETransportState GetTransportState() const { return fTransportState; }
@@ -60,11 +60,11 @@ namespace dabc {
          bool isTransportError() const { return GetTransportState() == stError; }
 
          /** Method called when module on other side is started */
-         virtual void ProcessConnectionActivated(const std::string &name, bool on);
+         void ProcessConnectionActivated(const std::string &name, bool on) override;
 
-         virtual void ProcessConnectEvent(const std::string &name, bool on);
+         void ProcessConnectEvent(const std::string &name, bool on) override;
 
-         virtual int ExecuteCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
 
          /** \brief Returns true when next info can be provided
           *  If info parameter was configured, one could use it regularly to provide information
@@ -72,7 +72,7 @@ namespace dabc {
          bool InfoExpected() const;
 
          /** Reimplemented method from module */
-         virtual void ModuleCleanup();
+         void ModuleCleanup() override;
 
          virtual void TransportCleanup() {}
 
@@ -82,9 +82,9 @@ namespace dabc {
          static std::string MakeName(const PortRef& inpport, const PortRef& outport);
 
       public:
-         virtual const char* ClassName() const { return "Transport"; }
+         const char* ClassName() const override { return "Transport"; }
 
-         Transport(dabc::Command cmd, const PortRef& inpport = 0, const PortRef& outport = 0);
+         Transport(dabc::Command cmd, const PortRef& inpport = nullptr, const PortRef& outport = nullptr);
          virtual ~Transport();
 
          /** Methods activated by Port, when transport starts/stops. */

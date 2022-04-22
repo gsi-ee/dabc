@@ -68,7 +68,7 @@ namespace dabc {
     */
 
    struct EventId {
-      uint64_t value;
+      uint64_t value{0};
 
       inline EventId() : value(0) {}
 
@@ -114,8 +114,8 @@ namespace dabc {
 
          class RecursionGuard {
             private:
-               Thread*  thrd;      ///< we can use direct pointer, reference will be preserved by other means
-               unsigned workerid;  ///< worker id which recursion is guarded
+               Thread*  thrd{nullptr};      ///< we can use direct pointer, reference will be preserved by other means
+               unsigned workerid{0};  ///< worker id which recursion is guarded
             public:
                RecursionGuard(Thread* t, unsigned id) :
                   thrd(t),
@@ -133,8 +133,8 @@ namespace dabc {
 
          struct TimeoutRec {
             TimeStamp      tmout_mark;   ///< time mark when timeout should happen
-            double         tmout_interv; ///< time interval was specified by timeout active
-            bool           tmout_active; ///< true when timeout active
+            double         tmout_interv{0}; ///< time interval was specified by timeout active
+            bool           tmout_active{false}; ///< true when timeout active
 
             TimeStamp      prev_fire;    ///< when previous timeout event was called
             TimeStamp      next_fire;    ///< when next timeout event will be called
@@ -163,7 +163,7 @@ namespace dabc {
             bool CheckEvent(Mutex* thread_mutex)
             {
                TimeStamp mark;
-               double interv(0.);
+               double interv = 0.;
 
                {
                   LockGuard lock(thread_mutex);
@@ -173,7 +173,7 @@ namespace dabc {
                   tmout_active = false;
                }
 
-               if (interv<0) {
+               if (interv < 0) {
                   next_fire.Reset();
                   prev_fire.Reset();
                } else {
@@ -227,13 +227,12 @@ namespace dabc {
          };
 
 
-
          struct WorkerRec {
-            Worker*        work;         ///< pointer on the worker, should we use reference?
-            WorkerAddon*   addon;        ///< addon for the worker, maybe thread-specific
-            unsigned       doinghalt;    ///< indicates that events will not be longer accepted by the worker, all submitted commands still should be executed
-            int            recursion;    ///< recursion calls of the worker
-            unsigned       processed;    ///< current number of processed events, when balance between processed and fired is 0, worker can be halted
+            Worker*        work{nullptr};         ///< pointer on the worker, should we use reference?
+            WorkerAddon*   addon{nullptr};        ///< addon for the worker, maybe thread-specific
+            unsigned       doinghalt{0};    ///< indicates that events will not be longer accepted by the worker, all submitted commands still should be executed
+            int            recursion{0};    ///< recursion calls of the worker
+            unsigned       processed{0};    ///< current number of processed events, when balance between processed and fired is 0, worker can be halted
             CommandsQueue  cmds;         ///< postponed commands, which are waiting until object is destroyed or halted
 
             TimeoutRec     tmout_worker; ///< timeout handling for worker
@@ -254,7 +253,7 @@ namespace dabc {
 
          class EventsQueue : public Queue<EventId, true> {
             public:
-               int scaler;
+               int scaler{0};
 
                EventsQueue() :
                   Queue<EventId, true>(),
@@ -273,32 +272,32 @@ namespace dabc {
 
          enum EThreadState { stCreated, stRunning, stStopped, stError, stChanging };
 
-         EThreadState         fState;         ///< actual thread state
+         EThreadState         fState{stCreated};  ///< actual thread state
 
-         bool                 fThrdWorking;   ///< flag indicates if mainloop of the thread should continue to work
-         bool                 fRealThrd;      ///< indicate if we create real thread and not running mainloop from top process
+         bool                 fThrdWorking{false};   ///< flag indicates if mainloop of the thread should continue to work
+         bool                 fRealThrd{false};      ///< indicate if we create real thread and not running mainloop from top process
 
          Condition            fWorkCond;      ///< condition, which is used in default MainLoop implementation
 
-         EventsQueue         *fQueues;         ///< queues for threads events
-         int                  fNumQueues;      ///< number of queues
+         EventsQueue         *fQueues{nullptr};    ///< queues for threads events
+         int                  fNumQueues{0};      ///< number of queues
 
          TimeStamp            fNextTimeout;    ///< indicate when we expects next timeout
-         int                  fProcessingTimeouts; ///< indicate recursion in timeouts processing
+         int                  fProcessingTimeouts{0}; ///< indicate recursion in timeouts processing
 
          WorkersVector        fWorkers;          ///< vector of all processors
 
-         unsigned             fExplicitLoop;     ///< id of the worker, selected to run own explicit loop
+         unsigned             fExplicitLoop{0};     ///< id of the worker, selected to run own explicit loop
 
-         ExecWorker*          fExec;             ///< processor to execute commands in the thread
-         bool                 fDidDecRefCnt;     ///< indicates if object cleanup was called - need in destructor
-         bool                 fCheckThrdCleanup; ///< indicates if thread should be checked for clean up
+         ExecWorker*          fExec{nullptr};             ///< processor to execute commands in the thread
+         bool                 fDidDecRefCnt{false};     ///< indicates if object cleanup was called - need in destructor
+         bool                 fCheckThrdCleanup{false}; ///< indicates if thread should be checked for clean up
 
-         bool                 fProfiling;        ///< if true, different statistic will be accumulated about thread
+         bool                 fProfiling{false};        ///< if true, different statistic will be accumulated about thread
          TimeStamp            fLastProfileTime;  ///< when doing profiling, last time when profiling was done
-         double               fThreadRunTime;    ///< total run time (user and sys), measured by getrusage
+         double               fThreadRunTime{0};    ///< total run time (user and sys), measured by getrusage
 
-         double               fThrdStopTimeout;  ///< time in second set as timeout when stopping thred
+         double               fThrdStopTimeout{0};  ///< time in second set as timeout when stopping thred
 
          static unsigned      fThreadInstances;
 
@@ -334,7 +333,7 @@ namespace dabc {
 
          virtual ~Thread();
 
-         virtual void* MainLoop();
+         void* MainLoop() override;
 
          inline bool IsItself() const { return PosixThread::IsItself(); }
          void SetPriority(int prio = 0) { PosixThread::SetPriority(prio); }
@@ -348,7 +347,7 @@ namespace dabc {
          bool Stop(double timeout_sec = 10);
          bool Sync(double timeout_sec = -1);
 
-         virtual const char* ClassName() const { return typeThread; }
+         const char* ClassName() const override { return typeThread; }
 
          virtual bool CompatibleClass(const std::string &clname) const;
 
@@ -367,7 +366,7 @@ namespace dabc {
          void RunEventLoop(double tmout = 1.);
 
          /** \brief Print thread content on debug output */
-         virtual void Print(int lvl = 0);
+         void Print(int lvl = 0) override;
 
          /** \brief Return total number of all events in the queues */
          unsigned TotalNumberOfEvents();
@@ -393,7 +392,7 @@ namespace dabc {
 
          bool _GetNextEvent(EventId&);
 
-         virtual void RunnableCancelled();
+         void RunnableCancelled() override;
 
         #ifdef DABC_EXTRA_CHECKS
           static unsigned maxlimit;
@@ -463,10 +462,10 @@ namespace dabc {
          void ChangeRecursion(unsigned id, bool inc);
 
          /** \brief Cleanup thread that manager is allowed to delete it */
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
          /** */
-         virtual bool _DoDeleteItself();
+         bool _DoDeleteItself() override;
 
          /** Returns actual number of workers */
          unsigned NumWorkers();

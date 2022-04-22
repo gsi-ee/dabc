@@ -38,13 +38,13 @@ namespace dabc {
             double user_util, sys_util, cpu_util;
          };
 
-         FILE *fStatFp;
-         FILE *fProcStatFp;
+         FILE *fStatFp{nullptr};
+         FILE *fProcStatFp{nullptr};
          std::vector<SingleCpu> fCPUs;
 
-         long unsigned  fVmSize;
-         long unsigned  fVmPeak;
-         long unsigned  fNumThreads;
+         long unsigned  fVmSize{0};
+         long unsigned  fVmPeak{0};
+         long unsigned  fNumThreads{0};
 
       public:
          CpuStatistic(bool withmem = false);
@@ -97,12 +97,12 @@ namespace dabc {
         static void SaveRatesInFile(const char* fname, Ratemeter** rates, int nrates, bool withsum = false);
 
      protected:
-        double firstoper, lastoper;
-        int64_t numoper, totalpacketsize;
+        double firstoper{0}, lastoper{0};
+        int64_t numoper{0}, totalpacketsize{0};
 
-        double fMeasureInterval; // interval between two points
-        long fMeasurePoints;
-        double* fPoints;
+        double fMeasureInterval{0}; // interval between two points
+        long fMeasurePoints{0};
+        double* fPoints{nullptr};
    };
 
    // ___________________________________________________________________________________
@@ -130,19 +130,17 @@ namespace dabc {
          double Dev() const;
          void Show(const char* name, bool showextr = false);
       protected:
-         long num;
-         double sum1;
-         double sum2;
-         double min, max;
-         long* hist; // histogram, same as in root hist[0], undeflow, hist[n+1] - overflow
-         int nhist;
-         double hist_min;
-         double hist_max;
-
+         long num{0};
+         double sum1{0};
+         double sum2{0};
+         double min{0}, max{0};
+         long* hist{nullptr}; // histogram, same as in root hist[0], undeflow, hist[n+1] - overflow
+         int nhist{0};
+         double hist_min{0};
+         double hist_max{0};
 
    };
 
 }
-
 
 #endif

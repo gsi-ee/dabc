@@ -152,22 +152,22 @@ namespace dabc {
          WorkerAddonRef   fAddon;                      ///< extension of worker for some special events
          Reference        fPublisher;                  ///< reference on publisher, once found, remain until end of object live
 
-         uint32_t         fWorkerId;                   ///< worker id in thread list, used for events submit
-         int              fWorkerPriority;             ///< priority of events, submitted by worker to the thread
+         uint32_t         fWorkerId{0};                ///< worker id in thread list, used for events submit
+         int              fWorkerPriority{0};          ///< priority of events, submitted by worker to the thread
 
-         Mutex*           fThreadMutex;                ///< pointer on main thread mutex
+         Mutex*           fThreadMutex{nullptr};       ///< pointer on main thread mutex
 
          // FIXME: most workers should analyze FireEvent to recognize moment when worker is going into halt mode
-         bool             fWorkerActive;               ///< indicates if worker can submit events to the thread
-         unsigned         fWorkerFiredEvents;          ///< indicate current balance between fired and processed events, used to correctly halt worker
+         bool             fWorkerActive{false};        ///< indicates if worker can submit events to the thread
+         unsigned         fWorkerFiredEvents{0};       ///< indicate current balance between fired and processed events, used to correctly halt worker
 
          CommandsQueue    fWorkerCommands;             ///< all kinds of commands, processed by the worker
 
-         int              fWorkerCommandsLevel;        ///< Number of process commands recursion
+         int              fWorkerCommandsLevel{0};     ///< Number of process commands recursion
 
          Hierarchy        fWorkerHierarchy;            ///< place for publishing of worker parameters
 
-         int              fWorkerCfgId;                ///< special ID, can be used in XML configuration in ${}# formula
+         int              fWorkerCfgId{0};             ///< special ID, can be used in XML configuration in ${}# formula
 
 
          /** \brief Inherited method from Object, invoked at the moment when worker requested to be destroyed by its thread */

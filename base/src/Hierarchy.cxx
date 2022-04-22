@@ -306,10 +306,11 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
 
       if (mask & maskFieldsStored) {
          if (fDisableDataReading) {
-            if (!s.skip_object())
+            if (!s.skip_object()) {
                EOUT("FAIL to skip fields part in the streamer for %s", ItemName().c_str());
-            else
+            } else {
                DOUT3("SKIP FIELDS in %s", ItemName().c_str());
+            }
          } else {
             fNodeChanged = true;
             std::string prefix;
@@ -320,10 +321,11 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
 
       if (mask & maskHistory) {
          if (fDisableDataReading) {
-            if (!s.skip_object())
+            if (!s.skip_object()) {
                EOUT("FAIL to skip history part in the streamer");
-            else
+            } else {
                DOUT3("SKIP HISTORY in %s", ItemName().c_str());
+            }
          } else {
             if (fHist.null()) fHist.Allocate();
             fHist()->Stream(s, version, hlimit);
@@ -379,10 +381,11 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
             }
 
             if (child->fDisableReadingAsChild) {
-               if (!s.skip_object())
+               if (!s.skip_object()) {
                   EOUT("FAIL to skip item %s completely", child->ItemName().c_str());
-               else
+               } else {
                   DOUT3("SKIP item completely %s", child->ItemName().c_str());
+               }
             } else {
                child->Stream(s, kind, version, hlimit);
             }

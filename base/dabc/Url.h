@@ -33,10 +33,10 @@ namespace dabc {
    class Url {
       protected:
          std::string fUrl;      ///< Full URL
-         bool        fValid;    ///< Is URL valid
+         bool        fValid{false};    ///< Is URL valid
          std::string fProtocol; ///< protocol
          std::string fHostName; ///< host name
-         int         fPort;     ///< port number
+         int         fPort{0};     ///< port number
          std::string fFileName; ///< file name
          std::string fOptions;  ///< list of options
 
