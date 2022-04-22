@@ -537,9 +537,9 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
                   unsigned platformid = (msg >> 20) & 0xff;
                   unsigned major = (msg >> 16) & 0xf;
                   unsigned minor = (msg >> 12) & 0xf;
-                  unsigned sub = (msg >> 8) & 0xf;
+                  unsigned sub2 = (msg >> 8) & 0xf;
                   unsigned numch = (msg & 0x7F) + 1;
-                  snprintf(sdata, sizeof(sdata), "platform:0x%x version:%u.%u.%u numch:%u", platformid, major, minor, sub, numch);
+                  snprintf(sdata, sizeof(sdata), "platform:0x%x version:%u.%u.%u numch:%u", platformid, major, minor, sub2, numch);
                }
             }
 
@@ -558,12 +558,12 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             unsigned pattern = msg & 0x1FF;
 
             double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
-            unsigned mask = 0x100, cnt = 8;
-            while (((pattern & mask) == 0) && (cnt > 0)) {
+            unsigned mask = 0x100, cnt2 = 8;
+            while (((pattern & mask) == 0) && (cnt2 > 0)) {
                mask = mask >> 1;
-               cnt--;
+               cnt2--;
             }
-            localtm -= coarse_unit/8*cnt;
+            localtm -= coarse_unit/8*cnt2;
 
             snprintf(sdata, sizeof(sdata), "ch:%u coarse:%u pattern:0x%03x tm0:%5.1f", channel, coarse, pattern, (localtm - localtm0)*1e9);
          } else
@@ -728,8 +728,8 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                rawtime += (dvalue << 16);
                time_t t = (time_t) rawtime;
                snprintf(sbuf, sizeof(sbuf), "  design 0x%08x %s", rawtime, ctime(&t));
-               int len = strlen(sbuf);
-               if (sbuf[len-1]==10) sbuf[len-1] = 0;
+               int len2 = strlen(sbuf);
+               if (sbuf[len2-1]==10) sbuf[len2-1] = 0;
             } else if (dkind == 0xE)
                snprintf(sbuf, sizeof(sbuf), " %3.1fC", dvalue/16.);
 
@@ -1244,7 +1244,6 @@ int main(int argc, char* argv[])
 
       hadaq::RawSubevent* sub = nullptr;
       while ((sub = evnt->NextSubevent(sub)) != nullptr) {
-
          bool print_sub_header(false);
          if ((onlytdc==0) && (onlynew==0) && (onlyraw==0) && (onlymonitor==0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
@@ -1413,23 +1412,23 @@ int main(int argc, char* argv[])
                if (errmask!=0) {
                   printf("         %s!!!! TDC errors:%s", getCol(col_RED), getCol(col_RESET));
                   unsigned mask = 1;
-                  for (int n=0;n<NumTdcErr;n++,mask*=2)
-                     if (errmask & mask) printf(" err_%s", TdcErrName(n));
+                  for (int k = 0; k < NumTdcErr; k++,mask*=2)
+                     if (errmask & mask) printf(" err_%s", TdcErrName(k));
                   printf("\n");
                }
             } else
             if (dostat) {
-               SubevStat &substat = subsubstat[datakind];
+               auto &substat2 = subsubstat[datakind];
 
-               substat.num++;
-               substat.sizesum+=datalen;
+               substat2.num++;
+               substat2.sizesum+=datalen;
                if (as_tdc) {
-                  substat.istdc = true;
+                  substat2.istdc = true;
                   unsigned errmask(0);
-                  PrintTdcData(sub, ix, datalen, 0, errmask, &substat);
+                  PrintTdcData(sub, ix, datalen, 0, errmask, &substat2);
                   unsigned mask = 1;
-                  for (int n=0;n<NumTdcErr;n++,mask*=2)
-                     if (errmask & mask) substat.IncTdcError(n);
+                  for (int k = 0; k < NumTdcErr; k++,mask*=2)
+                     if (errmask & mask) substat2.IncTdcError(k);
                }
             }
 
@@ -1463,15 +1462,15 @@ int main(int argc, char* argv[])
 
       printf("  Subsubevents ids:\n");
       for (auto &entry : subsubstat) {
-         SubevStat &substat = entry.second;
+         auto &substat2 = entry.second;
 
-         printf("   0x%04x : cnt %*lu averlen %6.1f", entry.first, width, substat.num, substat.aver_size());
+         printf("   0x%04x : cnt %*lu averlen %6.1f", entry.first, width, substat2.num, substat2.aver_size());
 
-         if (substat.istdc) {
-            printf(" TDC ch:%2u", substat.maxch);
-            for (unsigned n=0;n<substat.tdcerr.size();n++)
-               if (substat.tdcerr[n] > 0) {
-                  printf(" %s=%lu (%3.1f%s)", TdcErrName(n), substat.tdcerr[n], substat.tdcerr_rel(n) * 100., "\%");
+         if (substat2.istdc) {
+            printf(" TDC ch:%2u", substat2.maxch);
+            for (unsigned k = 0; k < substat2.tdcerr.size(); k++)
+               if (substat2.tdcerr[k] > 0) {
+                  printf(" %s=%lu (%3.1f%s)", TdcErrName(k), substat2.tdcerr[k], substat2.tdcerr_rel(k) * 100., "\%");
                }
          }
 
