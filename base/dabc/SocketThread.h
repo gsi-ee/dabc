@@ -142,26 +142,26 @@ namespace dabc {
 
    class SocketIOAddon : public SocketAddon {
       protected:
-         bool          fDatagramSocket; ///< indicate if socket is datagram and all operations should be finished with single call
-         bool          fUseMsgOper;     ///< indicate if sendmsg, recvmsg operations should be used, it is must for the datagram sockets
+         bool          fDatagramSocket{false}; ///< indicate if socket is datagram and all operations should be finished with single call
+         bool          fUseMsgOper{false};     ///< indicate if sendmsg, recvmsg operations should be used, it is must for the datagram sockets
 
          // sending data
-         bool          fSendUseMsg;     ///< use sendmsg for transport
-         struct iovec* fSendIOV;        ///< sending io vector for gather list
-         unsigned      fSendIOVSize;    ///< total number of elements in send vector
-         unsigned      fSendIOVFirst;   ///< number of element in send IOV where transfer is started
-         unsigned      fSendIOVNumber;  ///< number of elements in current send operation
+         bool          fSendUseMsg{false};     ///< use sendmsg for transport
+         struct iovec* fSendIOV{nullptr};        ///< sending io vector for gather list
+         unsigned      fSendIOVSize{0};    ///< total number of elements in send vector
+         unsigned      fSendIOVFirst{0};   ///< number of element in send IOV where transfer is started
+         unsigned      fSendIOVNumber{0};  ///< number of elements in current send operation
          struct sockaddr_in fSendAddr;  ///< optional send address for next send operation
-         bool          fSendUseAddr;    ///< if true, fSendAddr will be used
+         bool          fSendUseAddr{false};    ///< if true, fSendAddr will be used
 
          // receiving data
-         bool          fRecvUseMsg;     ///< use recvmsg for transport
-         struct iovec* fRecvIOV;        ///< receive io vector for scatter list
-         unsigned      fRecvIOVSize;    ///< number of elements in recv vector
-         unsigned      fRecvIOVFirst;   ///< number of element in recv IOV where transfer is started
-         unsigned      fRecvIOVNumber;  ///< number of elements in current recv operation
+         bool          fRecvUseMsg{false};     ///< use recvmsg for transport
+         struct iovec* fRecvIOV{nullptr};        ///< receive io vector for scatter list
+         unsigned      fRecvIOVSize{0};    ///< number of elements in recv vector
+         unsigned      fRecvIOVFirst{0};   ///< number of element in recv IOV where transfer is started
+         unsigned      fRecvIOVNumber{0};  ///< number of elements in current recv operation
          struct sockaddr_in fRecvAddr;  ///< source address of last receive operation
-         unsigned      fLastRecvSize;   ///< size of last recv operation
+         unsigned      fLastRecvSize{0};   ///< size of last recv operation
 
 #ifdef SOCKET_PROFILING
          long           fSendOper;
@@ -172,17 +172,17 @@ namespace dabc {
          long           fRecvSize;
 #endif
 
-         virtual const char* ClassName() const { return "SocketIOAddon"; }
+         const char* ClassName() const override { return "SocketIOAddon"; }
 
          bool IsDatagramSocket() const { return fDatagramSocket; }
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
          void AllocateSendIOV(unsigned size);
          void AllocateRecvIOV(unsigned size);
 
-         inline bool IsDoingSend() const { return fSendIOVNumber>0; }
-         inline bool IsDoingRecv() const { return fRecvIOVNumber>0; }
+         inline bool IsDoingSend() const { return fSendIOVNumber > 0; }
+         inline bool IsDoingRecv() const { return fRecvIOVNumber > 0; }
 
          /** \brief Method called when send operation is completed */
          virtual void OnSendCompleted()
@@ -252,7 +252,7 @@ namespace dabc {
             fConnId()
          {}
 
-         virtual void ObjectCleanup()
+         void ObjectCleanup() override
          {
             fConnRcv.Release();
             SocketAddon::ObjectCleanup();
@@ -267,7 +267,7 @@ namespace dabc {
             fConnId = connid;
          }
 
-         virtual const char* ClassName() const { return "SocketConnectAddon"; }
+         const char* ClassName() const override { return "SocketConnectAddon"; }
 
    };
 
@@ -300,13 +300,13 @@ namespace dabc {
          SocketServerAddon(int serversocket, const char* hostname = nullptr, int portnum = -1, struct addrinfo *info = nullptr);
          virtual ~SocketServerAddon() {}
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
          std::string ServerHostName() { return fServerHostName; }
          int ServerPortNumber() const { return fServerPortNumber; }
          std::string ServerId() { return dabc::format("%s:%d", fServerHostName.c_str(), fServerPortNumber); }
 
-         virtual const char* ClassName() const { return "SocketServerAddon"; }
+         const char* ClassName() const override { return "SocketServerAddon"; }
 
    };
 
@@ -325,21 +325,21 @@ namespace dabc {
 
          void SetRetryOpt(int nretry, double tmout = 1.);
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
-         virtual double ProcessTimeout(double);
+         double ProcessTimeout(double) override;
 
-         virtual const char* ClassName() const { return "SocketClientAddon"; }
+         const char* ClassName() const override { return "SocketClientAddon"; }
 
       protected:
          virtual void OnConnectionEstablished(int fd);
          virtual void OnConnectionFailed();
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
          struct addrinfo fServAddr; // own copy of server address
-         int             fRetry;
-         double          fRetryTmout;
+         int             fRetry{0};
+         double          fRetryTmout{0};
    };
 
    // ______________________________________________________________
@@ -363,16 +363,16 @@ namespace dabc {
              uint32_t  indx; ///< index for dereference of processor from ufds structure
          };
 
-         int            fPipe[2];         ///< array with i/o pipes handles
-         long           fPipeFired;       ///< indicate if something was written in pipe
-         bool           fWaitFire;        ///< indicates if pipe firing is awaited
-         int            fScalerCounter;   ///< variable used to test time to time sockets even if there are events in the queue
-         unsigned       f_sizeufds;       ///< size of the structure, which was allocated
-         pollfd        *f_ufds;           ///< list of file descriptors for poll call
-         ProcRec       *f_recs;           ///< identify used processors
-         bool           fIsAnySocket;     ///< indicates that at least one socket processors in the list
-         bool           fCheckNewEvents;  ///< flag indicate if sockets should be checked for new events even if there are already events in the queue
-         int            fBalanceCnt;      ///< counter for balancing of input events
+         int            fPipe[2] = {0,0};  ///< array with i/o pipes handles
+         long           fPipeFired{0};       ///< indicate if something was written in pipe
+         bool           fWaitFire{false};        ///< indicates if pipe firing is awaited
+         int            fScalerCounter{0};   ///< variable used to test time to time sockets even if there are events in the queue
+         unsigned       f_sizeufds{0};       ///< size of the structure, which was allocated
+         pollfd        *f_ufds{nullptr};           ///< list of file descriptors for poll call
+         ProcRec       *f_recs{nullptr};           ///< identify used processors
+         bool           fIsAnySocket{false};     ///< indicates that at least one socket processors in the list
+         bool           fCheckNewEvents{false};  ///< flag indicate if sockets should be checked for new events even if there are already events in the queue
+         int            fBalanceCnt{0};      ///< counter for balancing of input events
 
 #ifdef SOCKET_PROFILING
          long           fWaitCalls;
@@ -382,13 +382,13 @@ namespace dabc {
          double         fFillTime;
 #endif
 
-         virtual bool WaitEvent(EventId&, double tmout);
+         bool WaitEvent(EventId&, double tmout) override;
 
-         virtual void _Fire(const EventId& evnt, int nq);
+         void _Fire(const EventId& evnt, int nq) override;
 
-         virtual void WorkersSetChanged();
+         void WorkersSetChanged() override;
 
-         virtual void ProcessExtraThreadEvent(const EventId& evid);
+         void ProcessExtraThreadEvent(const EventId& evid) override;
 
       public:
 
@@ -397,8 +397,8 @@ namespace dabc {
          SocketThread(Reference parent, const std::string &name, Command cmd);
          virtual ~SocketThread();
 
-         virtual const char* ClassName() const { return typeSocketThread; }
-         virtual bool CompatibleClass(const std::string &clname) const;
+         const char* ClassName() const override { return typeSocketThread; }
+         bool CompatibleClass(const std::string &clname) const override;
 
          static bool SetNonBlockSocket(int fd);
          static bool SetNoDelaySocket(int fd);

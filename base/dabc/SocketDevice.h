@@ -39,15 +39,15 @@ namespace dabc {
 
          PointersVector         fConnRecs; // list of connections recs
          PointersVector         fProtocols; // list of protocol start processors
-         long                   fConnCounter;
+         long                   fConnCounter{0};
          std::string            fBindHost;   // host name used for socket binding
-         int                    fBindPort;   // selected port number
+         int                    fBindPort{0};   // selected port number
          std::string            fCmdChannelId; // server id of command channel, which will redirect sockets
-         bool                   fDebugMode;   // debug mode
+         bool                   fDebugMode{false};   // debug mode
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual int ExecuteCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
 
          bool CleanupRecs(double tmout);
 
@@ -73,8 +73,8 @@ namespace dabc {
             ProtocolMsgSize = 100      // total length of request buffer size
          };
 
-         virtual std::string RequiredThrdClass() const { return typeSocketThread; }
-         virtual const char* ClassName() const { return dabc::typeSocketDevice; }
+         std::string RequiredThrdClass() const override { return typeSocketThread; }
+         const char* ClassName() const override { return dabc::typeSocketDevice; }
 
          SocketDevice(const std::string &name, Command cmd);
          virtual ~SocketDevice();

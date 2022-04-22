@@ -90,44 +90,44 @@ namespace dabc {
          };
 
          std::string        fRemoteHostName;    ///<  host name and port number
-         double             fReconnectPeriod;   ///<  interval how often reconnect will be tried
+         double             fReconnectPeriod{0};   ///<  interval how often reconnect will be tried
 
          CommandsQueue      fCmds;              ///< commands to be submitted to the remote
 
-         EState             fState;             ///< current state of the worker
+         EState             fState{stConnecting};             ///< current state of the worker
 
          SocketCmdPacket    fSendHdr;           ///< header for send command
          dabc::Buffer       fSendBuf;           ///< content of transported command
          dabc::Buffer       fSendRawData;       ///< raw data, which should be send with command
-         bool               fSendingActive;     ///< indicate if currently send active
+         bool               fSendingActive{false};     ///< indicate if currently send active
          SocketCmdPacket    fRecvHdr;           ///< buffer for receiving header
-         char*              fRecvBuf;           ///< raw buffer for receiving command
-         unsigned           fRecvBufSize;       ///< currently allocated size of recv buffer
+         char*              fRecvBuf{nullptr};           ///< raw buffer for receiving command
+         unsigned           fRecvBufSize{0};       ///< currently allocated size of recv buffer
 
          CommandsQueue      fSendQueue;         ///< queue to keep commands which should be send
          CommandsQueue      fWaitQueue;         ///< commands which should be replied from remote
 
-         ERecvState         fRecvState;         ///< state that happens with receiver (server)
+         ERecvState         fRecvState{recvInit};         ///< state that happens with receiver (server)
 
          // these are fields, used to manage information about remote node
-         bool               fRemoteObserver;   ///< if true, channel automatically used to update information from remote
+         bool               fRemoteObserver{false};   ///< if true, channel automatically used to update information from remote
          std::string        fRemoteName;       ///< name of connection, appeared in the browser
 
          // indicate that this is special connection to master node
          // each time it is reconnected, it will append special command to register itself in remote master
-         bool               fMasterConn;
+         bool               fMasterConn{false};
          std::string        fClientNameSufix;  ///< name suffix, which will be append to name seen on the server side
-         bool               fDebugMode;        ///< debug mode
+         bool               fDebugMode{false};        ///< debug mode
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
-         virtual int ExecuteCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
 
-         virtual bool ReplyCommand(Command cmd);
+         bool ReplyCommand(Command cmd) override;
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
          bool EnsureRecvBuffer(unsigned strsize);
 
@@ -177,14 +177,14 @@ namespace dabc {
       friend class SocketCommandClient;
 
       protected:
-         int             fNodeId;         ///<  current node id
-         bool            fClientsAllowed; ///<  when true, incoming clients are allowed
-         int             fClientCnt;      ///<  counter for new clients
+         int             fNodeId{0};         ///<  current node id
+         bool            fClientsAllowed{false}; ///<  when true, incoming clients are allowed
+         int             fClientCnt{0};      ///<  counter for new clients
          std::string     fRedirectDevice; ///< name of socket device, which can get redirection
-         bool            fDebugMode;      ///< debug mode
+         bool            fDebugMode{false};      ///< debug mode
 
-         virtual int PreviewCommand(Command cmd);
-         virtual int ExecuteCommand(Command cmd);
+         int PreviewCommand(Command cmd) override;
+         int ExecuteCommand(Command cmd) override;
 
          /** \brief Provide string for connection to remote node */
          std::string GetRemoteNode(const std::string &url);
@@ -194,17 +194,16 @@ namespace dabc {
          SocketCommandClientRef ProvideWorker(const std::string &remnodename, double conn_tmout = -1);
 
          /** timeout used in channel to update node hierarchy, which than can be requested from remote */
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
       public:
          SocketCommandChannel(const std::string &name, SocketServerAddon* connaddon, Command cmd);
          virtual ~SocketCommandChannel() {}
 
          /** \brief As name said, command channel requires socket thread for the work */
-         virtual std::string RequiredThrdClass() const { return typeSocketThread; }
+         std::string RequiredThrdClass() const override { return typeSocketThread; }
 
    };
-
 
 }
 
