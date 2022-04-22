@@ -54,14 +54,12 @@ namespace dabc {
       public:
 
          struct NetIORec {
-            bool     used;
-            uint32_t kind;
-            uint32_t extras;  // remake with use of unions
+            bool     used{false};
+            uint32_t kind{0};
+            uint32_t extras{0};  // remake with use of unions
             Buffer   buf;
-            void*    header;
-            void*    inlinebuf;
-
-            NetIORec() : used(false), kind(0), extras(0), buf(), header(0), inlinebuf(0) {}
+            void*    header{nullptr};
+            void*    inlinebuf{nullptr};
          };
 
       #pragma pack(1)
@@ -82,32 +80,32 @@ namespace dabc {
       protected:
          typedef Queue<uint32_t> NetIORecsQueue;
 
-         NetworkInetrface*   fNet;
+         NetworkInetrface*   fNet{nullptr};
 
-         uint32_t      fTransportId;
+         uint32_t      fTransportId{0};
 
-         bool          fUseAckn;
-         unsigned      fInputQueueCapacity;    // capacity of input queue
-         unsigned      fOutputQueueCapacity;   // capacity of output queue
+         bool          fUseAckn{false};
+         unsigned      fInputQueueCapacity{0};    // capacity of input queue
+         unsigned      fOutputQueueCapacity{0};   // capacity of output queue
 
-         uint32_t      fNumRecs;
-         uint32_t      fRecsCounter;
-         NetIORec*     fRecs;
-         int           fNumUsedRecs;
+         uint32_t      fNumRecs{0};
+         uint32_t      fRecsCounter{0};
+         NetIORec*     fRecs{nullptr};
+         int           fNumUsedRecs{0};
 
-         unsigned      fOutputQueueSize; // number of output operations, submitted to the records
-         unsigned      fAcknAllowedOper;
+         unsigned      fOutputQueueSize{0}; // number of output operations, submitted to the records
+         unsigned      fAcknAllowedOper{0};
          NetIORecsQueue fAcknSendQueue;
-         bool          fAcknSendBufBusy; // indicate if ackn sending is under way
+         bool          fAcknSendBufBusy{false}; // indicate if ackn sending is under way
 
-         unsigned      fInputQueueSize; // total number of buffers, using for receiving : in device recv queue and input queue, not yet cleaned by user
-         bool          fFirstAckn;      // indicates, if first ackn packet was send or not
-         unsigned      fAcknReadyCounter; // counter of submitted to device recv packets
+         unsigned      fInputQueueSize{0}; // total number of buffers, using for receiving : in device recv queue and input queue, not yet cleaned by user
+         bool          fFirstAckn{false};      // indicates, if first ackn packet was send or not
+         unsigned      fAcknReadyCounter{0}; // counter of submitted to device recv packets
 
-         BufferSize_t  fFullHeaderSize;  // total header size
-         BufferSize_t  fInlineDataSize;  // part of the header, which can be used for inline data (in the end of header)
+         BufferSize_t  fFullHeaderSize{0};  // total header size
+         BufferSize_t  fInlineDataSize{0};  // part of the header, which can be used for inline data (in the end of header)
 
-         bool          fStartBufReq;     ///< if true, request to memory pool was started and one should wait until it is finished
+         bool          fStartBufReq{false};     ///< if true, request to memory pool was started and one should wait until it is finished
 
          uint32_t TakeRec(Buffer& buf, uint32_t kind = 0, uint32_t extras = 0);
          void ReleaseRec(uint32_t recid);
@@ -117,20 +115,19 @@ namespace dabc {
          void SubmitAllowedSendOperations();
 
          // methods inherited from the module
-         virtual void OnThreadAssigned();
-         virtual void ProcessInputEvent(unsigned port);
-         virtual void ProcessOutputEvent(unsigned port);
-         virtual void ProcessPoolEvent(unsigned pool);
-         virtual void ProcessTimerEvent(unsigned timer);
+         void OnThreadAssigned() override;
+         void ProcessInputEvent(unsigned port) override;
+         void ProcessOutputEvent(unsigned port) override;
+         void ProcessPoolEvent(unsigned pool) override;
+         void ProcessTimerEvent(unsigned timer) override;
 
          // methods inherited from transport
-         virtual bool StartTransport();
-         virtual bool StopTransport();
-
-         virtual void TransportCleanup();
+         bool StartTransport() override;
+         bool StopTransport() override;
+         void TransportCleanup() override;
 
       public:
-         virtual const char* ClassName() const { return "NetworkTransport"; }
+         const char* ClassName() const override { return "NetworkTransport"; }
 
          NetworkTransport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport,
                           bool useackn, WorkerAddon* addon);
@@ -149,7 +146,7 @@ namespace dabc {
          int PackHeader(uint32_t recid);
 
          unsigned NumRecs() const { return fNumRecs; }
-         NetIORec* GetRec(unsigned id) const { return id < fNumRecs ? fRecs + id : 0; }
+         NetIORec* GetRec(unsigned id) const { return id < fNumRecs ? fRecs + id : nullptr; }
 
          void ProcessSendCompl(uint32_t recid);
          void ProcessRecvCompl(uint32_t recid);
@@ -157,7 +154,6 @@ namespace dabc {
          static void GetRequiredQueuesSizes(const PortRef& port, unsigned& input_size, unsigned& output_size);
          static bool Make(const ConnectionRequest& req, WorkerAddon* addon, const std::string &devthrdname = "");
    };
-
 
 }
 

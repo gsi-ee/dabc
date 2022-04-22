@@ -46,8 +46,8 @@ namespace dabc {
       public:
          MultiplexerModule(const std::string &name, dabc::Command cmd = nullptr);
 
-         virtual void ProcessInputEvent(unsigned port);
-         virtual void ProcessOutputEvent(unsigned port);
+         void ProcessInputEvent(unsigned port) override;
+         void ProcessOutputEvent(unsigned port) override;
    };
 
    // ====================================================================
@@ -67,8 +67,8 @@ namespace dabc {
       public:
          RepeaterModule(const std::string &name, dabc::Command cmd = nullptr);
 
-         virtual bool ProcessRecv(unsigned port);
-         virtual bool ProcessSend(unsigned port);
+         bool ProcessRecv(unsigned port) override;
+         bool ProcessSend(unsigned port) override;
    };
 
 

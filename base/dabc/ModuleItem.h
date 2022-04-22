@@ -72,9 +72,9 @@ namespace dabc {
 
       protected:
 
-         int         fItemType;  // kind of the item
-         unsigned    fItemId;    // sequence id of the item in complete items list
-         unsigned    fSubId;     // sequence number of input/output/pool/timer port, used by module
+         int         fItemType{0};  // kind of the item
+         unsigned    fItemId{0};    // sequence id of the item in complete items list
+         unsigned    fSubId{0};     // sequence number of input/output/pool/timer port, used by module
 
          ModuleItem(int typ, Reference parent, const std::string &name);
 
@@ -151,15 +151,15 @@ namespace dabc {
       friend class Module;
 
       protected:
-         bool        fSysTimer;   //! indicate that timer uses module timeouts
-         double      fPeriod;   // period of timer events
-         long        fCounter;  // number of generated events
-         bool        fActive;   // is timer active
-         bool        fSynhron; // indicate if timer tries to keep number of events per second
-         double      fInaccuracy; // accumulated inaccuracy of timer in synchron mode
-         WorkerRef   fTimerSrc;   // source for the timer
+         bool        fSysTimer{false}; //! indicate that timer uses module timeouts
+         double      fPeriod{0};       // period of timer events
+         long        fCounter{0};      // number of generated events
+         bool        fActive{false};   // is timer active
+         bool        fSynhron{false};  // indicate if timer tries to keep number of events per second
+         double      fInaccuracy{0};   // accumulated inaccuracy of timer in synchron mode
+         WorkerRef   fTimerSrc;        // source for the timer
 
-         virtual bool ItemNeedThread() const { return !IsSysTimer(); }
+         bool ItemNeedThread() const override { return !IsSysTimer(); }
 
          bool IsSysTimer() const { return fSysTimer; }
 
@@ -175,11 +175,11 @@ namespace dabc {
 
          long GetCounter() const { return fCounter; }
 
-         virtual void DoStart();
-         virtual void DoStop();
-         virtual void DoCleanup() { fTimerSrc.Release(); }
+         void DoStart() override;
+         void DoStop() override;
+         void DoCleanup() override { fTimerSrc.Release(); }
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
       private:
          Timer(Reference parent, bool systimer, const std::string &name, double timeout = -1., bool synchron = false);
@@ -199,12 +199,12 @@ namespace dabc {
 
       protected:
 
-         std::string fPortName;        ///< port name, which should be reconnected
-         bool fErrorFlag;              ///< indicate why reconnection was started
+         std::string fPortName;          ///< port name, which should be reconnected
+         bool fErrorFlag{false};         ///< indicate why reconnection was started
 
-         virtual bool ItemNeedThread() const { return true; }
+         bool ItemNeedThread() const override { return true; }
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
          void Activate(double period) { ActivateTimeout(period); }
 
