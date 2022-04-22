@@ -34,10 +34,10 @@ rfio::FileInterface::FileInterface() :
 
 rfio::FileInterface::~FileInterface()
 {
-   if (fRemote!=0) {
+   if (fRemote) {
       DOUT2("Close existing connection to RFIO data mover");
       rfio_fclose((RFILE*) fRemote);
-      fRemote = 0;
+      fRemote = nullptr;
    }
 }
 
@@ -213,7 +213,7 @@ bool rfio::FileInterface::feof(Handle f)
    return f==0 ? false : (rfio_fendfile((RFILE*)f) > 0);
 }
 
-bool rfio::FileInterface::fflush(Handle f)
+bool rfio::FileInterface::fflush(Handle)
 {
    return true;
 
@@ -222,5 +222,7 @@ bool rfio::FileInterface::fflush(Handle f)
 
 dabc::Object* rfio::FileInterface::fmatch(const char* fmask, bool select_files)
 {
+   (void) fmask;
+   (void) select_files;
    return nullptr;
 }
