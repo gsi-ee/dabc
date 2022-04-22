@@ -55,7 +55,7 @@ void mbs::ClientTransport::ObjectCleanup()
 
 bool mbs::ClientTransport::IsDabcEnabledOnMbsSide()
 {
-   return fServInfo.iStreams==0;
+   return fServInfo.iStreams == 0;
 }
 
 unsigned mbs::ClientTransport::ReadBufferSize()
@@ -172,7 +172,7 @@ void mbs::ClientTransport::OnRecvCompleted()
    }
 }
 
-void mbs::ClientTransport::OnSocketError(int err, const std::string &info)
+void mbs::ClientTransport::OnSocketError(int err, const std::string &)
 {
    if (err==0) {
       DOUT3("MBS client Socket close\n");
@@ -209,7 +209,7 @@ void mbs::ClientTransport::OnThreadAssigned()
 //   DOUT0("Try to recv server info at the begin");
 }
 
-double mbs::ClientTransport::ProcessTimeout(double last_diff)
+double mbs::ClientTransport::ProcessTimeout(double)
 {
    if (fState == ioRecvInfo) {
       EOUT("Did not get server info in reasonable time");
@@ -234,7 +234,7 @@ void mbs::ClientTransport::MakeCallback(unsigned arg)
 {
    dabc::InputTransport* tr = dynamic_cast<dabc::InputTransport*> (fWorker());
 
-   if (tr==0) {
+   if (!tr) {
       EOUT("Didnot found DataInputTransport on other side worker %p", fWorker());
       fState = ioError;
       SubmitWorkerCmd(dabc::Command("CloseTransport"));
@@ -283,7 +283,7 @@ unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
 
    if (!fSpanBuffer.null()) {
 
-      if (fHeader.h_begin==0) {
+      if (fHeader.h_begin == 0) {
          EOUT("We expecting spanned buffer in the begin, but didnot get it");
          return dabc::di_Error;
       }

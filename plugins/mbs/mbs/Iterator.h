@@ -39,7 +39,7 @@ namespace mbs {
 
    class ReadIterator {
       protected:
-         bool           fFirstEvent;
+         bool           fFirstEvent{false};
          dabc::Pointer  fEvPtr;
          dabc::Pointer  fSubPtr;
          dabc::Pointer  fRawPtr;
@@ -169,12 +169,12 @@ namespace mbs {
          EventsIterator(const std::string &name) : dabc::EventsIterator(name), fIter() {}
          virtual ~EventsIterator() {}
 
-         virtual bool Assign(const dabc::Buffer& buf) { return fIter.Reset(buf); }
-         virtual void Close() { return fIter.Close(); }
+         bool Assign(const dabc::Buffer& buf) override { return fIter.Reset(buf); }
+         void Close() override { return fIter.Close(); }
 
-         virtual bool NextEvent() { return fIter.NextEvent(); };
-         virtual void* Event() { return fIter.evnt(); }
-         virtual dabc::BufferSize_t EventSize() { return fIter.GetEventSize(); }
+         bool NextEvent() override { return fIter.NextEvent(); };
+         void* Event() override { return fIter.evnt(); }
+         dabc::BufferSize_t EventSize() override { return fIter.GetEventSize(); }
    };
 
 }

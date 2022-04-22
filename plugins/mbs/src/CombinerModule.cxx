@@ -127,11 +127,11 @@ void mbs::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 }
 
 
-void mbs::CombinerModule::ProcessTimerEvent(unsigned timer)
+void mbs::CombinerModule::ProcessTimerEvent(unsigned)
 {
    if (fFlushFlag) {
       unsigned cnt = 0;
-      while (IsRunning() && (cnt<100) && BuildEvent()) ++cnt;
+      while (IsRunning() && (cnt < 100) && BuildEvent()) ++cnt;
       FlushBuffer();
    }
    fFlushFlag = true;

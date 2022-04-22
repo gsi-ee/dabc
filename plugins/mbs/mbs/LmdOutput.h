@@ -41,9 +41,9 @@ namespace mbs {
          LmdOutput(const dabc::Url& url);
          virtual ~LmdOutput();
 
-         virtual bool Write_Init();
+         bool Write_Init() override;
 
-         virtual unsigned Write_Buffer(dabc::Buffer& buf);
+         unsigned Write_Buffer(dabc::Buffer& buf) override;
    };
 
 }

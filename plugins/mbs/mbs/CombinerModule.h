@@ -157,9 +157,9 @@ namespace mbs {
          bool BuildEvent();
          bool FlushBuffer();
 
-         virtual void BeforeModuleStart();
+         void BeforeModuleStart() override;
 
-         virtual void AfterModuleStop();
+         void AfterModuleStop() override;
 
          bool ShiftToNextEvent(unsigned ninp);
 
@@ -181,19 +181,19 @@ namespace mbs {
          CombinerModule(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~CombinerModule();
 
-         virtual void ModuleCleanup();
+         void ModuleCleanup() override;
 
-         virtual bool ProcessRecv(unsigned port) { return BuildEvent(); }
-         virtual bool ProcessSend(unsigned port) { return BuildEvent(); }
+         bool ProcessRecv(unsigned) override { return BuildEvent(); }
+         bool ProcessSend(unsigned) override { return BuildEvent(); }
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
          unsigned NumObligatoryInputs() const { return fNumObligatoryInputs; }
 
          /* returns maximum possible eventnumber for overflow checking*/
          virtual unsigned int GetOverflowEventNumber() const;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
    };
 }
 

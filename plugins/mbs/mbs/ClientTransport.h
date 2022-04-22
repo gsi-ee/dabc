@@ -56,34 +56,34 @@ namespace mbs {
          };
 
          mbs::TransportInfo   fServInfo; // data, send by transport server in the beginning
-         EIOState             fState;
-         bool                 fSwapping;
-         bool                 fSpanning;  //!< when true, MBS could deliver spanned events
+         EIOState             fState{ioInit};
+         bool                 fSwapping{false};
+         bool                 fSpanning{false};  //!< when true, MBS could deliver spanned events
 
          mbs::BufferHeader    fHeader;
          char                 fSendBuf[12];
 
-         int                  fKind; // values from EMbsServerKinds
+         int                  fKind{0}; // values from EMbsServerKinds
 
-         bool                 fPendingStart;
+         bool                 fPendingStart{false};
 
          dabc::Buffer         fSpanBuffer;  //!< buffer rest, which should be copied and merged into next buffer
 
 
          // this is part from SocketAddon
 
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual void ProcessEvent(const dabc::EventId&);
+         void ProcessEvent(const dabc::EventId&) override;
 
-         virtual void OnSendCompleted();
-         virtual void OnRecvCompleted();
+         void OnSendCompleted() override;
+         void OnRecvCompleted() override;
 
-         virtual void OnSocketError(int err, const std::string &info);
+         void OnSocketError(int err, const std::string &info) override;
 
          void SubmitRequest();
          void MakeCallback(unsigned sz);
@@ -91,7 +91,7 @@ namespace mbs {
          unsigned ReadBufferSize();
          bool IsDabcEnabledOnMbsSide(); // indicates if new format is enabled on mbs side
 
-         virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
+         dabc::WorkerAddon* Read_GetAddon() override { return this; }
 
       public:
 
@@ -100,13 +100,12 @@ namespace mbs {
 
          int Kind() const { return fKind; }
 
-
          // this is interface from DataInput
 
-         virtual unsigned Read_Size();
-         virtual unsigned Read_Start(dabc::Buffer& buf);
-         virtual unsigned Read_Complete(dabc::Buffer& buf);
-         virtual double Read_Timeout() { return 0.1; }
+         unsigned Read_Size() override;
+         unsigned Read_Start(dabc::Buffer& buf) override;
+         unsigned Read_Complete(dabc::Buffer& buf) override;
+         double Read_Timeout() override { return 0.1; }
 
    };
 

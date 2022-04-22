@@ -31,22 +31,22 @@ namespace mbs {
    class LmdInput : public dabc::FileInput {
        protected:
 
-          mbs::LmdFile      fFile;
+          mbs::LmdFile   fFile;
 
           bool CloseFile();
 
           bool OpenNextFile();
 
-          virtual std::string GetListFileExtension() { return ".lml"; }
+          std::string GetListFileExtension() override { return ".lml"; }
 
        public:
           LmdInput(const dabc::Url& url);
           virtual ~LmdInput();
 
-          virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+          bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) override;
 
-          virtual unsigned Read_Size();
-          virtual unsigned Read_Complete(dabc::Buffer& buf);
+          unsigned Read_Size() override;
+          unsigned Read_Complete(dabc::Buffer& buf) override;
     };
 
 }
