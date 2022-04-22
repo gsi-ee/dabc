@@ -44,7 +44,7 @@ namespace mbs_root {
          int       fCompression{0};
          int       fMaxSize;
 
-        bool Close();
+         bool Close();
 
    };
 

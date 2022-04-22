@@ -1,8 +1,6 @@
 #ifndef DABC_DabcEvent
 #define DABC_DabcEvent
 
-
-
 #include "TObject.h"
 #include "TClonesArray.h"
 #include "mbs_root/DabcSubEvent.h"
@@ -14,7 +12,7 @@ namespace mbs_root {
 		Int_t fCount;
 		Int_t fTrigger;
 		Int_t fDummy;
-		TClonesArray *fSubEvts;	//->	
+		TClonesArray *fSubEvts;	//->
 
 		Int_t fMaxSubs;
 		Int_t fSubCursor;
@@ -22,7 +20,7 @@ namespace mbs_root {
 
 	public:
 		DabcEvent();
-		
+
 		DabcEvent(Int_t count, Int_t crate, Int_t subevts=20);
 
 		virtual ~DabcEvent();
@@ -35,7 +33,7 @@ namespace mbs_root {
 
 		void SetDummy(Int_t num);
 		Int_t GetDummy();
-	
+
 		mbs_root::DabcSubEvent * AddSubEvent(Int_t crate, Int_t control, Int_t procid);
 
 		void ResetSubCursor();
@@ -43,7 +41,7 @@ namespace mbs_root {
 		mbs_root::DabcSubEvent * NextSubEvent();
 
 		void Clear(Option_t *opt="");
-	
+
 	ClassDef(DabcEvent,1)
 	};
 }
