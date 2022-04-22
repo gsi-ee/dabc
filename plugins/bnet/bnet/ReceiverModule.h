@@ -8,9 +8,9 @@ namespace bnet {
    class ReceiverModule : public dabc::ModuleAsync {
       protected:
 
-         virtual bool ProcessRecv(unsigned port);
-         virtual bool ProcessSend(unsigned port);
-         virtual void ProcessTimerEvent(unsigned timer);
+         bool ProcessRecv(unsigned port) override;
+         bool ProcessSend(unsigned port) override;
+         void ProcessTimerEvent(unsigned timer) override;
 
       public:
 
@@ -18,11 +18,11 @@ namespace bnet {
 
          virtual ~ReceiverModule();
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
-         virtual void BeforeModuleStart();
+         void BeforeModuleStart() override;
 
-         virtual void AfterModuleStop();
+         void AfterModuleStop() override;
    };
 
 }

@@ -23,9 +23,9 @@ namespace bnet {
 
          bool ProcessData();
 
-         virtual bool ProcessRecv(unsigned port) { return ProcessData(); }
-         virtual bool ProcessSend(unsigned port) { return ProcessData(); }
-         virtual void ProcessTimerEvent(unsigned timer);
+         bool ProcessRecv(unsigned) override { return ProcessData(); }
+         bool ProcessSend(unsigned) override { return ProcessData(); }
+         void ProcessTimerEvent(unsigned) override;
 
       public:
 
@@ -33,11 +33,11 @@ namespace bnet {
 
          virtual ~SenderModule();
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
-         virtual void BeforeModuleStart();
+         void BeforeModuleStart() override;
 
-         virtual void AfterModuleStop();
+         void AfterModuleStop() override;
    };
 
 }

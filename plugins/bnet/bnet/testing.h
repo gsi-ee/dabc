@@ -21,22 +21,22 @@ namespace bnet {
    class TestEventsIterator : public dabc::EventsIterator {
       protected:
          dabc::Pointer fPtr;
-         bool fFirstEvent;
+         bool fFirstEvent{false};
 
       public:
          TestEventsIterator(const std::string &name) : dabc::EventsIterator(name), fPtr(), fFirstEvent(true) {}
          virtual ~TestEventsIterator() {}
 
-         virtual bool Assign(const dabc::Buffer& buf)
+         bool Assign(const dabc::Buffer& buf) override
          {
             if (buf.GetTypeId() != TestEvents) return false;
             fPtr = buf;
             fFirstEvent = true;
             return true;
          }
-         virtual void Close() { fPtr.reset(); }
+         void Close() override { fPtr.reset(); }
 
-         virtual bool NextEvent()
+         bool NextEvent() override
          {
             if (fFirstEvent)
                fFirstEvent = false;
@@ -48,12 +48,12 @@ namespace bnet {
             return EventSize() > 0;
          }
 
-         virtual void* Event()
+         void* Event() override
          {
             return fPtr();
          }
 
-         virtual dabc::BufferSize_t EventSize()
+         dabc::BufferSize_t EventSize() override
          {
             if (fPtr.null() || fPtr.fullsize()<3*sizeof(uint64_t)) return 0;
             uint64_t arr[3];
@@ -78,7 +78,7 @@ namespace bnet {
          TestEventsProducer(const std::string &name) : dabc::EventsProducer(name), fBuf(), fPtr() {}
          virtual ~TestEventsProducer() {}
 
-         virtual bool Assign(const dabc::Buffer& buf)
+         bool Assign(const dabc::Buffer& buf) override
          {
             fBuf = buf;
             fPtr = buf;
@@ -86,14 +86,14 @@ namespace bnet {
             return true;
          }
 
-         virtual void Close()
+         void Close() override
          {
             fBuf.SetTotalSize(fPtr.distance_to_ownbuf());
             fPtr.reset();
             fBuf.Release();
          }
 
-         virtual bool GenerateEvent(uint64_t evid, uint64_t subid, uint64_t raw_size)
+         bool GenerateEvent(uint64_t evid, uint64_t subid, uint64_t raw_size) override
          {
             while (raw_size % 8 !=0) raw_size++;
             unsigned total_size = 3*sizeof(uint64_t) + raw_size;
@@ -107,6 +107,5 @@ namespace bnet {
    };
 
 }
-
 
 #endif

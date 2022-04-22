@@ -24,9 +24,9 @@ namespace rfio {
 
    class FileInterface : public dabc::FileInterface {
       protected:
-         void*  fRemote;              //! connection to datamover, done once when any special argument is appearing
-         int    fOpenedCounter;       //! counter of opened files via special connection to datamover
-         int    fDataMoverIndx;       //! obtained data mover index
+         void*  fRemote{nullptr};      //! connection to datamover, done once when any special argument is appearing
+         int    fOpenedCounter{0};     //! counter of opened files via special connection to datamover
+         int    fDataMoverIndx{0};    //! obtained data mover index
          char   fDataMoverName[64];   //! obtained data mover name
 
       public:
@@ -35,25 +35,25 @@ namespace rfio {
 
          virtual ~FileInterface();
 
-         virtual Handle fopen(const char *fname, const char *mode, const char *opt = nullptr);
+         Handle fopen(const char *fname, const char *mode, const char *opt = nullptr) override;
 
-         virtual void fclose(Handle f);
+         void fclose(Handle f) override;
 
-         virtual size_t fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f);
+         size_t fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f) override;
 
-         virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f);
+         size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f) override;
 
-         virtual bool feof(Handle f);
+         bool feof(Handle f) override;
 
-         virtual bool fflush(Handle f);
+         bool fflush(Handle f) override;
 
-         virtual bool fseek(Handle f, long int offset, bool realtive = true);
+         bool fseek(Handle f, long int offset, bool realtive = true) override;
 
-         virtual dabc::Object* fmatch(const char* fmask, bool select_files = true);
+         dabc::Object* fmatch(const char* fmask, bool select_files = true) override;
 
-         virtual int GetFileIntPar(Handle h, const char* parname);
+         int GetFileIntPar(Handle h, const char* parname) override;
 
-         virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int sbuflen);
+         bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int sbuflen) override;
 
    };
 

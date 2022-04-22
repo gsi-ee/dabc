@@ -43,16 +43,16 @@ namespace fesa {
          std::string fDeviceName;    ///< FESA device name
          std::string fCycle;         ///< cycle parameter
 
-         rdaRDAService* fRDAService;
-         rdaDeviceHandle* fDevice;
+         rdaRDAService* fRDAService{nullptr};
+         rdaDeviceHandle* fDevice{nullptr};
          std::vector<rdaDabcHandler*> fHandlers;
 
-         bool fBlockRec; ///< when true, slow-control record cannot be updated
+         bool fBlockRec{false}; ///< when true, slow-control record cannot be updated
 
          double doGet(const std::string &service, const std::string &field);
 
-         virtual unsigned GetRecRawSize();
-         virtual unsigned WriteRecRawData(void* ptr, unsigned maxsize);
+         unsigned GetRecRawSize() override;
+         unsigned WriteRecRawData(void* ptr, unsigned maxsize) override;
 
       public:
 

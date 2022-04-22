@@ -126,7 +126,7 @@ fesa::Player::~Player()
 {
 }
 
-void fesa::Player::ProcessTimerEvent(unsigned timer)
+void fesa::Player::ProcessTimerEvent(unsigned)
 {
 //   DOUT0("Process timer");
 
@@ -275,6 +275,9 @@ double fesa::Player::doGet(const std::string &service, const std::string &field)
    {
         EOUT("Uncknown exception caught in doGet");
    }
+   #else
+   (void) service;
+   (void) field;
    #endif
    return res;
 }

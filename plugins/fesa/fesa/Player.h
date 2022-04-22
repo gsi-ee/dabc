@@ -40,24 +40,24 @@ namespace fesa {
 
    class Player : public dabc::ModuleAsync {
       protected:
-         virtual void BeforeModuleStart() {}
+         void BeforeModuleStart() override {}
 
-         virtual void AfterModuleStop() {}
+         void AfterModuleStop() override {}
 
-         unsigned fCounter;
+         unsigned fCounter{0};
 
-         MySniffer*  fSniffer;      ///< binary producer for ROOT objects
-         void* fHist;               ///< ROOT histogram
-         
+         MySniffer*  fSniffer{nullptr};      ///< binary producer for ROOT objects
+         void* fHist{nullptr};               ///< ROOT histogram
+
          std::string fServerName;    ///< FESA server name
          std::string fDeviceName;    ///< FESA device name
          std::string fCycles;        ///< cycles parameter
          std::string fService;       ///< service name
          std::string fField;         ///< field name in the service
-         
-         rdaRDAService* fRDAService;
-         rdaDeviceHandle* fDevice;
-         
+
+         rdaRDAService* fRDAService{nullptr};
+         rdaDeviceHandle* fDevice{nullptr};
+
          double doGet(const std::string &service, const std::string &field);
 
       public:
@@ -65,11 +65,11 @@ namespace fesa {
          Player(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Player();
 
-         virtual void ModuleCleanup() {}
+         void ModuleCleanup() override {}
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
    };
 }
 
