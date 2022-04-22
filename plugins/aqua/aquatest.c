@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <time.h>
 
-int main(int argc, char *argv[])
+int main()
 {
     int listenfd = 0, connfd = 0;
     struct sockaddr_in serv_addr;
