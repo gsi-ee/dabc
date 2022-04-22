@@ -48,7 +48,7 @@ void aqua::ClientOutput::OnSocketError(int err, const std::string &info)
    fState = err!=0 ? oError : oDisconnected;
 }
 
-double aqua::ClientOutput::ProcessTimeout(double lastdiff)
+double aqua::ClientOutput::ProcessTimeout(double)
 {
    return -1;
 }
@@ -72,11 +72,11 @@ aqua::ClientOutput::~ClientOutput()
    DOUT0("Destroy AQUA output");
 }
 
-void aqua::ClientOutput::MakeCallBack(unsigned arg)
+void aqua::ClientOutput::MakeCallBack(unsigned /* arg */)
 {
    dabc::OutputTransport* tr = dynamic_cast<dabc::OutputTransport*> (fWorker());
 
-   if (tr==0) {
+   if (!tr) {
       EOUT("Did not found OutputTransport on other side worker %s", fWorker.GetName());
       fState = oError;
       SubmitWorkerCmd(dabc::Command("CloseTransport"));

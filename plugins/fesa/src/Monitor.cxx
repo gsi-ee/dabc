@@ -204,7 +204,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
          EOUT("There is no tag specified in field of service %s", name.c_str());
          continue;
       }
-      
+
       // DOUT0("Service %s tag %s", name.c_str(), tag);
 
       switch (entry->getValueType()) {
@@ -332,6 +332,9 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
          }
       }
    }
+
+#else
+   (void) value;
 
    // TODO: here apply new version and create history entry
 #endif

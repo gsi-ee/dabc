@@ -49,43 +49,39 @@ namespace aqua {
          };
 
          dabc::TimeStamp       fLastConnect;
-         double                fReconnectTmout;
+         double                fReconnectTmout{0};
          std::string           fServerName;
-         int                   fServerPort;
+         int                   fServerPort{0};
 
          SendHeader fSendHdr;
 
-         OutputState           fState;
-         int64_t               fBufCounter;
+         OutputState           fState{oDisconnected};
+         int64_t               fBufCounter{0};
 
-         virtual void OnThreadAssigned();
-         virtual void OnSendCompleted();
-         virtual void OnRecvCompleted();
+         void OnThreadAssigned() override;
+         void OnSendCompleted() override;
+         void OnRecvCompleted() override;
 
-         virtual void OnSocketError(int errnum, const std::string &info);
+         void OnSocketError(int errnum, const std::string &info) override;
 
-         virtual double ProcessTimeout(double lastdiff);
+         double ProcessTimeout(double lastdiff) override;
 
-         virtual WorkerAddon* Write_GetAddon() { return this; }
+         WorkerAddon* Write_GetAddon() override { return this; }
 
          bool ConnectAquaServer();
 
          void MakeCallBack(unsigned arg);
-
 
       public:
 
          ClientOutput(dabc::Url& url);
          virtual ~ClientOutput();
 
-         virtual bool Write_Init();
-
-         virtual unsigned Write_Check();
-         virtual unsigned Write_Buffer(dabc::Buffer& buf);
-         virtual unsigned Write_Complete();
-
-         virtual double Write_Timeout();
-
+         bool Write_Init() override;
+         unsigned Write_Check() override;
+         unsigned Write_Buffer(dabc::Buffer& buf) override;
+         unsigned Write_Complete() override;
+         double Write_Timeout() override;
 
    };
 }
