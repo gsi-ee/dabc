@@ -262,9 +262,9 @@ double fesa::Player::doGet(const std::string &service, const std::string &field)
       try {
         rdaData context;
         rdaData* value = fDevice->get(service.c_str(), fCycles.c_str(), context);
-        if (value!=0) {
-          res = value->extractDouble(field.c_str());
-          delete value;
+        if (value) {
+           res = value->extractDouble(field.c_str());
+           delete value;
         }
    }
    catch (const rdaException& ex)
