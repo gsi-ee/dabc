@@ -98,8 +98,8 @@ const char* http::Server::GetMimeType(const char* path)
 }
 
 
-http::Server::Server(const std::string &name, dabc::Command cmd) :
-   dabc::Worker(MakePair(name)),
+http::Server::Server(const std::string &server_name, dabc::Command cmd) :
+   dabc::Worker(MakePair(server_name)),
    fLocations(),
    fHttpSys(),
    fJsRootSys(),

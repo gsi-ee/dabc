@@ -32,17 +32,17 @@ namespace http {
 
    class FastCgi : public Server  {
       protected:
-         int   fCgiPort;                 //!< configured fast cgi port, default 9000
-         bool  fDebugMode;               //!< when true, only debug info returned by server
-         int   fSocket;                  //!< fastcgi server socket
-         dabc::PosixThread* fThrd;       //!< thread where fastcgi mainloop will run
+         int   fCgiPort{0};                     //!< configured fast cgi port, default 9000
+         bool  fDebugMode{false};               //!< when true, only debug info returned by server
+         int   fSocket{0};                      //!< fastcgi server socket
+         dabc::PosixThread* fThrd{nullptr};     //!< thread where fastcgi mainloop will run
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
       public:
          FastCgi(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~FastCgi();
 
-         virtual const char* ClassName() const { return "FastCgiServer"; }
+         const char* ClassName() const override { return "FastCgiServer"; }
 
          static void* RunFunc(void* arg);
    };

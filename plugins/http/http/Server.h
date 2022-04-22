@@ -43,7 +43,7 @@ namespace http {
          std::string fHttpSys;      ///< location of http plugin, need to read special files
          std::string fOwnJsRootSys; ///< location of internal JSROOT code, need to read special files
          std::string fJsRootSys;    ///< location of JSROOT code, need to read special files
-         int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
+         int         fDefaultAuth{0};  ///< 0 - false, 1 - true, -1 - ignored
 
          std::string fAutoLoad;    ///< _autoload value in h.json
          std::string fTopTitle;    ///< _toptitle value in h.json
@@ -51,7 +51,7 @@ namespace http {
          std::string fLayout;      ///< _layout value in h.json
          std::string fDrawItem;    ///< _drawitem value in h.json, only for top page
          std::string fDrawOpt;     ///< _drawopt value in h.json, only for top page
-         int         fMonitoring;  ///< _monitoring value in h.json, only for top page
+         int         fMonitoring{0};  ///< _monitoring value in h.json, only for top page
 
          /** Check if relative path below current dir - prevents file access to top directories via http */
          static bool VerifyFilePath(const char* fname);
@@ -82,7 +82,7 @@ namespace http {
                           const std::string &nameprefix = "",
                           const std::string &nameprefixrepl = "");
 
-         virtual const char* ClassName() const { return "HttpServer"; }
+         const char* ClassName() const override { return "HttpServer"; }
 
          static const char* GetMimeType(const char* fname);
    };
