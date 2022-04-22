@@ -947,7 +947,7 @@ bool hadaq::CombinerModule::BuildEvent()
    grd.Next("drp");
 
    // we always build event with maximum trigger id = newest event, discard incomplete older events
-   int diff = incomplete_data ? 0 : CalcTrigNumDiff(mineventid, maxeventid);
+   int diff0 = incomplete_data ? 0 : CalcTrigNumDiff(mineventid, maxeventid);
 
 //   DOUT0("Min:%8u Max:%8u diff:%5d", mineventid, maxeventid, diff);
 
@@ -967,13 +967,13 @@ bool hadaq::CombinerModule::BuildEvent()
    // check too large triggertag difference on input channels or very long delay in building,
    // to repair situation, try to flush all input buffers
    if (fLastDropTm.Expired((fEventBuildTimeout > 0) ? 1.5*fEventBuildTimeout : 5.))
-     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || ((fEventBuildTimeout > 0) && fLastBuildTm.Expired(fEventBuildTimeout) && any_data && (fCfg.size() > 1))) {
+     if (((fTriggerNrTolerance > 0) && (diff0 > fTriggerNrTolerance)) || ((fEventBuildTimeout > 0) && fLastBuildTm.Expired(fEventBuildTimeout) && any_data && (fCfg.size() > 1))) {
 
         std::string msg;
-        if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) {
+        if ((fTriggerNrTolerance > 0) && (diff0 > fTriggerNrTolerance)) {
           msg = dabc::format(
               "Event id difference %d exceeding tolerance window %d (min input %u),",
-              diff, fTriggerNrTolerance, min_inp);
+              diff0, fTriggerNrTolerance, min_inp);
         } else {
            msg = dabc::format("No events were build since at least %.1f seconds,", fEventBuildTimeout);
         }
@@ -1560,6 +1560,7 @@ char* hadaq::CombinerModule::Unit(unsigned long v)
 
 std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 {
+   (void) runid;
    return fPrefix + hadaq::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
 }
 

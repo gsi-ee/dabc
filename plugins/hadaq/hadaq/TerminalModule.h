@@ -33,45 +33,44 @@ namespace hadaq {
       protected:
 
          struct CalibrRect {
-            long unsigned         lastrecv;
-            bool                  send_request;
-            unsigned              trb;
+            long unsigned         lastrecv{0};
+            bool                  send_request{false};
+            unsigned              trb{0};
             std::vector<uint64_t> tdcs;
-            int                   progress;
+            int                   progress{0};
             std::string           state;
-            CalibrRect() : lastrecv(0), send_request(false), trb(0), tdcs(), progress(0), state() {}
          };
 
-         uint64_t        fTotalBuildEvents;
-         uint64_t        fTotalRecvBytes;
-         uint64_t        fTotalDiscEvents;
-         uint64_t        fTotalDroppedData;
+         uint64_t        fTotalBuildEvents{0};
+         uint64_t        fTotalRecvBytes{0};
+         uint64_t        fTotalDiscEvents{0};
+         uint64_t        fTotalDroppedData{0};
 
-         bool            fDoClear;       ///< clear terminal when start module
-         bool            fDoShow;        ///< perform output
+         bool            fDoClear{false};       ///< clear terminal when start module
+         bool            fDoShow{false};        ///< perform output
          dabc::TimeStamp fLastTm;
          std::vector<CalibrRect> fCalibr;
-         int             fServPort;
+         int             fServPort{0};
          dabc::Command   fLastServCmd;    ///< last received data from file transport
-         bool            fServReqRunning; ///<  is file request running
-         int             fFilePort;
+         bool            fServReqRunning{false}; ///<  is file request running
+         int             fFilePort{0};
          dabc::Command   fLastFileCmd;    ///< last received data from file transport
-         bool            fFileReqRunning; ///< is file request running
-         int             fRingSize;       ///< number of last IDs shown
+         bool            fFileReqRunning{false}; ///< is file request running
+         int             fRingSize{0};       ///< number of last IDs shown
 
          std::string     fModuleName;    ///< name of hadaq combiner module
 
          std::string rate_to_str(double r);
 
-         virtual bool ReplyCommand(dabc::Command cmd);
+         bool ReplyCommand(dabc::Command cmd) override;
 
       public:
 
          TerminalModule(const std::string &name, dabc::Command cmd = nullptr);
 
-         virtual void BeforeModuleStart();
+         void BeforeModuleStart() override;
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
    };
 }
 

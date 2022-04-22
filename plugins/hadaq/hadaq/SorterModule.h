@@ -39,49 +39,49 @@ namespace hadaq {
 
    public:
          struct SubsRec {
-            void*     subevnt;  //!< direct pointer on subevent
-            uint32_t  trig;     //!< trigger number
-            uint32_t  buf;      //!< buffer indx
-            uint32_t  sz;       //!< padded size
+            void*     subevnt{nullptr};  //!< direct pointer on subevent
+            uint32_t  trig{0};     //!< trigger number
+            uint32_t  buf{0};      //!< buffer indx
+            uint32_t  sz{0};       //!< padded size
          };
 
          struct SubsComp {
-            SorterModule* m;
+            SorterModule* m{nullptr};
             SubsComp(SorterModule* _m) : m(_m) {}
             // use in std::sort for sorting elements of std::vector<SubsRec>
             bool operator() (const SubsRec& l,const SubsRec& r) { return m->Diff(l.trig, r.trig) > 0; }
          };
 
 
-      int       fFlushCnt;
-      int       fBufCnt;          //!< total number of buffers
-      int       fLastRet;         //!< debug
-      uint32_t  fTriggersRange;   //!< valid range for the triggers, normally 0x1000000
-      uint32_t  fLastTrigger;     //!< last trigger copied into output
-      unsigned  fNextBufIndx;     //!< next buffer which could be processed
-      unsigned  fReadyBufIndx;    //!< input buffer index which could be send directly
-      std::vector<SubsRec> fSubs; //!< vector with subevents data in the buffers
-      dabc::Buffer fOutBuf;       //!< output buffer
-      dabc::Pointer fOutPtr;      //!< place for new data
+      int       fFlushCnt{0};
+      int       fBufCnt{0};          //!< total number of buffers
+      int       fLastRet{0};         //!< debug
+      uint32_t  fTriggersRange{0};   //!< valid range for the triggers, normally 0x1000000
+      uint32_t  fLastTrigger{0};     //!< last trigger copied into output
+      unsigned  fNextBufIndx{0};     //!< next buffer which could be processed
+      unsigned  fReadyBufIndx{0};    //!< input buffer index which could be send directly
+      std::vector<SubsRec> fSubs;    //!< vector with subevents data in the buffers
+      dabc::Buffer fOutBuf;          //!< output buffer
+      dabc::Pointer fOutPtr;         //!< place for new data
 
-      void DecremntInputIndex(unsigned cnt=1);
+      void DecremntInputIndex(unsigned cnt = 1);
 
       bool RemoveUsedSubevents(unsigned num);
 
       bool retransmit();
 
-      virtual int ExecuteCommand(dabc::Command cmd);
+      int ExecuteCommand(dabc::Command cmd) override;
 
    public:
       SorterModule(const std::string &name, dabc::Command cmd = nullptr);
 
-      virtual bool ProcessBuffer(unsigned) { return retransmit(); }
+      bool ProcessBuffer(unsigned) override { return retransmit(); }
 
-      virtual bool ProcessRecv(unsigned) { return retransmit(); }
+      bool ProcessRecv(unsigned) override { return retransmit(); }
 
-      virtual bool ProcessSend(unsigned) { return retransmit(); }
+      bool ProcessSend(unsigned) override { return retransmit(); }
 
-      virtual void ProcessTimerEvent(unsigned);
+      void ProcessTimerEvent(unsigned) override;
 
       int Diff(uint32_t trig1, uint32_t trig2)
       {
@@ -90,7 +90,6 @@ namespace hadaq {
          if (res < ((int) fTriggersRange)/-2) return res + fTriggersRange;
          return res;
       }
-
 
    };
 

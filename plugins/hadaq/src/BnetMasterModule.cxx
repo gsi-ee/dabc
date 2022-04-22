@@ -505,7 +505,7 @@ void hadaq::BnetMasterModule::BeforeModuleStart()
 {
 }
 
-void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
+void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned)
 {
    dabc::CmdGetNamesList cmd;
 

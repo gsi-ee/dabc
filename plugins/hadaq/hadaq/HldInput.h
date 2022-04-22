@@ -36,16 +36,16 @@ namespace hadaq {
          bool CloseFile();
          bool OpenNextFile();
 
-         virtual std::string GetListFileExtension() { return ".hll"; }
+         std::string GetListFileExtension() override { return ".hll"; }
 
       public:
          HldInput(const dabc::Url& ulr);
          virtual ~HldInput();
 
-         virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+         bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) override;
 
-         virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(dabc::Buffer& buf);
+         unsigned Read_Size() override;
+         unsigned Read_Complete(dabc::Buffer& buf) override;
    };
 
 }

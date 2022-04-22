@@ -122,7 +122,7 @@ std::string hadaq::TerminalModule::rate_to_str(double r)
    return dabc::format("%5.1f kev/s",r/1e3);
 }
 
-void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
+void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
 {
    dabc::ModuleRef m = dabc::mgr.FindModule(fModuleName);
 

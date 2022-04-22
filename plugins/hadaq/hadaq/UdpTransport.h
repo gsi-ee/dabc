@@ -40,16 +40,16 @@ namespace hadaq {
    class TerminalModule;
 
    struct TransportInfo {
-      int                fNPort;           ///< upd port number
+      int                fNPort{0};           ///< upd port number
 
-      uint64_t           fTotalRecvPacket;
-      uint64_t           fTotalDiscardPacket;
-      uint64_t           fTotalDiscard32Packet;
-      uint64_t           fTotalArtificialLosts;
-      uint64_t           fTotalArtificialSkip;
-      uint64_t           fTotalRecvBytes;
-      uint64_t           fTotalDiscardBytes;
-      uint64_t           fTotalProducedBuffers;
+      uint64_t           fTotalRecvPacket{0};
+      uint64_t           fTotalDiscardPacket{0};
+      uint64_t           fTotalDiscard32Packet{0};
+      uint64_t           fTotalArtificialLosts{0};
+      uint64_t           fTotalArtificialSkip{0};
+      uint64_t           fTotalRecvBytes{0};
+      uint64_t           fTotalDiscardBytes{0};
+      uint64_t           fTotalProducedBuffers{0};
 
       void ClearCounters()
       {
@@ -97,24 +97,24 @@ namespace hadaq {
          friend class TerminalModule;  // use only to access statistic, nothing else
          friend class NewTransport;
 
-         dabc::Pointer      fTgtPtr;          ///< pointer used to read data
-         unsigned           fMTU;             ///< maximal size of packet expected from TRB
-         void*              fMtuBuffer;       ///< buffer used to skip packets when no normal buffer is available
-         int                fSkipCnt;         ///< counter used to control buffers skipping
-         int                fSendCnt;         ///< counter of send buffers since last timeout active
-         int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
-         double             fReduce;          ///< reduce filled buffer size to let reformat data later
-         double             fLostRate;        ///< artificial lost of received UDP packets
-         int                fLostCnt;         ///< counter used to drop buffers
-         bool               fDebug;           ///< when true, produce more debug output
-         bool               fRunning;         ///< is transport running
-         dabc::TimeStamp    fLastProcTm;      ///< last time when udp reading was performed
-         double             fMaxProcDist;     ///< maximal time between calls to BuildEvent method
+         dabc::Pointer      fTgtPtr;             ///< pointer used to read data
+         unsigned           fMTU{0};             ///< maximal size of packet expected from TRB
+         void*              fMtuBuffer{nullptr}; ///< buffer used to skip packets when no normal buffer is available
+         int                fSkipCnt{0};         ///< counter used to control buffers skipping
+         int                fSendCnt{0};         ///< counter of send buffers since last timeout active
+         int                fMaxLoopCnt{0};      ///< maximal number of UDP packets, read at once
+         double             fReduce{0};          ///< reduce filled buffer size to let reformat data later
+         double             fLostRate{0};        ///< artificial lost of received UDP packets
+         int                fLostCnt{0};         ///< counter used to drop buffers
+         bool               fDebug{false};       ///< when true, produce more debug output
+         bool               fRunning{false};     ///< is transport running
+         dabc::TimeStamp    fLastProcTm;         ///< last time when udp reading was performed
+         double             fMaxProcDist{0};     ///< maximal time between calls to BuildEvent method
 
-         virtual void ProcessEvent(const dabc::EventId&);
+         void ProcessEvent(const dabc::EventId&) override;
 
          /** Light-weight command interface */
-         virtual long Notify(const std::string&, int);
+         long Notify(const std::string&, int) override;
 
          /* Use codes which are valid for Read_Start */
          bool ReadUdp();
@@ -136,26 +136,26 @@ namespace hadaq {
 
       protected:
 
-         int            fIdNumber;     ///< input port item id
-         unsigned       fNumReadyBufs; ///< number of filled buffers which could be posted
-         bool           fBufAssigned;  ///< if next buffer assigned
-         int            fLastSendCnt;  ///< used for flushing
-         dabc::TimeStamp fLastDebugTm;     ///< timer used to generate rare debugs output
+         int            fIdNumber{0};         ///< input port item id
+         unsigned       fNumReadyBufs{0};     ///< number of filled buffers which could be posted
+         bool           fBufAssigned{false};  ///< if next buffer assigned
+         int            fLastSendCnt{0};      ///< used for flushing
+         dabc::TimeStamp fLastDebugTm;        ///< timer used to generate rare debugs output
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
       public:
          NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, double flush = 1, double heartbeat = -1);
          virtual ~NewTransport();
 
          /** Methods activated by Port, when transport starts/stops. */
-         virtual bool StartTransport();
-         virtual bool StopTransport();
+         bool StartTransport() override;
+         bool StopTransport() override;
 
-         virtual bool ProcessSend(unsigned port);
-         virtual bool ProcessBuffer(unsigned pool);
+         bool ProcessSend(unsigned port) override;
+         bool ProcessBuffer(unsigned pool) override;
 
          bool AssignNewBuffer(unsigned pool, NewAddon* addon = nullptr);
          void BufferReady();

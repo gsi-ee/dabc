@@ -152,12 +152,12 @@ namespace hadaq {
          EventsIterator(const std::string &name) : dabc::EventsIterator(name), fIter() {}
          virtual ~EventsIterator() {}
 
-         virtual bool Assign(const dabc::Buffer& buf) { return fIter.Reset(buf); }
-         virtual void Close() { return fIter.Close(); }
+         bool Assign(const dabc::Buffer& buf) override { return fIter.Reset(buf); }
+         void Close() override { return fIter.Close(); }
 
-         virtual bool NextEvent() { return fIter.NextEvent(); };
-         virtual void* Event() { return fIter.evnt(); }
-         virtual dabc::BufferSize_t EventSize() { return fIter.evntsize(); }
+         bool NextEvent() override { return fIter.NextEvent(); };
+         void *Event() override { return fIter.evnt(); }
+         dabc::BufferSize_t EventSize() override { return fIter.evntsize(); }
    };
 
    // _______________________________________________________________________________________________
@@ -170,11 +170,12 @@ namespace hadaq {
          EventsProducer(const std::string &name) : dabc::EventsProducer(name), fIter() {}
          virtual ~EventsProducer() {}
 
-         virtual bool Assign(const dabc::Buffer& buf) { return fIter.Reset(buf); }
-         virtual void Close() { fIter.Close(); }
+         bool Assign(const dabc::Buffer& buf) override { return fIter.Reset(buf); }
+         void Close() override { fIter.Close(); }
 
-         virtual bool GenerateEvent(uint64_t evid, uint64_t subid, uint64_t raw_size)
+         bool GenerateEvent(uint64_t evid, uint64_t subid, uint64_t raw_size) override
          {
+            (void) subid;
             if (!fIter.IsPlaceForEvent(raw_size)) return false;
             if (!fIter.NewEvent(evid)) return false;
             if (!fIter.NewSubevent(raw_size)) return false;

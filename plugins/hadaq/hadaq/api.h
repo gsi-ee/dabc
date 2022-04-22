@@ -35,7 +35,7 @@ namespace hadaq {
 
          hadaq::ReadIterator fIter2;   ///< iterator over HADAQ buffers
 
-         int AcceptBuffer(dabc::Buffer& buf);
+         int AcceptBuffer(dabc::Buffer& buf) override;
 
       public:
 

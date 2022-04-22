@@ -31,17 +31,17 @@ namespace hadaq {
    class HldOutput : public dabc::FileOutput {
       protected:
 
-         bool                fRunSlave;       ///< true if run id is controlled by combiner
-         uint32_t            fLastRunNumber;  ///< id number of last written run
-         uint32_t            fRunNumber;      ///< id number of current run (can be 0 when data are ignored)
-         uint32_t            fEventNumber;    ///< used to count event numbers when writing plain subevents
-         uint16_t            fEBNumber;       ///< id of parent event builder process
-         bool                fUseDaqDisk;     ///< true if /data number is taken from daq_disk (HADES setup)
-         bool                fRfio;           ///< true if we write to rfio
-         bool                fLtsm;           ///< true if we write to ltsm
-         bool                fPlainName;      ///< if true no any runid extensions appended to file name
-         std::string         fUrlOptions;     ///< remember URL options, may be used for RFIO file open
-         std::string         fLastPrefix;     ///< last prefix submitted from BNet master
+         bool                fRunSlave{false};       ///< true if run id is controlled by combiner
+         uint32_t            fLastRunNumber{0};      ///< id number of last written run
+         uint32_t            fRunNumber{0};          ///< id number of current run (can be 0 when data are ignored)
+         uint32_t            fEventNumber{0};        ///< used to count event numbers when writing plain subevents
+         uint16_t            fEBNumber{0};           ///< id of parent event builder process
+         bool                fUseDaqDisk{false};     ///< true if /data number is taken from daq_disk (HADES setup)
+         bool                fRfio{false};           ///< true if we write to rfio
+         bool                fLtsm{false};           ///< true if we write to ltsm
+         bool                fPlainName{false};      ///< if true no any runid extensions appended to file name
+         std::string         fUrlOptions;            ///< remember URL options, may be used for RFIO file open
+         std::string         fLastPrefix;            ///< last prefix submitted from BNet master
 
          std::string         fRunInfoToOraFilename;
 
@@ -58,15 +58,15 @@ namespace hadaq {
          HldOutput(const dabc::Url& url);
          virtual ~HldOutput();
 
-         virtual bool Write_Init();
+         bool Write_Init() override;
 
-         virtual bool Write_Retry();
+         bool Write_Retry() override;
 
-         virtual unsigned Write_Buffer(dabc::Buffer& buf);
+         unsigned Write_Buffer(dabc::Buffer& buf) override;
 
-         virtual bool Write_Stat(dabc::Command cmd);
+         bool Write_Stat(dabc::Command cmd) override;
 
-         virtual bool Write_Restart(dabc::Command cmd);
+         bool Write_Restart(dabc::Command cmd) override;
    };
 }
 
