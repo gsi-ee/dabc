@@ -152,35 +152,35 @@ namespace dabc {
 
          /** \brief Version number of the node
           * Any changes in the node will cause changes of the version */
-         uint64_t   fNodeVersion;       ///< version number of node itself
+         uint64_t   fNodeVersion{0};       ///< version number of node itself
 
          /** \brief Version used in DNS requests.
           * Changed when any childs add/removed or dns-relevant fields are changed
           * This version is used by name services to detect and update possible changes in hierarchy
           * and do not care about any other values changes */
-         uint64_t   fNamesVersion;
+         uint64_t   fNamesVersion{0};
 
          /** \brief Version of hierarchy structure
           * Childs version is changed when any childs is changed or inserted/removed */
-         uint64_t   fChildsVersion;  ///< version number of hierarchy below
+         uint64_t   fChildsVersion{0};  ///< version number of hierarchy below
 
-         bool       fAutoTime;          ///< when enabled, by node change (not hierarchy) time attribute will be set
+         bool       fAutoTime{false};          ///< when enabled, by node change (not hierarchy) time attribute will be set
 
-         bool       fPermanent;         ///< indicate that item is permanent and should be excluded from update
+         bool       fPermanent{false};         ///< indicate that item is permanent and should be excluded from update
 
-         bool       fNodeChanged;       ///< indicate if something was changed in the node during update
-         bool       fNamesChanged;      ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
-         bool       fChildsChanged;     ///< indicate if something was changed in the hierarchy
+         bool       fNodeChanged{false};       ///< indicate if something was changed in the node during update
+         bool       fNamesChanged{false};      ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
+         bool       fChildsChanged{false};     ///< indicate if something was changed in the hierarchy
 
-         bool       fDisableDataReading;    ///< when true, non of data (fields and history) need to be read in streamer
-         bool       fDisableChildsReading;  ///< when true, non of childs should be read
-         bool       fDisableReadingAsChild; ///< when true, object will not be updated when provided as child
+         bool       fDisableDataReading{false};    ///< when true, non of data (fields and history) need to be read in streamer
+         bool       fDisableChildsReading{false};  ///< when true, non of childs should be read
+         bool       fDisableReadingAsChild{false}; ///< when true, object will not be updated when provided as child
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
          History    fHist;              ///< special object with history data
 
-         Mutex*     fHierarchyMutex;    ///< mutex, which should be use for access to hierarchy and all its childs
+         Mutex*     fHierarchyMutex{nullptr};    ///< mutex, which should be use for access to hierarchy and all its childs
 
          HierarchyContainer* TopParent();
 
@@ -235,9 +235,9 @@ namespace dabc {
          /** \brief Enable time recording for hierarchy element every time when item is changed */
          void EnableTimeRecording(bool withchilds = true);
 
-         virtual Object *CreateInstance(const std::string &name) { return new HierarchyContainer(name); }
+         Object *CreateInstance(const std::string &name) override { return new HierarchyContainer(name); }
 
-         virtual void _ChildsChanged() { fNamesChanged = true; fChildsChanged = true; fNodeChanged = true;  }
+         void _ChildsChanged() override { fNamesChanged = true; fChildsChanged = true; fNodeChanged = true;  }
 
          uint64_t GetNextVersion() const;
 
@@ -246,13 +246,13 @@ namespace dabc {
          void CreateHMutex();
 
          /** \brief Save hierarchy in json/xml form. */
-         virtual bool SaveTo(HStore& res, bool create_node = true);
+         bool SaveTo(HStore& res, bool create_node = true) override;
 
       public:
          HierarchyContainer(const std::string &name);
          virtual ~HierarchyContainer();
 
-         virtual const char* ClassName() const { return "Hierarchy"; }
+         const char* ClassName() const override { return "Hierarchy"; }
 
          uint64_t StoreSize(unsigned kind = stream_Full, uint64_t v = 0, unsigned hist_limit = 0);
 
@@ -289,7 +289,7 @@ namespace dabc {
       /** \brief Create top-level object with specified name */
       void Create(const std::string &name, bool withmutex = false);
 
-      Mutex* GetHMutex() const { return null() ? 0 : GetObject()->fHierarchyMutex; }
+      Mutex* GetHMutex() const { return null() ? nullptr : GetObject()->fHierarchyMutex; }
 
       /** \brief Find master item
        * It is used in ROOT to specify position of streamer info */

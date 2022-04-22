@@ -40,7 +40,7 @@ namespace dabc {
          std::vector<unsigned>  fIndexes;
          ReferencesVector       fFolders;
          std::string            fFullName;
-         int fMaxLevel; /** Limit how deep iterator allowed to go inside hierarchy */
+         int fMaxLevel{0}; /** Limit how deep iterator allowed to go inside hierarchy */
       public:
          Iterator(Reference ref, int maxlevel = -1);
          Iterator(Object* topfolder, int maxlevel = -1);
@@ -53,9 +53,9 @@ namespace dabc {
           * \param[in] lvl  - level of parent, 0 - top-level folder, 1 - first-level folder and so on
           * \returns pointer on parent object */
          Object* parent(unsigned lvl);
-         const char* fullname() const { return fFullName.c_str(); } 
+         const char* fullname() const { return fFullName.c_str(); }
          const char* name() const { return fCurrent() ? fCurrent()->GetName() : "none"; }
-         
+
          template<class T>
          bool next_cast(T* &ptr, bool goinside = true)
          {
@@ -68,7 +68,7 @@ namespace dabc {
 
          static void PrintHieararchy(Reference ref);
    };
-   
+
 }
 
 #endif

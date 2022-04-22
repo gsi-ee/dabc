@@ -43,34 +43,32 @@ namespace dabc {
       friend class BufferContainer;
 
       struct RequesterReq {
-         BufferSize_t   size;
-         bool           pending;   // if true, request is pending
-         bool           disconn;   // if true, requester output is free and can be reused
-
-         RequesterReq() : size(0), pending(false), disconn(false) {}
+         BufferSize_t   size{0};
+         bool           pending{false};   // if true, request is pending
+         bool           disconn{false};   // if true, requester output is free and can be reused
       };
 
       protected:
 
-         MemoryBlock*              fMem;    ///< list of preallocated memory
+         MemoryBlock*              fMem{nullptr};    ///< list of preallocated memory
 
-         unsigned                  fAlignment;      ///< alignment boundary for memory
+         unsigned                  fAlignment{0};      ///< alignment boundary for memory
 
          std::vector<RequesterReq> fReqests;        ///< configuration for each output
 
          Queue<unsigned, true>    fPending;    ///< queue with requester indexes which are waiting release of the memory
 
-         bool                     fEvntFired;      ///< indicates if event was fired to process memory requests
-         bool                     fProcessingReq;  ///< flag indicate if memory pool processing requests, for debug purposes
+         bool                     fEvntFired{false};      ///< indicates if event was fired to process memory requests
+         bool                     fProcessingReq{false};  ///< flag indicate if memory pool processing requests, for debug purposes
 
-         unsigned                 fChangeCounter;  ///< memory pool change counter, incremented every time memory is allocated or freed
+         unsigned                 fChangeCounter{0};  ///< memory pool change counter, incremented every time memory is allocated or freed
 
-         bool                     fUseThread;      ///< indicate if thread functionality should be used to process supplied requests
+         bool                     fUseThread{false};      ///< indicate if thread functionality should be used to process supplied requests
 
          static unsigned          fDfltAlignment;   ///< default alignment for memory allocation
          static unsigned          fDfltBufSize;     ///< default buffer size
 
-         virtual bool Find(ConfigIO &cfg);
+         bool Find(ConfigIO &cfg) override;
 
          /** Reserve raw buffer without creating Buffer instance */
          bool TakeRawBuffer(unsigned& indx);
@@ -99,22 +97,22 @@ namespace dabc {
          /** Return true when all segments has refcnt==1 */
          bool IsSingleSegmRefs(MemSegment* segm, unsigned num);
 
-         virtual void OnThreadAssigned()
+         void OnThreadAssigned() override
          {
             fUseThread = HasThread();
             dabc::ModuleAsync::OnThreadAssigned();
          }
 
-         bool ProcessSend(unsigned port);
+         bool ProcessSend(unsigned port) override;
 
-         virtual void ProcessEvent(const EventId&);
+         void ProcessEvent(const EventId&) override;
 
-         virtual int ExecuteCommand(Command cmd);
+         int ExecuteCommand(Command cmd) override;
 
          /** Method called when port started or stopped. We could start buffer sending */
-         virtual void ProcessConnectionActivated(const std::string &name, bool on);
+         void ProcessConnectionActivated(const std::string &name, bool on) override;
 
-         virtual void ProcessConnectEvent(const std::string &name, bool on);
+         void ProcessConnectEvent(const std::string &name, bool on) override;
 
 
          bool RecheckRequests(bool from_recv = false);
@@ -124,7 +122,7 @@ namespace dabc {
          MemoryPool(const std::string &name, bool withmanager = false);
          virtual ~MemoryPool();
 
-         virtual const char* ClassName() const { return "MemoryPool"; }
+         const char* ClassName() const  override { return "MemoryPool"; }
 
          inline Mutex* GetPoolMutex() const { return ObjectMutex(); }
 

@@ -34,14 +34,14 @@ namespace dabc {
       protected:
          std::string fBasePath;      ///! base directory for data store
 
-         FileInterface* fIO;             ///! file interface
+         FileInterface* fIO{nullptr};    ///! file interface
          dabc::BinaryFile fFile;         ///! file used to write data
          dabc::DateTime   fLastStoreTm;  ///! time when last store was done
          dabc::DateTime   fLastFlushTm;  ///! time when last store flush was done
 
-         bool      fDoStore;         ///! indicate if store diff should be done
-         bool      fDoFlush;         ///! indicate if store flush should be done
-         uint64_t  fLastVersion;     ///! last stored version
+         bool      fDoStore{false};      ///! indicate if store diff should be done
+         bool      fDoFlush{false};      ///! indicate if store flush should be done
+         uint64_t  fLastVersion{0};      ///! last stored version
          Buffer    fStoreBuf;
          Buffer    fFlushBuf;
 
@@ -75,11 +75,11 @@ namespace dabc {
 
    class HierarchyReading {
       protected:
-         std::string fBasePath;      ///! base directory
+         std::string fBasePath;        ///! base directory
 
-         FileInterface* fIO;         ///! file interface
+         FileInterface* fIO{nullptr};  ///! file interface
 
-         dabc::Hierarchy  fTree;     ///! scanned files tree
+         dabc::Hierarchy  fTree;       ///! scanned files tree
 
          bool ScanTreeDir(dabc::Hierarchy& h, const std::string &dirname);
 

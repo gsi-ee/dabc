@@ -45,22 +45,22 @@ namespace dabc {
       protected:
 
          BuffersQueue fQueue;
-         bool fWithMutex;
+         bool fWithMutex{false};
 
          WorkerRef fOut;
-         unsigned fOutId;
-         int fOutSignKind;
-         unsigned fSignalOut;
+         unsigned fOutId{0};
+         int fOutSignKind{0};
+         unsigned fSignalOut{0};
 
          WorkerRef fInp;
-         unsigned fInpId;
-         int fInpSignKind;
-         unsigned fSignalInp;
+         unsigned fInpId{0};
+         int fInpSignKind{0};
+         unsigned fSignalInp{0};
 
-         unsigned fConnected;
+         unsigned fConnected{0};
 
-         bool fBlockWhenUnconnected; ///< should queue block when input port not connected, default false
-         bool fBlockWhenConnected;   ///< should queue block when input port connected, default true
+         bool fBlockWhenUnconnected{false}; ///< should queue block when input port not connected, default false
+         bool fBlockWhenConnected{false};   ///< should queue block when input port connected, default true
 
          enum { MaskInp = 0x1, MaskOut = 0x2, MaskConn = 0x3 };
 
@@ -104,7 +104,7 @@ namespace dabc {
 
          void SignalWhenFull();
 
-         inline Mutex* QueueMutex() const { return fWithMutex ? ObjectMutex() : 0; }
+         inline Mutex* QueueMutex() const { return fWithMutex ? ObjectMutex() : nullptr; }
 
          inline void EnableMutex() { fWithMutex = true; }
 

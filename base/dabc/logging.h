@@ -122,25 +122,25 @@ namespace dabc {
          virtual void _DoCheckTimeout();
 
       private:
-         Logger*           fPrev;
-         LoggerLineEntry **fLines;
-         unsigned          fMaxLine;
-         Mutex            *fMutex;
-         FILE             *fFile;          // output file for log messages
-         std::string       fSyslogPrefix;  // if specified, send message to syslog
-         unsigned          fDebugMask;     // mask for debug output
-         unsigned          fErrorMask;     // mask for error output
-         unsigned          fFileMask;      // mask for file output
-         int               fDebugLevel;    // level of debug output on terminal
-         int               fFileLevel;     // level of debug output to file
-         int               fSyslogLevel;   // level of syslog message
-         int               fLevel;         // used to define max
-         std::string       fPrefix;        // prefix of all messages
-         std::string       fLogFileName;   // name of logfile
-         double            fLogReopenTime; // last time when logfile was reopened
-         bool              fLogFileModified; // true if any string was written into file
-         unsigned          fLogLimit;     // maximum number of log messages before drop
-         bool              fLogReopenDisabled; // disable file reopen when doing shutdown
+         Logger*           fPrev{nullptr};
+         LoggerLineEntry **fLines{nullptr};
+         unsigned          fMaxLine{0};
+         Mutex            *fMutex{nullptr};
+         FILE             *fFile{nullptr};            // output file for log messages
+         std::string       fSyslogPrefix;             // if specified, send message to syslog
+         unsigned          fDebugMask{0};             // mask for debug output
+         unsigned          fErrorMask{0};             // mask for error output
+         unsigned          fFileMask{0};              // mask for file output
+         int               fDebugLevel{0};            // level of debug output on terminal
+         int               fFileLevel{0};             // level of debug output to file
+         int               fSyslogLevel{0};           // level of syslog message
+         int               fLevel{0};                 // used to define max
+         std::string       fPrefix;                   // prefix of all messages
+         std::string       fLogFileName;              // name of logfile
+         double            fLogReopenTime{0};         // last time when logfile was reopened
+         bool              fLogFileModified{false};   // true if any string was written into file
+         unsigned          fLogLimit{0};              // maximum number of log messages before drop
+         bool              fLogReopenDisabled{false}; // disable file reopen when doing shutdown
    };
 
    #define DOUT(level, args ... ) \
