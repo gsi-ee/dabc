@@ -33,15 +33,15 @@ namespace mbs {
    class TextInput : public dabc::FileInput {
       protected:
          std::string         fDataFormat;    // int32_t, uint32_t, float
-         int                 fNumData;       // number of data entries in line
-         int                 fNumHeaderLines; // number of lines in header
-         int                 fCharBufferLength;   // buffer for single string
+         int                 fNumData{0};       // number of data entries in line
+         int                 fNumHeaderLines{0}; // number of lines in header
+         int                 fCharBufferLength{0};   // buffer for single string
 
          std::ifstream       fFile;
-         char*               fCharBuffer;
-         uint32_t            fEventCounter;
-         int                 fFormatId; // 0 - float, 1 - int32_t, 2 - uint32_t
-         unsigned            fDataUnitSize; // sizeof of single binary entry
+         char*               fCharBuffer{nullptr};
+         uint32_t            fEventCounter{0};
+         int                 fFormatId{0}; // 0 - float, 1 - int32_t, 2 - uint32_t
+         unsigned            fDataUnitSize{0}; // sizeof of single binary entry
 
          bool CloseFile();
          bool OpenNextFile();
@@ -50,10 +50,10 @@ namespace mbs {
          TextInput(const dabc::Url& url);
          virtual ~TextInput();
 
-         virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+         bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) override;
 
-         virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(dabc::Buffer& buf);
+         unsigned Read_Size() override;
+         unsigned Read_Complete(dabc::Buffer& buf) override;
 
          virtual unsigned RawDataSize();
          virtual unsigned FillRawData(const char* str, void* rawdata, unsigned maxsize);

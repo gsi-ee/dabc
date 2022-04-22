@@ -41,28 +41,28 @@ namespace mbs {
 
    class GeneratorInput : public dabc::DataInput {
       protected:
-         uint32_t    fEventCount;          ///< current event id
-         uint16_t    fNumSubevents;        ///< number of subevents to generate
-         uint16_t    fFirstProcId;         ///< procid of first subevent
-         uint32_t    fSubeventSize;        ///< size of each subevent
-         bool        fIsGo4RandomFormat;   ///< is subevents should be filled with random numbers
-         uint32_t    fFullId;              ///< subevent id, if number subevents==1 and nonzero
-         uint64_t    fTotalSize;           ///< total size of generated events
-         uint64_t    fTotalSizeLimit;      ///< limit of generated events size
-         double      fGenerTimeout;        ///< timeout used to avoid 100% CPU load
-         bool        fTimeoutSwitch;       ///< boolean used to generate timeouts
+         uint32_t    fEventCount{0};          ///< current event id
+         uint16_t    fNumSubevents{0};        ///< number of subevents to generate
+         uint16_t    fFirstProcId{0};         ///< procid of first subevent
+         uint32_t    fSubeventSize{0};        ///< size of each subevent
+         bool        fIsGo4RandomFormat{false}; ///< is subevents should be filled with random numbers
+         uint32_t    fFullId{0};              ///< subevent id, if number subevents==1 and nonzero
+         uint64_t    fTotalSize{0};           ///< total size of generated events
+         uint64_t    fTotalSizeLimit{0};      ///< limit of generated events size
+         double      fGenerTimeout{0};        ///< timeout used to avoid 100% CPU load
+         bool        fTimeoutSwitch{false};   ///< boolean used to generate timeouts
 
       public:
          GeneratorInput(const dabc::Url& url);
          virtual ~GeneratorInput() {}
 
-         virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+         bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) override;
 
-         virtual unsigned Read_Size();
+         unsigned Read_Size() override;
 
-         virtual unsigned Read_Complete(dabc::Buffer& buf);
+         unsigned Read_Complete(dabc::Buffer& buf) override;
 
-         virtual double Read_Timeout() { return fGenerTimeout; }
+         double Read_Timeout() override { return fGenerTimeout; }
 
    };
 

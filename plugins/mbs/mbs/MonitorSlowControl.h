@@ -38,13 +38,13 @@ namespace mbs {
 
    class MonitorSlowControl : public dabc::ModuleAsync {
       protected:
-         mbs::SlowControlData  fRec;             ///< record used to store selected variables
-         bool                  fDoRec;           ///< when true, record should be filled
-         unsigned              fSubeventId;      ///< full id number for subevent
-         unsigned              fEventNumber;     ///< Event number, written to MBS event
-         dabc::TimeStamp       fLastSendTime;    ///< last time when buffer was send, used for flushing
-         mbs::WriteIterator    fIter;            ///< iterator for creating of MBS events
-         double                fFlushTime;       ///< time to flush event
+         mbs::SlowControlData  fRec;               ///< record used to store selected variables
+         bool                  fDoRec{false};      ///< when true, record should be filled
+         unsigned              fSubeventId{0};     ///< full id number for subevent
+         unsigned              fEventNumber{0};    ///< Event number, written to MBS event
+         dabc::TimeStamp       fLastSendTime;      ///< last time when buffer was send, used for flushing
+         mbs::WriteIterator    fIter;              ///< iterator for creating of MBS events
+         double                fFlushTime{0};      ///< time to flush event
 
          void SendDataToOutputs();
 
@@ -59,7 +59,7 @@ namespace mbs {
          MonitorSlowControl(const std::string &name, const std::string &prefix, dabc::Command cmd = nullptr);
          virtual ~MonitorSlowControl();
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
    };
 }

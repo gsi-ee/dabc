@@ -65,12 +65,16 @@ void mbs::ServerOutputAddon::OnThreadAssigned()
 //   ActivateTimeout(1.);
 }
 
-double mbs::ServerOutputAddon::ProcessTimeout(double last_diff)
+double mbs::ServerOutputAddon::ProcessTimeout(double)
 {
 //   DOUT0("mbs::ServerOutputAddon::ProcessTimeout inp:%s out:%s", DBOOL(IsDoingInput()), DBOOL(IsDoingOutput()));
    return 1.;
 }
 
+#if defined(__GNUC__) && (__GNUC__ >= 11)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 
 void mbs::ServerOutputAddon::OnSendCompleted()
 {
@@ -133,6 +137,11 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          break;
    }
 }
+
+#if defined(__GNUC__) && (__GNUC__ >= 11)
+#pragma GCC diagnostic pop
+#endif
+
 
 void mbs::ServerOutputAddon::OnRecvCompleted()
 {
@@ -288,7 +297,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 }
 
 
-void mbs::ServerOutputAddon::OnSocketError(int err, const std::string &info)
+void mbs::ServerOutputAddon::OnSocketError(int err, const std::string &)
 {
    switch (fState) {
       case oSendingEvents:  // only at this states callback is required to inform transport that data should be closed

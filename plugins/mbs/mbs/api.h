@@ -49,15 +49,15 @@ namespace mbs {
          dabc::TimeStamp fCurBufTm;      ///< time when buffer analysis starts
          dabc::Command fCmd;             ///< current nextbuffer cmd
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
          void ProcessData();
 
-         virtual void ProcessInputEvent(unsigned port);
+         void ProcessInputEvent(unsigned port) override;
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
-         virtual int AcceptBuffer(dabc::Buffer& buf) { return dabc::cmd_false; }
+         virtual int AcceptBuffer(dabc::Buffer&) { return dabc::cmd_false; }
 
          bool GetEventInTime(double maxage);
 
@@ -97,7 +97,6 @@ namespace mbs {
       mbs::EventHeader* GetEvent();
 
       protected:
-
 
       static ReadoutHandle DoConnect(const std::string &url, const char* classname);
 

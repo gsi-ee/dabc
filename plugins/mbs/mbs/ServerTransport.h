@@ -57,33 +57,33 @@ namespace mbs {
             oError
          };
 
-         OutputState           fState;
+         OutputState           fState{oInit};
 
-         int                   fKind; // see EMbsServerKinds values
+         int                   fKind{0}; // see EMbsServerKinds values
          mbs::TransportInfo    fServInfo; // data, send by transport server in the beginning
          char                  f_sbuf[12]; // input buffer to get request
          mbs::BufferHeader     fHeader;
-         long                  fSendBuffers;
-         long                  fDroppedBuffers;
+         long                  fSendBuffers{0};
+         long                  fDroppedBuffers{0};
          dabc::EventsIteratorRef fIter;
          mbs::EventHeader      fEvHdr;  // additional MBS event header (for non-MBS events)
          mbs::SubeventHeader   fSubHdr; // additional MBS subevent header (for non-MBS events)
-         uint32_t              fEvCounter; // special events counter
-         uint32_t              fSubevId;  // full id of subevent
-         bool                  fHasExtraRequest;
+         uint32_t              fEvCounter{0}; // special events counter
+         uint32_t              fSubevId{0};  // full id of subevent
+         bool                  fHasExtraRequest{false};
 
          // from addon
-         virtual void OnThreadAssigned();
-         virtual void OnSendCompleted();
-         virtual void OnRecvCompleted();
+         void OnThreadAssigned() override;
+         void OnSendCompleted() override;
+         void OnRecvCompleted() override;
 
          void MakeCallback(unsigned sz);
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual void OnSocketError(int err, const std::string &info);
+         void OnSocketError(int err, const std::string &info) override;
 
-         virtual dabc::WorkerAddon* Write_GetAddon() { return this; }
+         dabc::WorkerAddon* Write_GetAddon()  override { return this; }
 
       public:
          ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid);
@@ -93,9 +93,9 @@ namespace mbs {
          void SetServerKind(int kind) { fKind = kind; }
 
          // code from the DataOutput
-         virtual unsigned Write_Check();
-         virtual unsigned Write_Buffer(dabc::Buffer& buf);
-         virtual double Write_Timeout() { return 0.1; }
+         unsigned Write_Check() override;
+         unsigned Write_Buffer(dabc::Buffer& buf) override;
+         double Write_Timeout() override { return 0.1; }
    };
 
 
@@ -106,28 +106,28 @@ namespace mbs {
    class ServerTransport : public dabc::Transport {
       protected:
 
-         int fKind;             ///< kind: stream or transport
-         int fPortNum;          ///< used port number (only for info)
-         int fSlaveQueueLength; ///< queue length, used for slaves connections
-         int fClientsLimit;     ///< maximum number of simultaneous clients
-         int fDoingClose;       ///< 0 - normal, 1 - saw EOF, 2 - all clients are gone
-         bool fBlocking;        ///< if true, server will block buffers until it can be delivered
-         bool fDeliverAll;      ///< if true, server will try deliver all events when clients are there (default for transport)
-         std::string fIterKind; ///< iterator kind when non-mbs events should be delivered to clients
-         uint32_t fSubevId;     ///< subevent id when non-MBS events are used
+         int fKind{0};             ///< kind: stream or transport
+         int fPortNum{0};          ///< used port number (only for info)
+         int fSlaveQueueLength{0}; ///< queue length, used for slaves connections
+         int fClientsLimit{0};     ///< maximum number of simultaneous clients
+         int fDoingClose{0};       ///< 0 - normal, 1 - saw EOF, 2 - all clients are gone
+         bool fBlocking{false};    ///< if true, server will block buffers until it can be delivered
+         bool fDeliverAll{false};  ///< if true, server will try deliver all events when clients are there (default for transport)
+         std::string fIterKind;    ///< iterator kind when non-mbs events should be delivered to clients
+         uint32_t fSubevId{0};     ///< subevent id when non-MBS events are used
 
-         virtual bool StartTransport();
-         virtual bool StopTransport();
+         bool StartTransport() override;
+         bool StopTransport() override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
-         virtual bool ProcessRecv(unsigned) { return SendNextBuffer(); }
-         virtual bool ProcessSend(unsigned) { return SendNextBuffer(); }
-         virtual bool ProcessBuffer(unsigned) { return SendNextBuffer(); }
+         bool ProcessRecv(unsigned) override { return SendNextBuffer(); }
+         bool ProcessSend(unsigned) override { return SendNextBuffer(); }
+         bool ProcessBuffer(unsigned) override { return SendNextBuffer(); }
 
          bool SendNextBuffer();
 
-         void ProcessConnectionActivated(const std::string &name, bool on);
+         void ProcessConnectionActivated(const std::string &name, bool on) override;
 
       public:
 

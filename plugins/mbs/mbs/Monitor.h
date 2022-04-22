@@ -51,16 +51,16 @@ namespace mbs {
             evReactivate
          };
 
-         IOState              fState;
+         IOState              fState{ioInit};
          mbs::DaqStatus       fStatus;
-         bool                 fSwapping;
-         uint32_t             fSendCmd;
+         bool                 fSwapping{false};
+         uint32_t             fSendCmd{0};
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual void OnRecvCompleted();
+         void OnRecvCompleted() override;
 
       public:
 
@@ -82,23 +82,23 @@ namespace mbs {
          };
 
          std::string fMbsNode;
-         int         fPort;
+         int         fPort{0};
          MbsLogRec   fRec;
-         bool        fFirstRecv;
+         bool        fFirstRecv{false};
 
          bool CreateAddon();
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual void ProcessEvent(const dabc::EventId&);
+         void ProcessEvent(const dabc::EventId&) override;
 
       public:
          DaqLogWorker(const dabc::Reference& parent, const std::string &name, const std::string &mbsnode, int port);
          virtual ~DaqLogWorker();
 
-         virtual std::string RequiredThrdClass() const
+         std::string RequiredThrdClass() const override
            {  return dabc::typeSocketThread; }
 
    };
@@ -131,24 +131,24 @@ namespace mbs {
          };
 
          std::string       fMbsNode;
-         int               fPort;
+         int               fPort{0};
 
          dabc::CommandsQueue fCmds;
 
-         IOState           fState;
+         IOState           fState{ioInit};
          MbsRemCmdRec      fSendBuf;
-         uint32_t          fSendCmdId;  // command identifier, send to the MBS with the command
+         uint32_t          fSendCmdId{0};  // command identifier, send to the MBS with the command
          MbsRemCmdRec      fRecvBuf;
 
-         virtual void ProcessEvent(const dabc::EventId&);
+         void ProcessEvent(const dabc::EventId&) override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
          void ProcessNextMbsCommand();
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
          bool CreateAddon();
 
@@ -175,24 +175,24 @@ namespace mbs {
          };
 
          std::string       fMbsNode;    // real mbs node name
-         int               fPort;
+         int               fPort{0};
          std::string       fPrefix;     // prefix used to identify client
 
          dabc::CommandsQueue fCmds;
 
-         IOState           fState;
+         IOState           fState{ioInit};
          char              fSendBuf[256];
          uint32_t          fRecvBuf[2];
 
-         virtual void ProcessEvent(const dabc::EventId&);
+         void ProcessEvent(const dabc::EventId&) override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
          void ProcessNextMbsCommand();
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
          bool CreateAddon();
 
@@ -225,21 +225,21 @@ namespace mbs {
       protected:
 
          dabc::Hierarchy   fHierarchy;
-         unsigned          fCounter;
+         unsigned          fCounter{0};
 
          std::string       fMbsNode;    ///< name of MBS node to connect
          std::string       fAlias;      // name appeared in hierarchy, node name by default
-         double            fPeriod;     ///< period how often status is requested in seconds
-         double            fRateInterval; ///< period for measuring the rate averages in seconds
-         int               fHistory; ///< length of parameter history buffer
-         int               fStatPort;   ///< port, providing stat information (normally 6008)
-         int               fLoggerPort; ///< port, providing log information
-         int               fCmdPort;    ///< port, providing remote command access
-         bool              fWaitingLogger; ///< waiting logger to create cmd port
+         double            fPeriod{0};     ///< period how often status is requested in seconds
+         double            fRateInterval{0}; ///< period for measuring the rate averages in seconds
+         int               fHistory{0}; ///< length of parameter history buffer
+         int               fStatPort{0};   ///< port, providing stat information (normally 6008)
+         int               fLoggerPort{0}; ///< port, providing log information
+         int               fCmdPort{0};    ///< port, providing remote command access
+         bool              fWaitingLogger{false}; ///< waiting logger to create cmd port
          dabc::Command     fWaitingCmd;    ///< command waiting when logger channel is ready
          mbs::DaqStatus    fStatus;     ///< current DAQ status
          dabc::TimeStamp   fStatStamp;  ///< time when last status was obtained
-         bool              fPrintf;     ///< use printf for major debug output
+         bool              fPrintf{false};     ///< use printf for major debug output
          std::string       fFileStateName;    ///< name of filestate parameter
          std::string       fAcqStateName;    ///< name of acquisition running parameter
          std::string       fSetupStateName;    ///< name of "daq setup is loaded" parameter
@@ -250,9 +250,9 @@ namespace mbs {
 
          void CreateCommandWorker();
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
          /** update file on/off state*/
          void UpdateFileState(int isopen);
@@ -270,16 +270,16 @@ namespace mbs {
 
          bool IsPrompter() const { return fCmdPort == 6006; }
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
-         virtual unsigned WriteRecRawData(void* ptr, unsigned maxsize);
+         unsigned WriteRecRawData(void* ptr, unsigned maxsize) override;
 
       public:
 
          Monitor(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Monitor();
 
-         virtual std::string RequiredThrdClass() const
+         std::string RequiredThrdClass() const override
            {  return dabc::typeSocketThread; }
 
          std::string MbsNodeName() const { return fMbsNode; }

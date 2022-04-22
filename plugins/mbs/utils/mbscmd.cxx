@@ -41,7 +41,7 @@ int usage(const char* errstr = 0)
 
 int main(int argc, char* argv[])
 {
-   if (argc<2) return usage();
+   if (argc < 2) return usage();
 
    int logport(6007), cmdport(6019), statport(0);
    double tmout(5.), waittm(1.);
@@ -66,8 +66,8 @@ int main(int argc, char* argv[])
 
    //ref.MbsCmd("sta logrem");
 
-   for (unsigned n=0;n<cmds.size();n++)
-      ref.MbsCmd(cmds[n], tmout);
+   for (auto &cmd : cmds)
+      ref.MbsCmd(cmd, tmout);
 
    dabc::Sleep(waittm);
 

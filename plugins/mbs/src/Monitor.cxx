@@ -85,7 +85,7 @@ void mbs::DaqStatusAddon::OnThreadAssigned()
    ActivateTimeout(5.);
 }
 
-double mbs::DaqStatusAddon::ProcessTimeout(double last_diff)
+double mbs::DaqStatusAddon::ProcessTimeout(double)
 {
    EOUT("Status timeout - delete addon");
    DeleteAddonItself();
@@ -1141,7 +1141,7 @@ void mbs::DaqLogWorker::OnThreadAssigned()
    DOUT2("mbs::DaqLogWorker::OnThreadAssigned parent = %p", GetParent());
 }
 
-double mbs::DaqLogWorker::ProcessTimeout(double last_diff)
+double mbs::DaqLogWorker::ProcessTimeout(double)
 {
    // use timeout to reconnect with the logger
    if (CreateAddon()) return -1;
@@ -1309,7 +1309,7 @@ void mbs::DaqRemCmdWorker::ProcessEvent(const dabc::EventId& evnt)
    }
 }
 
-double mbs::DaqRemCmdWorker::ProcessTimeout(double last_diff)
+double mbs::DaqRemCmdWorker::ProcessTimeout(double)
 {
    if (CreateAddon()) ProcessNextMbsCommand();
 
@@ -1482,7 +1482,7 @@ void mbs::PrompterWorker::ProcessEvent(const dabc::EventId& evnt)
    }
 }
 
-double mbs::PrompterWorker::ProcessTimeout(double last_diff)
+double mbs::PrompterWorker::ProcessTimeout(double)
 {
    if (CreateAddon()) ProcessNextMbsCommand();
 
