@@ -69,8 +69,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    fFileUrl = cmd.GetStr("fileurl");
 
-
-   if ((fParallel>=0) && (fInitFunc==0)) {
+   if ((fParallel>=0) && (fInitFunc==nullptr)) {
       // first generate and load init func
 
       if (fParallel>999) fParallel=999;
@@ -567,7 +566,7 @@ bool stream::RunModule::RedistributeBuffers()
    return false;
 }
 
-bool stream::RunModule::ProcessRecv(unsigned port)
+bool stream::RunModule::ProcessRecv(unsigned)
 {
    if (fParallel<=0)
       return ProcessNextBuffer();

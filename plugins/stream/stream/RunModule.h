@@ -36,21 +36,21 @@ namespace stream {
    class RunModule : public dabc::ModuleAsync {
 
    protected:
-      int          fParallel; /// how many parallel processes to start
-      void        *fInitFunc; /// init function
-      int          fStopMode; /// for central module waiting that others finish
-      DabcProcMgr *fProcMgr;
+      int          fParallel{0}; /// how many parallel processes to start
+      void        *fInitFunc{nullptr}; /// init function
+      int          fStopMode{0}; /// for central module waiting that others finish
+      DabcProcMgr *fProcMgr{nullptr};
       std::string  fAsf;
       std::string  fFileUrl;  ///<! configured file URL - module used to produce output
-      bool         fDidMerge;
-      long unsigned fTotalSize;
-      long unsigned fTotalEvnts;
-      long unsigned fTotalOutEvnts;
-      int           fDefaultFill;   ///<! default fill color for 1-D histograms
+      bool         fDidMerge{false};
+      long unsigned fTotalSize{0};
+      long unsigned fTotalEvnts{0};
+      long unsigned fTotalOutEvnts{0};
+      int           fDefaultFill{0};   ///<! default fill color for 1-D histograms
 
-      virtual int ExecuteCommand(dabc::Command cmd);
+      int ExecuteCommand(dabc::Command cmd) override;
 
-      virtual void OnThreadAssigned();
+      void OnThreadAssigned() override;
 
       bool ProcessNextEvent(void* evnt, unsigned evntsize);
 
@@ -68,15 +68,15 @@ namespace stream {
       RunModule(const std::string &name, dabc::Command cmd = nullptr);
       virtual ~RunModule();
 
-      virtual bool ProcessRecv(unsigned port);
+      bool ProcessRecv(unsigned port) override;
 
-      virtual bool ProcessSend(unsigned) { return RedistributeBuffers(); }
+      bool ProcessSend(unsigned) override { return RedistributeBuffers(); }
 
-      virtual void ProcessTimerEvent(unsigned);
+      void ProcessTimerEvent(unsigned) override;
 
-      virtual void BeforeModuleStart();
+      void BeforeModuleStart() override;
 
-      virtual void AfterModuleStop();
+      void AfterModuleStop() override;
    };
 }
 

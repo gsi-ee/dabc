@@ -38,16 +38,16 @@ namespace stream {
 
    protected:
 
-      int fNumSub;                  // number of sub-modules
-      int fNumEv;                   // number of precessed events
-      int fMaxNumEv;                // maximal number of events to process
-      bool fReplace;                // replace or not TDC messages
-      DabcProcMgr *fProcMgr;        // central process manager
-      hadaq::HldProcessor *fHLD;    // processor of HLD events
+      int fNumSub{0};                  // number of sub-modules
+      int fNumEv{0};                   // number of precessed events
+      int fMaxNumEv{0};                // maximal number of events to process
+      bool fReplace{false};            // replace or not TDC messages
+      DabcProcMgr *fProcMgr{nullptr};  // central process manager
+      hadaq::HldProcessor *fHLD{nullptr}; // processor of HLD events
 
-      virtual int ExecuteCommand(dabc::Command cmd);
+      int ExecuteCommand(dabc::Command cmd) override;
 
-      virtual void OnThreadAssigned();
+      void OnThreadAssigned() override;
 
       bool retransmit();
 
@@ -56,15 +56,15 @@ namespace stream {
       RecalibrateModule(const std::string &name, dabc::Command cmd = nullptr);
       virtual ~RecalibrateModule();
 
-      virtual bool ProcessRecv(unsigned) { return retransmit(); }
+      bool ProcessRecv(unsigned) override { return retransmit(); }
 
-      virtual bool ProcessSend(unsigned) { return retransmit(); }
+      bool ProcessSend(unsigned) override { return retransmit(); }
 
-      virtual bool ProcessBuffer(unsigned) { return retransmit(); }
+      bool ProcessBuffer(unsigned) override { return retransmit(); }
 
-      virtual void BeforeModuleStart();
+      void BeforeModuleStart() override;
 
-      virtual void AfterModuleStop();
+      void AfterModuleStop() override;
    };
 }
 

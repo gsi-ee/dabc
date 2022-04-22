@@ -58,13 +58,13 @@ stream::RecalibrateModule::RecalibrateModule(const std::string &name, dabc::Comm
 
    CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
 
-   for (int n=0;n<fNumSub;n++) {
+   for (int n = 0; n < fNumSub; n++) {
       std::string mname = dabc::format("Sub%d",n);
 
-      dabc::CmdCreateModule cmd("stream::TdcCalibrationModule", mname);
-      cmd.SetPtr("ProcMgr", fProcMgr);
-      cmd.SetPtr("HLDProc", fHLD);
-      dabc::mgr.Execute(cmd);
+      dabc::CmdCreateModule subcmd("stream::TdcCalibrationModule", mname);
+      subcmd.SetPtr("ProcMgr", fProcMgr);
+      subcmd.SetPtr("HLDProc", fHLD);
+      dabc::mgr.Execute(subcmd);
    }
 
    fProcMgr->UserPreLoop();

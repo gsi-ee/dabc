@@ -28,12 +28,12 @@ namespace stream {
       protected:
 
          dabc::Hierarchy fTop;
-         bool fWorkingFlag;
+         bool fWorkingFlag{false};
 
          dabc::LocalWorkerRef fStore;
          std::string fStoreInfo;   ///<! last info about storage
-         bool fSortOrder;          ///<! sorting order
-         int  fDefaultFill;        ///<! default fill color
+         bool fSortOrder{false};   ///<! sorting order
+         int  fDefaultFill{0};    ///<! default fill color
 
          bool ClearHistogram(dabc::Hierarchy& item);
 

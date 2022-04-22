@@ -251,10 +251,10 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
 
          if (!logitem.null()) {
             auto errlog = tdc->TakeCalibrLog();
-            for (auto &item : errlog) {
-               logitem.SetField("value", item);
+            for (auto &subitem : errlog) {
+               logitem.SetField("value", subitem);
                logitem.MarkChangedItems();
-               if (res_msgs) res_msgs->push_back(item);
+               if (res_msgs) res_msgs->push_back(subitem);
             }
          }
 
@@ -305,10 +305,10 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
    }
 
    if (!logitem.null() && acknowledge_quality) {
-      std::string item = "Acknowledge quality";
-      logitem.SetField("value", item);
+      std::string subitem = "Acknowledge quality";
+      logitem.SetField("value", subitem);
       logitem.MarkChangedItems();
-      if (res_msgs) res_msgs->push_back(item);
+      if (res_msgs) res_msgs->push_back(subitem);
    }
 
    if (!is_any_progress) worse_progress = 0;
