@@ -159,19 +159,19 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
       addon->StartRecv(&fRecvHdr, sizeof(fRecvHdr));
 
       if (fMasterConn) {
-         dabc::Command cmd("AcceptClient");
+         dabc::Command cmd2("AcceptClient");
          std::string myname = dabc::SocketThread::DefineHostName();
          if (myname.empty()) myname = "Client";
          if (!fClientNameSufix.empty())
             myname+="_"+fClientNameSufix;
 
          // this name is used somewhere in hierarchy
-         cmd.SetStr("name", myname);
+         cmd2.SetStr("name", myname);
 
          // this name will be used to identify our node and deliver commands
-         cmd.SetStr("globalname", dabc::mgr.GetLocalAddress());
+         cmd2.SetStr("globalname", dabc::mgr.GetLocalAddress());
 
-         SendCommand(cmd);
+         SendCommand(cmd2);
       }
 
       SendSubmittedCommands();

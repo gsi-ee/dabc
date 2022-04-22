@@ -506,8 +506,9 @@ int dabc::Module::PreviewCommand(Command cmd)
    } else
       cmd_res = Worker::PreviewCommand(cmd);
 
-   if (cmd_res!=cmd_ignore)
+   if (cmd_res != cmd_ignore) {
       DOUT3("Module:%s PreviewCommand %s res=%d", GetName(), cmd.GetName(), cmd_res);
+   }
 
    return cmd_res;
 }

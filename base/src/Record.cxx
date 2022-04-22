@@ -436,12 +436,12 @@ bool dabc::RecordField::Stream(iostream& s)
             break;
          }
          case kind_buffer: {
-            uint64_t sz(0);
-            s.read_uint64(sz);
+            uint64_t bufsz(0);
+            s.read_uint64(bufsz);
             valueBuf = new Buffer;
             *valueBuf = Buffer::CreateBuffer((storesz-1)*8);
             s.read(valueBuf->SegmentPtr(), (storesz-1)*8);
-            if (sz != (storesz-1)*8) valueBuf->SetTotalSize(sz);
+            if (bufsz != (storesz-1)*8) valueBuf->SetTotalSize(bufsz);
             break;
          }
          case kind_reference:

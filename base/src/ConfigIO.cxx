@@ -135,10 +135,10 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
    // and config name. From all places we reconstruct all fields and attributes which can belong
    // to the record
 
-   if ((fCfg==0) || (obj==0)) return false;
+   if (!fCfg || !obj) return false;
 
    int maxlevel = 0;
-   Object* prnt = 0;
+   Object* prnt = nullptr;
    while ((prnt = GetObjParent(obj, maxlevel)) != 0) {
       if (prnt==dabc::mgr()) break;
       maxlevel++;
@@ -191,7 +191,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
 
 //         DOUT3("Search with level = %d prnt = %p %s", level, prnt, DNAME(prnt));
 
-         if (prnt == 0) return false;
+         if (!prnt) return false;
 
          // DOUT0("+++ Search parent %s class %s level %d", prnt->GetName(), prnt->ClassName(), level);
 

@@ -333,31 +333,30 @@ dabc::Manager::~Manager()
    if (fDestroyQueue && (fDestroyQueue->GetSize()>0))
       EOUT("Manager destroy queue is not empty");
 
-   delete fParEventsReceivers; fParEventsReceivers = 0;
+   delete fParEventsReceivers; fParEventsReceivers = nullptr;
 
-   delete fDestroyQueue; fDestroyQueue = 0;
+   delete fDestroyQueue; fDestroyQueue = nullptr;
 
-   if (fTimedPars!=0) {
-      if (fTimedPars->GetSize() > 0) {
+   if (fTimedPars) {
+      if (fTimedPars->GetSize() > 0)
          EOUT("Manager timed parameters list not empty");
-      }
 
       delete fTimedPars;
-      fTimedPars = 0;
+      fTimedPars = nullptr;
    }
 
    DOUT3("~Manager -> ~fDepend");
 
-   if (fDepend && (fDepend->size()>0))
+   if (fDepend && (fDepend->size() > 0))
       EOUT("Dependencies parameters list not empty");
 
-   delete fDepend; fDepend = 0;
+   delete fDepend; fDepend = nullptr;
 
    DOUT3("~Manager -> ~fMgrMutex");
 
-   delete fMgrMutex; fMgrMutex = 0;
+   delete fMgrMutex; fMgrMutex = nullptr;
 
-   if (dabc::mgr()==this) {
+   if (dabc::mgr() == this) {
       DOUT1("Normal EXIT");
       if (dabc::Logger::Instance())
          dabc::Logger::Instance()->LogFile(0);
@@ -365,7 +364,7 @@ dabc::Manager::~Manager()
       EOUT("What ??? !!!");
    }
 
-   fInstance = 0;
+   fInstance = nullptr;
    fInstanceId = 0;
 }
 
@@ -409,11 +408,10 @@ void dabc::Manager::HaltManager()
 
    TimeStamp tm2 = dabc::Now();
 
-   if (dabc::Thread::NumThreadInstances() > 0) {
+   if (dabc::Thread::NumThreadInstances() > 0)
       EOUT("!!!!!!!!! There are still %u threads - anyway declare manager halted spent: %5.3f s!!!!!!", dabc::Thread::NumThreadInstances(), tm2 - tm1);
-   } else {
+   else
       DOUT1("All threads stopped after %5.3f s (loop count = %d)", tm2-tm1, cnt);
-   }
 
 #ifdef DABC_EXTRA_CHECKS
    dabc::Object::DebugObject();
@@ -426,7 +424,7 @@ void dabc::Manager::HaltManager()
 
 bool dabc::Manager::ProcessDestroyQueue()
 {
-   ReferencesVector* vect = 0;
+   ReferencesVector *vect = nullptr;
 
    // this is references, which want to be informed that object destroyed
    ReferencesVector clr_vect;
@@ -440,7 +438,7 @@ bool dabc::Manager::ProcessDestroyQueue()
       LockGuard lock(fMgrMutex);
 
       vect = fDestroyQueue;
-      fDestroyQueue = 0;
+      fDestroyQueue = nullptr;
 
       DependPairList::iterator iter = fDepend->begin();
       while (iter != fDepend->end()) {
@@ -460,10 +458,10 @@ bool dabc::Manager::ProcessDestroyQueue()
    }
 
    // first inform about dependencies
-   for (unsigned n=0;n<clr_vect.GetSize();n++) {
+   for (unsigned n = 0; n < clr_vect.GetSize(); n++) {
       Object* obj = clr_vect.GetObject(n);
       Worker* w = dynamic_cast<Worker*> (obj);
-      if (w!=0) {
+      if (w) {
          if (obj->IsLogging())
             DOUT0("Submit worker %p to thread", obj);
          dabc::Command cmd("ObjectDestroyed");
@@ -481,7 +479,7 @@ bool dabc::Manager::ProcessDestroyQueue()
    ptr_vect.clear();
    rel_vect.Clear();
 
-   if (vect==0) return false;
+   if (!vect) return false;
 
    ParamEventReceiverList::iterator iter = fParEventsReceivers->begin();
 
@@ -509,7 +507,7 @@ void dabc::Manager::ProduceParameterEvent(ParameterContainer* par, int evid)
 {
    // method called from parameter itself therefore we do not need mutex to access parameter field
 
-   if (par==0) return;
+   if (!par) return;
 
    // first analyze parameters without manager mutex - we do not need it now
 
@@ -771,8 +769,9 @@ int dabc::Manager::PreviewCommand(Command cmd)
 
       if (cmd.GetBool("#local_cmd")) islocal = true;
 
-      if (!islocal)
+      if (!islocal) {
          DOUT3("MGR: Preview command %s item %s tgtnode %s", cmd.GetName(), url.c_str(), server.c_str());
+      }
 
       if (!islocal) {
 

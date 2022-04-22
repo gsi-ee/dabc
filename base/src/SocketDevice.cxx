@@ -188,7 +188,7 @@ namespace dabc {
 
 // ______________________________________________________________________
 
-dabc::SocketDevice::SocketDevice(const std::string &name, Command cmd) :
+dabc::SocketDevice::SocketDevice(const std::string &name, Command cmd1) :
    dabc::Device(name),
    fConnRecs(),
    fProtocols(),
@@ -196,15 +196,15 @@ dabc::SocketDevice::SocketDevice(const std::string &name, Command cmd) :
    fCmdChannelId(),
    fDebugMode(false)
 {
-   fBindHost = Cfg("host", cmd).AsStr();
-   fBindPort = Cfg("port", cmd).AsInt(-1);
+   fBindHost = Cfg("host", cmd1).AsStr();
+   fBindPort = Cfg("port", cmd1).AsInt(-1);
 
    if (fBindHost.empty() && (fBindPort < 0)) {
       dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
       if (!chl.null()) {
-         dabc::Command cmd("RedirectSocketConnect");
-         cmd.SetStr("Device", ItemName());
-         if (chl.Execute(cmd)) fCmdChannelId = cmd.GetStr("ServerId");
+         dabc::Command cmd2("RedirectSocketConnect");
+         cmd2.SetStr("Device", ItemName());
+         if (chl.Execute(cmd2)) fCmdChannelId = cmd2.GetStr("ServerId");
       }
 
       if (!fCmdChannelId.empty()) DOUT0("Socket device %s reuses %s for connections", GetName(), fCmdChannelId.c_str());
