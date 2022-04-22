@@ -97,7 +97,7 @@ if (url.HasOption("ltsmFSQDestination"))
       CloseTSMSession();
     }
 
-  // here optionally modify file path to contain year/day paths:
+  // here optionally modify file path to contain year/day pat0hs:
   std::string fileName=fname;
   // TODO 2020
   if(fUseDaysubfolders)

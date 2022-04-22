@@ -87,7 +87,7 @@ struct ibv_recv_wr* verbs::MemoryPool::GetRecvWR(unsigned bufid)
 {
    // special case, when working without Buffer objects at all
 
-   if ((f_rwr==0) || (f_sge==0)) return 0;
+   if (!f_rwr || !f_sge) return nullptr;
 
    f_sge[bufid].addr   = (uintptr_t) GetBufferLocation(bufid);
    f_sge[bufid].length = GetBufferSize(bufid);
@@ -96,7 +96,7 @@ struct ibv_recv_wr* verbs::MemoryPool::GetRecvWR(unsigned bufid)
    f_rwr[bufid].wr_id     = bufid;
    f_rwr[bufid].sg_list   = &(f_sge[bufid]);
    f_rwr[bufid].num_sge   = 1;
-   f_rwr[bufid].next      = NULL;
+   f_rwr[bufid].next      = nullptr;
 
    return &(f_rwr[bufid]);
 }
@@ -105,7 +105,7 @@ struct ibv_send_wr* verbs::MemoryPool::GetSendWR(unsigned bufid, uint64_t size)
 {
    // special case, when working without Buffer objects at all
 
-   if ((f_swr==0) || (f_sge==0)) return 0;
+   if (!f_swr || !f_sge) return nullptr;
 
    if (size==0) size = GetBufferSize(bufid) - fSendBufferOffset;
 

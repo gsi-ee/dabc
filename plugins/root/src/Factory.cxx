@@ -43,7 +43,7 @@ dabc::Reference root::Factory::CreateObject(const std::string &classname, const 
 
 dabc::DataInput* root::Factory::CreateDataInput(const std::string &typ)
 {
-   return 0;
+   return nullptr;
 }
 
 
@@ -51,9 +51,8 @@ dabc::DataOutput* root::Factory::CreateDataOutput(const std::string &typ)
 {
    dabc::Url url(typ);
 
-   if (url.GetProtocol() == "root") {
-      return 0;
-   }
+   if (url.GetProtocol() == "root")
+      return nullptr;
 
-   return 0;
+   return nullptr;
 }

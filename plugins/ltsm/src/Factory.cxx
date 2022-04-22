@@ -28,5 +28,5 @@ void* ltsm::Factory::CreateAny(const std::string &classname, const std::string&,
       return new ltsm::FileInterface;
    }
 
-   return 0;
+   return nullptr;
 }

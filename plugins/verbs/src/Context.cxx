@@ -324,9 +324,9 @@ int verbs::ContextRef::ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid
 
 #ifndef  __NO_MULTICAST__
 
-   OpenSM osm = GetObject() ? GetObject()->fOsm : 0;
+   OpenSM osm = GetObject() ? GetObject()->fOsm : nullptr;
 
-   if (osm==0) return 0;
+   if (!osm) return 0;
    switch (action) {
       case mcst_Error: return mcst_Error;
       case mcst_Ok: return mcst_Ok;
@@ -401,7 +401,7 @@ struct ibv_ah* verbs::ContextRef::CreateMAH(ibv_gid& mgid, uint32_t mlid)
 
 dabc::Reference verbs::ContextRef::RegisterPool(dabc::MemoryPool* pool)
 {
-   if (pool==0) return 0;
+   if (!pool) return nullptr;
 
    dabc::Reference folder = GetFolder("PoolReg", true);
 
@@ -411,7 +411,7 @@ dabc::Reference verbs::ContextRef::RegisterPool(dabc::MemoryPool* pool)
 
    if (ref.null()) {
       EOUT("Error - cannot create pool registry object for pool %s", pool->GetName());
-      return 0;
+      return nullptr;
    }
 
    folder.AddChild(ref.GetObject());

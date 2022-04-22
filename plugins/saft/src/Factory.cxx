@@ -81,7 +81,8 @@ dabc::Device* saftdabc::Factory::CreateDevice (const std::string &classname, con
   DOUT0 ("saftdabc::Factory::CreateDevice called for class:%s, device:%s", classname.c_str (), devname.c_str ());
 
   if (strcmp (classname.c_str (), "saftdabc::Device") != 0)
-    return 0;
+     return nullptr;
+
   dabc::Device* dev = new saftdabc::Device (devname, cmd);
   return dev;
 }

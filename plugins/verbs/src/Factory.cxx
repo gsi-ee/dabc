@@ -22,21 +22,21 @@
 
 dabc::FactoryPlugin verbsfactory(new verbs::Factory("verbs"));
 
-dabc::Reference verbs::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
+dabc::Reference verbs::Factory::CreateObject(const std::string &, const std::string &, dabc::Command)
 {
-   return 0;
+   return nullptr;
 }
 
 dabc::Device* verbs::Factory::CreateDevice(const std::string &classname,
                                            const std::string &devname,
-                                           dabc::Command cmd)
+                                           dabc::Command)
 {
    if (classname == verbs::typeDevice) {
       DOUT1("Creating verbs device");
       return new verbs::Device(devname);
    }
 
-   return 0;
+   return nullptr;
 }
 
 dabc::Reference verbs::Factory::CreateThread(dabc::Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, dabc::Command cmd)

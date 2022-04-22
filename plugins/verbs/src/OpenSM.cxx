@@ -53,7 +53,7 @@ int ibv_sa_init_ah_from_mcmember(
    ah_attr->sl = rec.sl;
    ah_attr->port_num = port_num;
    ah_attr->static_rate = rec.rate;
-
+0
    ah_attr->is_global = 1;
    ah_attr->grh.dgid = rec.mgid;
 

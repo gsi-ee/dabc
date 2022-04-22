@@ -163,18 +163,15 @@ dabc::Transport* saftdabc::Device::CreateTransport (dabc::Command cmd, const dab
   if (!dinput->Read_Init(port, cmd)) {
        EOUT("Input object for %s cannot be initialized", portref.ItemName ().c_str ());
        delete dinput;
-       return 0;
+       return nullptr;
    }
 
    dabc::InputTransport* transport =new dabc::InputTransport(cmd, portref, dinput, true);
    dinput->SetTransportRef(transport); // provide back reference for callback mode
-  DOUT1("saftdabc::Device::CreateTransport creates new transport instance %p", transport);
-  DOUT1 ("Device thread %p, %s\n", thread ().GetObject (), thread ().GetName ());
-  return transport;
+   DOUT1("saftdabc::Device::CreateTransport creates new transport instance %p", transport);
+   DOUT1 ("Device thread %p, %s\n", thread ().GetObject (), thread ().GetName ());
+   return transport;
 }
-
-
-
 
 
 void saftdabc::Device::SetInfo(const std::string &info, bool forceinfo)

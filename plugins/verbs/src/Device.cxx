@@ -267,9 +267,9 @@ verbs::QueuePair* verbs::Device::CreatePortQP(const std::string &thrd_name, dabc
 
    verbs::Thread* thrd_ptr = dynamic_cast<verbs::Thread*> (thrd());
 
-   if (thrd_ptr == 0) return 0;
+   if (!thrd_ptr) return nullptr;
 
-   unsigned input_size(0), output_size(0);
+   unsigned input_size = 0, output_size = 0;
 
    dabc::NetworkTransport::GetRequiredQueuesSizes(port, input_size, output_size);
 
@@ -283,9 +283,9 @@ verbs::QueuePair* verbs::Device::CreatePortQP(const std::string &thrd_name, dabc
                                    port_cq, output_size + 1, num_send_seg,
                                    port_cq, input_size + 1, 2);
 
-   if (port_qp->qp()==0) {
+   if (port_qp->qp() == 0) {
       delete port_qp;
-      port_qp = 0;
+      port_qp = nullptr;
    }
 
    return port_qp;
@@ -324,16 +324,14 @@ dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::R
 
       if (!ConvertStrToGid(maddr, multi_gid)) {
          EOUT("Cannot convert address %s to ibv_gid type", maddr.c_str());
-         return 0;
+         return nullptr;
       }
 
       std::string buf = ConvertGidToStr(multi_gid);
       if (buf!=maddr) {
          EOUT("Addresses not the same: %s - %s", maddr.c_str(), buf.c_str());
-         return 0;
+         return nullptr;
       }
-
-
 
 //      QueuePair*  port_qp(0);
 //      ThreadRef   thrd;
@@ -341,7 +339,7 @@ dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::R
 //         return new Transport(fIbContext, port_cq, port_qp, portref, false, &multi_gid);
    }
 
-   return 0;
+   return nullptr;
 }
 
 int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
