@@ -44,7 +44,7 @@ namespace verbs {
 
       protected:
 
-         QueuePair      *fQP;
+         QueuePair      *fQP{nullptr};
 
       public:
 
@@ -59,13 +59,13 @@ namespace verbs {
 
          virtual ~WorkerAddon();
 
-         virtual std::string RequiredThrdClass() const;
+         std::string RequiredThrdClass() const override;
 
          void SetQP(QueuePair* qp);
          inline QueuePair* QP() const { return fQP; }
          QueuePair* TakeQP();
 
-         virtual void ProcessEvent(const dabc::EventId&);
+         void ProcessEvent(const dabc::EventId&) override;
 
          virtual void VerbsProcessSendCompl(uint32_t) {}
          virtual void VerbsProcessRecvCompl(uint32_t) {}
@@ -73,7 +73,7 @@ namespace verbs {
 
          void CloseQP();
 
-         virtual const char* ClassName() const { return "verbs::WorkerAddon"; }
+         const char* ClassName() const override { return "verbs::WorkerAddon"; }
    };
 
 }

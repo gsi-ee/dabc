@@ -47,14 +47,14 @@ namespace verbs {
       friend class ContextRef;
 
       protected:
-         uint8_t fIbPort;  // infiniband port number
+         uint8_t fIbPort{0};  // infiniband port number
 
-         struct ibv_context *fContext;         // device context
-         struct ibv_pd *fPD;                   // protection domain
+         struct ibv_context *fContext{nullptr};         // device context
+         struct ibv_pd *fPD{nullptr};                   // protection domain
          struct ibv_device_attr fDeviceAttr;  // device attributes
          struct ibv_port_attr fPortAttr;      // port attributes
 
-         OpenSM      *fOsm; // osm object created when multicast is required
+         OpenSM      *fOsm{nullptr}; // osm object created when multicast is required
 
          static bool fThreadSafeVerbs;  // identifies if verbs is thread safe
 
@@ -84,7 +84,7 @@ namespace verbs {
          bool OpenVerbs(bool withmulticast = false, const char *devicename = nullptr, int ibport = -1);
 
          int IbPort() const { return GetObject() ? GetObject()->fIbPort : 0; }
-         bool IsMulticast() const { return GetObject() ? GetObject()->fOsm!=0 : false; }
+         bool IsMulticast() const { return GetObject() ? GetObject()->fOsm != nullptr : false; }
          struct ibv_pd *pd() const { return GetObject()->fPD; }
          struct ibv_context *context() const { return GetObject()->fContext; }
          uint16_t lid() const { return GetObject()->fPortAttr.lid; }
@@ -108,12 +108,12 @@ namespace verbs {
    class PoolRegistry : public dabc::Object {
       protected:
          ContextRef         fContext;
-         dabc::MemoryPool  *fPool;
-         unsigned           fLastChangeCounter;
-         unsigned           f_nummr;     // size of f_mr array
-         struct ibv_mr*    *f_mr;
+         dabc::MemoryPool  *fPool{nullptr};
+         unsigned           fLastChangeCounter{0};
+         unsigned           f_nummr{0};     // size of f_mr array
+         struct ibv_mr*    *f_mr{nullptr};
 
-         virtual void ObjectCleanup();
+         void ObjectCleanup() override;
 
       public:
          PoolRegistry(ContextRef ctx, dabc::MemoryPool* pool);
@@ -123,7 +123,7 @@ namespace verbs {
 
          inline void CheckMRStructure()
          {
-            if ((fPool!=0) && fPool->CheckChangeCounter(fLastChangeCounter)) {
+            if (fPool && fPool->CheckChangeCounter(fLastChangeCounter)) {
                EOUT("POOL %p change counter now = %u", fPool, fLastChangeCounter);
                throw dabc::Exception("Memory pool structure should not be changed at all");
             }
@@ -131,7 +131,7 @@ namespace verbs {
 
          inline uint32_t GetLkey(unsigned id) { return id < f_nummr ? f_mr[id]->lkey : 0; }
 
-         virtual void ObjectDestroyed(dabc::Object* obj);
+         void ObjectDestroyed(dabc::Object* obj) override;
 
          void SyncMRStructure();
 

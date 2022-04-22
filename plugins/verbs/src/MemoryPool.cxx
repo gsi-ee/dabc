@@ -58,13 +58,13 @@ verbs::MemoryPool::MemoryPool(ContextRef ctx,
       f_swr[id].sg_list  = &(f_sge[id]);
       f_swr[id].num_sge  = 1;
       f_swr[id].opcode   = IBV_WR_SEND;
-      f_swr[id].next     = NULL;
+      f_swr[id].next     = nullptr;
       f_swr[id].send_flags = IBV_SEND_SIGNALED;
 
       f_rwr[id].wr_id     = 0; // must be set later
       f_rwr[id].sg_list   = &(f_sge[id]);
       f_rwr[id].num_sge   = 1;
-      f_rwr[id].next      = NULL;
+      f_rwr[id].next      = nullptr;
    }
 
 }
@@ -117,7 +117,7 @@ struct ibv_send_wr* verbs::MemoryPool::GetSendWR(unsigned bufid, uint64_t size)
    f_swr[bufid].sg_list  = &(f_sge[bufid]);
    f_swr[bufid].num_sge  = 1;
    f_swr[bufid].opcode   = IBV_WR_SEND;
-   f_swr[bufid].next     = NULL;
+   f_swr[bufid].next     = nullptr;
    if (size <= VERBS_MAX_INLINE)
       f_swr[bufid].send_flags = (ibv_send_flags) (IBV_SEND_SIGNALED | IBV_SEND_INLINE);
    else

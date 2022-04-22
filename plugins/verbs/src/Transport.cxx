@@ -114,11 +114,11 @@ bool verbs::VerbsNetworkInetrface::AssignMultiGid(ibv_gid* multi_gid)
 
 
 
-void verbs::VerbsNetworkInetrface::AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue)
+void verbs::VerbsNetworkInetrface::AllocateNet(unsigned /* fulloutputqueue */, unsigned /* fullinputqueue */)
 {
    dabc::NetworkTransport* tr = (dabc::NetworkTransport*) fWorker();
 
-   if (tr==0) return;
+   if (!tr) return;
 
    DOUT3("++++ verbs::VerbsNetworkInetrface::AllocateNet tr = %p poolname %s", tr, tr->TransportPoolName().c_str());
 
@@ -132,7 +132,7 @@ void verbs::VerbsNetworkInetrface::AllocateNet(unsigned fulloutputqueue, unsigne
       return;
    }
 
-   if (tr->NumRecs()>0) {
+   if (tr->NumRecs() > 0) {
       fHeadersPool = new MemoryPool(fContext, "HeadersPool", tr->NumRecs(),
             tr->GetFullHeaderSize() + (IsUD() ? VERBS_UD_MEMADDON : 0), IsUD(), true);
 
@@ -159,13 +159,13 @@ void verbs::VerbsNetworkInetrface::AllocateNet(unsigned fulloutputqueue, unsigne
          f_swr[n].sg_list  = 0;
          f_swr[n].num_sge  = 1;
          f_swr[n].opcode   = IBV_WR_SEND;
-         f_swr[n].next     = NULL;
+         f_swr[n].next     = nullptr;
          f_swr[n].send_flags = IBV_SEND_SIGNALED;
 
          f_rwr[n].wr_id     = 0; // must be set later
          f_rwr[n].sg_list   = 0;
          f_rwr[n].num_sge   = 1;
-         f_rwr[n].next      = NULL;
+         f_rwr[n].next      = nullptr;
       }
    }
 
@@ -195,7 +195,7 @@ void verbs::VerbsNetworkInetrface::SubmitSend(uint32_t recid)
    f_swr[recid].sg_list  = &(f_sge[segid]);
    f_swr[recid].num_sge  = 1;
    f_swr[recid].opcode   = IBV_WR_SEND;
-   f_swr[recid].next     = NULL;
+   f_swr[recid].next     = nullptr;
    f_swr[recid].send_flags = IBV_SEND_SIGNALED;
 
    if (f_ud_ah) {
@@ -242,7 +242,7 @@ void verbs::VerbsNetworkInetrface::SubmitRecv(uint32_t recid)
    f_rwr[recid].wr_id     = recid;
    f_rwr[recid].sg_list   = &(f_sge[segid]);
    f_rwr[recid].num_sge   = 1;
-   f_rwr[recid].next      = NULL;
+   f_rwr[recid].next      = nullptr;
 
    if (IsUD()) {
       f_sge[segid].addr = (uintptr_t) fHeadersPool->GetBufferLocation(recid);

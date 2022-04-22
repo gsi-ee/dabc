@@ -65,24 +65,24 @@ namespace verbs {
          dabc::ThreadRef  fPortThrd;
 
          // address data of remote side
-         unsigned        fRemoteLID;
-         unsigned        fRemoteQPN;
-         unsigned        fRemotePSN;
+         unsigned        fRemoteLID{0};
+         unsigned        fRemoteQPN{0};
+         unsigned        fRemotePSN{0};
 
-         MemoryPool      *fPool;
+         MemoryPool      *fPool{nullptr};
 
-         bool             fConnected;
+         bool             fConnected{false};
 
       public:
          ProtocolAddon(QueuePair* qp);
          virtual ~ProtocolAddon();
 
-         virtual void VerbsProcessSendCompl(uint32_t);
-         virtual void VerbsProcessRecvCompl(uint32_t);
-         virtual void VerbsProcessOperError(uint32_t);
+         void VerbsProcessSendCompl(uint32_t) override;
+         void VerbsProcessRecvCompl(uint32_t) override;
+         void VerbsProcessOperError(uint32_t) override;
 
-         virtual void OnThreadAssigned();
-         virtual double ProcessTimeout(double last_diff);
+         void OnThreadAssigned() override;
+         double ProcessTimeout(double last_diff) override;
 
          void Finish(bool res);
    };
@@ -154,7 +154,7 @@ void verbs::ProtocolAddon::Finish(bool res)
 
 
 
-double verbs::ProtocolAddon::ProcessTimeout(double last_diff)
+double verbs::ProtocolAddon::ProcessTimeout(double)
 {
    if (fConnected) return -1;
 
@@ -224,7 +224,7 @@ void verbs::ProtocolAddon::VerbsProcessRecvCompl(uint32_t bufid)
    Finish(true);
 }
 
-void verbs::ProtocolAddon::VerbsProcessOperError(uint32_t bufid)
+void verbs::ProtocolAddon::VerbsProcessOperError(uint32_t /* bufid */)
 {
    EOUT("VerbsProtocolAddon error");
 
@@ -472,7 +472,7 @@ int verbs::Device::ExecuteCommand(dabc::Command cmd)
    return cmd_res;
 }
 
-double verbs::Device::ProcessTimeout(double last_diff)
+double verbs::Device::ProcessTimeout(double)
 {
    return -1;
 }

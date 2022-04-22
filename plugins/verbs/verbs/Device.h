@@ -50,14 +50,14 @@ namespace verbs {
 
          ContextRef  fIbContext;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
          QueuePair* CreatePortQP(const std::string &thrd_name, dabc::Reference port, int conn_type,
                                  dabc::ThreadRef &thrd);
 
-         virtual dabc::Transport* CreateTransport(dabc::Command cmd, const dabc::Reference& port);
+         dabc::Transport* CreateTransport(dabc::Command cmd, const dabc::Reference& port) override;
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
          int HandleManagerConnectionRequest(dabc::Command cmd);
 
@@ -77,7 +77,7 @@ namespace verbs {
          bool IsAllocateIndividualCQ() const { return fAllocateIndividualCQ; }
          void SetAllocateIndividualCQ(bool on) { fAllocateIndividualCQ = on; }
 
-         virtual const char* ClassName() const { return verbs::typeDevice; }
+         const char* ClassName() const override { return verbs::typeDevice; }
 
          static bool IsThreadSafeVerbs() { return fThreadSafeVerbs; }
 

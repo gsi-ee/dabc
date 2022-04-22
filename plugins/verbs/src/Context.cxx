@@ -348,6 +348,10 @@ int verbs::ContextRef::ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid
          if (osm->ManageMultiCastGroup(false, mgid.raw, &mlid)) return mcst_Ok;
          return mcst_Error;
    }
+#else
+   (void) action;
+   (void) mgid;
+   (void) mlid;
 #endif
 
    return mcst_Error;
@@ -364,9 +368,8 @@ struct ibv_ah* verbs::ContextRef::CreateAH(uint32_t dest_lid)
    ah_attr.port_num   = IbPort(); // !!!!!!!  probably, here should be destination port
 
    ibv_ah *ah = ibv_create_ah(pd(), &ah_attr);
-   if (ah==0) {
+   if (!ah)
       EOUT("Failed to create Address Handle");
-   }
    return ah;
 }
 
@@ -391,9 +394,8 @@ struct ibv_ah* verbs::ContextRef::CreateMAH(ibv_gid& mgid, uint32_t mlid)
    //DOUT1("Addr %02x %02x", ah_attr.grh.dgid.raw[0], ah_attr.grh.dgid.raw[1]);
 
    struct ibv_ah* f_ah = ibv_create_ah(pd(), &mah_attr);
-   if (f_ah==0) {
+   if (!f_ah)
      EOUT("Failed to create Multicast Address Handle");
-   }
 
    return f_ah;
 }

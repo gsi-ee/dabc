@@ -149,7 +149,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
          tv.tv_sec = 0;
          tv.tv_usec = timeout_micros;
 
-         int retval = select(1, &rfds, NULL, NULL, &tv);
+         int retval = select(1, &rfds, nullptr, nullptr, &tv);
 
          if (retval<0) {
             EOUT("Error when waiting IB event");

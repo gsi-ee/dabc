@@ -108,8 +108,8 @@ bool verbs::OpenSM::Init()
    memset(f_log, 0, sizeof(osm_log_t));
    osm_log_construct(f_log);
 
-   status = osm_log_init_v2(f_log, TRUE, 0x0001, NULL, 0, TRUE );
-//   status = osm_log_init(f_log, TRUE, 0x0001, NULL, TRUE );
+   status = osm_log_init_v2(f_log, TRUE, 0x0001, nullptr, 0, TRUE );
+//   status = osm_log_init(f_log, TRUE, 0x0001, nullptr, TRUE );
    if( status != IB_SUCCESS ) {
       EOUT("Problem with osm_log_init_v2");
       return false;
@@ -244,10 +244,10 @@ bool verbs::OpenSM::Query_SA(osmv_query_type_t query_type,
   /*
    * Return the IB query MAD to the pool as necessary.
    */
-  if(fLastResult.p_result_madw != NULL )
+  if(fLastResult.p_result_madw != nullptr )
   {
     osm_mad_pool_put( &f_mad_pool, fLastResult.p_result_madw );
-    fLastResult.p_result_madw = NULL;
+    fLastResult.p_result_madw = nullptr;
   }
 
   return (status==IB_SUCCESS);
@@ -415,10 +415,10 @@ bool verbs::OpenSM::PrintAllMulticasts()
   }
 
  Exit:
-  if( fLastResult.p_result_madw != NULL )
+  if( fLastResult.p_result_madw != nullptr )
   {
     osm_mad_pool_put( &f_mad_pool, fLastResult.p_result_madw );
-    fLastResult.p_result_madw = NULL;
+    fLastResult.p_result_madw = nullptr;
   }
 
   return ( status==IB_SUCCESS );
@@ -481,10 +481,10 @@ bool verbs::OpenSM::QueryMyltucastGroup(uint8_t* mgid, uint16_t& mlid)
   }
 
  Exit:
-  if( fLastResult.p_result_madw != NULL )
+  if( fLastResult.p_result_madw != nullptr )
   {
     osm_mad_pool_put( &f_mad_pool, fLastResult.p_result_madw );
-    fLastResult.p_result_madw = NULL;
+    fLastResult.p_result_madw = nullptr;
   }
 
   return res;

@@ -60,22 +60,22 @@ namespace verbs {
          enum EWaitStatus { wsWorking, wsWaiting, wsFired };
 
          ContextRef                fContext;
-         struct ibv_comp_channel *fChannel;
+         struct ibv_comp_channel *fChannel{nullptr};
       #ifdef VERBS_USING_PIPE
-         int                      fPipe[2];
+         int                      fPipe[2] = {0,0};
       #else
-         QueuePair               *fLoopBackQP;
-         MemoryPool              *fLoopBackPool;
-         int                      fLoopBackCnt;
-         TimeoutWorker           *fTimeout; // use to produce timeouts
+         QueuePair               *fLoopBackQP{nullptr};
+         MemoryPool              *fLoopBackPool{nullptr};
+         int                      fLoopBackCnt{0};
+         TimeoutWorker           *fTimeout{nullptr}; // use to produce timeouts
       #endif
-         ComplQueue              *fMainCQ;     // completion queue used for the whole thread to be able organize polling instead of waiting for the completion channel
-         EWaitStatus              fWaitStatus;
+         ComplQueue              *fMainCQ{nullptr};     // completion queue used for the whole thread to be able organize polling instead of waiting for the completion channel
+         EWaitStatus              fWaitStatus{wsWorking};
          WorkersMap               fMap; // for 1000 elements one need about 50 nanosec to get value from it
-         int                      fWCSize; // size of array
-         struct ibv_wc*           fWCs; // list of event completion
-         long                     fFastModus; // makes polling over MainCQ before starting wait - defines pooling number
-         bool                     fCheckNewEvents; // indicate if we should check verbs events even if there are some in the queue
+         int                      fWCSize{0}; // size of array
+         struct ibv_wc*           fWCs{nullptr}; // list of event completion
+         long                     fFastModus{0}; // makes polling over MainCQ before starting wait - defines pooling number
+         bool                     fCheckNewEvents{false}; // indicate if we should check verbs events even if there are some in the queue
       public:
          // list of all events for all kind of socket processors
 
@@ -90,23 +90,23 @@ namespace verbs {
 
          bool IsFastModus() const { return fFastModus > 0; }
 
-         virtual const char* ClassName() const { return verbs::typeThread; }
+         const char* ClassName() const override { return verbs::typeThread; }
 
-         virtual bool CompatibleClass(const std::string &clname) const;
+         bool CompatibleClass(const std::string &clname) const override;
 
          static const char* StatusStr(int code);
 
       protected:
 
-         virtual int ExecuteThreadCommand(dabc::Command cmd);
+         int ExecuteThreadCommand(dabc::Command cmd) override;
 
-         virtual bool WaitEvent(dabc::EventId& evid, double tmout);
+         bool WaitEvent(dabc::EventId& evid, double tmout) override;
 
-         virtual void _Fire(const dabc::EventId& evnt, int nq);
+         void _Fire(const dabc::EventId& evnt, int nq) override;
 
-         virtual void WorkersSetChanged();
+         void WorkersSetChanged() override;
 
-         virtual void ProcessExtraThreadEvent(const dabc::EventId&);
+         void ProcessExtraThreadEvent(const dabc::EventId&) override;
 
    };
 
