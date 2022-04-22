@@ -6,7 +6,8 @@ if(ROOT_FOUND)
 
    DABC_LINK_LIBRARY(DabcRoot
                      LIBRARIES DabcBase DabcHttp ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY} ${ROOT_XMLIO_LIBRARY}
-                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
+                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+                     NOWARN)
 
    ROOT_GENERATE_DICTIONARY(G__DabcRoot root/TDabcEngine.h
                             MODULE DabcRoot

@@ -27,11 +27,11 @@ namespace root {
    class TreeStore : public dabc::LocalWorker {
       protected:
 
-         TTree* fTree;
+         TTree* fTree{nullptr};
 
          void CloseTree();
 
-         virtual int ExecuteCommand(dabc::Command);
+         int ExecuteCommand(dabc::Command) override;
 
       public:
          TreeStore(const std::string &name);

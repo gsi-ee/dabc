@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -13,8 +13,6 @@
  ********************************************************************/
 #ifndef DABC_RootTreeOutput
 #define DABC_RootTreeOutput
-
-#ifndef __CINT__
 
 //#ifndef DABC_DataIO
 #include "dabc/DataIO.h"
@@ -32,26 +30,24 @@ namespace mbs_root {
          RootTreeOutput(const dabc::Url& url);
          virtual ~RootTreeOutput();
 
-         virtual bool Write_Init();
+         bool Write_Init() override;
 
-         virtual unsigned Write_Buffer(dabc::Buffer& buf);
+         unsigned Write_Buffer(dabc::Buffer& buf) override;
 
       protected:
 
-         TTree*         fTree;
-	 mbs_root::DabcEvent* fEvent;
+         TTree*         fTree{nullptr};
+         mbs_root::DabcEvent* fEvent{nullptr};
 
-	 int 		fSplit;	
-	 int 		fTreeBuf;
-	 int		fCompression;	
-	 int		fMaxSize;
+         int       fSplit{0};
+         int       fTreeBuf{0};
+         int       fCompression{0};
+         int       fMaxSize;
 
-	 bool Close();
-	
-	//mbs_root::ReadIterator	iter(buf);
+        bool Close();
+
    };
 
 }
 
-#endif
 #endif

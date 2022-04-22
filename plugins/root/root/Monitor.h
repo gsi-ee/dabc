@@ -69,7 +69,7 @@ namespace root {
          /** Method scans normal objects, registered in ROOT and DABC */
          void RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy &main, const char *path = nullptr);
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
          void ProcessActionsInRootContext(THttpServer* serv, TRootSniffer* sniff);
 
@@ -83,7 +83,7 @@ namespace root {
 
          virtual ~Monitor();
 
-         virtual const char* ClassName() const { return "Player"; }
+         const char* ClassName() const override { return "Player"; }
 
          bool IsEnabled() const { return fEnabled; }
    };

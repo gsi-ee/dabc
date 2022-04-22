@@ -3,7 +3,8 @@ if(ROOT_FOUND)
 
    DABC_LINK_LIBRARY(DabcMbsRoot
                     LIBRARIES DabcBase DabcMbs ${ROOT_LIBRARIES}
-                    INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
+                    INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+                    NOWARN)
 
    ROOT_GENERATE_DICTIONARY(G__DabcMbsRoot mbs_root/DabcEvent.h mbs_root/DabcSubEvent.h
                             MODULE DabcMbsRoot
