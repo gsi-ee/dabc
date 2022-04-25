@@ -41,7 +41,7 @@ dabc::Reference root::Factory::CreateObject(const std::string &classname, const 
 }
 
 
-dabc::DataInput* root::Factory::CreateDataInput(const std::string &typ)
+dabc::DataInput* root::Factory::CreateDataInput(const std::string &)
 {
    return nullptr;
 }

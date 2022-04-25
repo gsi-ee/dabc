@@ -60,11 +60,11 @@ namespace root {
 
          dabc::TimeStamp fLastUpdate;
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
          virtual void InitializeHierarchy() {}
 
-         virtual double ProcessTimeout(double last_diff);
+         double ProcessTimeout(double last_diff) override;
 
          /** Method scans normal objects, registered in ROOT and DABC */
          void RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy &main, const char *path = nullptr);
@@ -74,7 +74,7 @@ namespace root {
          void ProcessActionsInRootContext(THttpServer* serv, TRootSniffer* sniff);
 
          /** Execute extra command in ROOT context, used in Go4 plugin */
-         virtual bool ProcessHCommand(const std::string &cmdname, dabc::Command cmd) { return false; }
+         virtual bool ProcessHCommand(const std::string & /*cmdname*/, dabc::Command /*cmd*/) { return false; }
 
          virtual int ProcessGetBinary(THttpServer* serv, TRootSniffer* sniff, dabc::Command cmd);
 

@@ -22,14 +22,14 @@
 
 class TDabcEngine : public THttpEngine {
    protected:
-      virtual void Process();
+      void Process() override;
    public:
       TDabcEngine();
       virtual ~TDabcEngine();
 
-      virtual Bool_t Create(const char *args);
+      Bool_t Create(const char *args) override;
 
-   ClassDef(TDabcEngine, 0) // dabc engine for THttpServer
+   ClassDefOverride(TDabcEngine, 0) // dabc engine for THttpServer
 };
 
 

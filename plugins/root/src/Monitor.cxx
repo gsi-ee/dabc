@@ -40,8 +40,9 @@ public:
 
    virtual ~TRootSnifferStoreDabc() {}
 
-   virtual void CreateNode(Int_t lvl, const char* nodename)
+   void CreateNode(Int_t lvl, const char* nodename) override
    {
+      (void) lvl;
       if (curr.null()) {
          top.Create(nodename);
          curr = top;
@@ -49,8 +50,9 @@ public:
          curr = curr.CreateHChild(nodename, true);
       }
    }
-   virtual void SetField(Int_t lvl, const char* field, const char* value, Bool_t with_quotes)
+   void SetField(Int_t lvl, const char* field, const char* value, Bool_t with_quotes) override
    {
+      (void) lvl;
       if (!with_quotes) {
          if (!strcmp("value", "true")) { curr.SetField(field, true); return; }
          if (!strcmp("value", "false")) { curr.SetField(field, false); return; }
@@ -76,11 +78,11 @@ public:
          curr.SetField(field, value);
    }
 
-   virtual void BeforeNextChild(Int_t, Int_t, Int_t)
+   void BeforeNextChild(Int_t, Int_t, Int_t) override
    {
    }
 
-   virtual void CloseNode(Int_t, Int_t)
+   void CloseNode(Int_t, Int_t) override
    {
       curr = curr.GetParentRef();
    }
@@ -124,7 +126,7 @@ void root::Monitor::OnThreadAssigned()
    // if timer not installed, emulate activity in ROOT by regular timeouts
 }
 
-double root::Monitor::ProcessTimeout(double last_diff)
+double root::Monitor::ProcessTimeout(double)
 {
    return 10.;
 }
