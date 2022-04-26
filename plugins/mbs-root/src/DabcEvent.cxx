@@ -18,9 +18,9 @@ mbs_root::DabcEvent::DabcEvent(Int_t count, Int_t crate, Int_t subevts):
     }
 
 mbs_root::DabcEvent::~DabcEvent()
-        {
-            delete fSubEvts;
-        }
+{
+   delete fSubEvts;
+}
 
 void mbs_root::DabcEvent::SetCount(Int_t num)
         {
@@ -70,25 +70,24 @@ mbs_root::DabcSubEvent* mbs_root::DabcEvent::AddSubEvent(Int_t crate, Int_t cont
     	}
 
 void mbs_root::DabcEvent::ResetSubCursor()
-    {
-        fSubCursor=0;
-    }
+{
+   fSubCursor = 0;
+}
 
 mbs_root::DabcSubEvent* mbs_root::DabcEvent::NextSubEvent()
-	{
-        if(++fSubCursor > fUsedSubs)
-            {
-                fSubCursor--;
-                return nullptr; // exceed used length in array
-            }
-        return dynamic_cast<DabcSubEvent*>(fSubEvts->At(fSubCursor-1));
-    	}
+{
+   if (++fSubCursor > fUsedSubs) {
+      fSubCursor--;
+      return nullptr; // exceed used length in array
+   }
+   return dynamic_cast<DabcSubEvent*>(fSubEvts->At(fSubCursor - 1));
+}
 
-void mbs_root::DabcEvent::Clear(Option_t *opt)
-    {
-        fSubEvts->Clear("C"); //will also call Track::Clear
-        fCount=-1;
-        fTrigger=-1;
-        fSubCursor=0;
-        fUsedSubs=0;
-    }
+void mbs_root::DabcEvent::Clear(Option_t *)
+{
+   fSubEvts->Clear("C"); //will also call Track::Clear
+   fCount = -1;
+   fTrigger = -1;
+   fSubCursor = 0;
+   fUsedSubs = 0;
+}

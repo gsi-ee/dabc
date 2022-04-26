@@ -4,39 +4,39 @@
 #include "mbs_root/DabcSubEvent.h"
 
 Int_t mbs_root::DabcSubEvent::GetSubCrate()
-	{
-	return fSubCrate;
-	}
+   {
+   return fSubCrate;
+   }
 
 void mbs_root::DabcSubEvent::SetSubCrate(Int_t cr)
-	{
-	fSubCrate=cr;
-	}
+   {
+   fSubCrate=cr;
+   }
 
 Int_t mbs_root::DabcSubEvent::GetProcid()
-	{
-	return fProcid;
-	}
+   {
+   return fProcid;
+   }
 
 void mbs_root::DabcSubEvent::SetProcid(Int_t pr)
-	{
-	fProcid=pr;
-	}
+   {
+   fProcid=pr;
+   }
 
 Int_t mbs_root::DabcSubEvent::GetControl()
-	{
-	return fControl;
-	}
+   {
+   return fControl;
+   }
 
 void mbs_root::DabcSubEvent::SetControl(Int_t cr)
-	{
-	fControl=cr;
-	}
+   {
+   fControl=cr;
+   }
 
 Int_t mbs_root::DabcSubEvent::GetUsedLength()
-	{
-	return fLen;
-	}
+   {
+   return fLen;
+   }
 
 Int_t mbs_root::DabcSubEvent::Data(Int_t cursor)
     {
@@ -54,9 +54,9 @@ void mbs_root::DabcSubEvent::AddData(Int_t* src, Int_t len)
                 copylen= (fAllocLen-fLen)*sizeof(Int_t);
                 std::cout <<"Warning: data exceeding allocated length, truncating!1!" << std::endl;
             }
-        //memcpy((void*)( fData + fLen), src, copylen);   
-        memcpy(fData+fLen, src, copylen);   
-        fLen+=copylen/sizeof(Int_t);   
+        //memcpy((void*)( fData + fLen), src, copylen);
+        memcpy(fData+fLen, src, copylen);
+        fLen+=copylen/sizeof(Int_t);
     }
 
 void mbs_root::DabcSubEvent::ResetData()
@@ -85,14 +85,14 @@ mbs_root::DabcSubEvent::DabcSubEvent(Int_t crate, Int_t control, Int_t procid, B
     }
 
 mbs_root::DabcSubEvent::~DabcSubEvent()
-    {
-        delete [] fData;
-    }
+{
+   delete[] fData;
+}
 
-void mbs_root::DabcSubEvent::Clear(Option_t* opt)
-    {
-        ResetData();
-        fSubCrate=-1;
-        fProcid=-1;
-        fControl=-1;
-    }
+void mbs_root::DabcSubEvent::Clear(Option_t *)
+{
+   ResetData();
+   fSubCrate = -1;
+   fProcid = -1;
+   fControl = -1;
+}

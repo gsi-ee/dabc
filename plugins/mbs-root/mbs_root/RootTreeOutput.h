@@ -36,8 +36,8 @@ namespace mbs_root {
 
       protected:
 
-         TTree*         fTree{nullptr};
-         mbs_root::DabcEvent* fEvent{nullptr};
+         TTree                *fTree{nullptr};
+         mbs_root::DabcEvent  *fEvent{nullptr};
 
          int       fSplit{0};
          int       fTreeBuf{0};
