@@ -31,7 +31,7 @@ namespace hadaq {
 
 /** \brief Sorts HADAQ subevents according to trigger number
  *
- * Need to be applied when TRB send provides events not in order they appear
+ * Need to be applied when TRB provides events not in order they appear
  * Or when network adapter provides UDP packets not in order
  */
 
@@ -40,16 +40,16 @@ namespace hadaq {
    public:
          struct SubsRec {
             void*     subevnt{nullptr};  //!< direct pointer on subevent
-            uint32_t  trig{0};     //!< trigger number
-            uint32_t  buf{0};      //!< buffer indx
-            uint32_t  sz{0};       //!< padded size
+            uint32_t  trig{0};           //!< trigger number
+            uint32_t  buf{0};            //!< buffer indx
+            uint32_t  sz{0};             //!< padded size
          };
 
          struct SubsComp {
             SorterModule* m{nullptr};
             SubsComp(SorterModule* _m) : m(_m) {}
             // use in std::sort for sorting elements of std::vector<SubsRec>
-            bool operator() (const SubsRec& l,const SubsRec& r) { return m->Diff(l.trig, r.trig) > 0; }
+            bool operator()(const SubsRec& l, const SubsRec& r) { return m->Diff(l.trig, r.trig) > 0; }
          };
 
 
@@ -94,6 +94,5 @@ namespace hadaq {
    };
 
 }
-
 
 #endif
