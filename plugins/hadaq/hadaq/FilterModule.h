@@ -32,11 +32,19 @@ namespace hadaq {
       uint64_t     fDataRateCnt{0};
       uint64_t     fEventRateCnt{0};
       void        *fFilterFunc{nullptr}; /// filter function
+      bool         fSpliter{false};
+      bool         fMerger{false};
 
    protected:
       bool retransmit();
 
+      bool filterBuffers();
+      bool distributeBuffers();
+      bool mergeBuffers();
+
       int ExecuteCommand(dabc::Command cmd) override;
+
+      void OnThreadAssigned() override;
 
    public:
       FilterModule(const std::string &name, dabc::Command cmd = nullptr);

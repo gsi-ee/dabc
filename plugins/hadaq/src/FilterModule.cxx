@@ -25,10 +25,13 @@
 hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
-   // we need at least one input and one output port
    EnsurePorts(1, 1, dabc::xmlWorkPool);
 
-   double flushtime = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(0.3);
+   fMerger = IsName("Merger");
+   fSpliter = !fMerger && !cmd.GetBool("sorter", false) && (NumOutputs() > 2);
+   fFilterFunc = cmd.GetPtr("filter");
+
+   double flushtime = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(0.);
 
    if (flushtime > 0.)
       CreateTimer("FlushTimer", flushtime);
@@ -38,7 +41,7 @@ hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
 
    std::string file_name = Cfg("FilterCode", cmd).AsStr("");
 
-   if (!file_name.empty()) {
+   if (!fFilterFunc && !file_name.empty() && !fMerger) {
       const char *dabcsys = std::getenv("DABCSYS");
 
 #if defined(__MACH__) /* Apple OSX section */
@@ -81,11 +84,78 @@ hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
 
 }
 
+void hadaq::FilterModule::OnThreadAssigned()
+{
+   dabc::ModuleAsync::OnThreadAssigned();
+
+   if (fFilterFunc && fSpliter) {
+
+      std::string merger_name = "Merger";
+      dabc::ModuleRef merger = dabc::mgr.FindModule(merger_name);
+      if (merger.null() || merger.NumInputs() != NumOutputs()) {
+         EOUT("Did not found Merger module - HALT");
+         dabc::mgr.StopApplication();
+         return;
+      }
+
+      if (merger.NumInputs() != NumOutputs()) {
+         EOUT("Merger inputs %u mismatch outputs in splitter %u", merger.NumInputs(), NumOutputs());
+         dabc::mgr.StopApplication();
+         return;
+      }
+
+      for (unsigned n = 0; n < NumOutputs(); n++) {
+         std::string mname = dabc::format("%s%03u", GetName(), n);
+         dabc::CmdCreateModule cmd("hadaq::FilterModule", mname);
+         cmd.SetPtr("filter", fFilterFunc);
+         cmd.SetBool("sorter", true);
+
+         DOUT0("Create module %s", mname.c_str());
+
+         dabc::mgr.Execute(cmd);
+
+         dabc::ModuleRef m = dabc::mgr.FindModule(mname);
+
+         DOUT0("Connect %s ->%s", OutputName(n,true).c_str(), m.InputName(0).c_str());
+         dabc::Reference r1 = dabc::mgr.Connect(OutputName(n,true), m.InputName(0));
+         DOUT0("Connect output %u connected %s", n, DBOOL(IsOutputConnected(n)));
+
+         DOUT0("Connect %s ->%s", m.OutputName(0).c_str(), merger.InputName(n).c_str());
+         dabc::Reference r2 = dabc::mgr.Connect(m.OutputName(0), merger.InputName(n));
+
+         m.Start();
+      }
+   }
+
+}
+
+
+
 typedef bool filter_func_t(void *);
 
 
-
 bool hadaq::FilterModule::retransmit()
+{
+   if (fSpliter)
+      return distributeBuffers();
+   if (fMerger)
+      return mergeBuffers();
+
+   return filterBuffers();
+}
+
+bool hadaq::FilterModule::distributeBuffers()
+{
+   return false;
+}
+
+bool hadaq::FilterModule::mergeBuffers()
+{
+   return false;
+}
+
+
+bool hadaq::FilterModule::filterBuffers()
 {
    int cnt = 20;
 
