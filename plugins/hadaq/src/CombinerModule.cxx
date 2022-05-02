@@ -336,7 +336,7 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
    }
 
    int dest = DestinationPort(fLastTrigNr);
-   if (dest<0) {
+   if (dest < 0) {
       if (!CanSendToAllOutputs()) return false;
    } else {
       if (!CanSend(dest)) return false;
@@ -346,7 +346,7 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
 
    // if (fBNETsend) DOUT0("%s FLUSH buffer", GetName());
 
-   if (dest<0)
+   if (dest < 0)
       SendToAllOutputs(buf);
    else
       Send(dest, buf);

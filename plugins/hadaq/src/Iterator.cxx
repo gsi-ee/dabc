@@ -323,20 +323,21 @@ bool hadaq::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
 {
    dabc::BufferSize_t availible = 0;
 
-   if (!fEvPtr.null()) availible = fEvPtr.fullsize();
-   else  availible = fBuffer.GetTotalSize();
+   if (!fEvPtr.null())
+      availible = fEvPtr.fullsize();
+   else
+      availible = fBuffer.GetTotalSize();
 
    return availible >= (sizeof(hadaq::RawEvent) + subeventssize);
 }
 
 
 bool  hadaq::WriteIterator::NewEvent(uint32_t evtSeqNr, uint32_t runNr, uint32_t minsubeventssize)
-
 {
    // TODO: add arguments to set other event header fields
    if (fBuffer.null()) return false;
 
-   if (fEvPtr.null())  fEvPtr = fBuffer;
+   if (fEvPtr.null()) fEvPtr = fBuffer;
 
    fSubPtr.reset();
 
@@ -426,7 +427,7 @@ bool hadaq::WriteIterator::FinishEvent()
 
 bool hadaq::WriteIterator::CopyEvent(const hadaq::ReadIterator &iter)
 {
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null()) fEvPtr = fBuffer;
 
    auto size = iter.evntsize();
 

@@ -28,6 +28,9 @@ hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
    if (flushtime > 0.)
       CreateTimer("FlushTimer", flushtime);
 
+   CreatePar("FilterData").SetRatemeter(false, 3.).SetUnits("MB");
+   CreatePar("FilterEvents").SetRatemeter(false, 3.).SetUnits("Ev");
+
    // fTriggersRange = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
 }
 
@@ -39,7 +42,7 @@ bool hadaq::FilterModule::retransmit()
    while (CanSendToAllOutputs() && CanRecv() && CanTakeBuffer() && (cnt-- > 0)) {
 
       auto buf = Recv();
-      if (buf.null()) continue;
+      if (buf.null()) break;
 
       if (buf.GetTypeId() == dabc::mbt_EOF) {
          SendToAllOutputs(buf);
@@ -50,21 +53,32 @@ bool hadaq::FilterModule::retransmit()
 
       hadaq::WriteIterator iter2(TakeBuffer());
 
+      int numevents = 0;
       while (iter.NextSubeventsBlock()) {
          bool accept = true;
          while (iter.NextSubEvent()) {
-
+            numevents++;
          }
 
-         if (accept) iter2.CopyEvent(iter);
+         if (accept)
+            if (!iter2.CopyEvent(iter))
+               EOUT("Fail to copy event!!!");
       }
 
       auto outbuf = iter2.Close();
-      if (!outbuf.null() && (outbuf.GetTotalSize() > 0))
+      if (!outbuf.null() && (outbuf.GetTotalSize() > 0)) {
+
+         fEventRateCnt += numevents;
+         fDataRateCnt += outbuf.GetTotalSize();
+
+         Par("FilterData").SetValue(fDataRateCnt/1024./1024.);
+         Par("FilterEvents").SetValue(fEventRateCnt);
+
          SendToAllOutputs(outbuf);
+      }
    }
 
-   return cnt <= 0; // if cnt less than 0, reinject event
+   return (cnt <= 0); // if cnt less than 0, reinject event
 }
 
 
