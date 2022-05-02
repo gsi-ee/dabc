@@ -39,7 +39,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
       <lib value="libDabcHttp.so"/>
-      <lib value="libDabcRfio.so"/>
       <logfile value="hadaqevtbuild.log"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
