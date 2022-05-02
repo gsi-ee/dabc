@@ -107,7 +107,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 #endif
 
       std::string exec = dabc::format("%s %s/plugins/stream/src/stream_engine.cpp -O2 -fPIC -Wall -std=c++11 -I. -I%s/include %s %s"
-            "-shared -Wl,-soname,librunstream.so %s -Wl,-rpath,%s/lib -Wl,-rpath,%s/lib  -o librunstream.so",
+            " -shared -Wl,-soname,librunstream.so %s -Wl,-rpath,%s/lib -Wl,-rpath,%s/lib  -o librunstream.so",
             compiler, dabcsys, streamsys, extra_include.c_str(),
             (second ? "-D_SECOND_ " : ""), ldflags, dabcsys, streamsys);
 
@@ -117,7 +117,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
       int res = std::system(exec.c_str());
 
-      if (res!=0) {
+      if (res != 0) {
          EOUT("Fail to compile first.C/second.C scripts. Abort");
          dabc::mgr.StopApplication();
          return;
@@ -192,9 +192,9 @@ void stream::RunModule::OnThreadAssigned()
 {
    dabc::ModuleAsync::OnThreadAssigned();
 
-   if ((fInitFunc!=nullptr) && (fParallel<=0)) {
+   if (fInitFunc && (fParallel <= 0)) {
 
-      entryfunc* func = (entryfunc*) fInitFunc;
+      entryfunc *func = (entryfunc *) fInitFunc;
 
       fProcMgr = new DabcProcMgr;
       fProcMgr->SetDefaultFill(fDefaultFill);
@@ -234,7 +234,7 @@ void stream::RunModule::OnThreadAssigned()
          dabc::mgr.StopApplication();
       }
    } else
-   if ((fParallel>0) && (fInitFunc!=nullptr))  {
+   if ((fParallel > 0) && fInitFunc)  {
       for (int n=0;n<fParallel;n++) {
          std::string mname = dabc::format("%s%03d", GetName(), n);
          dabc::CmdCreateModule cmd("stream::RunModule", mname);
@@ -260,7 +260,7 @@ void stream::RunModule::OnThreadAssigned()
 
 void stream::RunModule::ProduceMergedHierarchy()
 {
-   if (fDidMerge || (fParallel<=0)) return;
+   if (fDidMerge || (fParallel <= 0)) return;
 
    fDidMerge = true;
 
