@@ -38,7 +38,7 @@ namespace dabc {
          /** Generic event processing method [internal].
           * Here all events are processed and delivered to the user.
           * Made private to exclude possibility to redefine it */
-         void ProcessItemEvent(ModuleItem* item, uint16_t evid) override;
+         void ProcessItemEvent(ModuleItem *item, uint16_t evid) override;
 
       protected:
          /** Constructor of ModuleAsync class.

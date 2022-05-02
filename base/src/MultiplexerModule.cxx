@@ -56,7 +56,7 @@ void dabc::MultiplexerModule::CheckDataSending()
 //   DOUT0("MultiplexerModule %s CheckDataSending queue %u canallsend:%s numout %u",
 //         GetName(), fQueue.Size(), DBOOL(CanSendToAllOutputs()), NumOutputs());
 
-   while (CanSendToAllOutputs() && (fQueue.Size()>0)) {
+   while (CanSendToAllOutputs() && (fQueue.Size() > 0)) {
       unsigned id = fQueue.Pop();
 
       if (id >= NumInputs()) {
