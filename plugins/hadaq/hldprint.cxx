@@ -169,7 +169,7 @@ struct SubevStat {
 };
 
 
-double tot_limit(20.), tot_shift(20.), coarse_tmlen(5.);
+double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5.;
 unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0;
 bool bubble_mode{false}, only_errors{false}, use_colors{true}, epoch_per_channel{false}, use_calibr{true}, use_400mhz{false};
 int onlych = -1;
@@ -1325,14 +1325,14 @@ int main(int argc, char* argv[])
                if ((onlytdc!=0) && (datakind == onlytdc)) {
                   as_tdc = true;
                   print_subsubhdr = true;
-               } else if ((onlynew!=0) && (datakind == onlynew)) {
+               } else if ((onlynew != 0) && (datakind == onlynew)) {
                   as_new = true;
                   print_subsubhdr = true;
                } else if (is_cts(datakind)) {
                   as_cts = true;
                } else if (is_adc(datakind)) {
                   as_adc = true;
-               } else if ((maxhublen==0) && is_hub(datakind)) {
+               } else if ((maxhublen == 0) && is_hub(datakind)) {
                   // this is hack - skip hub header, inside is normal subsub events structure
                   if (dostat) {
                      subsubstat[datakind].accumulate(datalen);
@@ -1354,7 +1354,7 @@ int main(int argc, char* argv[])
             if (!dostat && !showrate) {
                // do raw printout when necessary
 
-               unsigned errmask(0);
+               unsigned errmask = 0;
 
                if (only_errors) {
                   // only check data without printing
@@ -1374,16 +1374,19 @@ int main(int argc, char* argv[])
 
                   if (!print_sub_header) {
                      sub->Dump(false);
-                     if (lasthubid!=0)
+                     if (lasthubid != 0)
                         printf("      *** HUB size %3u id 0x%04x\n", lasthublen, lasthubid);
-                     if (lasthhubid!=0)
+                     if (lasthhubid != 0)
                         printf("         *** HHUB size %3u id 0x%04x\n", lasthhublen, lasthhubid);
                      print_sub_header = true;
                   }
                }
 
                unsigned prefix(9);
-               if (lasthhubid!=0) prefix = 15; else if (lasthubid!=0) prefix = 12;
+               if (lasthhubid != 0)
+                  prefix = 15;
+               else if (lasthubid != 0)
+                  prefix = 12;
 
                // when print raw selected with autoid, really print raw
                if (printraw && autoid && as_tdc) { as_tdc = false; as_raw = true; }
@@ -1403,13 +1406,18 @@ int main(int argc, char* argv[])
                   printf("%s\n", errbuf);
                }
 
-               if (as_tdc) PrintTdcData(sub, ix, datalen, prefix, errmask); else
-               if (as_new) PrintTdc4Data(sub, ix, datalen, prefix); else
-               if (as_adc) PrintAdcData(sub, ix, datalen, prefix); else
-               if (as_cts) PrintCtsData(sub, ix, datalen, prefix); else
-               if (as_raw) sub->PrintRawData(ix, datalen, prefix);
+               if (as_tdc)
+                  PrintTdcData(sub, ix, datalen, prefix, errmask);
+               else if (as_new)
+                  PrintTdc4Data(sub, ix, datalen, prefix);
+               else if (as_adc)
+                  PrintAdcData(sub, ix, datalen, prefix);
+               else if (as_cts)
+                  PrintCtsData(sub, ix, datalen, prefix);
+               else if (as_raw)
+                  sub->PrintRawData(ix, datalen, prefix);
 
-               if (errmask!=0) {
+               if (errmask != 0) {
                   printf("         %s!!!! TDC errors:%s", getCol(col_RED), getCol(col_RESET));
                   unsigned mask = 1;
                   for (int k = 0; k < NumTdcErr; k++,mask*=2)
