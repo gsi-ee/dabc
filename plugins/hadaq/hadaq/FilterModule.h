@@ -29,8 +29,9 @@ namespace hadaq {
  */
 
    class FilterModule : public dabc::ModuleAsync {
-      uint64_t           fDataRateCnt{0};
-      uint64_t           fEventRateCnt{0};
+      uint64_t     fDataRateCnt{0};
+      uint64_t     fEventRateCnt{0};
+      void        *fFilterFunc{nullptr}; /// filter function
 
    protected:
       bool retransmit();

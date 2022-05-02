@@ -17,6 +17,11 @@
 
 #include "hadaq/Iterator.h"
 
+#include "dabc/Manager.h"
+#include "dabc/Factory.h"
+
+#include <cstdlib>
+
 hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
@@ -31,13 +36,60 @@ hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
    CreatePar("FilterData").SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar("FilterEvents").SetRatemeter(false, 3.).SetUnits("Ev");
 
-   // fTriggersRange = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
+   std::string file_name = Cfg("FilterCode", cmd).AsStr("");
+
+   if (!file_name.empty()) {
+      const char *dabcsys = std::getenv("DABCSYS");
+
+#if defined(__MACH__) /* Apple OSX section */
+      const char *compiler = "clang++";
+      const char *ldflags = "";
+#else
+      const char *compiler = "g++";
+      const char *ldflags = "-Wl,--no-as-needed";
+#endif
+
+      std::string exec = dabc::format("%s %s -O2 -fPIC -Wall -std=c++11 -I. -I%s/include"
+            " -shared -Wl,-soname,librunfilter.so %s -Wl,-rpath,%s/lib -L%s/lib -lDabcBase -lDabcMbs -lDabcHadaq -o librunfilter.so",
+            compiler, file_name.c_str(), dabcsys,
+            ldflags, dabcsys, dabcsys);
+
+      DOUT0("Executing %s", exec.c_str());
+
+      int res = std::system(exec.c_str());
+
+      if (res != 0) {
+         EOUT("Fail to compile first.C/second.C scripts. Abort");
+         dabc::mgr.StopApplication();
+         return;
+      }
+
+      if (!dabc::Factory::LoadLibrary("librunfilter.so")) {
+         EOUT("Fail to load generated librunfilter.so library");
+         dabc::mgr.StopApplication();
+         return;
+      }
+
+      fFilterFunc = dabc::Factory::FindSymbol("filter_func");
+      if (!fFilterFunc) {
+         EOUT("Fail to find filter_func function in librunfilter.so library");
+         dabc::mgr.StopApplication();
+         return;
+      }
+
+   }
+
 }
+
+typedef bool filter_func_t(void *);
+
 
 
 bool hadaq::FilterModule::retransmit()
 {
    int cnt = 20;
+
+   filter_func_t *func = (filter_func_t *) fFilterFunc;
 
    while (CanSendToAllOutputs() && CanRecv() && CanTakeBuffer() && (cnt-- > 0)) {
 
@@ -56,13 +108,15 @@ bool hadaq::FilterModule::retransmit()
       int numevents = 0;
       while (iter.NextSubeventsBlock()) {
          bool accept = true;
-         while (iter.NextSubEvent()) {
-            numevents++;
-         }
 
-         if (accept)
+         if (func)
+            accept = func(iter.evnt());
+
+         if (accept) {
+            numevents++;
             if (!iter2.CopyEvent(iter))
                EOUT("Fail to copy event!!!");
+         }
       }
 
       auto outbuf = iter2.Close();

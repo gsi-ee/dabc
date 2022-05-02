@@ -42,6 +42,8 @@
        <!-- how often output will be flushed -->
        <FlushTimeout value="0.1"/>
 
+       <FilterCode value="filter.cxx"/>
+
        <!-- rate meters configuration, not seen with terminal module -->
        <FilterData width="4" prec="2" low="0" up="10" debug="1"/>
        <FilterEvents width="5" prec="1" low="0" up="1000" debug="1"/>
