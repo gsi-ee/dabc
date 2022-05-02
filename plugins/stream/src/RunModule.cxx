@@ -57,7 +57,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    fDefaultFill = Cfg("fillcolor", cmd).AsInt(3);
 
    // we need one input and no outputs
-   EnsurePorts(1, fParallel<0 ? 0 : fParallel);
+   EnsurePorts(1, fParallel < 0 ? 0 : fParallel);
 
    if (fParallel > 0) {
       SetPortSignaling(InputName(0), dabc::Port::SignalEvery);
@@ -69,7 +69,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    fFileUrl = cmd.GetStr("fileurl");
 
-   if ((fParallel>=0) && (fInitFunc==nullptr)) {
+   if ((fParallel>=0) && !fInitFunc) {
       // first generate and load init func
 
       if (fParallel>999) fParallel=999;
@@ -148,7 +148,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    fWorkerHierarchy.Create("Worker");
 
-   if (fParallel<=0) {
+   if (fParallel <= 0) {
       CreateTimer("Update", 1.);
 
       fWorkerHierarchy.CreateHChild("Status").SetField("_hidden", "true");
@@ -233,8 +233,7 @@ void stream::RunModule::OnThreadAssigned()
          EOUT("Stream analysis kind is not supported in DABC engine");
          dabc::mgr.StopApplication();
       }
-   } else
-   if ((fParallel > 0) && fInitFunc)  {
+   } else if ((fParallel > 0) && fInitFunc)  {
       for (int n=0;n<fParallel;n++) {
          std::string mname = dabc::format("%s%03d", GetName(), n);
          dabc::CmdCreateModule cmd("stream::RunModule", mname);
@@ -521,7 +520,7 @@ bool stream::RunModule::RedistributeBuffers()
    while (CanRecv()) {
 
       unsigned indx(0), max(0), min(10);
-      for (unsigned n=0;n<NumOutputs();n++) {
+      for (unsigned n = 0; n < NumOutputs(); n++) {
          unsigned cansend = NumCanSend(n);
          if (cansend > max) { max = cansend; indx = n; }
          if (cansend < min) min = cansend;
@@ -568,7 +567,7 @@ bool stream::RunModule::RedistributeBuffers()
 
 bool stream::RunModule::ProcessRecv(unsigned)
 {
-   if (fParallel<=0)
+   if (fParallel <= 0)
       return ProcessNextBuffer();
 
    return RedistributeBuffers();
