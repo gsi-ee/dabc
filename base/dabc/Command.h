@@ -125,7 +125,7 @@ namespace dabc {
 
          // set of methods to keep old interface, it is preferable to use field methods
 
-         bool SetStr(const std::string &name, const char* value) { return value==0 ? RemoveField(name) : SetField(name, value); }
+         bool SetStr(const std::string &name, const char* value) { return !value ? RemoveField(name) : SetField(name, value); }
          bool SetStr(const std::string &name, const std::string &value) { return SetField(name, value); }
          std::string GetStr(const std::string &name, const std::string &dflt = "") const { return GetField(name).AsStr(dflt); }
 
@@ -144,7 +144,7 @@ namespace dabc {
          /** \brief Set pointer argument for the command */
          void SetPtr(const std::string &name, void* p);
          /** \brief Get pointer argument from the command */
-         void* GetPtr(const std::string &name, void* deflt = 0) const;
+         void* GetPtr(const std::string &name, void* deflt = nullptr) const;
 
          /** Set reference to the command */
          bool SetRef(const std::string &name, Reference ref);

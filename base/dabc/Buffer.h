@@ -76,9 +76,9 @@ namespace dabc {
          unsigned     fNumSegments{0};  ///< number of entries in segments list
          unsigned     fCapacity{0};     ///< capacity of segments list
 
-         Reference    fPool;         ///< reference on the memory pool (or other object, containing memory)
+         Reference    fPool;            ///< reference on the memory pool (or other object, containing memory)
 
-         MemSegment*  fSegm{nullptr};         ///< array of segments
+         MemSegment  *fSegm{nullptr};   ///< array of segments
 
          BufferContainer() :
             Object(nullptr, "", flAutoDestroy | flNoMutex)
@@ -159,7 +159,7 @@ namespace dabc {
       /** Returns number of segment in buffer */
       unsigned NumSegments() const { return null() ? 0 : GetObject()->fNumSegments; }
 
-      MemSegment* Segments() const { return null() ? 0 : GetObject()->fSegm; }
+      MemSegment* Segments() const { return null() ? nullptr : GetObject()->fSegm; }
 
       /** Returns id of the segment, no any boundary checks */
       inline unsigned SegmentId(unsigned n = 0) const { return GetObject()->fSegm[n].id; }
