@@ -1,4 +1,4 @@
-// $Id: SorterModule.h 5032 2022-04-29 08:00:25Z linev $
+// $Id$
 
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
