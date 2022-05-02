@@ -423,3 +423,18 @@ bool hadaq::WriteIterator::FinishEvent()
 
    return true;
 }
+
+bool hadaq::WriteIterator::CopyEvent(const hadaq::ReadIterator &iter)
+{
+   if (fEvPtr.null()) return false;
+
+   auto size = iter.evntsize();
+
+   if (!iter.evnt() || (size == 0) || (fEvPtr.fullsize() < size)) return false;
+
+   fEvPtr.copyfrom(iter.evnt(), size);
+   fFullSize += size;
+   fEvPtr.shift(size);
+
+   return true;
+}

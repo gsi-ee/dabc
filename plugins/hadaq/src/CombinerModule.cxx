@@ -717,7 +717,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          // retry in next hadtu container
          if (ShiftToNextHadTu(ninp)) continue;
 
-         if ((cfg.fResortIndx>=0) && (NumCanRecv(ninp) > 1)) {
+         if ((cfg.fResortIndx >= 0) && (NumCanRecv(ninp) > 1)) {
             // we have at least 2 buffers in the queue and cannot find required subevent
             // seems to be, we should use next event from normal queue
             cfg.fResortIndx = -1;

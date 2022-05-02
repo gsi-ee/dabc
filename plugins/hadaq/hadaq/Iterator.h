@@ -126,13 +126,16 @@ namespace hadaq {
          {
             return AddSubevent(evnt->FirstSubevent(), evnt->AllSubeventsSize());
          }
+
+         bool CopyEvent(const ReadIterator &iter);
+
          bool FinishEvent();
 
          dabc::Buffer Close();
 
          hadaq::RawEvent* evnt() const { return (hadaq::RawEvent*) fEvPtr(); }
          hadaq::RawSubevent* subevnt() const { return (hadaq::RawSubevent*) fSubPtr(); }
-         void* rawdata() const { return subevnt() ? subevnt()->RawData() : 0; }
+         void* rawdata() const { return subevnt() ? subevnt()->RawData() : nullptr; }
          uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(hadaq::RawSubevent); }
 
       protected:
