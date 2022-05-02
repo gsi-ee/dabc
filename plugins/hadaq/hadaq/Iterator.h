@@ -38,16 +38,23 @@ namespace hadaq {
 
    class ReadIterator {
       protected:
-         bool           fFirstEvent;
+         bool           fFirstEvent{false};
          dabc::Pointer  fEvPtr;
          dabc::Pointer  fSubPtr;
          dabc::Pointer  fRawPtr;
-         unsigned       fBufType;
+         unsigned       fBufType{dabc::mbt_Null};
 
       public:
-         ReadIterator();
+         ReadIterator() {}
 
-         ReadIterator(const dabc::Buffer& buf);
+         ReadIterator(const dabc::Buffer& buf) { Reset(buf); }
+
+         ReadIterator(hadaq::RawEvent *evnt)
+         {
+            fFirstEvent = false;
+            fBufType = mbt_HadaqEvents;
+            fEvPtr.reset(evnt, evnt->GetPaddedSize());
+         }
 
          ReadIterator(const ReadIterator& src);
 

@@ -17,24 +17,6 @@
 
 #include "dabc/logging.h"
 
-hadaq::ReadIterator::ReadIterator() :
-   fFirstEvent(false),
-   fEvPtr(),
-   fSubPtr(),
-   fRawPtr(),
-   fBufType(dabc::mbt_Null)
-{
-}
-
-hadaq::ReadIterator::ReadIterator(const dabc::Buffer& buf) :
-   fFirstEvent(false),
-   fEvPtr(),
-   fSubPtr(),
-   fRawPtr(),
-   fBufType(dabc::mbt_Null)
-{
-   Reset(buf);
-}
 
 hadaq::ReadIterator::ReadIterator(const ReadIterator& src) :
    fFirstEvent(src.fFirstEvent),
