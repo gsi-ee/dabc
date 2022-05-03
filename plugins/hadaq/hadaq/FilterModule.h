@@ -34,6 +34,9 @@ namespace hadaq {
       void        *fFilterFunc{nullptr}; /// filter function
       bool         fSpliter{false};
       bool         fMerger{false};
+      unsigned     fSeqId{0};
+      bool         fSeenEOF{false};
+      bool         fSubFilter{false};
 
    protected:
       bool retransmit();

@@ -22,14 +22,18 @@
 
 #include <cstdlib>
 
+static const char *MergerName = "Merger";
+
+
 hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
    EnsurePorts(1, 1, dabc::xmlWorkPool);
 
-   fMerger = IsName("Merger");
+   fMerger = IsName(MergerName);
    fSpliter = !fMerger && !cmd.GetBool("sorter", false) && (NumOutputs() > 2);
    fFilterFunc = cmd.GetPtr("filter");
+   fSubFilter = (fFilterFunc != nullptr) && !fSpliter && !fMerger;
 
    double flushtime = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(0.);
 
@@ -90,8 +94,7 @@ void hadaq::FilterModule::OnThreadAssigned()
 
    if (fFilterFunc && fSpliter) {
 
-      std::string merger_name = "Merger";
-      dabc::ModuleRef merger = dabc::mgr.FindModule(merger_name);
+      dabc::ModuleRef merger = dabc::mgr.FindModule(MergerName);
       if (merger.null() || merger.NumInputs() != NumOutputs()) {
          EOUT("Did not found Merger module - HALT");
          dabc::mgr.StopApplication();
@@ -146,12 +149,45 @@ bool hadaq::FilterModule::retransmit()
 
 bool hadaq::FilterModule::distributeBuffers()
 {
-   return false;
+   int cnt = 20;
+
+   while(CanRecv() && CanSendToAllOutputs() && (cnt-- > 0)) {
+
+      auto buf = Recv();
+
+      if (buf.GetTypeId() == dabc::mbt_EOF) {
+         SendToAllOutputs(buf);
+         return false;
+      }
+
+      unsigned nport = fSeqId++ % NumOutputs();
+      Send(nport, buf);
+   }
+
+   return cnt <= 0;
 }
 
 bool hadaq::FilterModule::mergeBuffers()
 {
-   return false;
+   int cnt = 20;
+
+   while (CanSendToAllOutputs() && CanRecv(fSeqId % NumOutputs()) && (cnt-- > 0)) {
+      auto buf = Recv(fSeqId++ % NumOutputs());
+
+      // handle dummy buffer
+      if (buf.GetTypeId() == dabc::mbt_Generic)
+         continue;
+
+      // handle EOF buffer
+      if (buf.GetTypeId() == dabc::mbt_EOF) {
+         if (fSeenEOF) continue;
+         fSeenEOF = true;
+      }
+
+      SendToAllOutputs(buf);
+   }
+
+   return cnt <= 0;
 }
 
 
@@ -190,7 +226,9 @@ bool hadaq::FilterModule::filterBuffers()
       }
 
       auto outbuf = iter2.Close();
-      if (!outbuf.null() && (outbuf.GetTotalSize() > 0)) {
+      if (outbuf.null()) continue;
+
+      if (outbuf.GetTotalSize() > 0) {
 
          fEventRateCnt += numevents;
          fDataRateCnt += outbuf.GetTotalSize();
@@ -198,11 +236,15 @@ bool hadaq::FilterModule::filterBuffers()
          Par("FilterData").SetValue(fDataRateCnt/1024./1024.);
          Par("FilterEvents").SetValue(fEventRateCnt);
 
-         SendToAllOutputs(outbuf);
+      } else {
+         if (!fSubFilter) continue; // no need to create empty buffer
+         outbuf.SetTypeId(dabc::mbt_Generic);
       }
+
+      SendToAllOutputs(outbuf);
    }
 
-   return (cnt <= 0); // if cnt less than 0, reinject event
+   return cnt <= 0; // if cnt less than 0, reinject event
 }
 
 
