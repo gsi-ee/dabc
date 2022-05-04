@@ -258,9 +258,9 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       const char *name = Xml::GetAttr(node, xmlNameAttr);
       const char *clname = Xml::GetAttr(node, xmlClassAttr);
       const char *devname = Xml::GetAttr(node, xmlDeviceAttr);
-      if (name==0) continue;
-      if (clname==0) clname = dabc::typeThread;
-      if (devname==0) devname = "";
+      if (!name) continue;
+      if (!clname) clname = dabc::typeThread;
+      if (!devname) devname = "";
       DOUT2("Create thread %s", name);
       dabc::mgr.CreateThread(name, clname, devname);
    }
@@ -279,8 +279,10 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       const char *name = Xml::GetAttr(node, xmlNameAttr);
       const char *clname = Xml::GetAttr(node, xmlClassAttr);
       const char *thrdname = Xml::GetAttr(node, xmlThreadAttr);
-      if (clname==0) continue;
-      if (thrdname==0) thrdname="";
+      const char *auto_create = Xml::GetAttr(node, xmlAutoAttr);
+      if (!clname) continue;
+      if (auto_create && !strcmp(auto_create, xmlFalseValue)) continue;
+      if (!thrdname) thrdname = "";
 
       // check that module with such name exists
       dabc::ModuleRef m = dabc::mgr.FindModule(name);
