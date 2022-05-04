@@ -92,9 +92,18 @@ void hadaq::FilterModule::OnThreadAssigned()
 {
    dabc::ModuleAsync::OnThreadAssigned();
 
+//   DOUT0("Thread assign %s ninp %u nout %u", GetName(), NumInputs(), NumOutputs());
+
    if (fFilterFunc && fSpliter) {
 
+      //dabc::CmdCreateModule cmd0("hadaq::FilterModule", MergerName);
+      //cmd0.SetBool("merger", true);
+      //cmd0.SetInt(dabc::xmlNumInputs, NumOutputs());
+      //DOUT0("Create module %s", MergerName);
+      //dabc::mgr.Execute(cmd0);
+
       dabc::ModuleRef merger = dabc::mgr.FindModule(MergerName);
+
       if (merger.null() || merger.NumInputs() != NumOutputs()) {
          EOUT("Did not found Merger module - HALT");
          dabc::mgr.StopApplication();
@@ -108,7 +117,7 @@ void hadaq::FilterModule::OnThreadAssigned()
       }
 
       for (unsigned n = 0; n < NumOutputs(); n++) {
-         std::string mname = dabc::format("%s%03u", GetName(), n);
+         std::string mname = dabc::format("Filter%03u", n);
          dabc::CmdCreateModule cmd("hadaq::FilterModule", mname);
          cmd.SetPtr("filter", fFilterFunc);
          cmd.SetBool("sorter", true);
@@ -119,19 +128,30 @@ void hadaq::FilterModule::OnThreadAssigned()
 
          dabc::ModuleRef m = dabc::mgr.FindModule(mname);
 
-         DOUT0("Connect %s ->%s", OutputName(n,true).c_str(), m.InputName(0).c_str());
-         dabc::Reference r1 = dabc::mgr.Connect(OutputName(n,true), m.InputName(0));
-         DOUT0("Connect output %u connected %s", n, DBOOL(IsOutputConnected(n)));
+         dabc::mgr.Connect(OutputName(n,true), m.InputName(0));
+         DOUT0("Connect %s -> %s connected %s", OutputName(n,true).c_str(), m.InputName(0).c_str(), DBOOL(IsOutputConnected(n)));
 
-         DOUT0("Connect %s ->%s", m.OutputName(0).c_str(), merger.InputName(n).c_str());
-         dabc::Reference r2 = dabc::mgr.Connect(m.OutputName(0), merger.InputName(n));
+         dabc::mgr.Connect(m.OutputName(0), merger.InputName(n));
+         DOUT0("Connect %s -> %s", m.OutputName(0).c_str(), merger.InputName(n).c_str());
 
          m.Start();
       }
+
+      // merger.Start();
    }
 
 }
 
+
+void hadaq::FilterModule::BeforeModuleStart()
+{
+   DOUT0("START %s", GetName());
+}
+
+void hadaq::FilterModule::AfterModuleStop()
+{
+   DOUT0("STOP %s", GetName());
+}
 
 
 typedef bool filter_func_t(void *);
@@ -141,6 +161,7 @@ bool hadaq::FilterModule::retransmit()
 {
    if (fSpliter)
       return distributeBuffers();
+
    if (fMerger)
       return mergeBuffers();
 
@@ -149,40 +170,41 @@ bool hadaq::FilterModule::retransmit()
 
 bool hadaq::FilterModule::distributeBuffers()
 {
-   int cnt = 20;
+   int cnt = 200;
+
+   // DOUT0("Distributer %s get called %s %s", GetName(), DBOOL(CanSendToAllOutputs()), DBOOL(CanRecv()));
 
    while(CanRecv() && CanSendToAllOutputs() && (cnt-- > 0)) {
 
       auto buf = Recv();
 
-      if (buf.GetTypeId() == dabc::mbt_EOF) {
-         SendToAllOutputs(buf);
-         return false;
-      }
+      //if (buf.GetTypeId() == dabc::mbt_EOF)
+      //   DOUT0("!!!!!!!!!!!!!! DISTRIBUTER SEES EOF   !!!!!");
 
       unsigned nport = fSeqId++ % NumOutputs();
+      // DOUT0("Distribute buffer %u to port %u", buf.GetTotalSize(), nport);
       Send(nport, buf);
    }
 
-   return cnt <= 0;
+   return true; // cnt <= 0;
 }
 
 bool hadaq::FilterModule::mergeBuffers()
 {
    int cnt = 20;
 
-   while (CanSendToAllOutputs() && CanRecv(fSeqId % NumOutputs()) && (cnt-- > 0)) {
-      auto buf = Recv(fSeqId++ % NumOutputs());
+   // DOUT0("Merger %s get called seq %u %s %s ", GetName(), fSeqId, DBOOL(CanSendToAllOutputs()), DBOOL(CanRecv(fSeqId % NumInputs())));
+
+   while (CanSendToAllOutputs() && CanRecv(fSeqId % NumInputs()) && (cnt-- > 0)) {
+      auto buf = Recv(fSeqId++ % NumInputs());
 
       // handle dummy buffer
       if (buf.GetTypeId() == dabc::mbt_Generic)
          continue;
 
       // handle EOF buffer
-      if (buf.GetTypeId() == dabc::mbt_EOF) {
-         if (fSeenEOF) continue;
-         fSeenEOF = true;
-      }
+      // if (buf.GetTypeId() == dabc::mbt_EOF)
+      //   DOUT0("!!!!!!!!!!!!!! SEE EOF   !!!!!");
 
       SendToAllOutputs(buf);
    }
@@ -197,10 +219,14 @@ bool hadaq::FilterModule::filterBuffers()
 
    filter_func_t *func = (filter_func_t *) fFilterFunc;
 
+   // DOUT0("Filter %s get called %s %s %s isconnected %s", GetName(), DBOOL(CanSendToAllOutputs()), DBOOL(CanRecv()), DBOOL(CanTakeBuffer()), DBOOL(IsInputConnected(0)));
+
    while (CanSendToAllOutputs() && CanRecv() && CanTakeBuffer() && (cnt-- > 0)) {
 
       auto buf = Recv();
-      if (buf.null()) break;
+      if (buf.null()) continue;
+
+      // DOUT0("Filter %s get new buffer %u", GetName(), buf.GetTotalSize());
 
       if (buf.GetTypeId() == dabc::mbt_EOF) {
          SendToAllOutputs(buf);
@@ -256,4 +282,22 @@ void hadaq::FilterModule::ProcessTimerEvent(unsigned)
 int hadaq::FilterModule::ExecuteCommand(dabc::Command cmd)
 {
    return dabc::ModuleAsync::ExecuteCommand(cmd);
+}
+
+void hadaq::FilterModule::ProcessConnectEvent(const std::string &name, bool on)
+{
+   // DOUT0("Module %s port %s ProcessConnectEvent %s", GetName(), name.c_str(), DBOOL(on));
+
+   (void) name;
+
+   if ((fMerger || fSubFilter || fSpliter) && !on) {
+      bool isany = false;
+      for (unsigned n = 0; n < NumOutputs(); ++n)
+         if (IsOutputConnected(n))
+            isany = true;
+      if (!isany) {
+         DisconnectAllPorts();
+         Stop();
+      }
+   }
 }

@@ -26,29 +26,15 @@
        <NumBuffers value="1000"/>
     </MemoryPool>
 
-    <Module name="Filter" class="hadaq::FilterModule">
-       <NumInputs value="1"/>
-        <!-- these parameter has to be same as number of inputs by Merger -->
-       <NumOutputs value="5"/>
-
-       <InputPort name="Input0" url="hld:///home/linev/trb3/jurek_oct_2021/file.hld"/>
-
-       <!-- how often output will be flushed -->
-       <FlushTimeout value="0.1"/>
-
-       <FilterCode value="filter.cxx"/>
-
-       <!-- rate meters configuration, not seen with terminal module -->
-       <FilterData width="4" prec="2" low="0" up="10" debug="1"/>
-       <FilterEvents width="5" prec="1" low="0" up="1000" debug="1"/>
-     </Module>
-
-   <!-- here 5 modules will be created for actual filtering -->
+   <!-- Create merger first to ensure that filter can connect ports together -->
 
     <Module name="Merger" class="hadaq::FilterModule">
-        <!-- these parameters will force to create inputs/outputs of module -->
-       <NumInputs value="5"/>
+        <!-- these parameter has to be same as number of outputs by Filter -->
+       <NumInputs value="3"/>
        <NumOutputs value="2"/>
+
+       <!-- prevent auto connection -->
+       <InputPort name="*" auto="false"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
@@ -63,6 +49,32 @@
        <FilterData width="4" prec="2" low="0" up="10" debug="1"/>
        <FilterEvents width="5" prec="1" low="0" up="1000" debug="1"/>
      </Module>
+
+   <!-- here N modules for filtering -->
+    <Module name="Filter*">
+       <FlushTimeout value="0.1"/>
+    </Module>
+
+    <Module name="Splitter" class="hadaq::FilterModule">
+       <NumInputs value="1"/>
+        <!-- these parameter has to be same as number of inputs by Merger -->
+       <NumOutputs value="3"/>
+
+       <InputPort name="Input0" url="hld:///home/linev/trb3/jurek_oct_2021/file.hld"/>
+
+       <!-- prevent auto connection -->
+       <OutputPort name="*" auto="false"/>
+
+       <!-- how often output will be flushed -->
+       <FlushTimeout value="0.1"/>
+
+       <FilterCode value="filter.cxx"/>
+
+       <!-- rate meters configuration, not seen with terminal module -->
+       <FilterData width="4" prec="2" low="0" up="10" debug="1"/>
+       <FilterEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+     </Module>
+
 
 
   </Context>

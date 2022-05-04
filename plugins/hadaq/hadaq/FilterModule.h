@@ -35,7 +35,6 @@ namespace hadaq {
       bool         fSpliter{false};
       bool         fMerger{false};
       unsigned     fSeqId{0};
-      bool         fSeenEOF{false};
       bool         fSubFilter{false};
 
    protected:
@@ -48,6 +47,12 @@ namespace hadaq {
       int ExecuteCommand(dabc::Command cmd) override;
 
       void OnThreadAssigned() override;
+
+      void BeforeModuleStart() override;
+
+      void AfterModuleStop() override;
+
+      void ProcessConnectEvent(const std::string &name, bool on) override;
 
    public:
       FilterModule(const std::string &name, dabc::Command cmd = nullptr);
