@@ -153,7 +153,7 @@ namespace dabc {
 
          /** \brief Method called by framework when connection state of the item is changed.
            * \details Can be reimplemented by the user.
-           * Called when input/output port or pool handle are connected or disconnected diregard
+           * Called when input/output port or pool handle are connected or disconnected disregard
            * of running state of the module */
          virtual void ProcessConnectEvent(const std::string & /* name */, bool /* on */) {}
 
