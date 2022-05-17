@@ -479,7 +479,7 @@ is unique throughout all events ever acquired by the system.
 
          void Dump();
 
-         RawSubevent* NextSubevent(RawSubevent* prev = 0);
+         RawSubevent* NextSubevent(RawSubevent* prev = nullptr);
 
          RawSubevent* FirstSubevent();
 
