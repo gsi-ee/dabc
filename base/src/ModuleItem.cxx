@@ -26,9 +26,9 @@ dabc::ModuleItem::ModuleItem(int typ, Reference parent, const std::string &name)
    // we should reinitialize variable, while it will be cleared by constructor
    parent = GetParentRef();
 
-   Module* m = dynamic_cast<Module*> (GetParent());
+   auto m = dynamic_cast<Module *> (GetParent());
 
-   if (m==0)
+   if (!m)
       throw dabc::Exception(ex_Generic, "Item created without module or in wrong place of hierarchy", ItemName());
 
    // use module priority for the all port items
@@ -39,7 +39,7 @@ dabc::ModuleItem::~ModuleItem()
 {
    DOUT2("ModuleItem:%p start destructor", this);
 
-   Module* m = dynamic_cast<Module*> (GetParent());
+   auto m = dynamic_cast<Module *> (GetParent());
 
    if (m) m->RemoveModuleItem(this);
 
@@ -49,14 +49,14 @@ dabc::ModuleItem::~ModuleItem()
 
 void dabc::ModuleItem::StopModule()
 {
-   Module* m = dynamic_cast<Module*> (GetParent());
+   auto m = dynamic_cast<Module *> (GetParent());
    if (m) m->DoStop();
 }
 
 
 void dabc::ModuleItem::StartModule()
 {
-   Module* m = dynamic_cast<Module*> (GetParent());
+   auto m = dynamic_cast<Module *> (GetParent());
    if (m) m->DoStart();
 }
 
@@ -106,7 +106,7 @@ void dabc::Timer::DoStart()
    fActive = true;
 
    // for sys timer timeout will be activated by module itself
-   if ((fPeriod>0.) && !IsSysTimer())
+   if ((fPeriod > 0.) && !IsSysTimer())
       ActivateTimeout(fPeriod);
 }
 
@@ -125,7 +125,7 @@ double dabc::Timer::ProcessTimeout(double last_diff)
 
    fCounter++;
 
-   Module* m = (Module*) GetParent();
+   Module* m = (Module *) GetParent();
 
    if (m && m->IsRunning())
       m->ProcessItemEvent(this, evntTimeout);
@@ -155,7 +155,7 @@ dabc::ConnTimer::ConnTimer(Reference parent, const std::string &name, const std:
 
 double dabc::ConnTimer::ProcessTimeout(double)
 {
-   Module *m = dynamic_cast<Module *> (GetParent());
+   auto m = dynamic_cast<Module *> (GetParent());
 
    // DOUT0("ConnTimer::ProcessTimeout m = %s", DNAME(m));
 
