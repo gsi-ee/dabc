@@ -150,6 +150,8 @@ namespace hadaq {
          dabc::Pointer  fEvPtr;
          dabc::Pointer  fSubPtr;
          dabc::BufferSize_t fFullSize;
+         bool fWasStarted{false};  // indicates if events writing was started after buffer assign
+         bool fHasSubevents{false};  // indicates if any subevent was provided
    };
 
    // _______________________________________________________________________________________________

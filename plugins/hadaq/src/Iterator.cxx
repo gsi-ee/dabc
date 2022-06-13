@@ -285,6 +285,8 @@ bool hadaq::WriteIterator::Reset(const dabc::Buffer& buf)
    fBuffer = buf;
 
    fBuffer.SetTypeId(mbt_HadaqEvents);
+   fWasStarted = false;
+
    return true;
 }
 
@@ -292,7 +294,7 @@ dabc::Buffer hadaq::WriteIterator::Close()
 {
    fEvPtr.reset();
    fSubPtr.reset();
-   if ((fFullSize>0) && (fBuffer.GetTotalSize() >= fFullSize))
+   if ((fFullSize > 0) && (fBuffer.GetTotalSize() >= fFullSize))
       fBuffer.SetTotalSize(fFullSize);
    fFullSize = 0;
 
@@ -307,7 +309,7 @@ bool hadaq::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
 
    if (!fEvPtr.null())
       availible = fEvPtr.fullsize();
-   else
+   else if (!fWasStarted)
       availible = fBuffer.GetTotalSize();
 
    return availible >= (sizeof(hadaq::RawEvent) + subeventssize);
@@ -319,7 +321,12 @@ bool  hadaq::WriteIterator::NewEvent(uint32_t evtSeqNr, uint32_t runNr, uint32_t
    // TODO: add arguments to set other event header fields
    if (fBuffer.null()) return false;
 
-   if (fEvPtr.null()) fEvPtr = fBuffer;
+   if (fEvPtr.null()) {
+      if (fWasStarted)
+         return false;
+      fEvPtr = fBuffer;
+      fWasStarted = true;
+   }
 
    fSubPtr.reset();
 
@@ -330,17 +337,21 @@ bool  hadaq::WriteIterator::NewEvent(uint32_t evtSeqNr, uint32_t runNr, uint32_t
 
    evnt()->Init(evtSeqNr, runNr);
 
+   fHasSubevents = false;
+
    return true;
 }
 
 bool hadaq::WriteIterator::NewSubevent(uint32_t minrawsize, uint32_t trigger)
 {
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null())
+      return false;
 
    if (fSubPtr.null())
       fSubPtr.reset(fEvPtr, sizeof(hadaq::RawEvent));
 
-   if (fSubPtr.fullsize() < (sizeof(hadaq::RawSubevent) + minrawsize)) return false;
+   if (fSubPtr.fullsize() < (sizeof(hadaq::RawSubevent) + minrawsize))
+      return false;
 
    subevnt()->Init(trigger);
 
@@ -349,13 +360,17 @@ bool hadaq::WriteIterator::NewSubevent(uint32_t minrawsize, uint32_t trigger)
 
 bool hadaq::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
 {
-   if (fSubPtr.null()) return false;
+   if (fSubPtr.null())
+      return false;
 
-   if (rawdatasz > maxrawdatasize()) return false;
+   if (rawdatasz > maxrawdatasize())
+      return false;
 
    subevnt()->SetSize(rawdatasz + sizeof(hadaq::RawSubevent));
 
    fSubPtr.shift(subevnt()->GetPaddedSize());
+
+   fHasSubevents = true;
 
    return true;
 }
@@ -373,43 +388,57 @@ bool hadaq::WriteIterator::AddSubevent(const dabc::Pointer& source)
 
    fSubPtr.shift(source.fullsize());
 
+   fHasSubevents = true;
+
    return true;
 }
 
 bool hadaq::WriteIterator::AddSubevent(const void *ptr, unsigned len)
 {
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null())
+      return false;
 
    if (fSubPtr.null())
       fSubPtr.reset(fEvPtr, sizeof(hadaq::RawEvent));
 
-   if (fSubPtr.fullsize() < len) return false;
+   if (fSubPtr.fullsize() < len)
+      return false;
 
    fSubPtr.copyfrom(ptr, len);
 
    fSubPtr.shift(len);
 
+   fHasSubevents = true;
+
    return true;
 }
-
 
 bool hadaq::WriteIterator::FinishEvent()
 {
    if (fEvPtr.null()) return false;
 
    dabc::BufferSize_t dist = sizeof(hadaq::RawEvent);
-   if (!fSubPtr.null()) dist = fEvPtr.distance_to(fSubPtr);
+   if (!fSubPtr.null())
+      dist = fEvPtr.distance_to(fSubPtr);
+   else if (fHasSubevents)
+      dist = fEvPtr.fullsize(); // special case when exactly buffer was matched
    evnt()->SetSize(dist);
+
    dabc::BufferSize_t paddeddist = evnt()->GetPaddedSize();
    fFullSize += paddeddist;
    fEvPtr.shift(paddeddist);
+   fHasSubevents = false;
 
    return true;
 }
 
 bool hadaq::WriteIterator::CopyEvent(const hadaq::ReadIterator &iter)
 {
-   if (fEvPtr.null()) fEvPtr = fBuffer;
+   if (fEvPtr.null()) {
+      if (fWasStarted) return false;
+      fEvPtr = fBuffer;
+      fWasStarted = true;
+   }
 
    auto size = iter.evntsize();
 
