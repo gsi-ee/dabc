@@ -300,7 +300,7 @@ namespace dabc {
             fBufHdr.datalength -= sz;
 
             if (io->fwrite(ptr, sz, 1, fd) != 1) {
-               fprintf(stderr, "fail1 to write buffer payload of size %u\n", (unsigned) sz);
+               fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
                Close();
                return false;
             }
@@ -348,7 +348,7 @@ namespace dabc {
             fBufHdr.datalength -= sz;
 
             if (io->fread(ptr, sz, 1, fd) != 1) {
-               fprintf(stderr, "fail2 to write buffer payload of size %u\n", (unsigned) sz);
+               fprintf(stderr, "fail to read buffer payload of size %u\n", (unsigned) sz);
                Close();
                return false;
             }

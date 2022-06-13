@@ -662,8 +662,6 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
    cfg.fEmpty = (cfg.data_size == 0);
    cfg.fDataError = cfg.evnt->GetDataError();
 
-   if (cfg.fEmpty) DOUT0("!!!!!!!!!!!!!!!!!!!! SEE EMPTY!!!!!!!!!!!!!!!!!!!!!!!!!! ");
-
    cfg.fTrigType = cfg.evnt->GetId() & 0xF;
 
    // int diff = CalcTrigNumDiff(cfg.fLastTrigNr,cfg.fTrigNr);
@@ -904,10 +902,10 @@ bool hadaq::CombinerModule::BuildEvent()
 
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
 
-   unsigned masterchannel(0), min_inp(0);
-   uint32_t subeventssize(0), mineventid(0), maxeventid(0), buildevid(0);
-   bool incomplete_data(false), any_data(false);
-   int missing_inp(-1);
+   unsigned masterchannel = 0, min_inp = 0;
+   uint32_t subeventssize = 0, mineventid = 0, maxeventid = 0, buildevid = 0;
+   bool incomplete_data = false, any_data = false;
+   int missing_inp = -1;
 
    grd.Next("shft");
 
@@ -1236,6 +1234,8 @@ bool hadaq::CombinerModule::BuildEvent()
          fRunDiscEvents += (diff-1);
          fAllDiscEvents += (diff-1);
       }
+
+      // if (subeventssize == 0) EOUT("ZERO EVENT");
 
       unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
       fRunRecvBytes += currentbytes;

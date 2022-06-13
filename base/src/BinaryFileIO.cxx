@@ -80,7 +80,7 @@ unsigned dabc::BinaryFileInput::Read_Complete(Buffer& buf)
 {
    if (!fFile.isReading()) return di_Error;
 
-   if (buf.GetTotalSize()<fCurrentBufSize) {
+   if (buf.GetTotalSize() < fCurrentBufSize) {
       EOUT("Not enough space in buffer, required is %u", (unsigned) fCurrentBufSize);
       return di_Error;
    }

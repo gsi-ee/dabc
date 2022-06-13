@@ -128,7 +128,7 @@ bool hadaq::HldFile::WriteBuffer(void* buf, uint32_t bufsize)
    if (!isWriting() || !buf || (bufsize==0)) return false;
 
    if (io->fwrite(buf, bufsize, 1, fd) != 1) {
-      EOUT("fail to write buffer payload of size %u\n", (unsigned) bufsize);
+      EOUT("fail to write buffer payload of size %u", (unsigned) bufsize);
       CloseBasicFile();
       return false;
    }
