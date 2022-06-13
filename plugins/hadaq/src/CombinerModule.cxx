@@ -662,6 +662,8 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
    cfg.fEmpty = (cfg.data_size == 0);
    cfg.fDataError = cfg.evnt->GetDataError();
 
+   if (cfg.fEmpty) DOUT0("!!!!!!!!!!!!!!!!!!!! SEE EMPTY!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+
    cfg.fTrigType = cfg.evnt->GetId() & 0xF;
 
    // int diff = CalcTrigNumDiff(cfg.fLastTrigNr,cfg.fTrigNr);

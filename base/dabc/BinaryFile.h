@@ -200,7 +200,7 @@ namespace dabc {
          {
             if (isOpened()) return false;
 
-            if (fname==0 || *fname==0) {
+            if (!fname || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
@@ -208,13 +208,13 @@ namespace dabc {
             CheckIO();
 
             fd = io->fopen(fname,  "r");
-            if (fd==0) {
+            if (fd == 0) {
                fprintf(stderr, "File open failed %s for reading\n", fname);
                return false;
             }
 
             size_t res = io->fread(&fFileHdr, sizeof(fFileHdr), 1, fd);
-            if ((res!=1) || (fFileHdr.magic != BinaryFileMagicValue)) {
+            if ((res != 1) || (fFileHdr.magic != BinaryFileMagicValue)) {
                fprintf(stderr, "Failure reading file %s header\n", fname);
                Close();
                return false;
@@ -230,7 +230,7 @@ namespace dabc {
          {
             if (isOpened()) return false;
 
-            if (fname==0 || *fname==0) {
+            if (!fname || *fname == 0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
@@ -238,7 +238,7 @@ namespace dabc {
             CheckIO();
 
             fd = io->fopen(fname, "w");
-            if (fd==0) {
+            if (fd == 0) {
                fprintf(stderr, "File open failed %s for writing\n", fname);
                return false;
             }
@@ -267,7 +267,7 @@ namespace dabc {
 
          bool WriteBufHeader(uint64_t size, uint64_t typ = 0)
          {
-            if (!isWriting() || (size==0)) return false;
+            if (!isWriting() || (size == 0)) return false;
 
             if (fBufHdr.datalength != 0) {
                fprintf(stderr, "writing of previous buffer was not completed, remained %u bytes\n", (unsigned) fBufHdr.datalength);
@@ -289,7 +289,7 @@ namespace dabc {
 
          bool WriteBufPayload(const void* ptr, uint64_t sz)
          {
-            if (!isWriting() || (ptr==0) || (sz==0)) return false;
+            if (!isWriting() || !ptr || (sz == 0)) return false;
 
             if (fBufHdr.datalength < sz) {
                fprintf(stderr, "Appropriate header was not written for buffer %u\n", (unsigned) sz);
@@ -299,8 +299,8 @@ namespace dabc {
 
             fBufHdr.datalength -= sz;
 
-            if (io->fwrite(ptr, sz, 1, fd)!=1) {
-               fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
+            if (io->fwrite(ptr, sz, 1, fd) != 1) {
+               fprintf(stderr, "fail1 to write buffer payload of size %u\n", (unsigned) sz);
                Close();
                return false;
             }
@@ -315,8 +315,7 @@ namespace dabc {
             return WriteBufPayload(ptr, sz);
          }
 
-
-         bool ReadBufHeader(uint64_t* size, uint64_t* typ = 0)
+         bool ReadBufHeader(uint64_t* size, uint64_t* typ = nullptr)
          {
             if (!isReading()) return false;
 
@@ -338,7 +337,7 @@ namespace dabc {
 
          bool ReadBufPayload(void* ptr, uint64_t sz)
          {
-            if (!isReading() || (ptr==0) || (sz==0)) return false;
+            if (!isReading() || !ptr || (sz == 0)) return false;
 
             if (fBufHdr.datalength < sz) {
                fprintf(stderr, "Appropriate header was not read from buffer %u\n", (unsigned) sz);
@@ -349,7 +348,7 @@ namespace dabc {
             fBufHdr.datalength -= sz;
 
             if (io->fread(ptr, sz, 1, fd) != 1) {
-               fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
+               fprintf(stderr, "fail2 to write buffer payload of size %u\n", (unsigned) sz);
                Close();
                return false;
             }
@@ -357,9 +356,9 @@ namespace dabc {
             return true;
          }
 
-         bool ReadBuffer(void* ptr, uint64_t* sz, uint64_t* typ = 0)
+         bool ReadBuffer(void* ptr, uint64_t* sz, uint64_t* typ = nullptr)
          {
-            if ((ptr==0) || (sz==0) || (*sz == 0)) return false;
+            if (!ptr || !sz || (*sz == 0)) return false;
 
             uint64_t maxsz = *sz; *sz = 0;
 
