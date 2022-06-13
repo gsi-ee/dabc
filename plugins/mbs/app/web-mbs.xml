@@ -13,7 +13,7 @@
     </HttpServer>
 
     <Module name="mbs1" class="mbs::Monitor">
-       <node value="X86L-15"/>
+       <node value="X86L-59"/>
        <!--  alias value="node-15"/-->
        <!-- node value="depc418"/-->
        <period value="1"/>
@@ -25,7 +25,7 @@
        <logger value="true"/>
        <!-- command channel: true means new command channel started with sta cmdrem command
             When prompter is running, one should specify 6006 -->
-       <cmd value="6006"/>
+       <cmd value="true"/>
     </Module>
   </Context>
 </dabc>
