@@ -121,7 +121,7 @@ bool mbs::ReadIterator::NextEvent()
 
 unsigned mbs::ReadIterator::GetEventSize() const
 {
-   if (evnt()==0) return 0;
+   if (!evnt()) return 0;
    unsigned res = evnt()->FullSize();
    return res < fEvPtr.fullsize() ? res : fEvPtr.fullsize();
 
@@ -428,7 +428,6 @@ bool mbs::WriteIterator::AddSubevent(mbs::SubeventHeader* sub)
 bool mbs::WriteIterator::FinishEvent()
 {
    if (fEvPtr.null()) return false;
-
 
    dabc::BufferSize_t fullsize = fEvPtr.fullsize();
 

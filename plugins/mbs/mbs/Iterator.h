@@ -100,7 +100,7 @@ namespace mbs {
          dabc::Pointer  fEvPtr;   ///< place for current event
          dabc::Pointer  fSubPtr;  ///< place for subevents
          dabc::Pointer  fSubData; ///< pointer to place raw data of current subevent
-         dabc::BufferSize_t fFullSize; ///< size of accumulated events
+         dabc::BufferSize_t fFullSize{0}; ///< size of accumulated events
 
       public:
          WriteIterator();
