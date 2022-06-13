@@ -179,7 +179,7 @@ dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const st
 dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string &typ)
 {
    dabc::Url url(typ);
-   if (url.GetProtocol()=="bin") {
+   if (url.GetProtocol() == "bin") {
       return new dabc::BinaryFileOutput(url);
    } else
    if (url.GetProtocol() == "block") {
@@ -239,12 +239,12 @@ dabc::Manager::Manager(const std::string &managername, Configuration* cfg) :
    Worker(0, managername),
    fMgrStoppedTime(),
    fAppFinished(false),
-   fMgrMutex(0),
-   fDestroyQueue(0),
+   fMgrMutex(nullptr),
+   fDestroyQueue(nullptr),
    fParsQueue(1024),
-   fTimedPars(0),
-   fParEventsReceivers(0),
-   fDepend(0),
+   fTimedPars(nullptr),
+   fParEventsReceivers(nullptr),
+   fDepend(nullptr),
    fCfg(cfg),
    fCfgHost(),
    fNodeId(0),
@@ -484,7 +484,7 @@ bool dabc::Manager::ProcessDestroyQueue()
    DOUT3("MGR: Process destroy QUEUE vect = %u", (vect ? vect->GetSize() : 0));
 
    // FIXME: remove timed parameters, otherwise it is not possible to delete it
-   // if (fTimedPars!=0)
+   // if (fTimedPars)
    //      for(unsigned n=0;n<vect->GetSize();n++)
    //         fTimedPars->Remove(vect->GetObject(n));
 
@@ -1221,8 +1221,8 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          rec.only_change = cmd.GetBool("OnlyChange");
       } else {
          ParamEventReceiverList::iterator iter = fParEventsReceivers->begin();
-         while (iter!=fParEventsReceivers->end()) {
-            if ((iter->name_mask==mask) && (iter->recv == worker) && (iter->remote_recv == remote))
+         while (iter != fParEventsReceivers->end()) {
+            if ((iter->name_mask == mask) && (iter->recv == worker) && (iter->remote_recv == remote))
                fParEventsReceivers->erase(iter++);
             else
                iter++;
@@ -1338,7 +1338,7 @@ bool dabc::Manager::DestroyObject(Reference ref)
          iter++;
       }
 
-      if (fDestroyQueue==0) {
+      if (!fDestroyQueue) {
          fDestroyQueue = new ReferencesVector;
          fire = true;
       }
@@ -1472,9 +1472,12 @@ bool dabc::Manager::DecomposeAddress(const std::string &addr, bool& islocal, std
 
    if (nodeid>=0) server = GetNodeAddress(nodeid);
 
-   if ((nodeid>=0) && (fNodeId==nodeid)) islocal = true; else
-   if (server == fLocalAddress) islocal = true; else
-   if (server == "localhost") islocal = true;
+   if ((nodeid >= 0) && (fNodeId == nodeid))
+      islocal = true;
+   else if (server == fLocalAddress)
+      islocal = true;
+   else if (server == "localhost")
+      islocal = true;
 
    if (islocal) server = fLocalAddress;
 
@@ -1535,7 +1538,7 @@ double dabc::Manager::ProcessTimeout(double last_diff)
    dabc::Logger::CheckTimeout();
 
    // we can process timeouts without mutex while vector can be only changed from the thread itself
-   if (fTimedPars!=0)
+   if (fTimedPars)
       for (unsigned n=0; n<fTimedPars->GetSize(); n++) {
          ParameterContainer* par = (ParameterContainer*) fTimedPars->GetObject(n);
          if (par) par->ProcessTimeout(last_diff);
@@ -1615,10 +1618,7 @@ void dabc::Manager::ProcessPipeSignal()
    //   fMgrStoppedTime.GetNow();
    //   return;
    //}
-
 }
-
-
 
 void dabc::Manager::RunManagerMainLoop(double runtime)
 {
@@ -1690,14 +1690,14 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
 
 int inputAvailable()
 {
-  struct timeval tv;
-  fd_set fds;
-  tv.tv_sec = 0;
-  tv.tv_usec = 0;
-  FD_ZERO(&fds);
-  FD_SET(STDIN_FILENO, &fds);
-  select(STDIN_FILENO+1, &fds, nullptr, nullptr, &tv);
-  return (FD_ISSET(STDIN_FILENO, &fds));
+   struct timeval tv;
+   fd_set fds;
+   tv.tv_sec = 0;
+   tv.tv_usec = 0;
+   FD_ZERO(&fds);
+   FD_SET(STDIN_FILENO, &fds);
+   select(STDIN_FILENO+1, &fds, nullptr, nullptr, &tv);
+   return (FD_ISSET(STDIN_FILENO, &fds));
 }
 
 #include <iostream>
