@@ -1159,6 +1159,7 @@ int main(int argc, char* argv[])
    std::map<unsigned,SubevStat> substat;    // sub-events statistic
    std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
    long cnt = 0, cnt0 = 0, maxcnt = -1, mincnt = -1, lastcnt = 0, printcnt = 0;
+   uint32_t minseqnr = 0, maxseqnr = 0;
    uint64_t lastsz = 0, currsz = 0, minsz = 10000000000, maxsz = 0;
    dabc::TimeStamp last, first, lastevtm;
 
@@ -1199,11 +1200,13 @@ int main(int argc, char* argv[])
 
          if (dominsz && (evnt->GetSize() < minsz)) {
             minsz = evnt->GetSize();
+            minseqnr = evnt->GetSeqNr();
             mincnt = cnt;
          }
 
          if (domaxsz && (evnt->GetSize() > maxsz)) {
             maxsz = evnt->GetSize();
+            maxseqnr = evnt->GetSeqNr();
             maxcnt = cnt;
          }
 
@@ -1501,10 +1504,10 @@ int main(int argc, char* argv[])
    }
 
    if (dominsz && mincnt >= 0)
-      printf("Event %ld has minimal size %lu\n", mincnt, (long unsigned) minsz);
+      printf("Event #0x%08x (-skip %ld) has minimal size %lu\n", (unsigned) minseqnr, mincnt, (long unsigned) minsz);
 
    if (domaxsz && maxcnt >= 0)
-      printf("Event %ld has maximal size %lu\n", maxcnt, (long unsigned) maxsz);
+      printf("Event #0x%08x (-skip %ld) has maximal size %lu\n", (unsigned) maxseqnr, maxcnt, (long unsigned) maxsz);
 
    if (dabc::CtrlCPressed()) break;
 
