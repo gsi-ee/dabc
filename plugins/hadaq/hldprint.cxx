@@ -51,6 +51,8 @@ int usage(const char* errstr = nullptr)
    printf("   -find id                - search for given trigger id before start printing\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
    printf("   -stat                   - accumulate different kinds of statistics (default false)\n");
+   printf("   -minsz                  - find sequence id of event with minimum size\n");
+   printf("   -maxsz                  - find sequence id of event with maximum size\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -onlyerr                - printout only TDC data with errors\n");
    printf("   -cts id                 - printout raw data as CTS subsubevent (default none)\n");
@@ -995,7 +997,7 @@ void PrintMonitorData(hadaq::RawSubevent *sub)
 
 }
 
-bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, autoid = false;
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
 unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 std::vector<unsigned> hubs, tdcs, ctsids, newtdcs;
 
@@ -1102,6 +1104,8 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if (strcmp(argv[n],"-auto")==0) { autoid = true; printsub = true; } else
       if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
+      if (strcmp(argv[n],"-minsz")==0) { dominsz = true; } else
+      if (strcmp(argv[n],"-maxsz")==0) { domaxsz = true; } else
       if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if (strcmp(argv[n],"-bw")==0) { use_colors = false; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
@@ -1154,8 +1158,8 @@ int main(int argc, char* argv[])
    std::map<unsigned,SubevStat> idstat;     // events id statistic
    std::map<unsigned,SubevStat> substat;    // sub-events statistic
    std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
-   long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
-   uint64_t lastsz{0}, currsz{0};
+   long cnt = 0, cnt0 = 0, maxcnt = -1, mincnt = -1, lastcnt = 0, printcnt = 0;
+   uint64_t lastsz = 0, currsz = 0, minsz = 10000000000, maxsz = 0;
    dabc::TimeStamp last, first, lastevtm;
 
    hadaq::ReadoutHandle ref;
@@ -1181,7 +1185,7 @@ int main(int argc, char* argv[])
 
       cnt0++;
 
-      if (debug_delay>0) dabc::Sleep(debug_delay);
+      if (debug_delay > 0) dabc::Sleep(debug_delay);
 
       dabc::TimeStamp curr = dabc::Now();
 
@@ -1190,11 +1194,21 @@ int main(int argc, char* argv[])
          if (dostat)
             idstat[evnt->GetId()].accumulate(evnt->GetSize());
 
-         // ignore events which are nor match with specified id
-         if ((fullid!=0) && (evnt->GetId()!=fullid)) continue;
+         // ignore events which are not match with specified id
+         if ((fullid != 0) && (evnt->GetId() != fullid)) continue;
+
+         if (dominsz && (evnt->GetSize() < minsz)) {
+            minsz = evnt->GetSize();
+            mincnt = cnt;
+         }
+
+         if (domaxsz && (evnt->GetSize() > maxsz)) {
+            maxsz = evnt->GetSize();
+            maxcnt = cnt;
+         }
 
          cnt++;
-         currsz+=evnt->GetSize();
+         currsz += evnt->GetSize();
          lastevtm = curr;
       } else if (curr - lastevtm > tmout) {
          /*printf("TIMEOUT %ld\n", cnt0);*/
@@ -1205,7 +1219,7 @@ int main(int argc, char* argv[])
 
          double tm = curr - last;
 
-         if (tm>=0.3) {
+         if (tm >= 0.3) {
             printf("\rTm:%6.1fs  Ev:%8ld  Rate:%8.2f Ev/s  %6.2f MB/s", first.SpentTillNow(), cnt, (cnt-lastcnt)/tm, (currsz-lastsz)/tm/1024./1024.);
             fflush(stdout);
             last = curr;
@@ -1219,7 +1233,7 @@ int main(int argc, char* argv[])
 
       if (!evnt) continue;
 
-      if (skip>0) { skip--; continue; }
+      if (skip > 0) { skip--; continue; }
 
       if (dofind) {
          if (find_eventid) {
@@ -1485,6 +1499,12 @@ int main(int argc, char* argv[])
          printf("\n");
       }
    }
+
+   if (dominsz && mincnt >= 0)
+      printf("Event %ld has minimal size %lu\n", mincnt, (long unsigned) minsz);
+
+   if (domaxsz && maxcnt >= 0)
+      printf("Event %ld has maximal size %lu\n", maxcnt, (long unsigned) maxsz);
 
    if (dabc::CtrlCPressed()) break;
 
