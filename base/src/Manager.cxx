@@ -236,7 +236,7 @@ void dabc::Manager::SetAutoDestroy(bool on)
 
 
 dabc::Manager::Manager(const std::string &managername, Configuration* cfg) :
-   Worker(0, managername),
+   Worker(nullptr, managername),
    fMgrStoppedTime(),
    fAppFinished(false),
    fMgrMutex(nullptr),
@@ -1281,7 +1281,7 @@ bool dabc::Manager::ReplyCommand(Command cmd)
 
          if (&(*iter) == origin) {
             iter->queue--;
-            if (iter->queue<0)
+            if (iter->queue < 0)
                DOUT2("Internal error - parameters event queue negative");
             return true;
          }

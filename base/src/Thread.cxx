@@ -1398,7 +1398,7 @@ unsigned dabc::Thread::NumWorkers()
 
 bool dabc::ThreadRef::Execute(dabc::Command cmd, double tmout)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    return GetObject()->Execute(cmd, tmout);
 }
@@ -1406,9 +1406,9 @@ bool dabc::ThreadRef::Execute(dabc::Command cmd, double tmout)
 
 void dabc::ThreadRef::RunEventLoop(double tmout)
 {
-   if (tmout<0) tmout = 0.;
+   if (tmout < 0) tmout = 0.;
 
-   if (GetObject()==0)
+   if (!GetObject())
       dabc::Sleep(tmout);
    else
       GetObject()->RunEventLoop(tmout);
@@ -1416,7 +1416,7 @@ void dabc::ThreadRef::RunEventLoop(double tmout)
 
 bool dabc::ThreadRef::_ActivateWorkerTimeout(unsigned workerid, int priority, double tmout)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    if (workerid >= GetObject()->fWorkers.size()) return false;
 
@@ -1433,7 +1433,7 @@ bool dabc::ThreadRef::_ActivateWorkerTimeout(unsigned workerid, int priority, do
 
 bool dabc::ThreadRef::_ActivateAddonTimeout(unsigned workerid, int priority, double tmout)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    if (workerid >= GetObject()->fWorkers.size()) return false;
 
@@ -1452,7 +1452,7 @@ bool dabc::ThreadRef::_ActivateAddonTimeout(unsigned workerid, int priority, dou
 bool dabc::ThreadRef::MakeWorkerFor(WorkerAddon* addon, const std::string &name)
 {
    if (null()) return false;
-   Worker* worker = new Worker(0, name.empty() ? "dummy" : name.c_str());
+   Worker* worker = new Worker(nullptr, name.empty() ? "dummy" : name.c_str());
    worker->AssignAddon(addon);
    return worker->AssignToThread(*this);
 }

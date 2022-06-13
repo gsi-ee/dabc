@@ -365,7 +365,7 @@ int dabc::Parameter::GetDebugLevel() const
 dabc::Parameter& dabc::Parameter::SetRatemeter(bool synchron, double interval)
 {
 
-   if (GetObject()==0) return *this;
+   if (!GetObject()) return *this;
 
    GetObject()->fRateWidth = GetField("width").AsInt(GetObject()->fRateWidth);
    GetObject()->fRatePrec = GetField("prec").AsInt(GetObject()->fRatePrec);
@@ -393,7 +393,7 @@ dabc::Parameter& dabc::Parameter::SetRatemeter(bool synchron, double interval)
 
 dabc::Parameter& dabc::Parameter::DisableRatemeter()
 {
-   if (GetObject()==0) return *this;
+   if (!GetObject()) return *this;
 
    {
       LockGuard lock(ObjectMutex());
@@ -410,7 +410,7 @@ dabc::Parameter& dabc::Parameter::DisableRatemeter()
 
 bool dabc::Parameter::IsRatemeter() const
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    LockGuard lock(ObjectMutex());
 
@@ -433,7 +433,7 @@ dabc::Parameter& dabc::Parameter::SetWidthPrecision(unsigned width, unsigned pre
 
 dabc::Parameter& dabc::Parameter::SetAverage(bool synchron, double interval)
 {
-   if (GetObject()==0) return *this;
+   if (!GetObject()) return *this;
 
    GetObject()->fRateWidth = GetField("width").AsInt(GetObject()->fRateWidth);
    GetObject()->fRatePrec = GetField("prec").AsInt(GetObject()->fRatePrec);
@@ -461,7 +461,7 @@ dabc::Parameter& dabc::Parameter::SetAverage(bool synchron, double interval)
 
 dabc::Parameter& dabc::Parameter::DisableAverage()
 {
-   if (GetObject()==0) return *this;
+   if (!GetObject()) return *this;
 
    {
       LockGuard lock(ObjectMutex());
@@ -480,7 +480,7 @@ dabc::Parameter& dabc::Parameter::DisableAverage()
 
 bool dabc::Parameter::IsAverage() const
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    LockGuard lock(ObjectMutex());
 
@@ -490,7 +490,7 @@ bool dabc::Parameter::IsAverage() const
 
 dabc::Parameter &dabc::Parameter::SetSynchron(bool on, double interval, bool everyevnt)
 {
-   if (GetObject()!=0)
+   if (GetObject())
       GetObject()->SetSynchron(on, interval, everyevnt);
 
    FireConfigured();
@@ -501,7 +501,7 @@ dabc::Parameter &dabc::Parameter::SetSynchron(bool on, double interval, bool eve
 
 dabc::Reference dabc::Parameter::GetWorker() const
 {
-   return GetObject() ? GetObject()->GetWorker() : 0;
+   return GetObject() ? GetObject()->GetWorker() : nullptr;
 }
 
 
@@ -514,7 +514,7 @@ int dabc::Parameter::ExecuteChange(Command cmd)
 
 bool dabc::Parameter::IsMonitored()
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    LockGuard lock(ObjectMutex());
 
@@ -523,7 +523,7 @@ bool dabc::Parameter::IsMonitored()
 
 dabc::Parameter& dabc::Parameter::SetMonitored(bool on)
 {
-   if (GetObject()!=0) {
+   if (GetObject()) {
 
       LockGuard lock(ObjectMutex());
 
@@ -535,14 +535,14 @@ dabc::Parameter& dabc::Parameter::SetMonitored(bool on)
 
 const std::string dabc::Parameter::Kind() const
 {
-   if (GetObject()==0) return std::string();
+   if (!GetObject()) return std::string();
 
    return GetObject()->Kind();
 }
 
 const std::string dabc::Parameter::GetActualUnits() const
 {
-   if (GetObject()==0) return std::string();
+   if (!GetObject()) return std::string();
 
    return GetObject()->GetActualUnits();
 }

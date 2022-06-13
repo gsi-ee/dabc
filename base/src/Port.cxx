@@ -223,7 +223,7 @@ bool dabc::Port::TryNextReconnect(bool caused_by_error, bool can_disconnect)
 
 int dabc::PortRef::GetSignalingKind()
 {
-   if (GetObject()==0) return Port::SignalNone;
+   if (!GetObject()) return Port::SignalNone;
    dabc::Command cmd("GetSignalingKind");
    cmd.SetStr("Port", GetObject()->GetName());
    if (GetModule().Execute(cmd) == cmd_true)
@@ -233,7 +233,7 @@ int dabc::PortRef::GetSignalingKind()
 
 bool dabc::PortRef::Disconnect(bool witherr)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
    dabc::Command cmd("DisconnectPort");
    cmd.SetStr("Port", GetObject()->GetName());
    cmd.SetBool("WithErr", witherr);

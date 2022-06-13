@@ -979,7 +979,7 @@ void dabc::Module::SendToAllOutputs(Buffer& buf)
 
 bool dabc::ModuleRef::IsInputConnected(unsigned ninp)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    dabc::Command cmd("IsInputConnect");
    cmd.SetInt("Number", ninp);
@@ -989,7 +989,7 @@ bool dabc::ModuleRef::IsInputConnected(unsigned ninp)
 /** Returns true if specified output is connected */
 bool dabc::ModuleRef::IsOutputConnected(unsigned ninp)
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
    dabc::Command cmd("IsOutputConnect");
    cmd.SetInt("Number", ninp);
@@ -999,9 +999,9 @@ bool dabc::ModuleRef::IsOutputConnected(unsigned ninp)
 
 bool dabc::ModuleRef::ConnectPoolHandles()
 {
-   if (GetObject()==0) return false;
+   if (!GetObject()) return false;
 
-   unsigned cnt(0);
+   unsigned cnt = 0;
 
    while (true) {
       dabc::Command cmd("GetPoolHandle");

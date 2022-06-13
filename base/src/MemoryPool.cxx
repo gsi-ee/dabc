@@ -695,7 +695,7 @@ void dabc::MemoryPool::ProcessConnectEvent(const std::string &name, bool on)
 
 dabc::Reference dabc::MemoryPoolRef::CreateNewRequester()
 {
-   if (GetObject()==0) return dabc::Reference();
+   if (!GetObject()) return dabc::Reference();
 
    dabc::Command cmd("CreateNewRequester");
 

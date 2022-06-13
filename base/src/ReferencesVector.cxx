@@ -55,7 +55,7 @@ void dabc::ReferencesVector::ExpandVector()
 
 bool dabc::ReferencesVector::Add(Reference& ref) throw()
 {
-   if (ref.GetObject()==0) return false;
+   if (!ref.GetObject()) return false;
 
    ExpandVector();
 
@@ -70,7 +70,7 @@ bool dabc::ReferencesVector::Add(Reference& ref) throw()
 
 bool dabc::ReferencesVector::AddAt(Reference& ref, unsigned pos) throw()
 {
-   if (ref.GetObject()==0) return false;
+   if (!ref.GetObject()) return false;
 
    ExpandVector();
 
