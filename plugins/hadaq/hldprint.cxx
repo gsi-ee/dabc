@@ -173,7 +173,7 @@ struct SubevStat {
 
 double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5.;
 unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0;
-bool bubble_mode{false}, only_errors{false}, use_colors{true}, epoch_per_channel{false}, use_calibr{true}, use_400mhz{false};
+bool bubble_mode = false, only_errors = false, use_colors = true, epoch_per_channel = false, use_calibr = true, use_400mhz = false;
 int onlych = -1;
 
 const char *getCol(const char *col_name)
@@ -982,7 +982,6 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
 void PrintMonitorData(hadaq::RawSubevent *sub)
 {
-
    unsigned trbSubEvSize = sub->GetSize() / 4 - 4, ix = 0;
 
    int cnt = 0;
@@ -990,11 +989,8 @@ void PrintMonitorData(hadaq::RawSubevent *sub)
       unsigned addr1 = sub->Data(ix++);
       unsigned addr2 = sub->Data(ix++);
       unsigned value = sub->Data(ix++);
-
       printf("       %3d: %04x %04x = %08x\n", cnt++, addr1, addr2, value);
-
    }
-
 }
 
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
@@ -1044,7 +1040,6 @@ bool is_newtdc(unsigned id)
          return true;
 
    return false;
-
 }
 
 
@@ -1059,9 +1054,9 @@ int main(int argc, char* argv[])
 
    long number = 10, skip = 0, nagain = 0;
    unsigned find_trigid = 0, find_eventid = 0;
-   double tmout(-1.), maxage(-1.), debug_delay(-1), mhz(400.);
+   double tmout = -1., maxage = -1., debug_delay = -1, mhz = 400.;
    bool dofind = false;
-   unsigned tdcmask(0), ctsid(0);
+   unsigned tdcmask = 0, ctsid = 0;
 
    int n = 1;
    while (++n < argc) {
