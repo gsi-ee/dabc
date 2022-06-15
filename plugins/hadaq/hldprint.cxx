@@ -27,9 +27,8 @@
 
 int usage(const char* errstr = nullptr)
 {
-   if (errstr!=0) {
+   if (errstr)
       printf("Error: %s\n\n", errstr);
-   }
 
    printf("Utility for printing HLD events. 22.10.2018. S.Linev\n");
    printf("   hldprint source [args]\n");
@@ -1155,7 +1154,7 @@ int main(int argc, char* argv[])
    std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
    long cnt = 0, cnt0 = 0, maxcnt = -1, mincnt = -1, lastcnt = 0, printcnt = 0;
    uint32_t minseqnr = 0, maxseqnr = 0;
-   uint64_t lastsz = 0, currsz = 0, minsz = 10000000000, maxsz = 0;
+   uint64_t lastsz = 0, currsz = 0, minsz = 10000000000, numminsz = 0, maxsz = 0, nummaxsz = 0;
    dabc::TimeStamp last, first, lastevtm;
 
    hadaq::ReadoutHandle ref;
@@ -1193,16 +1192,26 @@ int main(int argc, char* argv[])
          // ignore events which are not match with specified id
          if ((fullid != 0) && (evnt->GetId() != fullid)) continue;
 
-         if (dominsz && (evnt->GetSize() < minsz)) {
-            minsz = evnt->GetSize();
-            minseqnr = evnt->GetSeqNr();
-            mincnt = cnt;
+         if (dominsz) {
+            if (evnt->GetSize() < minsz) {
+               minsz = evnt->GetSize();
+               minseqnr = evnt->GetSeqNr();
+               mincnt = cnt;
+               numminsz = 1;
+            } else if (evnt->GetSize() == minsz) {
+               numminsz++;
+            }
          }
 
-         if (domaxsz && (evnt->GetSize() > maxsz)) {
-            maxsz = evnt->GetSize();
-            maxseqnr = evnt->GetSeqNr();
-            maxcnt = cnt;
+         if (domaxsz) {
+            if (evnt->GetSize() > maxsz) {
+               maxsz = evnt->GetSize();
+               maxseqnr = evnt->GetSeqNr();
+               maxcnt = cnt;
+               nummaxsz = 1;
+            } else if (evnt->GetSize() == maxsz) {
+               nummaxsz++;
+            }
          }
 
          cnt++;
@@ -1499,10 +1508,10 @@ int main(int argc, char* argv[])
    }
 
    if (dominsz && mincnt >= 0)
-      printf("Event #0x%08x (-skip %ld) has minimal size %lu\n", (unsigned) minseqnr, mincnt, (long unsigned) minsz);
+      printf("Event #0x%08x (-skip %ld) has minimal size %lu cnt %lu\n", (unsigned) minseqnr, mincnt, (long unsigned) minsz, (long unsigned) numminsz);
 
    if (domaxsz && maxcnt >= 0)
-      printf("Event #0x%08x (-skip %ld) has maximal size %lu\n", (unsigned) maxseqnr, maxcnt, (long unsigned) maxsz);
+      printf("Event #0x%08x (-skip %ld) has maximal size %lu cnt %lu\n", (unsigned) maxseqnr, maxcnt, (long unsigned) maxsz, (long unsigned) nummaxsz);
 
    if (dabc::CtrlCPressed()) break;
 
