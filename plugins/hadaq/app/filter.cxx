@@ -20,21 +20,37 @@ bool use_400mhz = false;
 
 unsigned fine_min = 20, fine_max = 500;
 
+const int NumTDC = 7;
+
 /** check if it is hub */
 bool is_hub(unsigned id)
 {
-   return id == 0xFF99;
+   return (id == 0x8260) || (id == 0x8261);
 }
 
 bool is_tdc(unsigned id)
 {
-   return (id >= 0x1300) && (id < 0x1500);
+   return (id >= 0x1400) && (id < 0x1500);
 }
 
-bool scan_tdc(hadaq::RawSubevent* sub, unsigned tdcid, unsigned ix, unsigned len)
+int get_tdcnum(unsigned id)
+{
+   switch(id) {
+      case 0x1401: return 0;
+      case 0x1405: return 1;
+      case 0x1407: return 2;
+      case 0x1408: return 3;
+      case 0x1410: return 4;
+      case 0x1411: return 5;
+      case 0x1415: return 6;
+   }
+   return -1;
+}
+
+int scan_tdc(hadaq::RawSubevent* sub, unsigned tdcid, unsigned ix, unsigned len)
 {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
-   if (ix >= sz) return false;
+   if (ix >= sz) return -1;
    if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
    int nheader = 0;
@@ -119,18 +135,16 @@ bool scan_tdc(hadaq::RawSubevent* sub, unsigned tdcid, unsigned ix, unsigned len
          default:
             break;
       }
-
    }
 
    if (debug_cnt < 10)
       printf("TDC 0x%04x numhits %u\n", tdcid, numhit);
 
-
    // suppress compiler warnings
    (void) haschannel0;
    (void) with_calibr;
 
-   return true;
+   return numhit;
 }
 
 extern "C" bool filter_func(hadaq::RawEvent *evnt)
@@ -139,7 +153,9 @@ extern "C" bool filter_func(hadaq::RawEvent *evnt)
 
    int nsub = 0, ntdc = 0;
 
-   bool accept = true;
+   int numhits[NumTDC];
+   for (int n=0;n<NumTDC;++n)
+      numhits[n] = 0;
 
    hadaq::RawSubevent* sub = nullptr;
    while ((sub = evnt->NextSubevent(sub)) != nullptr) {
@@ -170,10 +186,11 @@ extern "C" bool filter_func(hadaq::RawEvent *evnt)
             continue;
          }
 
-         if (is_tdc(datakind)) {
-            ntdc++;
+         int tdcnum = get_tdcnum(datakind);
 
-            if (!scan_tdc(sub, datakind, ix, datalen)) accept = false;
+         if (tdcnum >= 0) {
+            ntdc++;
+            numhits[tdcnum] = scan_tdc(sub, datakind, ix, datalen);
          }
 
          ix += datalen;
@@ -181,7 +198,12 @@ extern "C" bool filter_func(hadaq::RawEvent *evnt)
 
    }
 
-   if (debug_cnt < 10) printf("Did filtering numsub %d numtdc %d\n", nsub, ntdc);
+   bool accept = true;
+   for (int n=0;n<NumTDC;++n)
+      if (numhits[n] < 5)
+         accept = false;
+
+   if (debug_cnt < 10) printf("Did filtering numsub %d numtdc %d accept %s\n", nsub, ntdc, accept ? "true" : "false");
 
    return accept;
 }

@@ -6,7 +6,7 @@
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
       <lib value="libDabcHttp.so"/>
-      <logfile value="sorter.log"/>
+      <logfile value="filter.log"/>
       <loglevel value="1"/>
       <loglimit value="1000"/>
       <control value="true"/>
@@ -31,7 +31,7 @@
        <NumInputs value="1"/>
        <NumOutputs value="2"/>
 
-       <InputPort name="Input0" url="hld:///home/linev/trb3/jurek_oct_2021/file.hld"/>
+       <InputPort name="Input0" url="hld:///home/linev/trb3/jurek_jun_2022/pulser_22164153949.hld"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
