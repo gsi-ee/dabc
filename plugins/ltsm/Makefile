@@ -42,7 +42,7 @@ DABCLTSM_O       += $(wildcard $(LTSMAPI)/*.a)
 
 
  
-$(LTSM_O) $(LTSM_D) : INCLUDES += $(LTSMAPI) $(TSMAPI)
+$(LTSM_O) $(LTSM_D) : INCLUDES += $(LTSMAPI) $(LTSMAPI)/../.. $(TSMAPI)
 
 
 DABCLTSM_D       = $(LTSM_D)
@@ -73,10 +73,10 @@ clean::
 
 ########### extra rules #############
 
-$(LTSM_CO) $(LTSM_CD): C_DEFINITIONS += Linux
+$(LTSM_CO) $(LTSM_CD): C_DEFINITIONS += Linux HAVE_CONFIG_H
 
-$(LTSM_O) : CXXFLAGS += -Wno-unused-variable
 
+$(LTSM_O) : CXXFLAGS += -Wno-unused-variable -DHAVE_CONFIG_H
 ifdef DABC_64BIT 
 $(LTSM_CO) $(LTSM_CD): C_DEFINITIONS += SYSTEM64 
 endif
