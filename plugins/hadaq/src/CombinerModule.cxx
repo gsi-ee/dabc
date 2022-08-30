@@ -1549,7 +1549,7 @@ char* hadaq::CombinerModule::Unit(unsigned long v)
 {
 
   // JAM stolen from old hadaq eventbuilders to keep precisely same format
-   static char retVal[16];
+   static char retVal[32];
    static char u[] = " kM";
    unsigned int i;
 
