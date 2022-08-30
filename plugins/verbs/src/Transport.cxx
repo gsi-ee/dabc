@@ -27,19 +27,9 @@ verbs::VerbsNetworkInetrface::VerbsNetworkInetrface(verbs::ContextRef ctx, Queue
    verbs::WorkerAddon(qp),
    NetworkInetrface(),
    fContext(ctx),
-   fInitOk(false),
    fPoolReg(),
-   f_rwr(0),
-   f_swr(0),
-   f_sge(0),
    fHeadersPool(0),
-   fSegmPerOper(2),
-   f_ud_ah(0),
-   f_ud_qpn(0),
-   f_ud_qkey(0),
-   f_multi(0),
-   f_multi_lid(0),
-   f_multi_attch(false)
+   fSegmPerOper(2)
 {
 }
 
@@ -53,18 +43,18 @@ verbs::VerbsNetworkInetrface::~VerbsNetworkInetrface()
       f_multi = 0;
    }
 
-   if(f_ud_ah!=0) {
+   if(f_ud_ah) {
       ibv_destroy_ah(f_ud_ah);
-      f_ud_ah = 0;
+      f_ud_ah = nullptr;
    }
 
-   delete fQP; fQP = 0;
+   delete fQP; fQP = nullptr;
 
-   delete[] f_rwr; f_rwr = 0;
-   delete[] f_swr; f_swr = 0;
-   delete[] f_sge; f_sge = 0;
+   delete[] f_rwr; f_rwr = nullptr;
+   delete[] f_swr; f_swr = nullptr;
+   delete[] f_sge; f_sge = nullptr;
 
-   dabc::Object::Destroy(fHeadersPool); fHeadersPool = 0;
+   dabc::Object::Destroy(fHeadersPool); fHeadersPool = nullptr;
 }
 
 long verbs::VerbsNetworkInetrface::Notify(const std::string &cmd, int arg)
@@ -84,9 +74,9 @@ void verbs::VerbsNetworkInetrface::SetUdAddr(struct ibv_ah *ud_ah, uint32_t ud_q
 bool verbs::VerbsNetworkInetrface::AssignMultiGid(ibv_gid* multi_gid)
 {
    dabc::NetworkTransport* tr = (dabc::NetworkTransport*) fWorker();
-   if (tr==0) return false;
+   if (!tr) return false;
 
-   if (multi_gid == 0) return false;
+   if (!multi_gid) return false;
 
    if (!QP()->InitUD()) return false;
 
@@ -99,7 +89,7 @@ bool verbs::VerbsNetworkInetrface::AssignMultiGid(ibv_gid* multi_gid)
    if (!f_multi) return false;
 
    f_ud_ah = fContext.CreateMAH(f_multi_gid, f_multi_lid);
-   if (f_ud_ah==0) return false;
+   if (!f_ud_ah) return false;
 
    f_ud_qpn = VERBS_MCAST_QPN;
    f_ud_qkey = VERBS_DEFAULT_QKEY;
@@ -175,14 +165,14 @@ void verbs::VerbsNetworkInetrface::AllocateNet(unsigned /* fulloutputqueue */, u
 void verbs::VerbsNetworkInetrface::SubmitSend(uint32_t recid)
 {
    dabc::NetworkTransport* tr = (dabc::NetworkTransport*) fWorker();
-   if (tr==0) return;
+   if (!tr) return;
 
    uint32_t segid = recid*fSegmPerOper;
    int senddtyp = tr->PackHeader(recid);
 
    dabc::NetworkTransport::NetIORec* rec = tr->GetRec(recid);
 
-   if ((rec==0) || (f_sge==0)) {
+   if (!rec || !f_sge) {
       EOUT("Did not found rec %p or f_sge %p - abort", rec, f_sge);
       exit(7);
    }
@@ -233,7 +223,7 @@ void verbs::VerbsNetworkInetrface::SubmitSend(uint32_t recid)
 void verbs::VerbsNetworkInetrface::SubmitRecv(uint32_t recid)
 {
    dabc::NetworkTransport* tr = (dabc::NetworkTransport*) fWorker();
-   if (tr==0) return;
+   if (!tr) return;
 
    uint32_t segid = recid*fSegmPerOper;
 

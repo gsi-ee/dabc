@@ -61,7 +61,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
       bool IsRegularTest() const { return fKind == "regular"; }
 
-      int ExecuteCommand(dabc::Command cmd)
+      int ExecuteCommand(dabc::Command cmd) override
       {
          return ModuleAsync::ExecuteCommand(cmd);
       }
@@ -72,7 +72,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
          if (IsChaoticTest()) {
 
-            if (nout==fIgnoreNode) return false;
+            if (nout == fIgnoreNode) return false;
 
             dabc::Buffer buf = TakeBuffer();
             if (buf.null()) return false;
@@ -82,7 +82,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
          if (IsRegularTest()) {
 
-            if (fSendCnt!=nout) return false;
+            if (fSendCnt != nout) return false;
 
             dabc::Buffer buf = TakeBuffer();
             if (buf.null()) return false;

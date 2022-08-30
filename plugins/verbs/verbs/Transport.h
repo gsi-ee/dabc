@@ -61,7 +61,7 @@ namespace verbs {
          uint32_t             f_ud_qpn{0};
          uint32_t             f_ud_qkey{0};
          int                  f_multi{0};     // return value by ManageMulticast
-         ibv_gid              f_multi_gid{0};
+         ibv_gid              f_multi_gid;
          uint16_t             f_multi_lid{0};
          bool                 f_multi_attch{false}; // true if QP was attached to multicast group
 
