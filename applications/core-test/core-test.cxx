@@ -738,7 +738,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
       {
       }
 
-      virtual int ExecuteCommand(dabc::Command cmd)
+      int ExecuteCommand(dabc::Command cmd) override
       {
          DOUT2("Module %s Executes command %s cnt:%d", GetName(), cmd.GetName(), fCount);
 
@@ -777,7 +777,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
          return res>0 ? res+1 : dabc::cmd_false;
       }
 
-      virtual double ProcessTimeout(double last_diff)
+      double ProcessTimeout(double last_diff) override
       {
          DOUT2(" ++++++++++++ Module %s process timeout diff %5.3f ++++++++++++++", GetName(), last_diff);
 
@@ -786,7 +786,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
          return -1;
       }
 
-      virtual bool ReplyCommand(dabc::Command cmd)
+      bool ReplyCommand(dabc::Command cmd) override
       {
          int res = cmd.GetResult();
          DOUT2("Module %s Get reply res = %d", GetName(), res);
