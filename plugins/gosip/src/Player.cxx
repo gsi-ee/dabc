@@ -74,8 +74,8 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
 
          std::string currcmd = gosipcmd[n];
 
-         bool isreading = (currcmd.find("-r")==0);
-         bool iswriting = (currcmd.find("-w")==0);
+         bool isreading = (currcmd.find("-r") == 0);
+         bool iswriting = (currcmd.find("-w") == 0);
 
          if (!isreading && !iswriting && (currcmd[0]!='-')) {
             isreading = true;

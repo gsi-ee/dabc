@@ -48,7 +48,7 @@ void dabc::formats(std::string& sbuf, const char *fmt, ...)
 
 std::string dabc::format(const char *fmt, ...)
 {
-   if (!fmt || (strlen(fmt)==0)) return std::string("");
+   if (!fmt || (strlen(fmt) == 0)) return std::string("");
 
    va_list args;
    int length = 256, result = 0;

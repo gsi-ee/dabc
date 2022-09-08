@@ -230,7 +230,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
 
    unsigned size = rec.Write(iter.rawdata(), iter.maxrawdatasize());
 
-   if (size==0) {
+   if (size == 0) {
       EOUT("Fail to write data into MBS subevent");
    }
 

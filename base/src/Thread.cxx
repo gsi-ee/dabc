@@ -952,7 +952,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
    DOUT4("THRD:%s CheckWorkerCanBeHalted %u doinghalt = %u", GetName(), id, fWorkers[id]->doinghalt);
 
-   if (fWorkers[id]->doinghalt==0) return cmd_false;
+   if (fWorkers[id]->doinghalt == 0) return cmd_false;
 
    if ((fWorkers[id]->recursion > 0)  || (balance > 0)) {
       DOUT2("THRD:%s ++++++++++++++++++++++ worker %p %s %s event balance %u fired:%u processed:%u recursion %d",

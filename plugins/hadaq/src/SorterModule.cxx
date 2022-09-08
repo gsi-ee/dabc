@@ -76,7 +76,7 @@ bool hadaq::SorterModule::RemoveUsedSubevents(unsigned num)
    // remove used entries from subs list
    // return true if any buffer from inp
 
-   if (num==0) return false;
+   if (num == 0) return false;
 
    if (num >= fSubs.size()) {
       // this is full clear of indexed data
@@ -126,8 +126,8 @@ bool hadaq::SorterModule::retransmit()
 
       // special handling for EOF buffer
       // either flush all data or just forward EOF buffer
-      if (buf.GetTypeId()==dabc::mbt_EOF) {
-         if (fNextBufIndx==0) {
+      if (buf.GetTypeId() == dabc::mbt_EOF) {
+         if (fNextBufIndx == 0) {
             if (!CanSend()) { fLastRet = 50; return false; }
             buf = Recv();
             DecremntInputIndex();

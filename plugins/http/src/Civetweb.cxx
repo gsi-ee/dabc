@@ -37,7 +37,7 @@ http::Civetweb::Civetweb(const std::string &name, dabc::Command cmd) :
       fDefaultAuth = Cfg("auth_default", cmd).AsBool(true) ? 1 : 0;
 
    fSslCertif = Cfg("ssl_certif", cmd).AsStr("");
-   if (!fSslCertif.empty() && (fHttpsPort.length()==0)) fHttpsPort = "443";
+   if (!fSslCertif.empty() && fHttpsPort.empty()) fHttpsPort = "443";
    if (fSslCertif.empty()) fHttpsPort.clear();
 
    memset(&fCallbacks, 0, sizeof(fCallbacks));

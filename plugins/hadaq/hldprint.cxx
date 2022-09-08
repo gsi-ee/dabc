@@ -231,12 +231,12 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
       if (n < BUBBLE_SIZE-1) data = data | ((bubble[n+1] & 0xFFFF) << 16); // use word to recognize bubble
 
       // this is error - first bit always 1
-      if ((n==0) && ((data & 1) == 0)) { return -1; }
+      if ((n == 0) && ((data & 1) == 0)) { return -1; }
 
       for (unsigned b=0;b<16;b++) {
          if ((data & 1) != last) {
             if (last==1) {
-               if (p1==0) p1 = pos; // take first change from 1 to 0
+               if (p1 == 0) p1 = pos; // take first change from 1 to 0
             } else {
                p2 = pos; // use last change from 0 to 1
             }
@@ -279,11 +279,11 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
    if (nflip == 2) return 0; // both are ok
 
-   if ((nflip == 4) && (b1>0) && (b2==0)) { p1 = b1; return 0x10; } // bubble in the begin
+   if ((nflip == 4) && (b1 > 0) && (b2 == 0)) { p1 = b1; return 0x10; } // bubble in the begin
 
-   if ((nflip == 4) && (b1==0) && (b2>0)) { p2 = b2; return 0x01; } // bubble at the end
+   if ((nflip == 4) && (b1 == 0) && (b2 > 0)) { p2 = b2; return 0x01; } // bubble at the end
 
-   if ((nflip == 6) && (b1>0) && (b2>0)) { p1 = b1; p2 = b2; return 0x11; } // bubble on both side
+   if ((nflip == 6) && (b1 > 0) && (b2 > 0)) { p1 = b1; p2 = b2; return 0x11; } // bubble on both side
 
    // up to here was simple errors, now we should do more complex analysis
 
@@ -308,7 +308,7 @@ void PrintBubble(unsigned* bubble, unsigned len = 0) {
    // print in original order, time from right to left
    // for (unsigned d=BUBBLE_SIZE;d>0;d--) printf("%04x",bubble[d-1]);
 
-   if (len==0) len = BUBBLE_SIZE;
+   if (len == 0) len = BUBBLE_SIZE;
    // print in reverse order, time from left to right
    for (unsigned d=0;d<len;d++) {
       unsigned origin = bubble[d], swap = 0;
@@ -348,9 +348,9 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
    if (ix>=sz) return false;
-   if ((len==0) || (ix + len > sz)) len = sz - ix;
+   if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
-   if (prefix==0) return false;
+   if (prefix == 0) return false;
 
    unsigned lastch = 0xFFFF;
    unsigned bubble[190];
@@ -378,14 +378,17 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
                if ((chk & 0xF0) == 0x10) left--;
                if ((chk & 0x0F) == 0x01) right++;
 
-               if (chk==0) printf(" norm"); else
-               if (chk==0x22) {
-                  printf(" corr "); PrintBubbleBinary(bubble, left, right);
-               } else
-               if (((chk & 0xF0) < 0x20) && ((chk & 0x0F) < 0x02)) {
-                  printf(" bubb "); PrintBubbleBinary(bubble, left, right);
+               if (chk == 0)
+                  printf(" norm");
+               else if (chk == 0x22) {
+                  printf(" corr ");
+                  PrintBubbleBinary(bubble, left, right);
+               } else if (((chk & 0xF0) < 0x20) && ((chk & 0x0F) < 0x02)) {
+                  printf(" bubb ");
+                  PrintBubbleBinary(bubble, left, right);
                } else {
-                  printf(" mixe "); PrintBubbleBinary(bubble, left, right);
+                  printf(" mixe ");
+                  PrintBubbleBinary(bubble, left, right);
                }
 
             } else {
@@ -451,7 +454,7 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
 
    if (ix >= sz) return;
    // here when len was 0 - rest of subevent was printed
-   if ((len==0) || (ix + len > sz)) len = sz - ix;
+   if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
    unsigned wlen = 2;
    if (sz>99) wlen = 3; else
@@ -628,7 +631,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
 
    // here when len was 0 - rest of subevent was printed
-   if ((len==0) || (ix + len > sz)) len = sz - ix;
+   if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
    unsigned wlen = 2;
    if (sz>99) wlen = 3; else
@@ -674,7 +677,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          bool israw = (msg & tdckind_Mask) == tdckind_Calibr;
          if (israw) {
             channel = (msg >> 22) & 0x7F;
-            if (bubble_len==0) { bubble_eix = bubble_ix = ix; bubble_ch = channel; }
+            if (bubble_len == 0) { bubble_eix = bubble_ix = ix; bubble_ch = channel; }
             if (bubble_ch == channel) { bubble[bubble_len++] = msg & 0xFFFF; bubble_eix = ix; }
          }
          if ((bubble_len >= 100) || (cnt==len-1) || (channel!=bubble_ch) || (!israw && (bubble_len > 0))) {
@@ -833,7 +836,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                printf("%s %s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
                       sbeg, ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
                       channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
-            if ((channel==0) && (ch0tm==0)) ch0tm = tm;
+            if ((channel == 0) && (ch0tm == 0)) ch0tm = tm;
             break;
          default:
             if (prefix > 0) printf("%s undefined\n", sbeg);
@@ -842,7 +845,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 
    if (len < 2) { if (nheader!=1) errmask |= tdcerr_NoData; } else
-   if (!haschannel0 && (ndebug==0) && (nbubble==0)) errmask |= tdcerr_MissCh0;
+   if (!haschannel0 && (ndebug == 0) && (nbubble == 0)) errmask |= tdcerr_MissCh0;
 
    for (unsigned n=1;n<NumCh;n++)
       if ((num_leading[n] > 0) && (num_trailing[n] > 0))
@@ -858,8 +861,8 @@ void PrintCtsData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
-   if ((ix>=sz) || (len==0)) return;
-   if ((len==0) || (ix + len > sz)) len = sz - ix;
+   if ((ix >= sz) || (len == 0)) return;
+   if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
    unsigned data = sub->Data(ix++); len--;
    unsigned trigtype = (data & 0xFFFF);
@@ -910,12 +913,12 @@ void PrintCtsData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 
    printf("%*sExternal trigger flag: 0x%x ", prefix, "", nExtTrigFlag);
-   if(nExtTrigFlag==0x1) {
+   if(nExtTrigFlag == 0x1) {
       data = sub->Data(ix++); len--;
       unsigned fTrigSyncId = (data & 0xFFFFFF);
       unsigned fTrigSyncIdStatus = data >> 24; // untested
       printf("MBS VULOM syncid 0x%06x status 0x%02x\n", fTrigSyncId, fTrigSyncIdStatus);
-   } else if(nExtTrigFlag==0x2) {
+   } else if(nExtTrigFlag == 0x2) {
       // ETM sends four words, is probably a Mainz A2 recv
       data = sub->Data(ix++); len--;
       unsigned fTrigSyncId = data; // full 32bits is trigger number
@@ -927,7 +930,7 @@ void PrintCtsData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       len -= 2;
 
       printf("MAINZ A2 recv syncid 0x%08x status 0x%08x\n", fTrigSyncId, fTrigSyncIdStatus);
-   } else if(nExtTrigFlag==0x0) {
+   } else if(nExtTrigFlag == 0x0) {
 
       printf("SYNC ");
 
@@ -965,16 +968,17 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
-   if ((ix>=sz) || (len==0)) return;
-   if ((len==0) || (ix + len > sz)) len = sz - ix;
+   if ((ix >= sz) || (len == 0)) return;
+   if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
    unsigned wlen = 2;
    if (sz>99) wlen = 3; else
    if (sz>999) wlen = 4;
 
-   for (unsigned cnt=0;cnt<len;cnt++,ix++) {
+   for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
       unsigned msg = sub->Data(ix);
-      if (prefix>0) printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
+      if (prefix > 0)
+         printf("%*s[%*u] %08x  ", prefix, "", wlen, ix, msg);
       printf("\n");
    }
 }
@@ -1059,55 +1063,55 @@ int main(int argc, char* argv[])
 
    int n = 1;
    while (++n < argc) {
-      if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
-      if (strcmp(argv[n],"-all")==0) { number = 0; } else
-      if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
-      if ((strcmp(argv[n],"-event")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_eventid); dofind = true; } else
-      if ((strcmp(argv[n],"-find")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_trigid); dofind = true; } else
-      if ((strcmp(argv[n],"-cts")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.emplace_back(ctsid); } else
-      if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.emplace_back(tdcmask); } else
-      if ((strcmp(argv[n],"-new")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); newtdcs.emplace_back(tdcmask); } else
-      if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
-      if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
-      if ((strcmp(argv[n],"-onlych")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &onlych); } else
-      if ((strcmp(argv[n],"-onlynew")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlynew); } else
-      if ((strcmp(argv[n],"-skipintdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc); } else
-      if ((strcmp(argv[n],"-fine-min")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
-      if ((strcmp(argv[n],"-fine-max")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
-      if ((strcmp(argv[n],"-fine-min4")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min4); } else
-      if ((strcmp(argv[n],"-fine-max4")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max4); } else
-      if ((strcmp(argv[n],"-tot")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
-      if ((strcmp(argv[n],"-stretcher")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_shift); } else
-      if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
-      if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
-      if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
-      if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.emplace_back(hubmask); } else
-      if ((strcmp(argv[n],"-onlymonitor")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlymonitor); } else
-      if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
-      if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
-      if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
-      if ((strcmp(argv[n],"-mhz")==0) && (n+1<argc)) {
+      if ((strcmp(argv[n],"-num") == 0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
+      if (strcmp(argv[n],"-all") == 0) { number = 0; } else
+      if ((strcmp(argv[n],"-skip") == 0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
+      if ((strcmp(argv[n],"-event") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_eventid); dofind = true; } else
+      if ((strcmp(argv[n],"-find") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_trigid); dofind = true; } else
+      if ((strcmp(argv[n],"-cts") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.emplace_back(ctsid); } else
+      if ((strcmp(argv[n],"-tdc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.emplace_back(tdcmask); } else
+      if ((strcmp(argv[n],"-new") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); newtdcs.emplace_back(tdcmask); } else
+      if ((strcmp(argv[n],"-range") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
+      if ((strcmp(argv[n],"-onlytdc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
+      if ((strcmp(argv[n],"-onlych") == 0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &onlych); } else
+      if ((strcmp(argv[n],"-onlynew") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlynew); } else
+      if ((strcmp(argv[n],"-skipintdc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc); } else
+      if ((strcmp(argv[n],"-fine-min") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
+      if ((strcmp(argv[n],"-fine-max") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
+      if ((strcmp(argv[n],"-fine-min4") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min4); } else
+      if ((strcmp(argv[n],"-fine-max4") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max4); } else
+      if ((strcmp(argv[n],"-tot") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
+      if ((strcmp(argv[n],"-stretcher") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_shift); } else
+      if ((strcmp(argv[n],"-onlyraw") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
+      if ((strcmp(argv[n],"-adc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
+      if ((strcmp(argv[n],"-fullid") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
+      if ((strcmp(argv[n],"-hub") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.emplace_back(hubmask); } else
+      if ((strcmp(argv[n],"-onlymonitor") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlymonitor); } else
+      if ((strcmp(argv[n],"-tmout") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if ((strcmp(argv[n],"-maxage") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
+      if ((strcmp(argv[n],"-delay") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
+      if ((strcmp(argv[n],"-mhz") == 0) && (n+1<argc)) {
          dabc::str_to_double(argv[++n], &mhz);
          use_400mhz = true; coarse_tmlen = 1000./mhz; fine_min = 0x5; fine_max = 0xc0;
       } else
-      if (strcmp(argv[n],"-bubble")==0) { bubble_mode = true; } else
-      if (strcmp(argv[n],"-bubb18")==0) { bubble_mode = true; BUBBLE_SIZE = 18; } else
-      if (strcmp(argv[n],"-bubb19")==0) { bubble_mode = true; BUBBLE_SIZE = 19; } else
-      if (strcmp(argv[n],"-onlyerr")==0) { only_errors = true; } else
-      if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
-      if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
-      if (strcmp(argv[n],"-auto")==0) { autoid = true; printsub = true; } else
-      if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
-      if (strcmp(argv[n],"-minsz")==0) { dominsz = true; } else
-      if (strcmp(argv[n],"-maxsz")==0) { domaxsz = true; } else
-      if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
-      if (strcmp(argv[n],"-bw")==0) { use_colors = false; } else
-      if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
-      if (strcmp(argv[n],"-ignorecalibr")==0) { use_calibr = false; } else
-      if (strcmp(argv[n],"-340")==0) { use_400mhz = true; coarse_tmlen = 1000./340.; fine_min = 0x5; fine_max = 0xc0; } else
-      if (strcmp(argv[n],"-400")==0) { use_400mhz = true; coarse_tmlen = 1000./400.; fine_min = 0x5; fine_max = 0xc0; } else
-      if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
-      if (strcmp(argv[n],"-again")==0) {
+      if (strcmp(argv[n],"-bubble") == 0) { bubble_mode = true; } else
+      if (strcmp(argv[n],"-bubb18") == 0) { bubble_mode = true; BUBBLE_SIZE = 18; } else
+      if (strcmp(argv[n],"-bubb19") == 0) { bubble_mode = true; BUBBLE_SIZE = 19; } else
+      if (strcmp(argv[n],"-onlyerr") == 0) { only_errors = true; } else
+      if (strcmp(argv[n],"-raw") == 0) { printraw = true; } else
+      if (strcmp(argv[n],"-sub") == 0) { printsub = true; } else
+      if (strcmp(argv[n],"-auto") == 0) { autoid = true; printsub = true; } else
+      if (strcmp(argv[n],"-stat") == 0) { dostat = true; } else
+      if (strcmp(argv[n],"-minsz") == 0) { dominsz = true; } else
+      if (strcmp(argv[n],"-maxsz") == 0) { domaxsz = true; } else
+      if (strcmp(argv[n],"-rate") == 0) { showrate = true; reconnect = true; } else
+      if (strcmp(argv[n],"-bw") == 0) { use_colors = false; } else
+      if (strcmp(argv[n],"-sub") == 0) { printsub = true; } else
+      if (strcmp(argv[n],"-ignorecalibr") == 0) { use_calibr = false; } else
+      if (strcmp(argv[n],"-340") == 0) { use_400mhz = true; coarse_tmlen = 1000./340.; fine_min = 0x5; fine_max = 0xc0; } else
+      if (strcmp(argv[n],"-400") == 0) { use_400mhz = true; coarse_tmlen = 1000./400.; fine_min = 0x5; fine_max = 0xc0; } else
+      if ((strcmp(argv[n],"-help") == 0) || (strcmp(argv[n],"?") == 0)) return usage(); else
+      if (strcmp(argv[n],"-again") == 0) {
          if ((n+1 < argc) && (argv[n+1][0] != '-')) dabc::str_to_lint(argv[++n], &nagain);
                                                else nagain++;
       } else
@@ -1254,9 +1258,9 @@ int main(int argc, char* argv[])
 
       printcnt++;
 
-      bool print_header(false);
+      bool print_header = false;
 
-      if (!showrate && !dostat && !only_errors && (onlymonitor==0)) {
+      if (!showrate && !dostat && !only_errors && (onlymonitor == 0)) {
          print_header = true;
          evnt->Dump();
       }
@@ -1266,7 +1270,7 @@ int main(int argc, char* argv[])
       hadaq::RawSubevent* sub = nullptr;
       while ((sub = evnt->NextSubevent(sub)) != nullptr) {
          bool print_sub_header(false);
-         if ((onlytdc==0) && (onlynew==0) && (onlyraw==0) && (onlymonitor==0) && !showrate && !dostat && !only_errors) {
+         if ((onlytdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
          }
@@ -1312,7 +1316,7 @@ int main(int argc, char* argv[])
             }
 
             bool as_raw = false, as_cts = false, as_tdc = false, as_new = false, as_adc = false,
-                 print_subsubhdr = (onlytdc==0) && (onlynew==0) && (onlyraw==0) && !only_errors;
+                 print_subsubhdr = (onlytdc == 0) && (onlynew == 0) && (onlyraw == 0) && !only_errors;
 
             if (maxhublen > 0) {
 
@@ -1368,7 +1372,7 @@ int main(int argc, char* argv[])
                   as_raw = true;
                   print_subsubhdr = true;
                } else if (printraw) {
-                  as_raw = (onlytdc==0) && (onlynew==0) && (onlyraw==0);
+                  as_raw = (onlytdc == 0) && (onlynew == 0) && (onlyraw == 0);
                }
             }
 
@@ -1381,7 +1385,7 @@ int main(int argc, char* argv[])
                   // only check data without printing
                   if (as_tdc) PrintTdcData(sub, ix, datalen, 0, errmask);
                   // no errors - no print
-                  if (errmask==0) { ix+=datalen; continue; }
+                  if (errmask == 0) { ix+=datalen; continue; }
 
                   print_subsubhdr = true;
                   errmask = 0;
@@ -1465,7 +1469,7 @@ int main(int argc, char* argv[])
          }
       }
 
-      if ((number>0) && (printcnt>=number)) break;
+      if ((number > 0) && (printcnt>=number)) break;
    }
 
    if (showrate) {

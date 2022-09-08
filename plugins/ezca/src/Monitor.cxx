@@ -161,7 +161,7 @@ unsigned ezca::Monitor::GetRecRawSize()
 
 bool ezca::Monitor::DoEpicsReadout()
 {
-   if ((fLongRecords.size()==0) && (fDoubleRecords.size()==0)) return false;
+   if ((fLongRecords.size() == 0) && (fDoubleRecords.size() == 0)) return false;
 
    dabc::TimeStamp tm = dabc::Now();
 
@@ -219,7 +219,7 @@ bool ezca::Monitor::DoEpicsReadout()
 int ezca::Monitor::CA_GetLong(const std::string &name, long& val)
 {
    int rev = ezcaGet((char*) name.c_str(), ezcaLong, 1, &val);
-   if(rev!=EZCA_OK)
+   if(rev != EZCA_OK)
       EOUT("%s", CA_ErrorString().c_str());
    else
       DOUT3("EpicsInput::CA_GetLong(%s) = %d",name.c_str(),val);
@@ -228,8 +228,8 @@ int ezca::Monitor::CA_GetLong(const std::string &name, long& val)
 
 int ezca::Monitor::CA_GetDouble(const std::string &name, double& val)
 {
-   int rev=ezcaGet((char*) name.c_str(), ezcaDouble, 1, &val);
-   if(rev!=EZCA_OK)
+   int rev = ezcaGet((char*) name.c_str(), ezcaDouble, 1, &val);
+   if(rev != EZCA_OK)
       EOUT("%s", CA_ErrorString().c_str());
    else
       DOUT3("EpicsInput::CA_GetDouble(%s) = %f",name.c_str(),val);

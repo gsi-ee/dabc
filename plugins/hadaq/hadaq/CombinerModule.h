@@ -131,7 +131,7 @@ namespace hadaq {
             bool first = true;
             cnt -= RingSize;
             for (int n=0;n<RingSize;n++) {
-               if (first && (fTrigNumRing[cnt]==0) && (n!=RingSize-1)) {
+               if (first && (fTrigNumRing[cnt] == 0) && (n != RingSize-1)) {
                   // ignore 0 in the beginning
                } else if (first) {
                   sbuf.append(dabc::format(" 0x%06x",(unsigned)fTrigNumRing[cnt]));

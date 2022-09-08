@@ -46,7 +46,7 @@ int main(int numc, char* args[])
       } else
       if (strcmp(arg,"-number") == 0) {
          unsigned res = cfg.NumNodes();
-         if (res==0) return 5;
+         if (res == 0) return 5;
          std::cout << res << std::endl;
          std::cout.flush();
       } else

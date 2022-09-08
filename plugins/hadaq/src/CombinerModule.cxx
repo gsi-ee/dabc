@@ -736,7 +736,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       if (tryresort && (cfg.fLastTrigNr!=0xffffffff)) {
          uint32_t trignr = iter.subevnt()->GetTrigNr();
-         if (trignr==0xffffffff) continue; // this is processed trigger, exclude it
+         if (trignr == 0xffffffff) continue; // this is processed trigger, exclude it
 
          int diff = CalcTrigNumDiff(cfg.fLastTrigNr, (trignr >> 8) & fTriggerRangeMask);
 
@@ -862,7 +862,7 @@ int hadaq::CombinerModule::DestinationPort(uint32_t trignr)
 
 bool hadaq::CombinerModule::CheckDestination(uint32_t trignr)
 {
-   if (!fBNETsend || (fLastTrigNr==0xffffffff)) return true;
+   if (!fBNETsend || (fLastTrigNr == 0xffffffff)) return true;
 
    return DestinationPort(fLastTrigNr) == DestinationPort(trignr);
 }
@@ -1383,7 +1383,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
    } else if (cmd.IsName("BnetCalibrControl")) {
 
-      if (!fBNETsend || fIsTerminating || (NumInputs()==0))
+      if (!fBNETsend || fIsTerminating || (NumInputs() == 0))
          return dabc::cmd_true;
 
       if (!fBnetCalibrCmd.null()) {
@@ -1422,7 +1422,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_postponed;
    } else if (cmd.IsName("BnetCalibrRefresh")) {
 
-      if (!fBNETsend || fIsTerminating || (NumInputs()==0))
+      if (!fBNETsend || fIsTerminating || (NumInputs() == 0))
          return dabc::cmd_true;
 
       if (!fBnetRefreshCmd.null()) {
@@ -1478,7 +1478,7 @@ void hadaq::CombinerModule::StoreRunInfoStart()
       the started RUN. The format: start <run_id> <filename> <date> <time>
       where "start" is a key word which defines START RUN info. -S.Y.
     */
-   if(!fRunToOracle || fRunNumber==0) return;
+   if(!fRunToOracle || fRunNumber == 0) return;
    time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
    char ltime[20];            /* local time */
    struct tm tm_res;
@@ -1500,13 +1500,13 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
       where "stop" is a key word which defines STOP RUN info. -S.Y.
     */
 
-   if(!fRunToOracle || fRunNumber==0) return; // suppress void output at beginning
+   if(!fRunToOracle || fRunNumber == 0) return; // suppress void output at beginning
    // JAM we do not use our own time, but time of next run given by epics master
    // otherwise mismatch between run start time that comes before run stop time!
    // note that this problem also occured with old EBs
    // only exception: when eventbuilder is discarded we use termination time!
    time_t t;
-   if(onexit || (newrunid==0))
+   if(onexit || (newrunid == 0))
       t = time(nullptr);
    else
       t = newrunid + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
@@ -1618,7 +1618,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       std::string state = "File";
       double quality = 0.98;
       if ((Par(fEventRateName).Value().AsDouble() == 0) &&  (quality > 0.55)) { state = "NoData"; quality = 0.55; }
-      if ((runid==0) && runname.empty() && (quality > 0.5)) { state = "NoFile"; quality = 0.5; }
+      if ((runid == 0) && runname.empty() && (quality > 0.5)) { state = "NoFile"; quality = 0.5; }
 
       fWorkerHierarchy.SetField("state", state);
       fWorkerHierarchy.SetField("quality", quality);

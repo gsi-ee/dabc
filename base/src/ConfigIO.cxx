@@ -115,7 +115,7 @@ dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const 
    if (!node || !name || (strlen(name) == 0)) return node;
 
    const char* pos = strchr(name, '/');
-   if (pos==0) return fCfg->FindChild(node, name);
+   if (!pos) return fCfg->FindChild(node, name);
 
    std::string subname(name, pos-name);
    return FindSubItem(fCfg->FindChild(node, subname.c_str()), pos+1);

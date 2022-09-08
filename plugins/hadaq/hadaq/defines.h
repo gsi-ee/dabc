@@ -185,7 +185,7 @@ namespace hadaq {
          {
             uint32_t hedsize = GetSize();
             uint32_t rest = hedsize % 8;
-            return (rest==0) ? hedsize : (hedsize + 8 - rest);
+            return (rest == 0) ? hedsize : (hedsize + 8 - rest);
          }
 
          void SetSize(uint32_t bytes) { SetValue(&tuSize, bytes); }

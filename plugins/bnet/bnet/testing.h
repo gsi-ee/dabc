@@ -42,7 +42,8 @@ namespace bnet {
                fFirstEvent = false;
             else {
                unsigned sz = EventSize();
-               if ((sz==0) || (sz<=fPtr.fullsize())) return false;
+               if ((sz == 0) || (sz <= fPtr.fullsize()))
+                  return false;
                fPtr.shift(sz);
             }
             return EventSize() > 0;

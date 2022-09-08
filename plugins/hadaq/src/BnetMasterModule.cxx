@@ -280,7 +280,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       if (fCtrlCnt == 0) {
          fCtrlStateQuality = 0.;
          fCtrlStateName = "NoNodes";
-      } else if (binp.size()==0) {
+      } else if (binp.size() == 0) {
          fCtrlStateQuality = 0.;
          fCtrlStateName = "NoInputs";
       } else if (bbuild.size() == 0) {
@@ -417,7 +417,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          } else {
             int nbuilders = item.GetField("nbuilders").AsInt();
-            if (fCtrlBldNodesExpect==0) fCtrlBldNodesExpect = nbuilders;
+            if (fCtrlBldNodesExpect == 0) fCtrlBldNodesExpect = nbuilders;
             if ((fCtrlBldNodesExpect != nbuilders) && (fCtrlStateQuality > 0)) {
                fCtrlStateName = "BuildersMismatch";
                fCtrlStateQuality = 0;

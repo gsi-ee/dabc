@@ -298,9 +298,9 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
          // only if file opened for writing, write rest buffers
          if (fFile.isWriting())
-            for (unsigned n=0;n<buf.NumSegments();n++) {
+            for (unsigned n = 0; n < buf.NumSegments(); n++) {
 
-               if (payload==0) break;
+               if (payload == 0) break;
 
                unsigned write_size = buf.SegmentSize(n);
                if (write_size > payload) write_size = payload;
@@ -314,7 +314,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
                      write_size, numevents, n);
 
                payload -= write_size;
-            }// for
+            } // for
       }
 
    } else {

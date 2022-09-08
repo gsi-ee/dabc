@@ -72,7 +72,8 @@ TEpicsProc::TEpicsProc(const char* name) : TGo4EventProcessor(name)
 
 const char* TEpicsProc::GetUpdateTimeString()
 {
-   if(fUTimeSeconds==0) return "EPICS time not available";
+   if(fUTimeSeconds == 0) 
+      return "EPICS time not available";
 
    UInt_t timeseconds=fUTimeSeconds;
    UInt_t timemicros=0;
@@ -86,7 +87,7 @@ const char* TEpicsProc::GetUpdateTimeString()
 Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
 {  // called by framework. We dont fill any output event here at all
 
-   if ((GetInputEvent()==0) || (GetInputEvent()->IsA() != TGo4MbsEvent::Class())) {
+   if (!GetInputEvent() || (GetInputEvent()->IsA() != TGo4MbsEvent::Class())) {
       TGo4Log::Error("TEpicsProc: no input MBS event found!");
       return kFALSE;
    }
@@ -211,7 +212,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
 
 TEpicsProc::VariableHist* TEpicsProc::FindVariable(const char* name)
 {
-   if (!name || (strlen(name)==0)) return nullptr;
+   if (!name || (strlen(name) == 0)) return nullptr;
    for (unsigned n=0;n<all_hists.size();n++)
       if (all_hists[n].IsName(name)) return & all_hists[n];
 
@@ -220,7 +221,7 @@ TEpicsProc::VariableHist* TEpicsProc::FindVariable(const char* name)
 
 TEpicsProc::VariableHist* TEpicsProc::CreateHist(const char* varname)
 {
-   if (!varname || (strlen(varname)==0)) return nullptr;
+   if (!varname || (strlen(varname) == 0)) return nullptr;
 
    const char* dirname = "EPICS";
    Double_t range = CBM_EPIX_STATRANGE;

@@ -168,7 +168,7 @@ void dim::Monitor::ProcessTimerEvent(unsigned timer)
    if (!fDimBr) return;
 
    if (TimerName(timer) == "DimTimer")
-      if (fLastScan.Expired(10.) || (fDimInfos.size()==0) || fNeedDnsUpdate)
+      if (fLastScan.Expired(10.) || (fDimInfos.size() == 0) || fNeedDnsUpdate)
          ScanDimServices();
 
    mbs::MonitorSlowControl::ProcessTimerEvent(timer);
@@ -234,7 +234,7 @@ void dim::Monitor::infoHandler()
       return;
    }
 
-   if (strcmp(info->getName(),"DIS_DNS/SERVER_LIST")==0) {
+   if (strcmp(info->getName(),"DIS_DNS/SERVER_LIST") == 0) {
       DOUT3("Get DIS_DNS/SERVER_LIST");
       fNeedDnsUpdate = true;
    }
@@ -243,36 +243,36 @@ void dim::Monitor::infoHandler()
    bool changed = true;
 
    iter->second.fKind = 0;
-   if (strcmp(info->getFormat(),"I")==0) {
+   if (strcmp(info->getFormat(),"I") == 0) {
       item.SetField("value", info->getInt());
       item.SetField(dabc::prop_kind,"rate");
       iter->second.fKind = 1;
       iter->second.fLong = info->getInt();
    } else
-   if (strcmp(info->getFormat(),"F")==0) {
+   if (strcmp(info->getFormat(),"F") == 0) {
       item.SetField("value", info->getFloat());
       item.SetField(dabc::prop_kind,"rate");
       iter->second.fKind = 2;
       iter->second.fDouble = info->getFloat();
    } else
-   if (strcmp(info->getFormat(),"D")==0) {
+   if (strcmp(info->getFormat(),"D") == 0) {
       item.SetField("value", info->getDouble());
       item.SetField(dabc::prop_kind,"rate");
       iter->second.fKind = 2;
       iter->second.fDouble = info->getDouble();
    } else
-   if (strcmp(info->getFormat(),"C")==0) {
+   if (strcmp(info->getFormat(),"C") == 0) {
       item.SetField("value", info->getString());
       item.SetField(dabc::prop_kind,"log");
    } else
-   if ((strcmp(info->getFormat(),"F:1;I:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16")==0) && (strncmp(info->getName(),"DABC/",5)==0)) {
+   if ((strcmp(info->getFormat(),"F:1;I:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16") == 0) && (strncmp(info->getName(),"DABC/",5) == 0)) {
       // old DABC rate record
       item.SetField("value", info->getFloat());
       item.SetField(dabc::prop_kind,"rate");
       iter->second.fKind = 2;
       iter->second.fDouble = info->getFloat();
    } else
-   if ((strcmp(info->getFormat(),"I:1;C:16;C:128")==0) && (strncmp(info->getName(),"DABC/",5)==0)) {
+   if ((strcmp(info->getFormat(),"I:1;C:16;C:128") == 0) && (strncmp(info->getName(),"DABC/",5) == 0)) {
       // old DABC info record
       item.SetField("value", (const char*) info->getData() + sizeof(int) + 16);
       item.SetField(dabc::prop_kind,"log");
@@ -293,7 +293,7 @@ void dim::Monitor::infoHandler()
          }
          if (*fmt==';') fmt++;
 
-         if (size<=0) break;
+         if (size <= 0) break;
 
          // DOUT0("Process item %c size %d", kind, size);
 
