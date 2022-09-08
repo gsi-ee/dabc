@@ -41,11 +41,12 @@ void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
       is.read(buf, length);
       if (!is) {
          std::free(buf);
-         buf = nullptr; length = 0;
+         buf = nullptr;
+         length = 0;
       }
    }
 
-   if (buf==0) {
+   if (!buf) {
       FCGX_FPrintF(request->out,
             "Status: 404 Not Found\r\n"
             "Content-Length: 0\r\n" // Always set Content-Length

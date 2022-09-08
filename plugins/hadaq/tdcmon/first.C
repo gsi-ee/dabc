@@ -92,11 +92,11 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
   // return;
    printf("Called after all sub-components are created\n");
 
-   if (hld==0) return;
+   if (!hld) return;
 
    for (unsigned k=0;k<hld->NumberOfTRB();k++) {
       hadaq::TrbProcessor* trb = hld->GetTRB(k);
-      if (trb==0) continue;
+      if (!trb) continue;
       //printf("Configure %s!\n", trb->GetName());
       trb->SetPrintErrors(10);
       // trb->SetPrintErrors(1000000000L);
@@ -104,7 +104,7 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 
    for (unsigned k=0;k<hld->NumberOfTDC();k++) {
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);
-      if (tdc==0) continue;
+      if (!tdc) continue;
 
       //if ((tdc->GetID() >= 0x5000) && (tdc->GetID() < 0x6200))
          tdc->SetTotUpperLimit(200); // 2000

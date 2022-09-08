@@ -172,7 +172,7 @@ void http::Server::AddLocation(const std::string &filepath,
 
 bool http::Server::VerifyFilePath(const char* fname)
 {
-   if ((fname==0) || (*fname==0)) return false;
+   if (!fname || (*fname==0)) return false;
 
    int level = 0;
 
@@ -180,7 +180,7 @@ bool http::Server::VerifyFilePath(const char* fname)
 
       // find next slash or backslash
       const char* next = strpbrk(fname, "/\\");
-      if (next==0) return true;
+      if (!next) return true;
 
       // most important - change to parent dir
       if ((next == fname + 2) && (*fname == '.') && (*(fname+1) == '.')) {
@@ -196,7 +196,7 @@ bool http::Server::VerifyFilePath(const char* fname)
       }
 
       // ignore slash at the front
-      if (next==fname) {
+      if (next == fname) {
          fname ++;
          continue;
       }
@@ -210,7 +210,7 @@ bool http::Server::VerifyFilePath(const char* fname)
 
 bool http::Server::IsFileRequested(const char* uri, std::string& res)
 {
-   if ((uri==0) || (strlen(uri)==0)) return false;
+   if (!uri || (strlen(uri) == 0)) return false;
 
    std::string fname = uri;
 
@@ -231,7 +231,7 @@ void http::Server::ExtractPathAndFile(const char* uri, std::string& pathname, st
 {
    pathname.clear();
    const char* rslash = strrchr(uri,'/');
-   if (rslash == 0) {
+   if (!rslash) {
       filename = uri;
    } else {
       pathname.append(uri, rslash - uri);
@@ -243,11 +243,12 @@ void http::Server::ExtractPathAndFile(const char* uri, std::string& pathname, st
 
 bool http::Server::IsAuthRequired(const char* uri)
 {
-   if (fDefaultAuth<0) return false;
+   if (fDefaultAuth < 0) return false;
 
    std::string pathname, fname;
 
-   if (IsFileRequested(uri, fname)) return fDefaultAuth > 0;
+   if (IsFileRequested(uri, fname))
+      return fDefaultAuth > 0;
 
    ExtractPathAndFile(uri, pathname, fname);
 
@@ -468,7 +469,7 @@ bool http::Server::Process(const char* uri, const char* _query,
       if (zipbuflen < 512) zipbuflen = 512;
       void* zipbuf = std::malloc(zipbuflen);
 
-      if (zipbuf==0) {
+      if (!zipbuf) {
          EOUT("Fail to allocate %lu bytes memory !!!", zipbuflen);
          return true;
       }

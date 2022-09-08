@@ -258,7 +258,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
 
       hadaq::TransportInfo *info = (hadaq::TransportInfo *) cfg.fInfo;
 
-      if (info==0) {
+      if (!info) {
          sbuf.append("  missing transport-info                             ");
          fCalibr[n].lastrecv = 0;
       } else {

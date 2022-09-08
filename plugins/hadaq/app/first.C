@@ -46,7 +46,7 @@ void first()
    for (int cnt=0;cnt<8;cnt++) {
 
       hadaq::TdcProcessor* tdc = hld->FindTDC(tdcmap[cnt]);
-      if (tdc==0) continue;
+      if (!tdc) continue;
 
       // specify reference channel
       tdc->SetRefChannel(3, 1, 0xffff, 2000,  -10., 10., true);

@@ -333,7 +333,7 @@ namespace hadaq {
 
             void CopyDataTo(void* buf, unsigned indx, unsigned datalen)
             {
-               if (buf==0) return;
+               if (!buf) return;
                while (datalen-- > 0) {
                   *((uint32_t*) buf) = Data(indx++);
                   buf = ((uint32_t*) buf) + 1;

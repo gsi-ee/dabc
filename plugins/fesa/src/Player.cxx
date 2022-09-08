@@ -258,7 +258,7 @@ double fesa::Player::doGet(const std::string &service, const std::string &field)
    double res = 0.;
 
    #ifdef WITH_FESA
-      if (fDevice==0) return 0.;
+      if (!fDevice) return 0.;
       try {
         rdaData context;
         rdaData* value = fDevice->get(service.c_str(), fCycles.c_str(), context);

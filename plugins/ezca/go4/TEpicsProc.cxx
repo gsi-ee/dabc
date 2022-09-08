@@ -179,7 +179,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
             input.getline(curbuf,256,'\0');
 
             VariableHist* hist = FindVariable(curbuf);
-            if (hist==0) hist = CreateHist(curbuf);
+            if (!hist) hist = CreateHist(curbuf);
 
             if (fVerbose)
                printf("Var:%s value %ld\n", curbuf, (long) fLongRecords[i]);
@@ -193,7 +193,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
             input.getline(curbuf,256,'\0');
 
             VariableHist* hist = FindVariable(curbuf);
-            if (hist==0) hist = CreateHist(curbuf);
+            if (!hist) hist = CreateHist(curbuf);
 
             if (fVerbose)
                printf("Var:%s value %f\n", curbuf, fDoubleRecords[i]);
@@ -249,8 +249,8 @@ TGraph* TEpicsProc::MakeTimeGraph(const TString& name, const TString& dir)
    TString fullname=dir+"/"+name;
    //cout <<"fullname "<<fullname << endl;
    TGraph* gr=dynamic_cast<TGraph*>(GetObject(fullname));
-   if(gr==0) {
-      gr=new TGraph();
+   if(!gr) {
+      gr = new TGraph();
       gr->SetName(name);
       gr->SetMarkerStyle(33);
       TCanvas* c1 = new TCanvas("c1","c1",3);
@@ -283,7 +283,7 @@ void TEpicsProc::UpdateTrending(TH1* histo, Double_t val, time_t time)
 
 void  TEpicsProc::IncTrending( TH1 * histo, Double_t value, bool forwards )
 {
-   if(histo==0) return;
+   if(!histo) return;
    int bins = histo->GetNbinsX();
    //bool forwards=true;
    int j = forwards ? bins : 0;
@@ -298,7 +298,7 @@ void  TEpicsProc::IncTrending( TH1 * histo, Double_t value, bool forwards )
 
 void TEpicsProc::UpdateHist(VariableHist* hst, double val, const char* varname)
 {
-   if ((varname==0) || (hst==0)) return;
+   if (!varname || !hst) return;
 
    hst->fStat->Fill(val);
    hst->fStat->SetTitle(Form("Statistics of %s at %s", varname, GetUpdateTimeString()));

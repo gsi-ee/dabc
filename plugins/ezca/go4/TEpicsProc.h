@@ -25,11 +25,11 @@ class TEpicsProc : public TGo4EventProcessor {
    protected:
 
       struct VariableHist {
-         TH1*    fTrend;
-         TH1*    fStat;
-         TGraph* fGraph;
-         VariableHist() : fTrend(0), fStat(0), fGraph(0) {}
-         bool Empty() const { return fGraph==0; }
+         TH1*    fTrend{nullptr};
+         TH1*    fStat{nullptr};
+         TGraph* fGraph{nullptr};
+         VariableHist() {}
+         bool Empty() const { return !fGraph; }
          bool IsName(const std::string &name) const { return fGraph ? name==fGraph->GetName() : false; }
       };
 
