@@ -33,7 +33,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
                                  ComplQueue* recv_cq, int recv_depth, int max_recv_sge) :
    fContext(ctx),
    fType(qp_type),
-   f_qp(0),
+   f_qp(nullptr),
    f_local_psn(0),
    f_remote_lid(0),
    f_remote_qpn(0),

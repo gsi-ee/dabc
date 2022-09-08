@@ -51,7 +51,7 @@ verbs::PoolRegistry::PoolRegistry(ContextRef ctx, dabc::MemoryPool* pool) :
    fPool(pool),
    fLastChangeCounter(0),
    f_nummr(0),
-   f_mr(0)
+   f_mr(nullptr)
 {
    DOUT4("Create registry for the POOL: %s numref %u", GetName(), NumReferences());
 }
@@ -162,9 +162,9 @@ void verbs::PoolRegistry::SyncMRStructure()
 verbs::Context::Context() :
    dabc::Object(nullptr, "VERBS"),
    fIbPort(0),
-   fContext(0),
-   fPD(0),
-   fOsm(0)
+   fContext(nullptr),
+   fPD(nullptr),
+   fOsm(nullptr)
 {
 }
 
@@ -193,18 +193,18 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
 
    struct ibv_device **dev_list = ibv_get_device_list(&num_of_hcas);
 
-   if ((dev_list==0) || (num_of_hcas<=0)) {
+   if (!dev_list || (num_of_hcas <= 0)) {
       EOUT("No verbs devices found");
       return false;
    }
 
    DOUT1( "Number of hcas %d", num_of_hcas);
 
-   struct ibv_device *selected_device = 0;
+   struct ibv_device *selected_device = nullptr;
    uint64_t gid;
    bool res = false;
 
-   if (devicename==0) {
+   if (!devicename) {
       selected_device = dev_list[0];
       fIbPort = 1;
       devicename = ibv_get_device_name(selected_device);
@@ -219,7 +219,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
       }
    }
 
-   if (selected_device==0) goto cleanup;
+   if (!selected_device) goto cleanup;
 
    fContext = ibv_open_device(selected_device);
    if (fContext==0) {
@@ -236,7 +236,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
    DOUT1( "Open device: %s  gid: %016lx",  devicename, be64toh(gid));
 
    fPD = ibv_alloc_pd(fContext);
-   if (fPD==0) {
+   if (!fPD) {
       EOUT("Couldn't allocate protection domain (PD)");
       goto cleanup;
    }
@@ -275,7 +275,7 @@ bool verbs::Context::CloseVerbs()
       res = false;
    }
 
-   fPD = 0;
+   fPD = nullptr;
    fContext = nullptr;
 
 #ifndef  __NO_MULTICAST__

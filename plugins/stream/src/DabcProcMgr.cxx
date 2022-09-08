@@ -424,7 +424,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
          double left = item.GetField("left").AsDouble();
          double right = item.GetField("right").AsDouble();
 
-         double sum0(0), sum1(0), sum2(0);
+         double sum0 = 0, sum1 = 0, sum2 = 0;
 
          for (int n=0;n<nbins;n++) {
             double x = left + (right-left)/nbins*(n+0.5);
@@ -432,7 +432,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
             sum1 += x*bins[n+4];
             sum2 += x*x*bins[n+4];
          }
-         double mean(0), rms(0);
+         double mean = 0, rms = 0;
          if (sum0>0) {
             mean = sum1/sum0;
             rms = sqrt(sum2/sum0 - mean*mean);

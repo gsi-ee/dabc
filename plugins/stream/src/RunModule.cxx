@@ -519,7 +519,7 @@ bool stream::RunModule::RedistributeBuffers()
 {
    while (CanRecv()) {
 
-      unsigned indx(0), max(0), min(10);
+      unsigned indx = 0, max = 0, min = 10;
       for (unsigned n = 0; n < NumOutputs(); n++) {
          unsigned cansend = NumCanSend(n);
          if (cansend > max) { max = cansend; indx = n; }

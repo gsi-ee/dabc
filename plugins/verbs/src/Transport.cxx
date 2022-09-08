@@ -28,7 +28,7 @@ verbs::VerbsNetworkInetrface::VerbsNetworkInetrface(verbs::ContextRef ctx, Queue
    NetworkInetrface(),
    fContext(ctx),
    fPoolReg(),
-   fHeadersPool(0),
+   fHeadersPool(nullptr),
    fSegmPerOper(2)
 {
 }
@@ -263,7 +263,6 @@ void verbs::VerbsNetworkInetrface::SubmitRecv(uint32_t recid)
 
    fQP->Post_Recv(&(f_rwr[recid]));
 }
-
 
 
 void verbs::VerbsNetworkInetrface::VerbsProcessSendCompl(uint32_t arg)

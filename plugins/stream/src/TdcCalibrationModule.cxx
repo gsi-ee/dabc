@@ -28,9 +28,9 @@
 
 stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
-   fProcMgr(0),
+   fProcMgr(nullptr),
    fOwnProcMgr(false),
-   fTrbProc(0),
+   fTrbProc(nullptr),
    fDummy(false),
    fReplace(true),
    fAutoCalibr(1000),

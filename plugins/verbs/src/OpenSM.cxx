@@ -84,7 +84,7 @@ void TOsm_query_callback(osmv_query_res_t * p_rec )
 
 verbs::OpenSM::OpenSM() :
    f_vendor(0),
-   f_log(0)
+   f_log(nullptr)
 {
    memset(&f_local_port, 0, sizeof(f_local_port));
    memset(&f_bind_handle, 0, sizeof(f_bind_handle));

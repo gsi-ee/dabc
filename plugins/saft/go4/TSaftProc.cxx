@@ -118,11 +118,9 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
       return kFALSE;
    }
 
-
-
    evnt->ResetIterator();
-   TGo4MbsSubEvent *psubevt(0);
-   while((psubevt = evnt->NextSubEvent()) != 0) { // loop over subevents
+   TGo4MbsSubEvent *psubevt = nullptr;
+   while((psubevt = evnt->NextSubEvent()) != nullptr) { // loop over subevents
 
       //if (psubevt->GetProcid() != SAFT_PROCID) return kFALSE;
      if (psubevt->GetFullId() != fPar->fSubeventID) return kFALSE;
@@ -133,8 +131,8 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
       Int_t* evtPaddedEnd = theEnd;
       Int_t* subEnd = theEnd;
       Int_t* subPaddedEnd = theEnd;
-      hadaq::RawEvent* hadevt=0;
-      hadaq::RawSubevent* hadsub =0;
+      hadaq::RawEvent* hadevt = nullptr;
+      hadaq::RawSubevent* hadsub = nullptr;
 
       if(fPar->fHadaqMode)
       {
@@ -155,9 +153,6 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
                 std::cout << std::endl;
             }
       }
-
-
-
 
       char buf[1024];
       saftdabc::Timing_Event theEvent;

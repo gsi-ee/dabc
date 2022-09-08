@@ -87,12 +87,12 @@ verbs::Thread::Thread(dabc::Reference parent, const std::string &name, dabc::Com
    fContext(ctx),
    fChannel(nullptr),
 #ifndef VERBS_USING_PIPE
-   fLoopBackQP(0),
-   fLoopBackPool(0),
+   fLoopBackQP(nullptr),
+   fLoopBackPool(nullptr),
    fLoopBackCnt(0),
    fTimeout(0),
 #endif
-   fMainCQ(0),
+   fMainCQ(nullptr),
    fWaitStatus(wsWorking),
    fWCSize(0),
    fWCs(nullptr),
@@ -100,7 +100,7 @@ verbs::Thread::Thread(dabc::Reference parent, const std::string &name, dabc::Com
    fCheckNewEvents(true)
 {
    fChannel = ibv_create_comp_channel(fContext.context());
-   if (fChannel==0) {
+   if (!fChannel) {
       EOUT("Cannot create completion channel - HALT");
       exit(143);
    }

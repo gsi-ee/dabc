@@ -223,8 +223,8 @@ int root::Monitor::ProcessGetBinary(THttpServer* serv, TRootSniffer* sniff, dabc
 
 #else
 
-   void* ptr(nullptr);
-   Long_t length(0);
+   void* ptr = nullptr;
+   Long_t length = 0;
    TString str;
 
    // use sniffer method to generate data

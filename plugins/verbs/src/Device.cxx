@@ -333,7 +333,7 @@ dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::R
          return nullptr;
       }
 
-//      QueuePair*  port_qp(0);
+//      QueuePair*  port_qp = nullptr;
 //      ThreadRef   thrd;
 //      if (CreatePortQP(thrdname.c_str(), port, IBV_QPT_UD, thrd, port_qp))
 //         return new Transport(fIbContext, port_cq, port_qp, portref, false, &multi_gid);
