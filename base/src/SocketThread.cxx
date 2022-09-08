@@ -340,14 +340,14 @@ void dabc::SocketIOAddon::SetSendAddr(const std::string &host, int port)
 
 void dabc::SocketIOAddon::AllocateSendIOV(unsigned size)
 {
-   if (fSendIOV!=0) delete [] fSendIOV;
+   if (fSendIOV) delete [] fSendIOV;
 
-   fSendIOV = 0;
+   fSendIOV = nullptr;
    fSendIOVSize = 0;
    fSendIOVFirst = 0;
    fSendIOVNumber = 0;
 
-   if (size<=0) return;
+   if (size <= 0) return;
 
    fSendIOVSize = size;
    fSendIOV = new struct iovec [size];
@@ -355,14 +355,14 @@ void dabc::SocketIOAddon::AllocateSendIOV(unsigned size)
 
 void dabc::SocketIOAddon::AllocateRecvIOV(unsigned size)
 {
-   if (fRecvIOV!=0) delete [] fRecvIOV;
+   if (fRecvIOV) delete [] fRecvIOV;
 
-   fRecvIOV = 0;
+   fRecvIOV = nullptr;
    fRecvIOVSize = 0;
    fRecvIOVFirst = 0;
    fRecvIOVNumber = 0;
 
-   if (size<=0) return;
+   if (size <= 0) return;
 
    fRecvIOVSize = size;
    fRecvIOV = new struct iovec [size];
@@ -438,7 +438,7 @@ bool dabc::SocketIOAddon::StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, s
 
    int indx = 0;
 
-   if ((hdr!=0) && (hdrsize>0)) {
+   if (hdr && (hdrsize > 0)) {
       fRecvIOV[indx].iov_base = hdr;
       fRecvIOV[indx].iov_len = hdrsize;
       indx++;
@@ -482,7 +482,7 @@ bool dabc::SocketIOAddon::StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf,
 
    int indx = 0;
 
-   if ((hdr!=0) && (hdrsize>0)) {
+   if (hdr && (hdrsize > 0)) {
       fRecvIOV[indx].iov_base = hdr;
       fRecvIOV[indx].iov_len = hdrsize;
       indx++;
@@ -524,7 +524,7 @@ bool dabc::SocketIOAddon::StartNetSend(void* hdr, unsigned hdrsize, const Buffer
 
    int indx = 0;
 
-   if ((hdr!=0) && (hdrsize>0)) {
+   if (hdr && (hdrsize > 0)) {
       fSendIOV[indx].iov_base = hdr;
       fSendIOV[indx].iov_len = hdrsize;
       indx++;
@@ -644,8 +644,8 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
                 res -= rec->iov_len;
                 fRecvIOVFirst++;
 
-                if (fRecvIOVFirst==fRecvIOVNumber) {
-                   if (res!=0) EOUT("Internal error - length after recvmsg() not zero");
+                if (fRecvIOVFirst == fRecvIOVNumber) {
+                   if (res != 0) EOUT("Internal error - length after recvmsg() not zero");
 
                    fRecvIOVFirst = 0;
                    fRecvIOVNumber = 0;
@@ -738,7 +738,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
                 fSendIOVFirst++;
 
                 if (fSendIOVFirst == fSendIOVNumber) {
-                   if (res!=0) EOUT("Internal error - length after sendmsg() not zero");
+                   if (res != 0) EOUT("Internal error - length after sendmsg() not zero");
 
                    fSendIOVFirst = 0;
                    fSendIOVNumber = 0;
@@ -901,7 +901,7 @@ dabc::SocketClientAddon::SocketClientAddon(const struct addrinfo* serv_addr, int
    fServAddr.ai_protocol = serv_addr->ai_protocol;
    fServAddr.ai_addrlen = serv_addr->ai_addrlen;
    fServAddr.ai_addr = nullptr;
-   if ((serv_addr->ai_addrlen>0) && (serv_addr->ai_addr!=0)) {
+   if ((serv_addr->ai_addrlen > 0) && serv_addr->ai_addr) {
        fServAddr.ai_addr = (sockaddr*) std::malloc(fServAddr.ai_addrlen);
        if (fServAddr.ai_addr)
           memcpy(fServAddr.ai_addr, serv_addr->ai_addr, fServAddr.ai_addrlen);
@@ -1117,8 +1117,8 @@ dabc::SocketThread::~SocketThread()
   DOUT3("~~~~~~~~~~~~~~ SOCKThread %s destructor with timeout %3.1fs", GetName(), GetStopTimeout());
   Stop(GetStopTimeout()); // JAM 6.7.2017 - try with larger timeout for ltsm
 
-   if (fPipe[0]!=0) { close(fPipe[0]);  fPipe[0] = 0; }
-   if (fPipe[1]!=0) { close(fPipe[1]);  fPipe[1] = 0; }
+   if (fPipe[0] != 0) { close(fPipe[0]);  fPipe[0] = 0; }
+   if (fPipe[1] != 0) { close(fPipe[1]);  fPipe[1] = 0; }
 
    if (f_ufds) {
       delete[] f_ufds;
@@ -1232,7 +1232,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
                                  serviceinfo, sizeof(serviceinfo),
                                  /*NI_NUMERICHOST | NI_NUMERICSERV */ NI_NOFQDN | NI_NUMERICSERV);
 
-            if (host.empty() && (ni == 0) && (strcmp(nameinfo,"0.0.0.0")!=0)) hostname = nameinfo;
+            if (host.empty() && (ni == 0) && (strcmp(nameinfo,"0.0.0.0") != 0)) hostname = nameinfo;
             if (dabc::SocketThread::SetNonBlockSocket(sockfd)) {
                addon = new SocketServerAddon(sockfd, hostname ? hostname : "localhost", serviceid, t);
                break;
@@ -1262,8 +1262,8 @@ int dabc::SocketThread::StartClient(const std::string &host, int nport, bool non
    hints.ai_family = AF_UNSPEC;
    hints.ai_socktype = SOCK_STREAM;
 
-   int sockfd(-1);
-   if (getaddrinfo(host.c_str(), service, &hints, &info)!=0) return sockfd;
+   int sockfd = -1;
+   if (getaddrinfo(host.c_str(), service, &hints, &info) != 0) return sockfd;
 
    for (struct addrinfo *t = info; t; t = t->ai_next) {
 
@@ -1691,9 +1691,9 @@ void dabc::SocketThread::WorkersSetChanged()
    for (unsigned indx=1;indx<fWorkers.size();indx++) {
       SocketAddon* addon = dynamic_cast<SocketAddon*> (fWorkers[indx]->addon);
 
-      f_recs[indx].use = addon!=0;
+      f_recs[indx].use = addon != nullptr;
 
-      if (addon!=0) {
+      if (addon) {
          fIsAnySocket = true;
 //         DOUT0("Socket %d doing input=%s output=%s", addon->Socket(), DBOOL(addon->IsDoingInput()), DBOOL(addon->IsDoingOutput()));
       }

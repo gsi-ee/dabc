@@ -186,7 +186,7 @@ unsigned dabc::MemoryPool::GetAlignment() const
 
 bool dabc::MemoryPool::_Allocate(BufferSize_t bufsize, unsigned number) throw()
 {
-   if (fMem!=0) return false;
+   if (fMem) return false;
 
    if (bufsize*number == 0) return false;
 
@@ -375,7 +375,7 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
    while (sum<size) {
       unsigned id = fMem->fFree.Pop();
 
-      if (fMem->fArr[id].refcnt!=0)
+      if (fMem->fArr[id].refcnt != 0)
          throw dabc::Exception(ex_Pool, "Buffer is not free even is declared so", ItemName());
 
       if (cnt>=res.GetObject()->fCapacity)

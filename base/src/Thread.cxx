@@ -457,7 +457,7 @@ void* dabc::Thread::MainLoop()
       } else
          ProcessNoneEvent();
 
-      if (fExplicitLoop!=0) RunExplicitLoop();
+      if (fExplicitLoop != 0) RunExplicitLoop();
    }
 
    DOUT3("*** Thrd:%s Leaving MainLoop", GetName());
@@ -783,7 +783,7 @@ bool dabc::Thread::SetExplicitLoop(Worker* proc)
       exit(113);
    }
 
-   if (fExplicitLoop!=0)
+   if (fExplicitLoop != 0)
       EOUT("Explicit loop is already set");
    else
       fExplicitLoop = proc->fWorkerId;

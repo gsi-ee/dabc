@@ -113,7 +113,7 @@ void dabc::ModuleAsync::ActivateInput(unsigned port)
 {
    InputPort* inp = Input(port);
 
-   if ((inp!=0) && IsRunning() && inp->CanRecv())
+   if (inp && IsRunning() && inp->CanRecv())
       FireEvent(evntInputReinj, inp->ItemId());
 }
 
@@ -138,7 +138,7 @@ void dabc::ModuleAsync::ActivateOutput(unsigned port)
 {
    OutputPort* out = Output(port);
 
-   if ((out!=0) && IsRunning() && out->CanSend())
+   if (out && IsRunning() && out->CanSend())
       FireEvent(evntOutputReinj, out->ItemId());
 }
 
@@ -163,7 +163,7 @@ void dabc::ModuleAsync::ActivatePool(unsigned poolindex)
 {
    PoolHandle* pool = Pool(poolindex);
 
-   if ((pool!=0) && IsRunning() && pool->CanTakeBuffer())
+   if (pool && IsRunning() && pool->CanTakeBuffer())
       FireEvent(evntOutputReinj, pool->ItemId());
 }
 

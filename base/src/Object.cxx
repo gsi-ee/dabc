@@ -237,13 +237,13 @@ void dabc::Object::Destructor()
    {
       LockGuard lock(fObjectMutex);
 
-      if ((GetState() != stDestructor) && (fObjectRefCnt!=0)) {
+      if ((GetState() != stDestructor) && (fObjectRefCnt != 0)) {
          EOUT("Object %p %s deleted not via Destroy method refcounter %u", this, GetName(), fObjectRefCnt);
       }
 
       SetState(stDestructor);
 
-      if (fObjectRefCnt!=0) {
+      if (fObjectRefCnt != 0) {
          EOUT("!!!!!!!!!!!! Destructor called when refcounter %u obj:%s %p", fObjectRefCnt, GetName(), this);
 //         Object* obj = (Object*) 29387898;
 //         delete obj;
@@ -958,7 +958,7 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::
 
    ConstructorPair pair;
 
-   if (slash!=0) {
+   if (slash) {
       pair.name = slash+1;
       std::string path = std::string(fullname, slash - fullname);
       if (!prnt.null())

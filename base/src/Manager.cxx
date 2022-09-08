@@ -1434,7 +1434,8 @@ std::string dabc::Manager::ComposeAddress(const std::string &server, const std::
    if (res.empty()) res = GetLocalAddress();
    if (res.empty()) res = "localhost";
 
-   if (res.find("dabc://")!=0) res = std::string("dabc://") + res;
+   if (res.find("dabc://") != 0)
+      res = std::string("dabc://") + res;
 
    if (!itemname.empty()) {
       if (itemname[0]!='/') res += "/";
@@ -1459,7 +1460,7 @@ bool dabc::Manager::DecomposeAddress(const std::string &addr, bool& islocal, std
       return true;
    }
 
-   if (url.GetProtocol().compare("dabc")!=0) return false;
+   if (url.GetProtocol().compare("dabc") != 0) return false;
 
    islocal = false;
    server = url.GetHostNameWithPort();

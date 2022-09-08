@@ -154,7 +154,7 @@ extern "C" void CleanupRunnable(void* abc)
 {
    dabc::Runnable *run = (dabc::Runnable*) abc;
 
-   if (run!=0) run->RunnableCancelled();
+   if (run) run->RunnableCancelled();
 }
 
 extern "C" void* StartTRunnable(void* abc)
@@ -163,7 +163,7 @@ extern "C" void* StartTRunnable(void* abc)
 
    void* res = nullptr;
 
-   if (run!=0) {
+   if (run) {
 
       pthread_cleanup_push(CleanupRunnable, abc);
 
@@ -220,16 +220,16 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
          }
 
       res = sched_setaffinity(0, sizeof(fDfltSet), &fDfltSet);
-      if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
+      if (res != 0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
       return true;
    }
 
    if ((*aff == 'o') || (*aff == 'x') || (*aff == 's')) {
       unsigned cpu = 0;
       const char* curr = aff;
-      bool isany(false);
+      bool isany = false;
 
-      while ((*curr!=0) && (cpu<CPU_SETSIZE)) {
+      while ((*curr != 0) && (cpu<CPU_SETSIZE)) {
          switch (*curr) {
             case 'x': CPU_SET(cpu, &fDfltSet); isany = true; break;
             case 'o': CPU_CLR(cpu, &fDfltSet); break;
@@ -241,7 +241,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
 
       if (isany) {
          int res = sched_setaffinity(0, sizeof(fDfltSet), &fDfltSet);
-         if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
+         if (res != 0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
       }
 
       return true;
@@ -261,7 +261,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
          CPU_SET(cpu, &fDfltSet);
 
    int res = sched_setaffinity(0, sizeof(fDfltSet), &fDfltSet);
-   if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
+   if (res != 0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
 
    return true;
 }
@@ -317,9 +317,9 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
    if ((*aff=='o') || (*aff=='x')) {
       unsigned cpu = 0;
       const char* curr = aff;
-      bool isany(false);
+      bool isany = false;
 
-      while ((*curr!=0) && (cpu<CPU_SETSIZE)) {
+      while ((*curr != 0) && (cpu<CPU_SETSIZE)) {
          switch (*curr) {
             case 'x': CPU_SET(cpu, &fCpuSet); isany = true; break;
             case 'o': CPU_CLR(cpu, &fCpuSet); break;
@@ -398,7 +398,7 @@ void dabc::PosixThread::SetPriority(int prio)
    thread_param.sched_priority = prio;
    ret = pthread_setschedparam(fThrd, (prio>0) ? SCHED_FIFO : SCHED_OTHER,
                                  &thread_param);
-   if (ret!=0)
+   if (ret != 0)
       EOUT("pthread_setschedparam ret = %d %d %d %d %d\n", ret, (ret==EPERM), (ret==ESRCH), (ret==EINVAL), (ret==EFAULT));
 }
 

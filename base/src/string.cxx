@@ -154,7 +154,7 @@ bool dabc::str_to_int(const char* val, int* res)
       return false;
    }
 
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
+   if (strpbrk(val,".,eE")) return false; // avoid any float value
 
    return sscanf(val, "%d", res) == 1;
 }
@@ -175,7 +175,7 @@ bool dabc::str_to_lint(const char* val, long* res)
       return false;
    }
 
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
+   if (strpbrk(val,".,eE")) return false; // avoid any float value
 
    return sscanf(val, "%ld", res) == 1;
 }
@@ -192,7 +192,7 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
       return sscanf(val+2, "%x", res) == 1;
    }
 
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
+   if (strpbrk(val,".,eE")) return false; // avoid any float value
 
    return sscanf(val, "%u", res) == 1;
 }
@@ -208,7 +208,7 @@ bool dabc::str_to_luint(const char* val, long unsigned* res)
       return sscanf(val+2, "%lx", res) == 1;
    }
 
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
+   if (strpbrk(val,".,eE")) return false; // avoid any float value
 
    return sscanf(val, "%lu", res) == 1;
 }

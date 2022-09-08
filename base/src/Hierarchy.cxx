@@ -1140,9 +1140,9 @@ std::string dabc::Hierarchy::ItemName() const
 dabc::Hierarchy dabc::Hierarchy::GetTop() const
 {
    HierarchyContainer* obj = GetObject();
-   while (obj!=0) {
+   while (obj) {
       HierarchyContainer* prnt = dynamic_cast<HierarchyContainer*> (obj->GetParent());
-      if (prnt == 0) break;
+      if (!prnt) break;
       obj = prnt;
    }
    return dabc::Hierarchy(obj);

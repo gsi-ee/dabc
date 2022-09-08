@@ -151,7 +151,7 @@ void dabc::HStore::CreateNode(const char *nodename)
       // starts new xml node, will be closed by CloseNode
       buf.append(dabc::format("%*s<item", compact() > 0 ? 0 : lvl * 2, ""));
       if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
-      if (nodename!=0)
+      if (nodename)
          buf.append(dabc::format(" _name=\"%s\"", nodename));
       numchilds.emplace_back(0);
       numflds.emplace_back(0);
@@ -161,7 +161,7 @@ void dabc::HStore::CreateNode(const char *nodename)
       lvl++;
       numflds.emplace_back(0);
       numchilds.emplace_back(0);
-      if (nodename!=0)
+      if (nodename)
          SetField("_name", dabc::format("\"%s\"",nodename).c_str());
    }
 
@@ -314,7 +314,7 @@ dabc::RecordField::RecordField(const RecordField& src)
 
    switch (src.fKind) {
       case kind_none: break;
-      case kind_bool: SetBool(src.valueInt!=0); break;
+      case kind_bool: SetBool(src.valueInt != 0); break;
       case kind_int: SetInt(src.valueInt); break;
       case kind_datime: SetDatime(src.valueUInt); break;
       case kind_uint: SetUInt(src.valueUInt); break;
@@ -751,7 +751,7 @@ std::string dabc::RecordField::AsStr(const std::string &dflt) const
 {
    switch (fKind) {
       case kind_none: return dflt;
-      case kind_bool: return valueInt!=0 ? xmlTrueValue : xmlFalseValue;
+      case kind_bool: return valueInt != 0 ? xmlTrueValue : xmlFalseValue;
       case kind_int: return dabc::format("%ld", (long) valueInt);
       case kind_datime: {
          std::string res = dabc::DateTime(valueUInt).AsJSString(3);
@@ -781,7 +781,7 @@ std::string dabc::RecordField::AsStr(const std::string &dflt) const
          return res;
       }
       case kind_string: {
-         if (valueStr!=0) return valueStr;
+         if (valueStr) return valueStr;
          break;
       }
       case kind_buffer: return dflt;
@@ -837,7 +837,7 @@ std::string dabc::RecordField::AsJson() const
 {
    switch (fKind) {
       case kind_none: return "null";
-      case kind_bool: return valueInt!=0 ? "true" : "false";
+      case kind_bool: return valueInt != 0 ? "true" : "false";
       case kind_int: return dabc::format("%ld", (long) valueInt);
       case kind_datime: {
          std::string res = dabc::DateTime(valueUInt).AsJSString(3);
@@ -1032,7 +1032,7 @@ bool dabc::RecordField::SetValue(const RecordField& src)
 {
    switch (src.fKind) {
       case kind_none: return SetNull();
-      case kind_bool: return SetBool(src.valueInt!=0);
+      case kind_bool: return SetBool(src.valueInt != 0);
       case kind_int: return SetInt(src.valueInt);
       case kind_datime: return SetDatime(src.valueUInt);
       case kind_uint: return SetUInt(src.valueUInt);

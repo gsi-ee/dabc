@@ -76,7 +76,7 @@ bool dabc::CpuStatistic::Measure()
 
    while (fgets(buffer, sizeof(buffer), fStatFp)) {
 
-      if (strncmp (buffer, "cpu", 3)!=0) break;
+      if (strncmp (buffer, "cpu", 3) != 0) break;
 
       const char* info = buffer;
 
@@ -197,7 +197,7 @@ void dabc::Ratemeter::Packet(int size, double now)
    } else
       return; // do not account packets comming before expected start of measurement
 
-   if ((fPoints!=0) && (fMeasureInterval>0)) {
+   if (fPoints && (fMeasureInterval > 0)) {
       long npnt = lrint((now - firstoper) / fMeasureInterval);
       if ((npnt>=0) && (npnt<fMeasurePoints))
          fPoints[npnt] += size / fMeasureInterval;
@@ -258,7 +258,7 @@ void dabc::Ratemeter::SaveRatesInFile(const char* fname, Ratemeter** rates, int 
    int npoints = 0;
    double interval = 0;
    for (int nr=0;nr<nrates;nr++)
-      if (rates[nr]!=0) {
+      if (rates[nr]) {
          npoints = rates[nr]->fMeasurePoints;
          interval = rates[nr]->fMeasureInterval;
       }

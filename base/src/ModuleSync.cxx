@@ -248,7 +248,7 @@ void dabc::ModuleSync::StopUntilRestart()
 
 void dabc::ModuleSync::ObjectCleanup()
 {
-   if (fNewCommands!=0) {
+   if (fNewCommands) {
       EOUT("Some commands remain even when module %s is cleaned up - BAD", GetName());
       AsyncProcessCommands();
    }
@@ -326,8 +326,8 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
       if (!SingleLoop(tmout)) throw Exception(ex_Stop, "Module stopped when waiting for", ItemName());
    }
 
-   if (resevid!=0) *resevid = fWaitId;
-   if (resitem!=0) *resitem = fWaitItem;
+   if (resevid) *resevid = fWaitId;
+   if (resitem) *resitem = fWaitItem;
 
    return true; // it is normal exit
 }

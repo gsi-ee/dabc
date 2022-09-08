@@ -207,7 +207,7 @@ MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
       break;
    };
 
-   if(mode!=0) return; // only change display mode, do not start new trending history
+   if(mode != 0) return; // only change display mode, do not start new trending history
 
    MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval)
       .then(() => MyDisplay.SetStatusMessage("CmdSetRateInterval sent."))

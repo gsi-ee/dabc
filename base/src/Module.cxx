@@ -261,7 +261,7 @@ dabc::Buffer dabc::Module::TakeDfltBuffer()
 
    MemoryPool* pool = dynamic_cast<MemoryPool*> (fDfltPool());
 
-   if (pool!=0) return pool->TakeBuffer();
+   if (pool) return pool->TakeBuffer();
 
    return dabc::Buffer();
 }
@@ -850,7 +850,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
          // DOUT0("PORT DISCONNECTED iserr %s port %s autostop %s", DBOOL(iserror), port->ItemName().c_str(), DBOOL(fAutoStop));
 
-         if (port!=0) {
+         if (port) {
 
             ConnectionRequest req = port->GetConnReq();
 

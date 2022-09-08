@@ -35,7 +35,7 @@ dabc::HierarchyStore::~HierarchyStore()
 {
    CloseFile();
 
-   if (fIO!=0) {
+   if (fIO) {
       delete fIO;
       fIO = nullptr;
    }
@@ -363,7 +363,7 @@ bool dabc::HierarchyReading::ProduceStructure(Hierarchy& tree, const DateTime& f
 
          /// we exclude building of the structures which are not interesting for us
          if (!entry.empty())
-            if (entry.find(tree_chld.ItemName())!=0) continue;
+            if (entry.find(tree_chld.ItemName()) != 0) continue;
 
          Hierarchy tgt_chld = tgt.CreateHChild(tree_chld.GetName());
          if (!ProduceStructure(tree_chld, from_date, till_date, entry, tgt_chld)) return false;
