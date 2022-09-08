@@ -175,7 +175,7 @@ void rfio::FileInterface::fclose(Handle f)
       return;
    }
 
-   if (fRemote) EOUT("Get RFIO::fclose with unexpected argument when fRemote!=0 cnt %d", fOpenedCounter);
+   if (fRemote) EOUT("Get RFIO::fclose with unexpected argument when fRemote != 0 cnt %d", fOpenedCounter);
 
    if (f) rfio_fclose((RFILE*)f);
 }

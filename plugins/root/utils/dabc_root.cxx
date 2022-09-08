@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
          if (skipzero) {
             bool isany = false;
             for (int n=0;n<nbins+2;n++) {
-               if (bins[3+n]!=0.) { isany = true; break; }
+               if (bins[3+n] != 0.) { isany = true; break; }
             }
             if (!isany) { emptycnt++; continue; }
          }
@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
          if (skipzero) {
             bool isany = false;
             for (int n=0;n<(nbins1+2)*(nbins2+2);n++) {
-               if (bins[6+n]!=0.) { isany = true; break; }
+               if (bins[6+n] != 0.) { isany = true; break; }
             }
             if (!isany) { emptycnt++; continue; }
          }

@@ -272,7 +272,7 @@ bool IbTestWorkerModule::CreateQPs(void* data)
             recs[indx].psn = 0;
          } else {
             fQPs[lid][node] = new verbs::QueuePair(fIbContext, qp_type, fCQ, qpdepth, 2, fCQ, qpdepth, 2);
-            if (fQPs[lid][node]->qp()==0) return false;
+            if (fQPs[lid][node]->qp() == 0) return false;
             recs[indx].qp = fQPs[lid][node]->qp_num();
             recs[indx].psn = fQPs[lid][node]->local_psn();
 
@@ -867,7 +867,7 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
 bool IbTestWorkerModule::MasterCollectActiveNodes()
 {
    fActiveNodes.clear();
-   fActiveNodes.emplace_back(true); // master itself is active
+   fActiveNodes.push_back(true); // master itself is active
 
    uint8_t buff[NumNodes()];
 
@@ -876,7 +876,7 @@ bool IbTestWorkerModule::MasterCollectActiveNodes()
 
    for(int node=1;node<NumNodes();node++) {
       bool active = IsInputConnected(node-1);
-      fActiveNodes.emplace_back(active);
+      fActiveNodes.push_back(active);
       if (active) cnt++;
       buff[node] = active ? 1 : 0;
    }
@@ -1120,8 +1120,8 @@ bool IbTestWorkerModule::ExecuteSlaveCommand(int cmdid)
          uint8_t* buff = (uint8_t*) fCmdDataBuffer;
 
          fActiveNodes.clear();
-         for (int n=0;n<fCmdDataSize;n++)
-            fActiveNodes.emplace_back(buff[n]>0);
+         for (int n = 0; n < fCmdDataSize; n++)
+            fActiveNodes.push_back(buff[n] > 0);
 
          break;
       }

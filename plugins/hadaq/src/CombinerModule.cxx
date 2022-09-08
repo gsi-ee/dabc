@@ -734,7 +734,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       // no need to analyze data
       if (fast) return true;
 
-      if (tryresort && (cfg.fLastTrigNr!=0xffffffff)) {
+      if (tryresort && (cfg.fLastTrigNr != 0xffffffff)) {
          uint32_t trignr = iter.subevnt()->GetTrigNr();
          if (trignr == 0xffffffff) continue; // this is processed trigger, exclude it
 
@@ -1186,7 +1186,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fOut.FinishEvent();
 
       int diff = 1;
-      if (fLastTrigNr!=0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+      if (fLastTrigNr != 0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
 
       //if (fBNETsend && (diff!=1))
       //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);

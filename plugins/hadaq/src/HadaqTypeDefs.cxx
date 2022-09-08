@@ -56,7 +56,7 @@ std::string hadaq::FormatFilename (uint32_t runid, uint16_t ebid)
    time_t iocTime = runid + HADAQ_TIMEOFFSET;
    struct tm tm_res;
    size_t off = strftime(buf, 128, "%y%j%H%M%S", localtime_r(&iocTime, &tm_res));
-   if(ebid!=0) snprintf(buf+off, 128-off, "%02d", ebid);
+   if(ebid != 0) snprintf(buf+off, 128-off, "%02d", ebid);
    return std::string(buf);
 }
 

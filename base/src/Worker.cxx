@@ -338,7 +338,7 @@ bool dabc::Worker::AssignToThread(ThreadRef thrd, bool sync)
    std::string thrdcl = RequiredThrdClass();
 
    if (thrdcl.length()>0)
-     if (thrdcl.compare(thrd.ClassName())!=0) {
+     if (thrdcl.compare(thrd.ClassName()) != 0) {
         EOUT("Processor requires class %s than thread %s of class %s" , thrdcl.c_str(), thrd.GetName(), thrd.ClassName());
         return false;
      }
@@ -545,7 +545,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string &name, Command cmd) const
 
    // forth - in parameters of all parents
    Object* prnt = GetParent();
-   while (prnt!=0) {
+   while (prnt) {
       res = WorkerRef(prnt).Par(name).Value();
       if (!res.null()) return res;
 

@@ -141,7 +141,7 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
          }
 
          sbuf = fCharBuffer;
-         while ((*sbuf!=0) && ((*sbuf==' ') || (*sbuf=='\t'))) sbuf++;
+         while ((*sbuf != 0) && ((*sbuf==' ') || (*sbuf=='\t'))) sbuf++;
 
          if (strlen(sbuf) == 0) DOUT1("Empty string eof fail = %d %d", fFile.eof(), fFile.fail());
 

@@ -91,7 +91,7 @@ void verbs::PoolRegistry::CleanMRStructure()
    for (unsigned n=0;n<f_nummr;n++)
      if (f_mr[n] != 0) {
         DOUT5("CleanMRStructure %s mr[%u] = %p", GetName(), n, f_mr[n]);
-//        if (strcmp(GetName(),"TransportPool")!=0)
+//        if (strcmp(GetName(),"TransportPool") != 0)
            ibv_dereg_mr(f_mr[n]);
 //        else
 //           EOUT("Skip ibv_dereg_mr(f_mr[n])");
@@ -127,7 +127,7 @@ void verbs::PoolRegistry::SyncMRStructure()
 
       if (!fPool->_GetPoolInfo(bufs, sizes, &fLastChangeCounter)) return;
 
-      if (f_nummr!=0) CleanMRStructure();
+      if (f_nummr != 0) CleanMRStructure();
 
       DOUT5("CreateMRStructure %p for pool %p size %u", this, fPool, bufs.size());
 
@@ -341,7 +341,7 @@ int verbs::ContextRef::ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid
       case mcst_Init:
          mlid = 0;
          if (osm->QueryMyltucastGroup(mgid.raw, mlid))
-            if (mlid!=0) return mcst_Ok;
+            if (mlid != 0) return mcst_Ok;
          if (osm->ManageMultiCastGroup(true, mgid.raw, &mlid)) return mcst_Unregister;
          return mcst_Error;
       case mcst_Unregister:

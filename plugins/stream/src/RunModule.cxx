@@ -292,14 +292,14 @@ void stream::RunModule::ProduceMergedHierarchy()
       bool miss = false;
       while (iter1.next()) {
          if (!iter2.next()) { miss = true; break; }
-         if (strcmp(iter1.name(),iter2.name())!=0) { miss = true; break; }
+         if (strcmp(iter1.name(),iter2.name()) != 0) { miss = true; break; }
 
          // merge histograms till the end
          dabc::Hierarchy item1 = iter1.ref();
          dabc::Hierarchy item2 = iter2.ref();
 
          if (item1.HasField("_dabc_hist") && item2.HasField("_dabc_hist") &&
-               (item1.GetFieldPtr("bins")!=0) && (item2.GetFieldPtr("bins")!=0) &&
+               item1.GetFieldPtr("bins") && item2.GetFieldPtr("bins") &&
                (item1.GetFieldPtr("bins")->GetArraySize() == item2.GetFieldPtr("bins")->GetArraySize())) {
             double* arr1 = item1.GetFieldPtr("bins")->GetDoubleArr();
             double* arr2 = item2.GetFieldPtr("bins")->GetDoubleArr();
@@ -407,8 +407,8 @@ void stream::RunModule::SaveHierarchy(dabc::Buffer buf)
 
    int res = std::system(args.c_str());
 
-   if (res!=0) EOUT("Fail to convert DABC histograms in ROOT file, check h.bin file");
-          else std::system("rm -f h.bin");
+   if (res != 0) EOUT("Fail to convert DABC histograms in ROOT file, check h.bin file");
+            else std::system("rm -f h.bin");
 }
 
 void stream::RunModule::AfterModuleStop()

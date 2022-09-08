@@ -378,7 +378,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
 {
    std::string name = cmd.GetName();
 
-   if ((name.find("HCMD_")!=0) && (name!="ROOTCMD")) return false;
+   if ((name.find("HCMD_") != 0) && (name != "ROOTCMD")) return false;
 
    dabc::Hierarchy item = cmd.GetRef("item");
    if (item.null()) return false;

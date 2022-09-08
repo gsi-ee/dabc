@@ -209,7 +209,7 @@ void verbs::ProtocolAddon::VerbsProcessRecvCompl(uint32_t bufid)
 
    const char* connid = (const char*) fPool->GetBufferLocation(bufid);
 
-   if (req.GetConnId().compare(connid)!=0) {
+   if (req.GetConnId().compare(connid) != 0) {
       EOUT("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str());
    }
 

@@ -1048,7 +1048,7 @@ bool is_newtdc(unsigned id)
 
 bool is_adc(unsigned id)
 {
-   return ((adcmask!=0) && ((id & idrange) <= (adcmask & idrange)) && ((id & ~idrange) == (adcmask & ~idrange)));
+   return ((adcmask != 0) && ((id & idrange) <= (adcmask & idrange)) && ((id & ~idrange) == (adcmask & ~idrange)));
 }
 
 int main(int argc, char* argv[])
@@ -1118,7 +1118,7 @@ int main(int argc, char* argv[])
       return usage("Unknown option");
    }
 
-   if ((adcmask!=0) || !tdcs.empty() || (onlytdc!=0) || (onlynew!=0) || (onlyraw!=0)) { printsub = true; }
+   if ((adcmask != 0) || !tdcs.empty() || (onlytdc != 0) || (onlynew != 0) || (onlyraw != 0)) { printsub = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -1347,7 +1347,7 @@ int main(int argc, char* argv[])
             if (is_newtdc(datakind)) as_new = !onlytdc && !onlynew;
 
             if (!as_tdc) {
-               if ((onlytdc!=0) && (datakind == onlytdc)) {
+               if ((onlytdc != 0) && (datakind == onlytdc)) {
                   as_tdc = true;
                   print_subsubhdr = true;
                } else if ((onlynew != 0) && (datakind == onlynew)) {
@@ -1368,7 +1368,7 @@ int main(int argc, char* argv[])
                   lasthubid = datakind;
                   lasthublen = datalen;
                   continue;
-               } else if ((onlyraw!=0) && (datakind==onlyraw)) {
+               } else if ((onlyraw != 0) && (datakind == onlyraw)) {
                   as_raw = true;
                   print_subsubhdr = true;
                } else if (printraw) {

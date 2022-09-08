@@ -45,7 +45,7 @@ void aqua::ClientOutput::OnSocketError(int err, const std::string &info)
 
    CancelIOOperations();
 
-   fState = err!=0 ? oError : oDisconnected;
+   fState = err != 0 ? oError : oDisconnected;
 }
 
 double aqua::ClientOutput::ProcessTimeout(double)

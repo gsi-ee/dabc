@@ -178,10 +178,10 @@ bool dabc::Url::DecomposeItemName(const std::string &name, int& nodeid, std::str
       return true;
    }
 
-   if (url.GetProtocol().compare("dabc")!=0) return false;
+   if (url.GetProtocol().compare("dabc") != 0) return false;
 
    std::string node = url.GetHostName();
-   if (node.compare(0, 4, "node")!=0) return false;
+   if (node.compare(0, 4, "node") != 0) return false;
    node.erase(0,4);
 
    nodeid = -1;

@@ -101,7 +101,7 @@ std::string ezca::Monitor::GetItemName(const std::string &ezcaname)
 
    if (!fTopFolder.empty()) {
       // any variable should have top folder name in front
-      if (res.find(fTopFolder)!=0) return std::string();
+      if (res.find(fTopFolder) != 0) return std::string();
       res.erase(0, fTopFolder.length()+1); // delete top folder and slash
    }
 

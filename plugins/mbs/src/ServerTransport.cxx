@@ -152,7 +152,7 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
       return;
    }
 
-   if (strcmp(f_sbuf, "GETEVT")!=0)
+   if (strcmp(f_sbuf, "GETEVT") != 0)
      EOUT("Wrong request string %s", f_sbuf);
 
    memset(f_sbuf, 0, sizeof(f_sbuf));

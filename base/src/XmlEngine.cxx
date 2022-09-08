@@ -102,7 +102,7 @@ namespace dabc {
          if (fCurrent!=fBuf) {
             if (fOut)
                fOut->write(fBuf, fCurrent-fBuf);
-            else if (fOutStr!=0)
+            else if (fOutStr)
                fOutStr->append(fBuf, fCurrent-fBuf);
          }
          fCurrent = fBuf;
@@ -408,7 +408,7 @@ bool dabc::Xml::HasAttr(XMLNodePointer_t xmlnode, const char* name)
 
    if (!xmlnode || !name) return false;
    SXmlAttr_t* attr = ((SXmlNode_t*)xmlnode)->fAttr;
-   while (attr!=0) {
+   while (attr) {
       if (strcmp(SXmlAttr_t::Name(attr),name) == 0) return true;
       attr = attr->fNext;
    }
@@ -422,7 +422,7 @@ const char* dabc::Xml::GetAttr(XMLNodePointer_t xmlnode, const char* name)
 
    if (!xmlnode) return nullptr;
    SXmlAttr_t* attr = ((SXmlNode_t*)xmlnode)->fAttr;
-   while (attr!=0) {
+   while (attr) {
       if (strcmp(SXmlAttr_t::Name(attr),name) == 0)
          return SXmlAttr_t::Name(attr) + strlen(name) + 1;
       attr = attr->fNext;
@@ -491,7 +491,7 @@ void dabc::Xml::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
    SXmlAttr_t* prev = nullptr;
    while (attr) {
       if (strcmp(SXmlAttr_t::Name(attr),name) == 0) {
-         if (prev!=0)
+         if (prev)
             prev->fNext = attr->fNext;
          else
             ((SXmlNode_t*) xmlnode)->fAttr = attr->fNext;
@@ -583,7 +583,7 @@ dabc::XMLNodePointer_t dabc::Xml::NewChild(XMLNodePointer_t parent, XMLNsPointer
       *SXmlNode_t::Name(node) = 0;
 
    node->fNs = (SXmlAttr_t*) ns;
-   if (content!=0) {
+   if (content) {
       int contlen = strlen(content);
       if (contlen>0) {
          SXmlNode_t* contnode = (SXmlNode_t*) AllocateNode(contlen+1, node);
@@ -669,7 +669,7 @@ void dabc::Xml::AddChild(XMLNodePointer_t parent, XMLNodePointer_t child)
       pnode->fLastChild = cnode;
    } else {
       //SXmlNode_t* ch = pnode->fChild;
-      //while (ch->fNext!=0) ch=ch->fNext;
+      //while (ch->fNext) ch = ch->fNext;
       pnode->fLastChild->fNext = cnode;
       pnode->fLastChild = cnode;
    }
@@ -992,10 +992,10 @@ dabc::XMLDocPointer_t dabc::Xml::NewDoc(const char* version)
    SXmlDoc_t* doc = new SXmlDoc_t;
    doc->fRootNode = (SXmlNode_t*) NewChild(0, 0, "??DummyTopNode??", 0);
 
-   if (version!=0) {
+   if (version) {
       XMLNodePointer_t vernode = NewChild( (XMLNodePointer_t) doc->fRootNode, 0, "xml");
       ((SXmlNode_t*) vernode)->fType = kXML_PI_NODE;
-      NewAttr(vernode, 0, "version", version);
+      NewAttr(vernode, nullptr, "version", version);
    }
 
    doc->fDtdName = nullptr;
@@ -1049,7 +1049,7 @@ void dabc::Xml::SaveDoc(XMLDocPointer_t xmldoc, const char* filename, int layout
    do {
       SaveNode(child, &out, layout, 0);
       ShiftToNext(child, false);
-   } while (child!=0);
+   } while (child);
 
 }
 
@@ -1149,7 +1149,7 @@ bool dabc::Xml::ValidateVersion(XMLDocPointer_t xmldoc, const char* version)
    if (!vernode) return false;
 
    if (((SXmlNode_t*) vernode)->fType!=kXML_PI_NODE) return false;
-   if (strcmp(GetNodeName(vernode), "xml")!=0) return false;
+   if (strcmp(GetNodeName(vernode), "xml") != 0) return false;
 
    const char* value = GetAttr(vernode,"version");
    if (!value) return false;
@@ -1396,14 +1396,14 @@ void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int lay
    if (node->fType==kXML_PI_NODE) out->Put('?');
 
    // we suppose that ns is always first attribute
-   if ((node->fNs!=0) && (node->fNs!=node->fAttr)) {
+   if (node->fNs && (node->fNs != node->fAttr)) {
       out->Write(SXmlAttr_t::Name(node->fNs)+6);
       out->Put(':');
    }
    out->Write(SXmlNode_t::Name(node));
 
    SXmlAttr_t* attr = node->fAttr;
-   while (attr!=0) {
+   while (attr) {
       out->Put(' ');
       char* attrname = SXmlAttr_t::Name(attr);
       out->Write(attrname);
@@ -1532,7 +1532,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
       if (*inp->fCurrent!='>')  return nullptr;
       if (!inp->ShiftCurrent()) return nullptr;
 
-      if (parent->fNs!=0)
+      if (parent->fNs)
          TruncateNsExtension((XMLNodePointer_t)parent);
 
       inp->SkipSpaces(true); // locate start of next string
@@ -1564,7 +1564,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
    *nameptr = 0; // add 0 to the end
 
    char* colon = strchr(SXmlNode_t::Name(node),':');
-   if ((colon!=0) && (parent!=0)) {
+   if (colon && parent) {
       *colon = 0;
       node->fNs = (SXmlAttr_t*) FindNs(xmlparent, SXmlNode_t::Name(node));
       *colon =':';
@@ -1630,11 +1630,11 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
          attrname = SXmlAttr_t::Name(attr);
 
          if ((strlen(attrname)>6) && (strstr(attrname,"xmlns:")==attrname)) {
-            if (strcmp(SXmlNode_t::Name(node), attrname + 6)!=0) {
+            if (strcmp(SXmlNode_t::Name(node), attrname + 6) != 0) {
                resvalue = -8;
                //return nullptr;
             }
-            if (node->fNs!=0) {
+            if (node->fNs) {
                resvalue = -9;
                //return nullptr;
             }

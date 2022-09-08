@@ -492,7 +492,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
     dabc::LockGuard gard (fQueueMutex);// protect against Transport thread
     std::string description = fDevice.GetInputDescription (event);
     // here check if we have input condition, then substract the offset:
-    if(description.compare(std::string(NON_IO_CONDITION_LABEL))!=0)
+    if(description.compare(std::string(NON_IO_CONDITION_LABEL)) != 0)
       {
         deadline -= IO_CONDITION_OFFSET; // like in saft-io-ctl
       }
@@ -510,8 +510,6 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 //        dabc::format ("Received %s at %s!", saftdabc::tr_formatActionEvent (event, PMODE_VERBOSE).c_str (),
 //            saftdabc::tr_formatDate (deadline, PMODE_VERBOSE).c_str ()));
     }
-
-
 
 
     uint64_t doverflow = fOverflowCount-fLastOverflowCount;

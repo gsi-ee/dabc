@@ -96,7 +96,7 @@ namespace bnet {
 
          bool GenerateEvent(uint64_t evid, uint64_t subid, uint64_t raw_size) override
          {
-            while (raw_size % 8 !=0) raw_size++;
+            while (raw_size % 8 != 0) raw_size++;
             unsigned total_size = 3*sizeof(uint64_t) + raw_size;
             if (total_size > fPtr.fullsize()) return false;
             fPtr.copyfrom_shift(&evid, sizeof(evid));

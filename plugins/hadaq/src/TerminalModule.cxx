@@ -305,7 +305,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
 
          sbuf.append(dabc::format(" %3d %10s", fCalibr[n].progress, fCalibr[n].state.c_str()));
 
-         if (fCalibr[n].state.find("Ready")!=0) isready = false;
+         if (fCalibr[n].state.find("Ready") != 0) isready = false;
       }
 
       s += sbuf;

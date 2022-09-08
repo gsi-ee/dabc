@@ -165,7 +165,7 @@ bool hadaq::SorterModule::retransmit()
          uint32_t prev = fLastTrigger;
          bool ok(true);
          for (unsigned n=0;n<fSubs.size();n++) {
-            if (prev!=0xffffffff) {
+            if (prev != 0xffffffff) {
                ok = Diff(prev, fSubs[n].trig) == 1;
                if (!ok) break;
             }
@@ -211,7 +211,7 @@ bool hadaq::SorterModule::retransmit()
    unsigned cnt = 0;
    while (cnt < fSubs.size()) {
       int diff = 1;
-      if (fLastTrigger!=0xffffffff)
+      if (fLastTrigger != 0xffffffff)
          diff = Diff(fLastTrigger, fSubs[cnt].trig);
 
       if (diff!=1) {

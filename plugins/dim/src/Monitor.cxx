@@ -331,7 +331,7 @@ void dim::Monitor::infoHandler()
                break;
             case 'C' : {
                int slen = 0;
-               while ((slen<size) && (ptr[slen]!=0)) slen++;
+               while ((slen < size) && (ptr[slen] != 0)) slen++;
                if (slen<size)
                   fld.SetStr(ptr);
                else

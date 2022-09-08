@@ -1429,21 +1429,21 @@ void mbs::PrompterWorker::ProcessEvent(const dabc::EventId& evnt)
       case dabc::SocketAddon::evntSocketRecvInfo: {
          //DOUT0("mbs::PrompterWorker get evntSocketRecvInfo");
 
-         if ((fCmds.Size()>0) && (fState == ioWaitReply)) {
+         if ((fCmds.Size() > 0) && (fState == ioWaitReply)) {
             // TODO: when reply command - check result
 
             bool res = true;
 
-            if (fRecvBuf[0]!=1)
+            if (fRecvBuf[0] != 1)
                mbs::SwapData(fRecvBuf, sizeof(fRecvBuf));
 
             DOUT3("mbs::PrompterWorker get reply for the command id %u", (unsigned) fRecvBuf[1]);
 
-            if (fRecvBuf[0]!=1) {
+            if (fRecvBuf[0] != 1) {
                EOUT("Wrong reply from the prompter");
                res = false;
             } else
-            if (fRecvBuf[1]!=0) {
+            if (fRecvBuf[1] != 0) {
                res = false;
             }
 

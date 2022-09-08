@@ -110,13 +110,13 @@ bool dabc::TimeStamp::CheckLinuxTSC()
    char buf[1024];
 
    while(fgets(buf, sizeof(buf), f)) {
-      if (strstr(buf,"AMD Opteron(tm) Processor 248")!=0) {
+      if (strstr(buf,"AMD Opteron(tm) Processor 248")) {
          // this is known type of AMD Opteron, we can use it in time measurement
          isgsiamd = true;
          break;
       }
 
-      if (strstr(buf,"constant_tsc")!=0) {
+      if (strstr(buf,"constant_tsc")) {
          can_use_tsc = true;
          break;
       }
