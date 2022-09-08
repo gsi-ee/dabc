@@ -28,16 +28,16 @@
 class rdaDabcHandler : public rdaReplyHandler
 {
   public:
-    fesa::Monitor* fPlayer;
+    fesa::Monitor* fPlayer{nullptr};
     std::string fService;
-    rdaRequest* fRequest;
+    rdaRequest* fRequest{nullptr};
     rdaData fContext;
 
     rdaDabcHandler(fesa::Monitor* p, const std::string &serv) :
        rdaReplyHandler(),
        fPlayer(p),
        fService(serv),
-       fRequest(0),
+       fRequest(nullptr),
        fContext()
        {
        }
@@ -46,7 +46,7 @@ class rdaDabcHandler : public rdaReplyHandler
        {
          try {
             fRequest = device->monitorOn(fService.c_str(), cycle.c_str(), false, this, fContext);
-            return fRequest!=0;
+            return fRequest!=nullptr;
          } catch (const rdaException& ex) {
             if (fPlayer) fPlayer->ReportServiceError(fService, dabc::format("%s : %s", ex.getType(),ex.getMessage()));
             EOUT("Exception caught in subscribe: %s %s", ex.getType(), ex.getMessage());
@@ -62,7 +62,7 @@ class rdaDabcHandler : public rdaReplyHandler
       {
          try {
            if (fRequest) device->monitorOff(fRequest);
-           fRequest = 0;
+           fRequest = nullptr;
            return true;
         } catch (const rdaException& ex) {
             if (fPlayer) fPlayer->ReportServiceError(fService, dabc::format("%s : %s", ex.getType(),ex.getMessage()));

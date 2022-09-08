@@ -10,8 +10,8 @@
 
 mbs_root::RootTreeOutput::RootTreeOutput(const dabc::Url& url) :
    dabc::FileOutput(url,".root"),
-   fTree(0),
-   fEvent(0)
+   fTree(nullptr),
+   fEvent(nullptr)
 {
 
    // TODO: create event structure here:
@@ -24,38 +24,38 @@ mbs_root::RootTreeOutput::RootTreeOutput(const dabc::Url& url) :
 
 mbs_root::RootTreeOutput::~RootTreeOutput()
 {
-   // TODO: better use Close() function here which is also used in case of input EOF   
-   Close();   
+   // TODO: better use Close() function here which is also used in case of input EOF
+   Close();
    delete fEvent;
-   fEvent = 0;
+   fEvent = nullptr;
 }
 
 bool mbs_root::RootTreeOutput::Close()
 {
-   if (fTree==0) return true;
+   if (!fTree) return true;
 
    fTree->Write();
    TFile* f = fTree->GetCurrentFile(); // for file split after 1.8 Gb!
    delete f; // note that we must not delete fxTree, since it is removed from mem when ROOT file is closed!
-   fTree=0;
+   fTree = nullptr;
    return true;
 }
 
 bool mbs_root::RootTreeOutput::Write_Init()
-{   
+{
    if (!dabc::FileOutput::Write_Init()) return false;
 
-   // TODO: member variables to contain properties for tree output   
-   
+   // TODO: member variables to contain properties for tree output
+
    ProduceNewFileName();
 
    DOUT0("################# Create root file %s , split=%d",CurrentFileName().c_str(),fSplit);
-   
+
    // gFile pointer is used when tree is created
    new TFile(CurrentFileName().c_str(),"recreate","Mbs tree file",fCompression);
-   fTree = new TTree("DabcTree","Dabc Mbs Tree format");   
+   fTree = new TTree("DabcTree","Dabc Mbs Tree format");
    fTree->Branch("mbs_root::DabcEvent", &fEvent,fTreeBuf ,fSplit);
-   TTree::SetMaxTreeSize(fMaxSize); // after filling this number of bytes, tree will write into next file with name fFileName+"_i"    
+   TTree::SetMaxTreeSize(fMaxSize); // after filling this number of bytes, tree will write into next file with name fFileName+"_i"
    fTree->Write();
    return true;
 }

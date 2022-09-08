@@ -28,9 +28,9 @@ verbs::MemoryPool::MemoryPool(ContextRef ctx,
    fUD(isud),
    fSendBufferOffset(isud ? VERBS_UD_MEMADDON : 0),
    fReg(),
-   f_rwr(0),
-   f_swr(0),
-   f_sge(0)
+   f_rwr(nullptr),
+   f_swr(nullptr),
+   f_sge(nullptr)
 {
    DOUT4("Create verbs::Pool %s %p", GetName(), this);
 
@@ -75,9 +75,9 @@ verbs::MemoryPool::~MemoryPool()
 
    fReg.Destroy();
 
-   delete[] f_rwr; f_rwr = 0;
-   delete[] f_swr; f_swr = 0;
-   delete[] f_sge; f_sge = 0;
+   delete[] f_rwr; f_rwr = nullptr;
+   delete[] f_swr; f_swr = nullptr;
+   delete[] f_sge; f_sge = nullptr;
 
    DOUT4("Destroy verbs::Pool %s %p refs:%u DONE", GetName(), this, NumReferences());
 

@@ -28,9 +28,9 @@ void http::Factory::Initialize()
    if (dabc::mgr.null()) return;
 
    // if dabc started without config file, do not automatically start http server
-   if ((dabc::mgr()->cfg()==0) || (dabc::mgr()->cfg()->GetVersion()<=0)) return;
+   if (!dabc::mgr()->cfg() || (dabc::mgr()->cfg()->GetVersion()<=0)) return;
 
-   dabc::XMLNodePointer_t node = 0;
+   dabc::XMLNodePointer_t node = nullptr;
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, "HttpServer", true)) {
 
@@ -40,10 +40,10 @@ void http::Factory::Initialize()
 //      DOUT0("Found HttpServer node name = %s!!!", name ? name : "---");
 
       std::string objname;
-      if (name!=0) objname = name;
+      if (name) objname = name;
       if (objname.length()==0) objname = "/http";
       if (objname[0]!='/') objname = std::string("/") + objname;
-      if ((thrdname==0) || (*thrdname==0)) thrdname = "HttpThread";
+      if (!thrdname || (*thrdname==0)) thrdname = "HttpThread";
 
       dabc::WorkerRef serv = new http::Civetweb(objname);
       serv.MakeThreadForWorker(thrdname);
@@ -60,10 +60,10 @@ void http::Factory::Initialize()
 //      DOUT0("Found FastCgiServer node name = %s!!!", name ? name : "---");
 
       std::string objname;
-      if (name!=0) objname = name;
+      if (name) objname = name;
       if (objname.length()==0) objname = "/fastcgi";
       if (objname[0]!='/') objname = std::string("/") + objname;
-      if ((thrdname==0) || (*thrdname==0)) thrdname = "HttpThread";
+      if (!thrdname || (*thrdname==0)) thrdname = "HttpThread";
 
       dabc::WorkerRef serv = new http::FastCgi(objname);
       serv.MakeThreadForWorker(thrdname);

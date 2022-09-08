@@ -458,10 +458,10 @@ typedef void StreamCallFunc(void*);
 
 bool stream::DabcProcMgr::CallFunc(const char* funcname, void* arg)
 {
-   if (funcname==0) return false;
+   if (!funcname) return false;
 
    void* symbol = dabc::Factory::FindSymbol(funcname);
-   if (symbol == 0) return false;
+   if (!symbol) return false;
 
    StreamCallFunc* func = (StreamCallFunc*) symbol;
 
@@ -500,7 +500,7 @@ bool stream::DabcProcMgr::CreateStore(const char* storename)
 
 bool stream::DabcProcMgr::CloseStore()
 {
-   fTree = 0;
+   fTree = nullptr;
    fStore.Execute("Close");
    fStore.Release();
    fStoreInfo = "ROOT store closed";

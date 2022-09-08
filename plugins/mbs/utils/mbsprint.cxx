@@ -156,11 +156,11 @@ int main(int argc, char* argv[])
          continue;
       }
 
-      if (evnt==0) continue;
+      if (!evnt) continue;
 
       evnt->PrintHeader();
-      mbs::SubeventHeader* sub = 0;
-      while ((sub = evnt->NextSubEvent(sub)) != 0) {
+      mbs::SubeventHeader* sub = nullptr;
+      while ((sub = evnt->NextSubEvent(sub)) != nullptr) {
          sub->PrintHeader();
          if ((slowsubevid!=0) && (sub->fFullId==slowsubevid)) {
             PrintSlowSubevent(sub);

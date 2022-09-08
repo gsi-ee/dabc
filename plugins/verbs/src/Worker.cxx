@@ -56,16 +56,16 @@ void verbs::WorkerAddon::SetQP(QueuePair* qp)
 
 void verbs::WorkerAddon::CloseQP()
 {
-   if (fQP!=0) {
+   if (fQP) {
       delete fQP;
-      fQP = 0;
+      fQP = nullptr;
    }
 }
 
 verbs::QueuePair* verbs::WorkerAddon::TakeQP()
 {
    QueuePair* qp = fQP;
-   fQP = 0;
+   fQP = nullptr;
    return qp;
 }
 

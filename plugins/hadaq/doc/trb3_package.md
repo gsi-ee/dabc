@@ -462,7 +462,7 @@ In simplified form access to any data source (local file, remote file or online 
 #include "hadaq/api.h"
 int main() {
    hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect("file.hld");
-   hadaq::RawEvent* evnt = 0;
+   hadaq::RawEvent* evnt = nullptr;
    while(evnt = ref.NextEvent(1.)) {
       // any user code here
       evnt->Dump();

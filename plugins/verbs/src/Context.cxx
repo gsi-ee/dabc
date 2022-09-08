@@ -99,7 +99,7 @@ void verbs::PoolRegistry::CleanMRStructure()
      }
 
    delete[] f_mr;
-   f_mr = 0;
+   f_mr = nullptr;
    f_nummr = 0;
 
 //   fLastChangeCounter = 0;

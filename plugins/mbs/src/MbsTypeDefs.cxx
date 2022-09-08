@@ -102,8 +102,8 @@ void mbs::SubeventHeader::PrintData(bool ashex, bool aslong)
 unsigned mbs::EventHeader::NumSubevents() const
 {
    unsigned cnt = 0;
-   SubeventHeader* sub = 0;
-   while ((sub = NextSubEvent(sub)) != 0) cnt++;
+   SubeventHeader* sub = nullptr;
+   while ((sub = NextSubEvent(sub)) != nullptr) cnt++;
    return cnt;
 }
 

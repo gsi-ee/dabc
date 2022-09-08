@@ -29,7 +29,7 @@ dim::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    fDimDns(),
    fDimMask(),
    fDimPeriod(1.),
-   fDimBr(0),
+   fDimBr(nullptr),
    fDimInfos(),
    fLastScan(),
    fNeedDnsUpdate(true)
@@ -55,11 +55,12 @@ dim::Monitor::~Monitor()
 {
    for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end();iter++) {
       delete iter->second.info;
-      iter->second.info = 0;
+      iter->second.info = nullptr;
    }
    fDimInfos.clear();
 
-   delete fDimBr; fDimBr = 0;
+   delete fDimBr;
+   fDimBr = nullptr;
 }
 
 
@@ -148,7 +149,7 @@ void dim::Monitor::ScanDimServices()
          if (iter->second.flag != 0) { iter++; continue; }
 
          delete iter->second.info;
-         iter->second.info = 0;
+         iter->second.info = nullptr;
 
          DOUT3("Destroy entry %s", iter->first.c_str());
 
@@ -207,7 +208,7 @@ void dim::Monitor::infoHandler()
    // DIM method, called when service is updated
 
    DimInfo *info = getInfo();
-   if (info==0) return;
+   if (!info) return;
 
    if (info->getData() == fNoLink) {
       DOUT3("Get nolink for %s", info->getName());
