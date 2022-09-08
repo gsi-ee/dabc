@@ -440,7 +440,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
                DOUT2("SocketDevice:: create client protocol for socket %d connid:%s", fd, connid.c_str());
 
                proto = new SocketProtocolAddon(fd, this, rec);
-               rec->fClient = 0; // if we get command, client is destroyed
+               rec->fClient = nullptr; // if we get command, client is destroyed
                rec->fProtocol = proto;
             }
          }
@@ -455,7 +455,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
                cmd_res = cmd_false;
             } else {
                EOUT("Client error for connid %s", connid.c_str());
-               rec->fClient = 0; // if we get command, client is destroyed
+               rec->fClient = nullptr; // if we get command, client is destroyed
                fConnRecs.remove(rec);
             }
          }

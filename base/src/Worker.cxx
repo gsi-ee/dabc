@@ -821,8 +821,10 @@ int dabc::Worker::PreviewCommand(Command cmd)
          dabc::NumericLocale loc; // ensure correct locale for conversion
 
          if (field.empty()) {
-            if (compact<0) compact = 0; else
-            if (compact>storemask_Compact) compact = storemask_Compact;
+            if (compact < 0)
+               compact = 0;
+            else if (compact > storemask_Compact)
+               compact = storemask_Compact;
             unsigned mask = compact;
             if (hlimit>0) mask |= storemask_NoChilds | dabc::storemask_History | storemask_TopVersion;
             if (isxml) mask |= dabc::storemask_AsXML;

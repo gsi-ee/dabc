@@ -1249,7 +1249,7 @@ int dabc::SocketThread::StartClient(const std::string &host, int nport, bool non
    char service[100];
    sprintf(service, "%d", nport);
 
-   struct addrinfo hints, *info = 0;
+   struct addrinfo hints, *info = nullptr;
    memset(&hints, 0, sizeof(hints));
    hints.ai_family = AF_UNSPEC;
    hints.ai_socktype = SOCK_STREAM;

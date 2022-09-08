@@ -178,7 +178,7 @@ dabc::Ratemeter::Ratemeter()
 {
    fMeasureInterval = 0;
    fMeasurePoints = 0;
-   fPoints = 0;
+   fPoints = nullptr;
    Reset();
 }
 
@@ -300,7 +300,7 @@ void dabc::Ratemeter::SaveInFile(const char* fname)
 
 dabc::Average::Average()
 {
-   hist = 0;
+   hist = nullptr;
    nhist = 0;
    hist_min = 0.;
    hist_max = 1.;
@@ -315,7 +315,7 @@ dabc::Average::~Average()
 
 void dabc::Average::AllocateHist(int nbins, double xmin, double xmax)
 {
-   if (hist) { delete[] hist; hist = 0; nhist = 0; }
+   if (hist) { delete[] hist; hist = nullptr; nhist = 0; }
 
    if ((nbins>0) && (xmax>xmin)) {
       hist = new long[nbins+2];
@@ -342,7 +342,7 @@ void dabc::Average::Reset()
 
 void dabc::Average::Fill(double zn)
 {
-   if (num==0) {
+   if (num == 0) {
       min = zn;
       max = zn;
    } else {

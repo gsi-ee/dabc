@@ -161,7 +161,7 @@ extern "C" void* StartTRunnable(void* abc)
 {
    dabc::Runnable *run = (dabc::Runnable*) abc;
 
-   void* res = 0;
+   void* res = nullptr;
 
    if (run!=0) {
 
@@ -185,10 +185,10 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
    CPU_ZERO(&fSpecialSet);
    CPU_ZERO(&fDfltSet);
 
-   if ((aff==0) || (*aff==0)) return true;
+   if (!aff || (*aff==0)) return true;
 
    if ((*aff=='-') && (strlen(aff)>1)) {
-      unsigned numspecial(0);
+      unsigned numspecial = 0;
       if (!str_to_uint(aff+1, &numspecial) || (numspecial==0)) {
          EOUT("Wrong  default affinity format %s", aff);
          return false;
@@ -210,7 +210,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
          return false;
       }
 
-      unsigned cnt(0);
+      unsigned cnt = 0;
       for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
          if (CPU_ISSET(cpu, &fDfltSet)) {
             if (++cnt>numset-numspecial) {
@@ -287,7 +287,7 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
 {
    CPU_ZERO(&fCpuSet);
 
-   if ((aff==0) || (*aff==0)) {
+   if (!aff || (*aff==0)) {
       for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
          if (CPU_ISSET(cpu, &fDfltSet))
             CPU_SET(cpu, &fCpuSet);
@@ -296,7 +296,7 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
 
    if ((*aff=='+') && (strlen(aff)>1)) {
 
-      unsigned specialid(0), numspecial(0);
+      unsigned specialid = 0, numspecial = 0;
       if (!str_to_uint(aff+1, &specialid)) {
          EOUT("Wrong affinity format %s", aff);
          return false;
@@ -381,14 +381,14 @@ void dabc::PosixThread::Start(Runnable* run)
 
 void dabc::PosixThread::Start(StartRoutine* func, void* args)
 {
-   if (func==0) return;
+   if (!func) return;
 
    pthread_create(&fThrd, nullptr, func, args);
 }
 
 void dabc::PosixThread::Join()
 {
-   void* res = 0;
+   void* res = nullptr;
    pthread_join(fThrd, &res);
 }
 

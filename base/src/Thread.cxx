@@ -286,7 +286,7 @@ dabc::Thread::~Thread()
    //Stop(1.); JAM 6.7.2017 - try with larger timeout for ltsm
    Stop(GetStopTimeout());
 
-   ExecWorker* exec = 0;
+   ExecWorker* exec = nullptr;
 
    {
       LockGuard lock(ObjectMutex());
@@ -294,7 +294,7 @@ dabc::Thread::~Thread()
       // We decrease it during cleanup, now increase it again
       if (fDidDecRefCnt) fObjectRefCnt++;
       exec = fExec;
-      fExec = 0;
+      fExec = nullptr;
    }
 
    exec->ClearThreadRef();
@@ -307,7 +307,7 @@ dabc::Thread::~Thread()
       if (fWorkers[n]) {
          //EOUT("Still non-empty worker rec %u  in thread %s destructor", n, GetName());
          delete fWorkers[n];
-         fWorkers[n] = 0;
+         fWorkers[n] = nullptr;
       }
    }
 
@@ -331,7 +331,8 @@ dabc::Thread::~Thread()
       EOUT("THRD %s %u events are not processed", GetName(), totalsize);
 #endif
 
-   delete [] fQueues; fQueues = 0;
+   delete [] fQueues;
+   fQueues = nullptr;
    fNumQueues = 0;
 
    DOUT3("~~~~~~~~~~~~~~ THRD %s destroyed cnt:%d", GetName(), fThreadInstances);

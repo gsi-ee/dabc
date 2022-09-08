@@ -34,7 +34,7 @@ dabc::SocketNetworkInetrface::~SocketNetworkInetrface()
    if (!fMcastAddr.empty())
       SocketThread::DettachMulticast(Socket(), fMcastAddr);
 
-   delete [] fHeaders; fHeaders = 0;
+   delete [] fHeaders; fHeaders = nullptr;
 }
 
 void dabc::SocketNetworkInetrface::AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue)
