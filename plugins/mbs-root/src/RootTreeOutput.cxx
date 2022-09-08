@@ -64,7 +64,7 @@ bool mbs_root::RootTreeOutput::Write_Init()
 unsigned mbs_root::RootTreeOutput::Write_Buffer(dabc::Buffer& buf)
 {
    // example how it could work JAM
-   //if (buf==0) return false;
+   //if (buf.null()) return false;
 
    // some checks if input is of correct format, stolen from lmdoutput class JAM:
    if (buf.GetTypeId() == dabc::mbt_EOF) {

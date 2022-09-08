@@ -32,8 +32,8 @@ int main(int argc, char* argv[]) {
 
    printf("dabc_root utility, v %s\n", DABC_RELEASE);
 
-   const char* inpfile(0), *outfile(0);
-   bool skipzero(false);
+   const char* inpfile = nullptr, *outfile = nullptr;
+   bool skipzero = false;
 
    for (int n=1;n<argc;n++) {
       if ((strcmp(argv[n],"-h")==0) && (n+1 < argc)) {
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
       }
    }
 
-   if ((inpfile==0) || (outfile==0)) {
+   if (!inpfile || !outfile) {
       printf("Some arguments:\n");
       printf("-h filename     -   input file with stored hierarchy\n");
       printf("-o filename.root -  output ROOT file with histograms\n");
@@ -87,12 +87,12 @@ int main(int argc, char* argv[]) {
    }
 
    TFile* f = TFile::Open(outfile,"recreate");
-   if (f==0) {
+   if (!f) {
       printf("Cannot create %s for output\n", outfile);
       return 1;
    }
 
-   int cnt(0), emptycnt(0), currcnt(0);
+   int cnt = 0, emptycnt = 0, currcnt = 0;
    TString lastdir;
    dabc::Iterator iter(h);
    while (iter.next()) {
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
 
       for (unsigned n=1;n<iter.level();n++) {
          dabc::Object* prnt = iter.parent(n);
-         if (prnt==0) break;
+         if (!prnt) break;
 
          if (n>1) dirname.Append("/");
          dirname.Append(prnt->GetName());

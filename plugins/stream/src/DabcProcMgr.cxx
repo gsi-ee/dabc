@@ -414,7 +414,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
       if ((kind != "ROOT.TH2D") && (kind != "ROOT.TH1D")) return false;
 
       double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
-      if (bins==0) return false;
+      if (!bins) return false;
 
       name.erase(0,5); // remove HCMD_ prefix
 

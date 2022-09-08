@@ -57,7 +57,7 @@ int root::TreeStore::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    } else
    if (cmd.IsName("CreateBranch")) {
-      if (fTree==0) return dabc::cmd_false;
+      if (!fTree) return dabc::cmd_false;
 
       if (cmd.GetPtr("member"))
          fTree->Branch(cmd.GetStr("name").c_str(), cmd.GetPtr("member"), cmd.GetStr("kind").c_str());

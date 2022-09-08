@@ -189,7 +189,7 @@ namespace mbs {
 
          bool Read(void* buf, unsigned bufsize)
          {
-            if ((buf==0) || (bufsize<24)) return false;
+            if (!buf || (bufsize<24)) return false;
 
             Clear();
 
@@ -204,7 +204,7 @@ namespace mbs {
             memcpy(&num64, ptr, sizeof(num64)); ptr+=sizeof(num64);
             fLongValues.reserve(num64);
             for (uint64_t n=0;n<num64;n++) {
-               int64_t val(0);
+               int64_t val = 0;
                memcpy(&val, ptr, sizeof(val)); ptr+=sizeof(val);
                fLongValues.push_back(val);
             }

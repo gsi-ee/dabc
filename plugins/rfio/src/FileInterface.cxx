@@ -25,7 +25,7 @@
 
 rfio::FileInterface::FileInterface() :
    dabc::FileInterface(),
-   fRemote(0),
+   fRemote(nullptr),
    fOpenedCounter(0),
    fDataMoverIndx(0)
 {
@@ -45,11 +45,11 @@ rfio::FileInterface::~FileInterface()
 dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const char* mode, const char* opt)
 {
    // clear possible parameters
-   if (((opt==0) || (*opt==0)) && (fRemote==0)) {
+   if ((!opt || (*opt==0)) && !fRemote) {
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
    }
 
-   if (fRemote == 0) {
+   if (!fRemote) {
       bool isany = false;
 
       dabc::Url url;
@@ -125,7 +125,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
       }
    }
 
-   if (fRemote==0)
+   if (!fRemote)
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
 
    DOUT3("Calling rfio_fnewfile %s", fname);
@@ -134,7 +134,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 
    DOUT3("Did call rfio_fnewfile %s rev = %d", fname, rev);
 
-   if (rev!=0) {
+   if (rev != 0) {
       EOUT("Fail to create new RFIO file %s via existing datamover %d %s connection", fname, fDataMoverIndx, fDataMoverName);
       return 0;
    }
@@ -183,17 +183,17 @@ void rfio::FileInterface::fclose(Handle f)
 size_t rfio::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f)
 {
 
-   return ((f==0) || (ptr==0) || (sz==0)) ? 0 : rfio_fwrite((const char*)ptr, sz, nmemb, (RFILE*) f) / sz;
+   return (!f || !ptr || (sz==0)) ? 0 : rfio_fwrite((const char*)ptr, sz, nmemb, (RFILE*) f) / sz;
 }
 
 size_t rfio::FileInterface::fread(void* ptr, size_t sz, size_t nmemb, Handle f)
 {
-   return ((f==0) || (ptr==0) || (sz==0)) ? 0 : rfio_fread((char*) ptr, sz, nmemb, (RFILE*) f) / sz;
+   return (!f || !ptr || (sz==0)) ? 0 : rfio_fread((char*) ptr, sz, nmemb, (RFILE*) f) / sz;
 }
 
 bool rfio::FileInterface::fseek(Handle f, long int offset, bool relative)
 {
-   if (f==0) return false;
+   if (!f) return false;
 
 #ifdef ORIGIN_ADSM
    int fileid = -1;
@@ -210,14 +210,14 @@ bool rfio::FileInterface::fseek(Handle f, long int offset, bool relative)
 
 bool rfio::FileInterface::feof(Handle f)
 {
-   return f==0 ? false : (rfio_fendfile((RFILE*)f) > 0);
+   return !f ? false : (rfio_fendfile((RFILE*)f) > 0);
 }
 
 bool rfio::FileInterface::fflush(Handle)
 {
    return true;
 
-   // return f==0 ? false : ::fflush((FILE*)f)==0;
+   // return !f ? false : ::fflush((FILE*)f)==0;
 }
 
 dabc::Object* rfio::FileInterface::fmatch(const char* fmask, bool select_files)

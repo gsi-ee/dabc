@@ -176,7 +176,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
       return 2;
    }
 
-   if ((ev_ctx==0) || (ev_ctx->own_cq != ev_cq)) {
+   if (!ev_ctx || (ev_ctx->own_cq != ev_cq)) {
       EOUT("Error with getting context after ibv_get_cq_event");
       return 2;
    }

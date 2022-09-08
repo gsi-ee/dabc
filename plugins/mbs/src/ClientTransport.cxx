@@ -174,7 +174,7 @@ void mbs::ClientTransport::OnRecvCompleted()
 
 void mbs::ClientTransport::OnSocketError(int err, const std::string &)
 {
-   if (err==0) {
+   if (err == 0) {
       DOUT3("MBS client Socket close\n");
 
       fState = ioClosed;

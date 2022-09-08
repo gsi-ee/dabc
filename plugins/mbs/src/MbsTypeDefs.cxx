@@ -207,7 +207,7 @@ void mbs::BufferHeader::SetNumEvents(int32_t events)
 
 void mbs::SwapData(void* data, unsigned bytessize)
 {
-   if (data==0) return;
+   if (!data) return;
    unsigned cnt = bytessize / 4;
    uint32_t* d = (uint32_t*) data;
 

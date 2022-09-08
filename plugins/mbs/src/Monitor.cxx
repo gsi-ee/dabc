@@ -1267,7 +1267,7 @@ void mbs::DaqRemCmdWorker::ProcessEvent(const dabc::EventId& evnt)
 
             DOUT3("mbs::DaqRemCmdWorker get reply for the command id %u", (unsigned) fRecvBuf.l_cmdid);
 
-            bool res = fRecvBuf.l_status==0;
+            bool res = fRecvBuf.l_status == 0;
 
             if (fSendCmdId!= fRecvBuf.l_cmdid) {
                EOUT("Mismatch of command id in the MBS reply");
@@ -1283,7 +1283,7 @@ void mbs::DaqRemCmdWorker::ProcessEvent(const dabc::EventId& evnt)
 
          dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
 
-         if (addon==0) {
+         if (!addon) {
             EOUT("ADDON disappear !!!");
             ActivateTimeout(3.);
          } else {
@@ -1332,11 +1332,11 @@ void mbs::DaqRemCmdWorker::ProcessNextMbsCommand()
    // start next command when previous is completed
    if (fState != ioInit) return;
 
-   if (fCmds.Size()==0) return;
+   if (fCmds.Size() == 0) return;
 
    dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
 
-   if ((addon==0) || !addon->IsSocket()) {
+   if (!addon || !addon->IsSocket()) {
       EOUT("Something went wrong");
       exit(5);
    }
@@ -1456,7 +1456,7 @@ void mbs::PrompterWorker::ProcessEvent(const dabc::EventId& evnt)
 
          dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
 
-         if (addon==0) {
+         if (!addon) {
             EOUT("ADDON disappear !!!");
             ActivateTimeout(3.);
          } else {
@@ -1505,11 +1505,11 @@ void mbs::PrompterWorker::ProcessNextMbsCommand()
    // start next command when previous is completed
    if (fState != ioInit) return;
 
-   if (fCmds.Size()==0) return;
+   if (fCmds.Size() == 0) return;
 
    dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
 
-   if ((addon==0) || !addon->IsSocket()) {
+   if (!addon || !addon->IsSocket()) {
       EOUT("Something went wrong");
       exit(5);
    }

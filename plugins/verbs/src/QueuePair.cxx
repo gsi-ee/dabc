@@ -40,7 +40,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
    f_remote_psn(0),
    fNumSendSegs(max_send_sge)
 {
-   if ((send_cq==0) || (recv_cq==0)) {
+   if (!send_cq || !recv_cq) {
       EOUT("No COMPLETION QUEUE WAS SPECIFIED");
       return;
    }
@@ -61,7 +61,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
    attr.qp_type = fType;
 
    f_qp = ibv_create_qp(fContext.pd(), &attr);
-   if (f_qp==0) {
+   if (!f_qp) {
       EOUT("Couldn't create queue pair (QP)");
       return;
    }

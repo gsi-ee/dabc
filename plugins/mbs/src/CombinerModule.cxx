@@ -212,7 +212,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
       bool res = fInp[ninp].NextEvent();
 
-      if (!res || (fInp[ninp].evnt()==0)) {
+      if (!res || !fInp[ninp].evnt()) {
          fInp[ninp].Close();
          SkipInputBuffers(ninp, 1);
          continue;
@@ -323,7 +323,7 @@ bool mbs::CombinerModule::BuildEvent()
 
       if (fCfg[ninp].last_valid_tm <= 0) fCfg[ninp].last_valid_tm = tm_now;
 
-      if (fInp[ninp].evnt()==0) {
+      if (!fInp[ninp].evnt()) {
          if (!ShiftToNextEvent(ninp)) {
             // if optional input is absent just continue
             if (fCfg[ninp].no_evnt_num) continue;
@@ -359,7 +359,7 @@ bool mbs::CombinerModule::BuildEvent()
 
    } // for ninp
 
-   if (num_valid==0) return false;
+   if (num_valid == 0) return false;
 
    // we always try to build event with minimum id
    mbs::EventNumType buildevid(mineventid);
@@ -397,7 +397,7 @@ bool mbs::CombinerModule::BuildEvent()
    // define number of input which will be used to copy mbs header
    int copyMbsHdrId = -1;
    std::map<uint32_t, bool> subid_map;
-   unsigned num_selected_important(0), num_selected_all(0);
+   unsigned num_selected_important = 0, num_selected_all = 0;
 
    // check of unique subevent ids:
    bool duplicatefound = false;

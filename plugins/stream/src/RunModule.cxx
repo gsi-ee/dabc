@@ -434,7 +434,7 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 
    fTotalEvnts++;
 
-   if (fParallel==0) Par("Events").SetValue(1);
+   if (fParallel == 0) Par("Events").SetValue(1);
 
    // TODO - later we need to use DABC buffer here to allow more complex
    // analysis when many dabc buffers required at the same time to analyze data
@@ -474,7 +474,7 @@ bool stream::RunModule::ProcessNextBuffer()
 
    dabc::Buffer buf = Recv();
 
-   if (fParallel==0) Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
+   if (fParallel == 0) Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
       if (fParallel<0) {

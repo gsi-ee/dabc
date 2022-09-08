@@ -89,30 +89,24 @@ extern const char* xmlCallbackMode;
 /** switch between silent or verbose event receiver  mode*/
 extern const char* xmlSaftVerbose;
 
- /* full subevent id for timestamp data*/
- extern const char* xmlSaftSubeventId;
+/* full subevent id for timestamp data*/
+extern const char* xmlSaftSubeventId;
 
+/* switch to fill single timing event for each (MBS or hadaq) Event container*/
+extern const char* xmlSaftSingleEvent;
 
- /* switch to fill single timing event for each (MBS or hadaq) Event container*/
-  extern const char* xmlSaftSingleEvent;
+/* specify output event format: mbs, hadaq, or raw*/
+extern const char* xmlEventFormat;
 
-  /* specify output event format: mbs, hadaq, or raw*/
-  extern const char* xmlEventFormat;
+/** Command to invoke the glib/dbus mainloop*/
+extern const char* commandRunMainloop;
 
+/** Name of event rate parameter*/
+extern const char* parEventRate;
 
-
-
- /** Command to invoke the glib/dbus mainloop*/
- extern const char* commandRunMainloop;
-
- /** Name of event rate parameter*/
- extern const char* parEventRate;
-
-
- /** \brief The saftlib input event data structure.
-  */
- class Timing_Event
- {
+/** \brief The saftlib input event data structure.
+ */
+class Timing_Event {
 
  public:
 
@@ -135,7 +129,7 @@ extern const char* xmlSaftVerbose;
 
    int InfoMessage(char* str, size_t len)
    {
-      if(str==0) return -1;
+      if(!str) return -1;
       return snprintf(str, len, "saftdabc::Timing_Event - event=0x%lx, param=0x%lx , deadline=0x%lx, executed=0x%lx, flags=0x%lx, overflows=0x%lx, description:%s",
           fEvent, fParam , fDeadline, fExecuted, fFlags, fOverflows, fDescription);
 
@@ -144,11 +138,5 @@ extern const char* xmlSaftVerbose;
  };
 
 }
-
-
-
-
-
-
 
 #endif

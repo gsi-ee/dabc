@@ -191,12 +191,12 @@ void saftdabc::Device::SetInfo(const std::string &info, bool forceinfo)
 
 bool saftdabc::Device::RegisterInputCondition(saftdabc::Input* receiver, std::string& name)
 {
-  if(receiver==0) return false;
+  if(!receiver) return false;
 
   try{
     dabc::LockGuard gard(fConditionMutex);
-    bool found=false;
-    const char* ioname=name.c_str(); // JAM need this hop because of map with Glib::ustring? better copy as is...
+    bool found = false;
+    const char* ioname = name.c_str(); // JAM need this hop because of map with Glib::ustring? better copy as is...
 
 
 #ifdef  DABC_SAFT_USE_2_0

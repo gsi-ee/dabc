@@ -85,7 +85,7 @@ namespace verbs {
 verbs::Thread::Thread(dabc::Reference parent, const std::string &name, dabc::Command cmd, ContextRef ctx) :
    dabc::Thread(parent, name, cmd),
    fContext(ctx),
-   fChannel(0),
+   fChannel(nullptr),
 #ifndef VERBS_USING_PIPE
    fLoopBackQP(0),
    fLoopBackPool(0),
@@ -95,7 +95,7 @@ verbs::Thread::Thread(dabc::Reference parent, const std::string &name, dabc::Com
    fMainCQ(0),
    fWaitStatus(wsWorking),
    fWCSize(0),
-   fWCs(0),
+   fWCs(nullptr),
    fFastModus(0),
    fCheckNewEvents(true)
 {
@@ -187,9 +187,8 @@ void verbs::Thread::CloseThread()
 
 verbs::ComplQueue* verbs::Thread::MakeCQ()
 {
-   if (fMainCQ!=0) return fMainCQ;
-
-   fMainCQ = new ComplQueue(fContext, 10000, fChannel);
+   if (!fMainCQ)
+      fMainCQ = new ComplQueue(fContext, 10000, fChannel);
 
    return fMainCQ;
 }
@@ -232,8 +231,6 @@ void verbs::Thread::_Fire(const dabc::EventId& evnt, int nq)
 bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 {
 
-//   if (tmout_sec>=0) EOUT("Non-empty timeout");
-
    {
       dabc::LockGuard lock(ThreadMutex());
 
@@ -251,10 +248,10 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
       fWaitStatus = wsWaiting;
    }
 
-   struct ibv_cq *ev_cq = 0;
+   struct ibv_cq *ev_cq = nullptr;
    int nevents = 0;
 
-   if ((fFastModus>0) && (fMainCQ!=0))
+   if ((fFastModus > 0) && fMainCQ)
      for (int n=0;n<fFastModus;n++) {
         nevents = ibv_poll_cq(fMainCQ->cq(), fWCSize, fWCs);
         if (nevents>0) {
@@ -311,7 +308,7 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 
 #endif
 
-   void *ev_ctx = 0;
+   void *ev_ctx = nullptr;
 
 //      DOUT1("Call ibv_get_cq_event");
 
@@ -321,7 +318,7 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 
    ibv_req_notify_cq(ev_cq, 0);
 
-   if(ev_ctx!=0) {
+   if(ev_ctx) {
       ComplQueueContext* cq_ctx = (ComplQueueContext*) ev_ctx;
       if (cq_ctx->own_cq != ev_cq) {
          EOUT("Mismatch in cq context");
@@ -352,10 +349,10 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
    bool isany = false;
 
    while (true) {
-      if (nevents==0)
+      if (nevents == 0)
          nevents = ibv_poll_cq(ev_cq, fWCSize, fWCs);
 
-      if (nevents<=0) break;
+      if (nevents <= 0) break;
 
       struct ibv_wc* wc = fWCs;
 
@@ -414,9 +411,6 @@ void verbs::Thread::ProcessExtraThreadEvent(const dabc::EventId& evid)
    }
 }
 
-
-
-
 void verbs::Thread::WorkersSetChanged()
 {
    // we do not need locks while fWorkers and fMap can be changed only inside the thread
@@ -430,7 +424,7 @@ void verbs::Thread::WorkersSetChanged()
 
       DOUT5("Test processor %u: work %p addon %p", indx, fWorkers[indx]->work, addon);
 
-      if ((addon==0) || (addon->QP()==0)) continue;
+      if (!addon || !addon->QP()) continue;
 
       fMap[addon->QP()->qp_num()] = indx;
 

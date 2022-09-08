@@ -49,7 +49,7 @@ namespace mbs {
          {
             if (isOpened()) return false;
 
-            if (fname==0 || *fname==0) {
+            if (!fname || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
@@ -57,7 +57,7 @@ namespace mbs {
             CheckIO();
 
             fd = io->fopen(fname,  "r", opt);
-            if (fd==0) {
+            if (!fd) {
                fprintf(stderr, "File open failed %s for reading\n", fname);
                return false;
             }
@@ -106,7 +106,7 @@ namespace mbs {
          {
             if (isOpened()) return false;
 
-            if (fname==0 || *fname==0) {
+            if (!fname || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
@@ -114,7 +114,7 @@ namespace mbs {
             CheckIO();
 
             fd = io->fopen(fname, "w", opt);
-            if (fd==0) {
+            if (!fd) {
                fprintf(stderr, "File open failed %s for writing\n", fname);
                return false;
             }
@@ -154,7 +154,7 @@ namespace mbs {
           * User must ensure that content of buffer is corresponds to the lmd header formatting */
          bool WriteBuffer(const void* ptr, uint64_t sz)
          {
-            if (!isWriting() || (ptr==0) || (sz==0)) return false;
+            if (!isWriting() || !ptr || (sz==0)) return false;
 
             if (io->fwrite(ptr, sz, 1, fd) != 1) {
                fprintf(stderr, "fail to write buffer of size %u to lmd file\n", (unsigned) sz);
@@ -169,7 +169,7 @@ namespace mbs {
          /** Reads buffer with several MBS events */
          bool ReadBuffer(void* ptr, uint64_t* sz, bool onlyevent = false)
          {
-            if (isWriting() || (ptr==0) || (sz==0) || (*sz < sizeof(mbs::Header))) return false;
+            if (isWriting() || !ptr || (sz==0) || (*sz < sizeof(mbs::Header))) return false;
 
             // if (fMbsFormat) return ReadMbsBuffer(ptr, sz, onlyevent);
 
@@ -182,7 +182,7 @@ namespace mbs {
 
             // printf("readsz = %u\n", (unsigned) readsz);
 
-            if (readsz==0) return false;
+            if (readsz == 0) return false;
 
             size_t checkedsz = 0;
 
@@ -202,7 +202,7 @@ namespace mbs {
 
             *sz = checkedsz;
 
-            return checkedsz>0;
+            return checkedsz > 0;
          }
 
    };

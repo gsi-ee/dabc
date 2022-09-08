@@ -262,7 +262,7 @@ cleanup:
 
 bool verbs::Context::CloseVerbs()
 {
-   if (fContext==0) return true;
+   if (!fContext) return true;
 
    bool res = true;
 
@@ -276,13 +276,13 @@ bool verbs::Context::CloseVerbs()
    }
 
    fPD = 0;
-   fContext = 0;
+   fContext = nullptr;
 
 #ifndef  __NO_MULTICAST__
-   if (fOsm!=0) {
+   if (fOsm) {
       fOsm->Close();
       delete fOsm;
-      fOsm = 0;
+      fOsm = nullptr;
    }
 #endif
 
