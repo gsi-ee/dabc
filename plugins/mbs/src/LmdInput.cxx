@@ -96,7 +96,7 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
           if (!OpenNextFile()) return dabc::di_EndOfStream;
        }
 
-       if (bufsize==0) return dabc::di_Error;
+       if (bufsize == 0) return dabc::di_Error;
        break;
    }
 

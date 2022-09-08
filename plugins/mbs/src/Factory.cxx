@@ -56,7 +56,7 @@ dabc::Module *mbs::Factory::CreateTransport(const dabc::Reference& port, const s
 
    if (portref.IsOutput() && (kind>0)) {
 
-      if (portnum==0) portnum = DefualtServerPort(kind);
+      if (portnum == 0) portnum = DefualtServerPort(kind);
 
       dabc::SocketServerAddon *addon = dabc::SocketThread::CreateServerAddon(host, portnum);
 
@@ -98,13 +98,13 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string &typ)
          kind = StrToServerKind(url.GetFileName());
 
       if (kind == mbs::NoServer) {
-         if (portnum==DefualtServerPort(mbs::TransportServer)) kind = mbs::TransportServer; else
-         if (portnum==DefualtServerPort(mbs::StreamServer)) kind = mbs::StreamServer;
+         if (portnum == DefualtServerPort(mbs::TransportServer)) kind = mbs::TransportServer; else
+         if (portnum == DefualtServerPort(mbs::StreamServer)) kind = mbs::StreamServer;
       }
 
       if (portnum<=0) portnum = DefualtServerPort(kind);
 
-      if ((kind == mbs::NoServer) || (portnum==0)) {
+      if ((kind == mbs::NoServer) || (portnum == 0)) {
          EOUT("MBS server in url %s not specified correctly", typ.c_str());
          return 0;
       }
@@ -129,7 +129,7 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string &typ)
    DOUT2("Factory::CreateDataOutput typ:%s", typ.c_str());
 
    dabc::Url url(typ);
-   if (url.GetProtocol()==mbs::protocolLmd) {
+   if (url.GetProtocol() == mbs::protocolLmd) {
       DOUT0("LMD output file name %s", url.GetFullName().c_str());
       return new mbs::LmdOutput(url);
    }

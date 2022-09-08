@@ -45,7 +45,7 @@ rfio::FileInterface::~FileInterface()
 dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const char* mode, const char* opt)
 {
    // clear possible parameters
-   if ((!opt || (*opt==0)) && !fRemote) {
+   if ((!opt || (*opt == 0)) && !fRemote) {
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
    }
 
@@ -149,14 +149,14 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 
 int rfio::FileInterface::GetFileIntPar(Handle, const char* parname)
 {
-   if (strcmp(parname, "RFIO")==0) return 8; // return RFIO version number
+   if (strcmp(parname, "RFIO") == 0) return 8; // return RFIO version number
    if (fRemote && strcmp(parname, "DataMoverIndx")==0) return fDataMoverIndx;
    return 0;
 }
 
 bool rfio::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf, int sbuflen)
 {
-   if (fRemote && strcmp(parname, "DataMoverName")==0)
+   if (fRemote && strcmp(parname, "DataMoverName") == 0)
       if (strlen(fDataMoverName) < (unsigned) sbuflen) {
          strncpy(sbuf, fDataMoverName, sbuflen);
          return true;
@@ -183,12 +183,12 @@ void rfio::FileInterface::fclose(Handle f)
 size_t rfio::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f)
 {
 
-   return (!f || !ptr || (sz==0)) ? 0 : rfio_fwrite((const char*)ptr, sz, nmemb, (RFILE*) f) / sz;
+   return (!f || !ptr || (sz == 0)) ? 0 : rfio_fwrite((const char*)ptr, sz, nmemb, (RFILE*) f) / sz;
 }
 
 size_t rfio::FileInterface::fread(void* ptr, size_t sz, size_t nmemb, Handle f)
 {
-   return (!f || !ptr || (sz==0)) ? 0 : rfio_fread((char*) ptr, sz, nmemb, (RFILE*) f) / sz;
+   return (!f || !ptr || (sz == 0)) ? 0 : rfio_fread((char*) ptr, sz, nmemb, (RFILE*) f) / sz;
 }
 
 bool rfio::FileInterface::fseek(Handle f, long int offset, bool relative)
@@ -217,7 +217,7 @@ bool rfio::FileInterface::fflush(Handle)
 {
    return true;
 
-   // return !f ? false : ::fflush((FILE*)f)==0;
+   // return !f ? false : ::fflush((FILE*)f) == 0;
 }
 
 dabc::Object* rfio::FileInterface::fmatch(const char* fmask, bool select_files)

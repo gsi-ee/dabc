@@ -199,7 +199,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
       if (!fInp[ninp].IsData()) {
 
-         if (NumCanRecv(ninp)==0) return false;
+         if (NumCanRecv(ninp) == 0) return false;
 
          if (!fInp[ninp].Reset(RecvQueueItem(ninp, 0))) {
 

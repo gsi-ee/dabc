@@ -83,17 +83,17 @@ int main(int argc, char* argv[])
 
    int n = 1;
    while (++n<argc) {
-      if (strcmp(argv[n],"-hex")==0) { printdata = true; ashex = true; } else
-      if (strcmp(argv[n],"-dec")==0) { printdata = true; ashex = false; } else
-      if (strcmp(argv[n],"-long")==0) { printdata = true; aslong = true; } else
-      if (strcmp(argv[n],"-short")==0) { printdata = true; aslong = false; } else
-      if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
-      if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
-      if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
-      if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
-      if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
-      if ((strcmp(argv[n],"-slow")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &slowsubevid); } else
-      if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
+      if (strcmp(argv[n],"-hex") == 0) { printdata = true; ashex = true; } else
+      if (strcmp(argv[n],"-dec") == 0) { printdata = true; ashex = false; } else
+      if (strcmp(argv[n],"-long") == 0) { printdata = true; aslong = true; } else
+      if (strcmp(argv[n],"-short") == 0) { printdata = true; aslong = false; } else
+      if (strcmp(argv[n],"-rate") == 0) { showrate = true; reconnect = true; } else
+      if ((strcmp(argv[n],"-num") == 0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
+      if ((strcmp(argv[n],"-tmout") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if ((strcmp(argv[n],"-maxage") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
+      if ((strcmp(argv[n],"-delay") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
+      if ((strcmp(argv[n],"-slow") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &slowsubevid); } else
+      if ((strcmp(argv[n],"-help") == 0) || (strcmp(argv[n],"?") == 0)) return usage(); else
       return usage("Unknown option");
    }
 

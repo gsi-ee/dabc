@@ -172,7 +172,7 @@ void http::Server::AddLocation(const std::string &filepath,
 
 bool http::Server::VerifyFilePath(const char* fname)
 {
-   if (!fname || (*fname==0)) return false;
+   if (!fname || (*fname == 0)) return false;
 
    int level = 0;
 
@@ -210,7 +210,7 @@ bool http::Server::VerifyFilePath(const char* fname)
 
 bool http::Server::IsFileRequested(const char* uri, std::string& res)
 {
-   if (!uri || (strlen(uri) == 0)) return false;
+   if (!uri || (*uri == 0)) return false;
 
    std::string fname = uri;
 
@@ -304,7 +304,7 @@ bool http::Server::Process(const char* uri, const char* _query,
    }
 
    for (unsigned n=0;n<fLocations.size();n++)
-      if (!fLocations[n].fNamePrefix.empty() && (filename.find(fLocations[n].fNamePrefix)==0)) {
+      if (!fLocations[n].fNamePrefix.empty() && (filename.find(fLocations[n].fNamePrefix) == 0)) {
          size_t len = fLocations[n].fNamePrefix.length();
          if ((filename.length()<=len) || (filename[len]=='.')) continue;
          filename.erase(0, len);
@@ -375,7 +375,7 @@ bool http::Server::Process(const char* uri, const char* _query,
       std::string opt = query;
       dabc::Url::ReplaceSpecialSymbols(opt);
 
-      if (opt.find("items=")==0) {
+      if (opt.find("items=") == 0) {
          std::size_t separ = opt.find("&");
          if (separ == std::string::npos) separ = opt.length();
          std::string items = opt.substr(6, separ-6);

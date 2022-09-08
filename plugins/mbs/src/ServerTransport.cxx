@@ -147,7 +147,7 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
 {
 //   DOUT0("mbs::ServerOutputAddon::OnRecvCompleted %s  inp:%s out:%s", f_sbuf, DBOOL(IsDoingInput()), DBOOL(IsDoingOutput()));
 
-   if (strcmp(f_sbuf, "CLOSE")==0) {
+   if (strcmp(f_sbuf, "CLOSE") == 0) {
       OnSocketError(0, "get CLOSE event"); // do same as connection was closed
       return;
    }
@@ -303,7 +303,7 @@ void mbs::ServerOutputAddon::OnSocketError(int err, const std::string &)
       case oSendingEvents:  // only at this states callback is required to inform transport that data should be closed
       case oSendingBuffer:
       case oWaitingReqBack:
-         fState = (err==0) ? oDoingClose : oError;
+         fState = (err == 0) ? oDoingClose : oError;
          MakeCallback(dabc::do_Close);
          return;
 
@@ -311,7 +311,7 @@ void mbs::ServerOutputAddon::OnSocketError(int err, const std::string &)
       case oError: return;
 
       default:
-         fState = (err==0) ? oDoingClose : oError;
+         fState = (err == 0) ? oDoingClose : oError;
          SubmitWorkerCmd(dabc::Command("CloseTransport"));
    }
 }
@@ -468,7 +468,7 @@ bool mbs::ServerTransport::SendNextBuffer()
    if (!CanRecv()) return false;
 
    // unconnected transport server will block until any connection is established
-   if ((NumOutputs()==0) && fBlocking /*&& (fKind == mbs::TransportServer) */) return false;
+   if ((NumOutputs() == 0) && fBlocking /*&& (fKind == mbs::TransportServer) */) return false;
 
    bool allcansend = CanSendToAllOutputs(true);
 
@@ -502,7 +502,7 @@ bool mbs::ServerTransport::SendNextBuffer()
       DOUT2("Server transport saw EOF buffer");
       fDoingClose = 1;
 
-      if ((NumOutputs()==0) || !fBlocking) {
+      if ((NumOutputs() == 0) || !fBlocking) {
          DOUT2("One could close server transport immediately");
          CloseTransport(false);
          fDoingClose = 2;

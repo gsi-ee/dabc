@@ -391,7 +391,7 @@ unsigned mbs::ClientTransport::Read_Complete(dabc::Buffer& buf)
 
    fState = ioReady;
 
-   if (buf.GetTotalSize()==0) {
+   if (buf.GetTotalSize() == 0) {
       DOUT0("EXTREME CASE - FULL BUFFER IS JUST PEACE FROM THE MIDDLE");
       return dabc::di_SkipBuffer;
    }

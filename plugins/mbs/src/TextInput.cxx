@@ -143,12 +143,12 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
          sbuf = fCharBuffer;
          while ((*sbuf!=0) && ((*sbuf==' ') || (*sbuf=='\t'))) sbuf++;
 
-         if (strlen(sbuf)==0) DOUT1("Empty string eof fail = %d %d", fFile.eof(), fFile.fail());
+         if (strlen(sbuf) == 0) DOUT1("Empty string eof fail = %d %d", fFile.eof(), fFile.fail());
 
-      } while (strlen(sbuf)==0);
+      } while (strlen(sbuf) == 0);
 
       unsigned filledsize = FillRawData(fCharBuffer, iter.rawdata(), rawdatasize);
-      if (filledsize==0) return dabc::di_Error;
+      if (filledsize == 0) return dabc::di_Error;
 
       iter.FinishSubEvent(filledsize);
 

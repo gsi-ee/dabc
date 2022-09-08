@@ -121,21 +121,19 @@ if (url.HasOption("ltsmFSQDestination"))
      }
   // open session before first file is written, or if we have closed previous session to start tape migration on server
 #ifdef LTSM_USE_FSD
-  if (fUseFileSystemDemon)
-    {
-      if (fSessionFSD == 0)
-   {
-     if(!OpenTSMSession(opt)) return 0;
-   } // if fSesssion==0
-    }
-  else
+     if (fUseFileSystemDemon) {
+        if (fSessionFSD == 0) {
+           if (!OpenTSMSession(opt))
+              return 0;
+        }
+     } else
 #endif
-    {
+     {
        if (!fSession) {
           if (!OpenTSMSession(opt))
              return 0;
        }
-    }
+     }
 
   // default description is per file, not per session:
   dabc::DateTime dt;
@@ -244,7 +242,7 @@ bool ltsm::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
    return true;
    }
     // JAM2020: this one will pass the real filename upward for display in logfile and gui
-    if (strcmp(parname, "RealFileName")==0)
+    if (strcmp(parname, "RealFileName") == 0)
      {
        strncpy(sbuf,fCurrentFile.c_str(),sbuflen);
        return true;
@@ -402,7 +400,7 @@ bool ltsm::FileInterface::feof(Handle f)
       return false;
    return false;
 
-   //  return f==0 ? false : (ltsm_fendfile((RFILE*)f) > 0);
+   //  return f == 0 ? false : (ltsm_fendfile((RFILE*)f) > 0);
 }
 
 bool ltsm::FileInterface::fflush(Handle f)
@@ -412,7 +410,7 @@ bool ltsm::FileInterface::fflush(Handle f)
 
    return true;
 
-   // return f==0 ? false : ::fflush((FILE*)f)==0;
+   // return f == 0 ? false : ::fflush((FILE*)f) == 0;
 }
 
 dabc::Object* ltsm::FileInterface::fmatch(const char* fmask, bool select_files)
@@ -546,7 +544,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
     memset(fSession, 0, sizeof(struct session_t));
     rc = tsm_fconnect(&tsmlogin, fSession);
        }
-     if (rc==0)
+     if (rc == 0)
        {
     break;
        }
@@ -600,7 +598,7 @@ bool ltsm::FileInterface::CloseTSMSession()
 #ifdef LTSM_USE_FSD
   if (fUseFileSystemDemon)
     {
-      if(fSessionFSD==0) return false;
+      if(fSessionFSD == 0) return false;
       fsd_fdisconnect(fSessionFSD);
       std::free(fSessionFSD);
       fSessionFSD = nullptr;
@@ -608,12 +606,12 @@ bool ltsm::FileInterface::CloseTSMSession()
   else
 #endif
     {
-      if(fSession==0) return false;
+      if(fSession == 0) return false;
       tsm_fdisconnect(fSession);
       std::free(fSession);
       fSession = nullptr;
     }
-  fSessionFileCount=0;
+  fSessionFileCount = 0;
   return true;
 }
 

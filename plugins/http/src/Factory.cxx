@@ -41,9 +41,9 @@ void http::Factory::Initialize()
 
       std::string objname;
       if (name) objname = name;
-      if (objname.length()==0) objname = "/http";
+      if (objname.empty()) objname = "/http";
       if (objname[0]!='/') objname = std::string("/") + objname;
-      if (!thrdname || (*thrdname==0)) thrdname = "HttpThread";
+      if (!thrdname || (*thrdname == 0)) thrdname = "HttpThread";
 
       dabc::WorkerRef serv = new http::Civetweb(objname);
       serv.MakeThreadForWorker(thrdname);
@@ -61,9 +61,9 @@ void http::Factory::Initialize()
 
       std::string objname;
       if (name) objname = name;
-      if (objname.length()==0) objname = "/fastcgi";
+      if (objname.empty()) objname = "/fastcgi";
       if (objname[0]!='/') objname = std::string("/") + objname;
-      if (!thrdname || (*thrdname==0)) thrdname = "HttpThread";
+      if (!thrdname || (*thrdname == 0)) thrdname = "HttpThread";
 
       dabc::WorkerRef serv = new http::FastCgi(objname);
       serv.MakeThreadForWorker(thrdname);

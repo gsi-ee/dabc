@@ -92,7 +92,7 @@ void mbs::MonitorSlowControl::SendDataToOutputs()
 
    unsigned size = WriteRecRawData(fIter.rawdata(), fIter.maxrawdatasize());
 
-   if (size==0) {
+   if (size == 0) {
       EOUT("Fail to write data into MBS subevent");
    }
 

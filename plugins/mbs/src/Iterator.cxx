@@ -390,7 +390,7 @@ bool mbs::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
       filled_rawsize = fSubPtr.distance_to(fSubData) - sizeof(SubeventHeader);
    }
 
-   if (rawdatasz==0) rawdatasz = filled_rawsize;
+   if (rawdatasz == 0) rawdatasz = filled_rawsize;
 
    if (rawdatasz > maxrawdatasize()) {
       EOUT("So big raw data size %u not possible, maximum is %u", rawdatasz, maxrawdatasize());

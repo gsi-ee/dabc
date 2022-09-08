@@ -50,13 +50,13 @@ int main(int argc, char* argv[])
 
    int n = 1;
    while (++n<argc) {
-      if (strcmp(argv[n],"-prompter")==0) { cmdport = 6006; } else
-      if (strcmp(argv[n],"-stat")==0) { statport = 6008; } else
-      if ((strcmp(argv[n],"-logport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &logport); } else
-      if ((strcmp(argv[n],"-cmdport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &cmdport); } else
-      if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
-      if ((strcmp(argv[n],"-wait")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &waittm); } else
-      if ((strcmp(argv[n],"-cmd")==0) && (n+1<argc)) { cmds.emplace_back(argv[++n]); } else
+      if (strcmp(argv[n],"-prompter") == 0) { cmdport = 6006; } else
+      if (strcmp(argv[n],"-stat") == 0) { statport = 6008; } else
+      if ((strcmp(argv[n],"-logport") == 0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &logport); } else
+      if ((strcmp(argv[n],"-cmdport") == 0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &cmdport); } else
+      if ((strcmp(argv[n],"-tmout") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if ((strcmp(argv[n],"-wait") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &waittm); } else
+      if ((strcmp(argv[n],"-cmd") == 0) && (n+1<argc)) { cmds.emplace_back(argv[++n]); } else
       usage("Unknown option");
    }
 

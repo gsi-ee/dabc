@@ -65,14 +65,14 @@ public:
          }
       }
 
-      if ((strcmp(field,"_autoload")==0) && (*value == '/')) {
+      if ((strcmp(field,"_autoload") == 0) && (*value == '/')) {
          TString res = "/";
          res.Append(prefix);
          res.Append(value);
          res.ReplaceAll(";/", std::string("/") + prefix);
          curr.SetField(field, res.Data());
       } else
-      if ((strcmp(field,"_icon")==0) && (*value == '/'))
+      if ((strcmp(field,"_icon") == 0) && (*value == '/'))
          curr.SetField(field, std::string("/") + prefix + value);
       else
          curr.SetField(field, value);
