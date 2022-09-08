@@ -87,7 +87,7 @@ dabc::Worker::Worker(Reference parent, const std::string &name) :
    fWorkerId(0),
    fWorkerPriority(-1), // minimum priority per default
 
-   fThreadMutex(0),
+   fThreadMutex(nullptr),
    fWorkerActive(false),
    fWorkerFiredEvents(0),
 
@@ -112,7 +112,7 @@ dabc::Worker::Worker(const ConstructorPair &pair) :
    fWorkerId(0),
    fWorkerPriority(-1), // minimum priority per default
 
-   fThreadMutex(0),
+   fThreadMutex(nullptr),
    fWorkerActive(false),
    fWorkerFiredEvents(0),
 
@@ -745,9 +745,9 @@ int dabc::Worker::PreviewCommand(Command cmd)
          return cmd_ignore;
       }
 
-      unsigned hlimit(0);
-      uint64_t version(0);
-      int compact(0);
+      unsigned hlimit = 0;
+      uint64_t version = 0;
+      int compact = 0;
       bool with_childs(false);
 
       if (url.HasOption("history")) {

@@ -201,7 +201,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
          return false;
       }
 
-      unsigned numset(0);
+      unsigned numset = 0;
       for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
          if (CPU_ISSET(cpu, &fDfltSet)) numset++;
 
@@ -249,7 +249,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
 
    }
 
-   unsigned mask(0);
+   unsigned mask = 0;
 
    if (!str_to_uint(aff, &mask)) {
       EOUT("Wrong  default affinity format %s", aff);
@@ -335,7 +335,7 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
       return true;
    }
 
-   unsigned mask(0);
+   unsigned mask = 0;
 
    if (!str_to_uint(aff, &mask)) {
       EOUT("Wrong  affinity format %s", aff);
@@ -423,7 +423,7 @@ void dabc::PosixThread::SetThreadName(const char *thrdname)
 
 bool dabc::PosixThread::GetDfltAffinity(char* buf, unsigned maxbuf)
 {
-   unsigned last(0);
+   unsigned last = 0;
 
    if (maxbuf==0) return false;
 
@@ -480,7 +480,7 @@ bool dabc::PosixThread::GetAffinity(bool actual, char* buf, unsigned maxbuf)
 #endif
    }
 
-   unsigned last(0);
+   unsigned last = 0;
 
    for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++) {
       char symb = 'o';

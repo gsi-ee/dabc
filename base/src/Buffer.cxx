@@ -111,13 +111,13 @@ void dabc::Buffer::SetTotalSize(BufferSize_t len)
 
    if (len == totalsize) return;
 
-   unsigned nseg(0), npos(0);
+   unsigned nseg = 0, npos = 0;
    Locate(len, nseg, npos);
 
    if (nseg >= NumSegments())
       throw dabc::Exception(dabc::ex_Buffer, "FATAL nseg>=NumSegments", dabc::format("Buffer numseg %u", NumSegments()));
 
-   if (npos>0) {
+   if (npos > 0) {
       GetObject()->fSegm[nseg].datasize = npos;
       nseg++;
    }
@@ -145,14 +145,14 @@ void dabc::Buffer::CutFromBegin(BufferSize_t len)
       return;
    }
 
-   unsigned nseg(0), npos(0);
+   unsigned nseg = 0, npos = 0;
    Locate(len, nseg, npos);
 
    if (nseg >= NumSegments())
       throw dabc::Exception(dabc::ex_Buffer, "FATAL nseg >= NumSegments()", dabc::format("Buffer numseg %u", NumSegments()));
 
    // we should release segments which are no longer required
-   if (nseg>0) {
+   if (nseg > 0) {
 
       if (PoolPtr()) PoolPtr()->DecreaseSegmRefs(Segments(), nseg);
 
@@ -162,7 +162,7 @@ void dabc::Buffer::CutFromBegin(BufferSize_t len)
       GetObject()->fNumSegments -= nseg;
    }
 
-   if (npos>0) {
+   if (npos > 0) {
       GetObject()->fSegm[0].datasize -= npos;
       GetObject()->fSegm[0].buffer = (char*) (GetObject()->fSegm[0].buffer) + npos;
    }
@@ -253,7 +253,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs)
       ownbuf = src;
 
 
-   unsigned tgtseg(0), tgtpos(0);
+   unsigned tgtseg = 0, tgtpos = 0;
 
    Locate(pos, tgtseg, tgtpos);
 
@@ -266,7 +266,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs)
    MemSegment *segm = Segments();
 
    // first move complete segments to the end
-   for (unsigned n=NumSegments(); n>tgtseg + (tgtpos>0 ? 1 : 0); ) {
+   for (unsigned n = NumSegments(); n > tgtseg + (tgtpos>0 ? 1 : 0); ) {
       n--;
 
       // DOUT0("Move segm %u->%u", n, n + numrequired - NumSegments());
@@ -359,16 +359,16 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
 
    if (ptr.fullsize() < len) return res;
 
-   unsigned firstseg(0), lastseg(0);
-   void* firstptr(0);
-   BufferSize_t firstlen(0), lastlen(0);
+   unsigned firstseg = 0, lastseg = 0;
+   void* firstptr = nullptr;
+   BufferSize_t firstlen = 0, lastlen = 0;
 
    while ((len>0) && (ptr.fSegm<NumSegments())) {
       unsigned partlen(len);
       if (partlen>ptr.rawsize()) partlen = ptr.rawsize();
-      if (partlen==0) break;
+      if (partlen == 0) break;
 
-      if (firstptr==0) {
+      if (!firstptr) {
          firstptr = ptr.ptr();
          firstlen = partlen;
          firstseg = ptr.fSegm;
@@ -381,7 +381,7 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
       ptr.shift(partlen);
    }
 
-   if (len>0) {
+   if (len > 0) {
       EOUT("Internal problem - not full length covered");
       return res;
    }

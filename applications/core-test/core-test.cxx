@@ -1002,7 +1002,7 @@ extern "C" void RunPoolTest()
       DOUT0("Full size1 = %u size3 = %u issame %s", buf1.GetTotalSize(), buf3.GetTotalSize(), DBOOL(buf3==buf1));
 
 
-      unsigned cnt(0);
+      unsigned cnt = 0;
       dabc::Buffer hdr;
       dabc::Pointer ptr = buf2;
       while (!(hdr = buf2.GetNextPart(ptr, 16)).null()) cnt++;
@@ -1083,9 +1083,9 @@ extern "C" void RunPoolTest()
 /** Prototype of stack buffer - all fields are in stack, need to deep copy all of them by assign operator */
 class SBuffer {
    protected:
-      int fField;
+      int fField{0};
    public:
-      SBuffer() : fField(0) { DOUT0("SBuffer Default constructor"); }
+      SBuffer() { DOUT0("SBuffer Default constructor"); }
 
       SBuffer(const SBuffer& src) : fField(src.fField) { DOUT0("SBuffer Copy constructor"); }
 
@@ -1094,7 +1094,8 @@ class SBuffer {
       SBuffer& operator=(const SBuffer& src)
       {
          DOUT0("operator=(const SBuffer& src)");
-         fField = src.fField; return *this;
+         fField = src.fField;
+         return *this;
       }
 
       SBuffer& operator=(SBuffer& src)
@@ -1277,10 +1278,10 @@ extern "C" void RunCPPTest()
 class MyClass {
    public:
 
-      int fValue;
+      int fValue{0};
       float arr[3];
 
-      MyClass() : fValue(0) {}
+      MyClass()  {}
       virtual ~MyClass() {}
 
       virtual void SetValue(int a) { fValue = a; }

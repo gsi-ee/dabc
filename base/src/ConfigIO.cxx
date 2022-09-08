@@ -23,8 +23,8 @@
 
 dabc::ConfigIO::ConfigIO(Configuration* cfg, int id) :
    fCfg(cfg),
-   fCurrItem(0),
-   fCurrChld(0),
+   fCurrItem(nullptr),
+   fCurrChld(nullptr),
    fCurrStrict(true),
    fCgfId(id)
 {

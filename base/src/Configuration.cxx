@@ -137,7 +137,7 @@ int dabc::Configuration::ShowCpuInfo()
    if (!fSelected) return -1;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlCpuInfo);
    if (res.empty()) return -1;
-   int kind(0);
+   int kind = 0;
    return dabc::str_to_int(res.c_str(), &kind) ? kind : -1;
 }
 

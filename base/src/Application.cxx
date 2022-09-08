@@ -24,7 +24,7 @@
 dabc::Application::Application(const char *classname) :
    Worker(dabc::mgr(), xmlAppDfltName),
    fAppClass(classname ? classname : typeApplication),
-   fInitFunc(0),
+   fInitFunc(nullptr),
    fAnyModuleWasRunning(false),
    fSelfControl(true),
    fAppDevices(),

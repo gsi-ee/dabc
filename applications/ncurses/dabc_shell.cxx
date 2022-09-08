@@ -16,25 +16,18 @@ const char *choices[] = {"Choice 1",
                          "Choice 3",
                          "Choice 4",
                          "Exit",
-                         0};
+                         nullptr};
 
 std::string fNodeName;
 
 struct LevelItem {
-   WINDOW *my_menu_win;
-   MENU *my_menu;
-   ITEM **my_items;
-   unsigned num_items;
-   int winx, winy;
+   WINDOW *my_menu_win{nullptr};
+   MENU *my_menu{nullptr};
+   ITEM **my_items{nullptr};
+   unsigned num_items{0};
+   int winx{0}, winy{0};
 
-   LevelItem() :
-      my_menu_win(0),
-      my_menu(0),
-      my_items(0),
-      num_items(0),
-      winx(0), winy(0)
-   {
-   }
+   LevelItem() { }
 
    virtual ~LevelItem()
    {

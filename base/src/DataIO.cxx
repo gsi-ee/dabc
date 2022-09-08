@@ -249,7 +249,7 @@ bool dabc::FileOutput::Write_Init()
 
       while ((fname.length()>1) && fname[0]=='0') fname.erase(0, 1);
 
-      int number(0);
+      int number = 0;
       if ((fname.length()>0) && dabc::str_to_int(fname.c_str(), &number)) {
          if (number>maxnumber) maxnumber = number;
       }

@@ -52,8 +52,8 @@ namespace dabc {
 
          struct QueueRec {
             Command     cmd;
-            EKind       kind;
-            uint32_t    id;
+            EKind       kind{kindNone};
+            uint32_t    id{0};
 
             QueueRec() : cmd(), kind(kindNone), id(0) {}
             QueueRec(const Command& _cmd, EKind _kind, uint32_t _id) : cmd(_cmd), kind(_kind), id(_id) {}

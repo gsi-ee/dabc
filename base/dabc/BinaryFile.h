@@ -154,8 +154,8 @@ namespace dabc {
 
    /** \brief Binary file header structure */
    struct BinaryFileHeader {
-      uint64_t magic;    ///< special word, expected in the beginning of the file
-      uint64_t version;  ///< version number of the binary file
+      uint64_t magic{0};    ///< special word, expected in the beginning of the file
+      uint64_t version{0};  ///< version number of the binary file
 
       /** \brief Default constructor */
       BinaryFileHeader() : magic(0), version(0) {}
@@ -165,8 +165,8 @@ namespace dabc {
 
    /** \brief Binary file buffer header structure */
    struct BinaryFileBufHeader {
-      uint64_t datalength;   ///< overall length of buffer
-      uint64_t buftype;      ///< type id of the buffer
+      uint64_t datalength{0};   ///< overall length of buffer
+      uint64_t buftype{0};      ///< type id of the buffer
 
       /** \brief Default constructor */
       BinaryFileBufHeader() : datalength(0), buftype(0) {}

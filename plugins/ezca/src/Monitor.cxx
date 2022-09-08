@@ -189,7 +189,7 @@ bool ezca::Monitor::DoEpicsReadout()
    }
 
 
-   int *rcs(0), nrcs(0);
+   int *rcs = nullptr, nrcs = 0;
 
    if (ezcaEndGroupWithReport(&rcs, &nrcs) != EZCA_OK) {
       res = false;

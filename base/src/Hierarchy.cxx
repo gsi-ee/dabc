@@ -51,7 +51,7 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
    uint64_t pos = s.size();
    uint64_t sz = 0;
 
-   uint32_t storesz(0), storenum(0), storevers(0);
+   uint32_t storesz = 0, storenum = 0, storevers = 0;
 
    if (s.is_output()) {
       sz = s.is_real() ? StoreSize(version, hlimit) : 0;

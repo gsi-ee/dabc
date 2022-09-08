@@ -52,7 +52,7 @@ void dabc::InputTransport::SetDataInput(DataInput* inp, bool owner)
    fInputOwner = false;
    WorkerAddon* addon = inp->Read_GetAddon();
 
-   if (addon==0) {
+   if (!addon) {
       fInputOwner = owner;
    } else if (owner) {
       AssignAddon(addon);
@@ -83,7 +83,7 @@ bool dabc::InputTransport::StartTransport()
    // if we are doing input transport,
    // generate artificial event for the port to start transport
    // TODO: should it be default for the module itself???
-   if (fInput==0) {
+   if (!fInput) {
       EOUT("Input object is not assigned");
 
       return false;

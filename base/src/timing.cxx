@@ -290,7 +290,7 @@ bool dabc::DateTime::SetOnlyDate(const char* sbuf)
 {
    if ((sbuf==0) || (strlen(sbuf)!=10)) return false;
 
-   unsigned year(0), month(0), day(0);
+   unsigned year = 0, month = 0, day = 0;
    if (sscanf(sbuf,"%4u-%02u-%02u", &year, &month, &day)!=3) return false;
    if ((year<1970) || (year>2100) || (month>12) || (month==0) || (day>31) || (day==0)) return false;
 
@@ -309,7 +309,7 @@ bool dabc::DateTime::SetOnlyTime(const char* sbuf)
 {
    if ((sbuf==0) || (strlen(sbuf)!=8)) return false;
 
-   unsigned hour(0), min(0), sec(0);
+   unsigned hour = 0, min = 0, sec = 0;
    if (sscanf(sbuf,"%02u:%02u:%02u", &hour, &min, &sec)!=3) return false;
    if ((hour>23) || (min>59) || (sec>59)) return false;
 

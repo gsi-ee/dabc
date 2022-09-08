@@ -64,10 +64,10 @@ namespace fesa {
 fesa::Player::Player(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fCounter(0),
-   fSniffer(0),
-   fHist(0),
+   fSniffer(nullptr),
+   fHist(nullptr),
    fRDAService(0),
-   fDevice(0)
+   fDevice(nullptr)
 {
    fWorkerHierarchy.Create("FESA", true);
 

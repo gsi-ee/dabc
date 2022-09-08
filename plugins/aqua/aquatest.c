@@ -38,7 +38,7 @@ int main()
 
     lastcnt = -1;
     totalsz = 0; totalbuf = 0; totallost = 0;
-    lasttm = time(0);
+    lasttm = time(NULL);
 
 
     while(1)
@@ -80,7 +80,7 @@ int main()
 
            lastcnt = header[0];
 
-           tm = time(0);
+           tm = time(NULL);
            if (tm - lasttm > 3) {
               printf("Bufs %6lld  Size %8.3f MB  Lost %3lld\n", (long long) totalbuf, totalsz*1e-6, (long long) totallost);
               lasttm = tm;
