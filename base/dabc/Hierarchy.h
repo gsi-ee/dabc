@@ -88,7 +88,7 @@ namespace dabc {
 
          RecordFieldsMap* TakeNext()
          {
-            if (fArr.Size()==0) return nullptr;
+            if (fArr.Size() == 0) return nullptr;
             RecordFieldsMap *next = fArr.Front().take();
             fArr.PopOnly();
             return next;

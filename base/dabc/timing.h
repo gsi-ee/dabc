@@ -207,7 +207,7 @@ namespace dabc {
 
          double operator-(const DateTime& src) const { return src.DistanceTo(*this); }
 
-         bool null() const { return (tv_sec==0) && (tv_nsec==0); }
+         bool null() const { return (tv_sec == 0) && (tv_nsec == 0); }
 
          DateTime& GetNow();
 

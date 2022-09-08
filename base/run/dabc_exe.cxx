@@ -29,11 +29,11 @@ bool CreateManagerControl(dabc::Configuration& cfg)
    int ctrl = cfg.UseControl();
    std::string master = cfg.MasterName();
 
-   if ((ctrl==0) && (cfg.NumNodes()>1)) ctrl = 1;
+   if ((ctrl == 0) && (cfg.NumNodes()>1)) ctrl = 1;
 
    if ((ctrl > 0) || !master.empty()) {
       DOUT2("Connecting control");
-      if (!dabc::mgr.CreateControl(ctrl>0)) {
+      if (!dabc::mgr.CreateControl(ctrl > 0)) {
          EOUT("Cannot establish connection to command system");
          return false;
       }
@@ -75,8 +75,8 @@ int main(int numc, char* args[])
 
    DOUT2("Start  cnt = %u", dabc::Object::NumInstances());
 
-   if ((numc>1) and (strcmp(args[1],"cmd")==0))
-      return command_shell(numc>2 ? args[2] : "");
+   if ((numc > 1) and (strcmp(args[1], "cmd") == 0))
+      return command_shell(numc > 2 ? args[2] : "");
 
    const char *cfgfile = nullptr;
 
@@ -102,21 +102,21 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
-      if (strcmp(arg,"-slow-time")==0) {
+      if (strcmp(arg,"-slow-time") == 0) {
          dabc::TimeStamp::SetUseSlow();
       } else
-      if (strcmp(arg,"-nodeid")==0) {
+      if (strcmp(arg,"-nodeid") == 0) {
          if (cnt < numc)
             nodeid = std::stoul(args[cnt++]);
       } else
-      if (strcmp(arg,"-numnodes")==0) {
+      if (strcmp(arg,"-numnodes") == 0) {
          if (cnt < numc)
             numnodes = std::stoul(args[cnt++]);
       } else
-      if (strcmp(arg,"-run")==0) {
+      if (strcmp(arg,"-run") == 0) {
          //dorun = true;
       } else
-      if (strcmp(arg,"-norun")==0) {
+      if (strcmp(arg,"-norun") == 0) {
          //dorun = false;
       } else {
          const char* separ = strchr(arg,'=');
@@ -137,7 +137,7 @@ int main(int numc, char* args[])
       }
    }
 
-   if (numnodes==0) numnodes = cfg.NumNodes();
+   if (numnodes == 0) numnodes = cfg.NumNodes();
    if (nodeid>=numnodes) nodeid = 0;
 
    DOUT2("Using config file: %s id: %u", cfgfile, nodeid);
@@ -171,13 +171,13 @@ int main(int numc, char* args[])
    int res = 0;
 
    if (!cfg.LoadLibs()) res = -2;
-   if (res==0)
+   if (res == 0)
       if (!CreateManagerControl(cfg)) res = -1;
 
-   if (res==0)
+   if (res == 0)
       dabc::mgr.Execute("InitFactories");
 
-   if ((res==0) && (cfg.WithPublisher() > 0))
+   if ((res == 0) && (cfg.WithPublisher() > 0))
       dabc::mgr.CreatePublisher();
 
    dabc::Application::ExternalFunction* runfunc =
@@ -185,18 +185,18 @@ int main(int numc, char* args[])
          dabc::Factory::FindSymbol(cfg.RunFuncName());
 
    int cpuinfo = cfg.ShowCpuInfo();
-   if (cpuinfo>=0) {
+   if (cpuinfo >= 0) {
       dabc::mgr.CreateModule("dabc::CpuInfoModule", "/CpuInfo", dabc::Manager::MgrThrdName());
       dabc::mgr.StartModule("/CpuInfo");
    }
 
-   if (runfunc!=0) {
-      if (res==0) runfunc();
+   if (runfunc) {
+      if (res == 0) runfunc();
    } else {
-      if (res==0)
+      if (res == 0)
          if (!dabc::mgr.CreateApplication(cfg.ConetextAppClass())) res = -3;
 
-      if (res==0)
+      if (res == 0)
          dabc::mgr.RunMainLoop(cfg.GetRunTime());
    }
 

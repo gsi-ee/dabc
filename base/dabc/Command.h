@@ -222,10 +222,10 @@ namespace dabc {
           */
          void Reply(int res = cmd_noresult);
 
-         /** Reply on the command with false (cmd_false==0) value */
+         /** Reply on the command with false (cmd_false == 0) value */
          void ReplyFalse() { Reply(cmd_false); }
 
-         /** Reply on the command with true (cmd_true==1) value */
+         /** Reply on the command with true (cmd_true == 1) value */
          void ReplyTrue() { Reply(cmd_true); }
 
          /** Reply on the command with true or false value */

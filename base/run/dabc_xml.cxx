@@ -36,15 +36,15 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
-      if (strcmp(arg,"-id")==0) {
+      if (strcmp(arg,"-id") == 0) {
          if (cnt < numc)
             configid = std::stoul(args[cnt++]);
       } else
-      if (strcmp(arg,"-workdir")==0) {
+      if (strcmp(arg,"-workdir") == 0) {
          if (cnt < numc)
             workdir = args[cnt++];
       } else
-      if (strcmp(arg,"-number")==0) {
+      if (strcmp(arg,"-number") == 0) {
          unsigned res = cfg.NumNodes();
          if (res==0) return 5;
          std::cout << res << std::endl;
@@ -53,17 +53,17 @@ int main(int numc, char* args[])
       if (strcmp(arg,"-mode") == 0) {
          const char* kind = (cnt < numc) ? args[cnt++] : "start";
          std::string res = cfg.SshArgs(configid, kind, configuration, workdir);
-         if (res.length()==0) return 7;
+         if (res.empty()) return 7;
          std::cout << res << std::endl;
          std::cout.flush();
       } else
-      if (strstr(arg,"-nodename")==arg) {
+      if (strstr(arg,"-nodename") == arg) {
          std::string name = cfg.NodeName(configid);
          if (name.length() == 0) return 5;
          std::cout << name << std::endl;
          std::cout.flush();
       } else
-      if (strstr(arg,"-contextname")==arg) {
+      if (strstr(arg,"-contextname") == arg) {
          std::string name = cfg.ContextName(configid);
          if (name.length() == 0) return 5;
          std::cout << name << std::endl;

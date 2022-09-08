@@ -57,9 +57,9 @@ void DABC_GLOBAL_CtrlCHandler(int /* number */)
 
    DABC_SigCnt++;
 
-   if ((DABC_SigCnt>2) || (dabc::mgr()==0)) {
+   if ((DABC_SigCnt > 2) || !dabc::mgr()) {
       printf("Force application exit\n");
-      if (dabc::lgr()!=0) dabc::lgr()->CloseFile();
+      if (dabc::lgr()) dabc::lgr()->CloseFile();
       exit(0);
    }
 
@@ -72,9 +72,9 @@ void DABC_GLOBAL_SigPipeHandler(int /* number */)
  // note that DABC sockets have SIGPIPE disabled by default
  // todo: maybe one global signal handlers for all signals. For the moment, keep things rather separate...
   if (DABC_SigThrd != dabc::PosixThread::Self()) return;
-  if (dabc::mgr()==0) {
+  if (!dabc::mgr()) {
      printf("DABC_GLOBAL_SigPipeHandler: no manager, Force application exit\n");
-     if (dabc::lgr()!=0) dabc::lgr()->CloseFile();
+     if (dabc::lgr()) dabc::lgr()->CloseFile();
      exit(0);
   }
   dabc::mgr()->ProcessPipeSignal();
@@ -82,7 +82,7 @@ void DABC_GLOBAL_SigPipeHandler(int /* number */)
 
 bool dabc::InstallSignalHandlers()
 {
-   if (DABC_SigThrd!=0) {
+   if (DABC_SigThrd) {
       printf("Signal handler was already installed !!!\n");
       return false;
    }

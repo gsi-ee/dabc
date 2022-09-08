@@ -244,12 +244,12 @@ std::string dabc::Configuration::ConetextAppClass()
 
    XMLNodePointer_t node = Xml::GetChild(fSelected);
 
-   while (node!=0) {
+   while (node) {
       if (IsNodeName(node, xmlApplication)) break;
       node = Xml::GetNext(node);
    }
 
-   if (node==0)
+   if (!node)
       node = FindMatch(0, fSelected, xmlApplication);
 
    const char* res = Xml::GetAttr(node, xmlClassAttr);
@@ -280,18 +280,18 @@ bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char* n
    do {
 
       prev = FindMatch(prev, fSelected, nodename);
-      if (prev==0) break;
+      if (!prev) break;
 
       // if creation node marked with auto="false" attribute, than creation is disabled
       const char* autoattr = Xml::GetAttr(prev, xmlAutoAttr);
-      if ((autoattr!=0) && strcmp(autoattr,xmlFalseValue)==0) continue;
+      if (autoattr && strcmp(autoattr,xmlFalseValue) == 0) continue;
 
       if (!check_name_for_multicast) break;
       const char* nameattr = Xml::GetAttr(prev, xmlNameAttr);
-      if ((nameattr==0) || (strpbrk(nameattr,"*?")==0)) break;
+      if (!nameattr || (strpbrk(nameattr,"*?") == 0)) break;
 
-   } while (prev!=0);
+   } while (prev);
 
-   return prev!=0;
+   return prev != nullptr;
 }
 

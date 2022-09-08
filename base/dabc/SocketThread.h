@@ -72,13 +72,13 @@ namespace dabc {
           * When it will be possible, worker get evntSocketWrite event */
          inline void SetDoingOutput(bool on = true) { fDoingOutput = on; }
 
-         /** Generic error handler. Also invoked when socket is closed (msg==0) */
+         /** Generic error handler. Also invoked when socket is closed (msg == 0) */
          virtual void OnSocketError(int msg, const std::string &info);
 
          ssize_t DoRecvBuffer(void* buf, ssize_t len);
-         ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr = 0, unsigned srcaddrlen = 0);
+         ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr = nullptr, unsigned srcaddrlen = 0);
          ssize_t DoSendBuffer(void* buf, ssize_t len);
-         ssize_t DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr = 0, unsigned tgtaddrlen = 0);
+         ssize_t DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr = nullptr, unsigned tgtaddrlen = 0);
 
          bool IsDeleteWorkerOnClose() const { return fDeleteWorkerOnClose; }
          void SetDeleteWorkerOnClose(bool on = true) { fDeleteWorkerOnClose = on; }

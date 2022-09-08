@@ -200,7 +200,7 @@ namespace dabc {
          {
             if (isOpened()) return false;
 
-            if (!fname || *fname==0) {
+            if (!fname || *fname == 0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }

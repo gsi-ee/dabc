@@ -380,7 +380,7 @@ namespace dabc {
 
          inline bool CanTakeBuffer() const
          {
-            return (QueueCapacity()==0) ? true : fQueue.CanRecv();
+            return (QueueCapacity() == 0) ? true : fQueue.CanRecv();
          }
 
          Buffer TakeBuffer(BufferSize_t size = 0);

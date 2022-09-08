@@ -144,7 +144,7 @@ namespace dabc {
 
          inline void* operator()() const { return fPtr; }
          inline void* ptr() const { return fPtr; }
-         inline bool null() const { return (fPtr==0) || (fullsize()==0); }
+         inline bool null() const { return !fPtr || (fullsize() == 0); }
          inline BufferSize_t rawsize() const { return fRawSize; }
          inline BufferSize_t fullsize() const { return fFullSize; }
 

@@ -120,7 +120,7 @@ namespace dabc {
 
          /** \brief Take buffer from memory pool */
          Buffer TakeBuffer(unsigned pool = 0)
-         { return (pool < fPools.size()) ? fPools[pool]->TakeBuffer() : ((pool==0) ? TakeDfltBuffer() : Buffer()); }
+         { return (pool < fPools.size()) ? fPools[pool]->TakeBuffer() : ((pool == 0) ? TakeDfltBuffer() : Buffer()); }
 
          /** \brief Returns buffer from queue assigned with the pool */
          Buffer PoolQueueItem(unsigned pool = 0, unsigned nbuf = 0);

@@ -68,7 +68,7 @@ void dabc::Command::ChangeName(const std::string &name)
 void dabc::Command::AddCaller(Worker* worker, bool* exe_ready)
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return;
+   if (!cont) return;
 
    LockGuard lock(ObjectMutex());
 
@@ -78,7 +78,7 @@ void dabc::Command::AddCaller(Worker* worker, bool* exe_ready)
 void dabc::Command::RemoveCaller(Worker* worker, bool* exe_ready)
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return;
+   if (!cont) return;
 
    LockGuard lock(ObjectMutex());
 
@@ -86,7 +86,7 @@ void dabc::Command::RemoveCaller(Worker* worker, bool* exe_ready)
 
    while (iter != cont->fCallers.end()) {
 
-      if ((iter->worker == worker) && ((exe_ready==0) || (iter->exe_ready==exe_ready)))
+      if ((iter->worker == worker) && (!exe_ready || (iter->exe_ready == exe_ready)))
          cont->fCallers.erase(iter++);
       else
          iter++;
@@ -102,7 +102,7 @@ bool dabc::Command::IsLastCallerSync()
 
    if ((cont->fCallers.size() == 0)) return false;
 
-   return cont->fCallers.back().exe_ready != 0;
+   return cont->fCallers.back().exe_ready != nullptr;
 }
 
 dabc::Command& dabc::Command::SetTimeout(double tm)
@@ -236,7 +236,7 @@ void dabc::Command::Reply(int res)
       {
          LockGuard lock(ObjectMutex());
 
-         if (cont->fCallers.size()==0) break;
+         if (cont->fCallers.size() == 0) break;
 
          DOUT5("Cmd %s Finalize callers %u", cont->GetName(), cont->fCallers.size());
 
@@ -244,7 +244,7 @@ void dabc::Command::Reply(int res)
          cont->fCallers.pop_back();
       }
 
-      if (rec.worker==0) continue;
+      if (!rec.worker) continue;
 
       if (rec.worker->GetCommandReply(*this, rec.exe_ready)) break;
 
@@ -281,7 +281,7 @@ bool remove_quotes(std::string& str)
 
    if (str[0] != str[len-1]) return true;
 
-   if (str[0]=='\"') {
+   if (str[0] == '\"') {
       str.erase(len-1, 1);
       str.erase(0,1);
    }
@@ -312,7 +312,7 @@ bool dabc::Command::ReadFromCmdString(const std::string &str)
       if (separ == part.length()) {
          SetStr(dabc::format("Arg%d", narg++), part);
       } else
-      if (separ==0) {
+      if (separ == 0) {
          EOUT("Wrong position of '=' symbol");
          Release();
          return false;
@@ -324,7 +324,7 @@ bool dabc::Command::ReadFromCmdString(const std::string &str)
       }
    }
 
-   if (narg>0) SetInt("NumArg", narg);
+   if (narg > 0) SetInt("NumArg", narg);
 
    return true;
 }

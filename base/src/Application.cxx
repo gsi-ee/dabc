@@ -289,7 +289,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       if (!m.null()) continue;
 
       // FIXME: for old xml files, remove after 12.2014
-      if (strcmp(clname, "dabc::Publisher")==0) continue;
+      if (strcmp(clname, "dabc::Publisher") == 0) continue;
 
       fAppModules.emplace_back(name);
 
@@ -336,7 +336,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       const char *inputname = Xml::GetAttr(node, "input");
 
       // output and input should always be specified
-      if ((outputname==0) || (inputname==0)) continue;
+      if (!outputname || !inputname) continue;
 
       const char *kind = Xml::GetAttr(node, "kind");
       const char *lst = Xml::GetAttr(node, "list");
@@ -348,7 +348,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
          arr = fld.AsStrVect();
       }
 
-      if (kind && (strcmp(kind,"all-to-all")==0)) {
+      if (kind && (strcmp(kind,"all-to-all") == 0)) {
          int numnodes = 1;
          if (arr.size() > 0)
             numnodes = arr.size();
@@ -392,7 +392,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       }
    }
 
-   if (nconn==0) return cmd_true;
+   if (nconn == 0) return cmd_true;
 
    dabc::Command cmd("ActivateConnections");
    cmd.SetTimeout(fConnTimeout);

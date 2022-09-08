@@ -153,7 +153,7 @@ namespace dabc {
                newcapacity = fCapacity * 2;
             if (newcapacity < 16) newcapacity = 16;
             T* q = new T [newcapacity];
-            if (q==0) return false;
+            if (!q) return false;
 
             CopyTo(q);
 
@@ -169,7 +169,7 @@ namespace dabc {
 
          bool Remove(T value)
          {
-            if (Size()==0) return false;
+            if (Size() == 0) return false;
 
             T *i_tgt(fTail), *i_src(fTail);
 
@@ -259,7 +259,7 @@ namespace dabc {
          T Pop()
          {
             #ifdef DABC_EXTRA_CHECKS
-               if (fSize==0) EOUT("Queue is empty");
+               if (fSize == 0) EOUT("Queue is empty");
             #endif
             T* res = fTail++;
             if (fTail==fBorder) fTail = fQueue;
@@ -270,7 +270,7 @@ namespace dabc {
          T& Front() const
          {
             #ifdef DABC_EXTRA_CHECKS
-               if (fSize==0) EOUT("Queue is empty");
+               if (fSize == 0) EOUT("Queue is empty");
             #endif
             return *fTail;
          }
@@ -304,7 +304,7 @@ namespace dabc {
          T& Back() const
          {
             #ifdef DABC_EXTRA_CHECKS
-               if (fSize==0) EOUT("Queue is empty");
+               if (fSize == 0) EOUT("Queue is empty");
             #endif
             return Item(fSize-1);
          }
@@ -343,7 +343,7 @@ namespace dabc {
 
          void* pop()
          {
-            if (size()==0) return nullptr;
+            if (size() == 0) return nullptr;
             void* res = back();
             pop_back();
             return res;
@@ -351,7 +351,7 @@ namespace dabc {
 
          bool has_ptr(void* item) const
          {
-            for (unsigned n=0; n<size(); n++)
+            for (unsigned n = 0; n < size(); n++)
                if (at(n)==item) return true;
             return false;
          }

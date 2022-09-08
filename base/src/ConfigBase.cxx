@@ -201,10 +201,10 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindItemMatch(XMLNodePointer_t& lastmat
    while (subnode) {
       if (IsNodeName(subnode, sub1)) {
          if (!sub2) {
-            if (lastmatch==0) return subnode;
-            if (lastmatch==subnode) lastmatch = 0;
+            if (!lastmatch) return subnode;
+            if (lastmatch == subnode) lastmatch = nullptr;
          } else {
-            XMLNodePointer_t res = FindItemMatch(lastmatch, subnode, sub2, sub3, 0);
+            XMLNodePointer_t res = FindItemMatch(lastmatch, subnode, sub2, sub3, nullptr);
             if (res) return res;
          }
       }
@@ -282,16 +282,17 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
 
 std::string dabc::ConfigBase::GetNodeValue(XMLNodePointer_t node)
 {
-   if (node==0) return std::string();
+   if (!node) return std::string();
    const char* value = Xml::GetAttr(node, xmlValueAttr);
-   if (value==0) value = Xml::GetNodeContent(node);
+   if (!value) value = Xml::GetNodeContent(node);
    return ResolveEnv(value ? value : "");
 }
 
 std::string dabc::ConfigBase::GetAttrValue(XMLNodePointer_t node, const char* name)
 {
-   const char* res = Xml::GetAttr(node, name);
-   if (res==0) return std::string();
+   const char *res = Xml::GetAttr(node, name);
+   if (!res)
+      return std::string();
    return ResolveEnv(res);
 }
 
@@ -307,8 +308,8 @@ std::string dabc::ConfigBase::Find1(XMLNodePointer_t node,
                                     const char* sub3)
 {
    XMLNodePointer_t res = FindMatch(0, node, sub1, sub2, sub3);
-   if (res==0) {
-      if (sub2!=0) {
+   if (!res) {
+      if (sub2) {
          XMLNodePointer_t child = FindChild(node, sub1);
          if (child) return Find1(child, dflt, sub2, sub3);
       }
@@ -326,7 +327,7 @@ std::string dabc::ConfigBase::FindN(XMLNodePointer_t node,
 {
    XMLNodePointer_t res = FindMatch(prev, node, sub1, sub2, sub3);
    prev = res;
-   if (res==0) return std::string();
+   if (!res) return std::string();
    return GetNodeValue(res);
 }
 
@@ -338,7 +339,7 @@ unsigned dabc::ConfigBase::NumNodes()
    if (!rootnode) return 0;
    XMLNodePointer_t node = Xml::GetChild(rootnode);
    unsigned cnt = 0;
-   while (node!=0) {
+   while (node) {
       if (IsContextNode(node)) cnt++;
       node = Xml::GetNext(node);
    }
@@ -389,9 +390,9 @@ std::string dabc::ConfigBase::ContextName(unsigned id)
 
 bool dabc::ConfigBase::IsWildcard(const char* str)
 {
-   if (str==0) return false;
+   if (!str) return false;
 
-   return (strchr(str,'*')!=0) || (strchr(str,'?')!=0);
+   return (strchr(str,'*')!=0) || (strchr(str,'?') != 0);
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::RootNode()
@@ -425,7 +426,7 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
    XMLNodePointer_t node = Xml::GetChild(rootnode);
    unsigned cnt = 0;
 
-   while (node!=nullptr) {
+   while (node) {
       if (IsContextNode(node)) {
          if (cnt++ == id) return node;
       }
@@ -463,8 +464,8 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string &arg, int id)
          std::string value;
 
          XMLNodePointer_t node = FindChild(fCmdVariables, var.c_str());
-         if (node==0) node = FindChild(vars, var.c_str());
-         if (node!=0) value = GetNodeValue(node);
+         if (!node) node = FindChild(vars, var.c_str());
+         if (node) value = GetNodeValue(node);
 
          if (value.empty()){
             if (var==xmlDABCSYS) value = envDABCSYS; else
@@ -527,23 +528,23 @@ std::string dabc::ConfigBase::GetEnv(const char* name)
 
 std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char* topcfgfile, const char* topworkdir)
 {
-   if (skind==0) skind = "test";
+   if (!skind) skind = "test";
 
    int kind = -1;
-   if (strcmp(skind, "kill")==0) kind = kindKill; else
-   if (strcmp(skind, "copycfg")==0) kind = kindCopy; else
-   if (strcmp(skind, "start")==0) kind = kindStart; else
-   if (strcmp(skind, "stop")==0) kind = kindStop; else
-   if (strcmp(skind, "test")==0) kind = kindTest; else
-   if (strcmp(skind, "run")==0) kind = kindRun; else
-   if (strcmp(skind, "getlog")==0) kind = kindGetlog; else
-   if (strcmp(skind, "dellog")==0) kind = kindDellog; else
+   if (strcmp(skind, "kill") == 0) kind = kindKill; else
+   if (strcmp(skind, "copycfg") == 0) kind = kindCopy; else
+   if (strcmp(skind, "start") == 0) kind = kindStart; else
+   if (strcmp(skind, "stop") == 0) kind = kindStop; else
+   if (strcmp(skind, "test") == 0) kind = kindTest; else
+   if (strcmp(skind, "run") == 0) kind = kindRun; else
+   if (strcmp(skind, "getlog") == 0) kind = kindGetlog; else
+   if (strcmp(skind, "dellog") == 0) kind = kindDellog; else
 
-   if (kind<0) return std::string("");
+   if (kind < 0) return std::string("");
 
    std::string res;
    XMLNodePointer_t contnode = FindContext(id);
-   if (contnode == 0) return std::string("");
+   if (!contnode) return std::string("");
 
    envDABCNODEID = dabc::format("%u", id);
    envDABCNUMNODES = dabc::format("%u", NumNodes());
@@ -579,7 +580,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    std::string envdabcsys = GetEnv("DABCSYS");
 
-   if (topcfgfile==0) {
+   if (!topcfgfile) {
       EOUT("Config file not defined");
       return std::string("");
    }
@@ -805,4 +806,3 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    return logcmd;
 }
-

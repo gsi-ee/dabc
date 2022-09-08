@@ -28,7 +28,7 @@
 
 bool dabc::FileInterface::mkdir(const char* path)
 {
-   if ((path==0) || (*path==0)) return false;
+   if (!path || (*path == 0)) return false;
 
    const char* part = path;
 
@@ -59,14 +59,14 @@ bool dabc::FileInterface::mkdir(const char* path)
 
 dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
 {
-   if (!fmask || (*fmask==0)) return nullptr;
+   if (!fmask || (*fmask == 0)) return nullptr;
 
    std::string pathname;
    const char* fname = nullptr;
 
    const char* slash = strrchr(fmask, '/');
 
-   if (slash==0) {
+   if (!slash) {
       pathname = ".";
       fname = fmask;
    } else {
@@ -85,16 +85,16 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
       const char* item = namelist[n]->d_name;
       // exclude all files/directory names starting with .
       // we exclude all hidden files or directory likes '.' and '..'
-      if ((item==0) || (*item == '.')) continue;
+      if (!item || (*item == '.')) continue;
 
-      if ((fname==0) || (fnmatch(fname, item, FNM_NOESCAPE)==0)) {
+      if (!fname || (fnmatch(fname, item, FNM_NOESCAPE) == 0)) {
          std::string fullitemname;
          if (slash) fullitemname += pathname;
          fullitemname += item;
          if (stat(fullitemname.c_str(), &buf)!=0) continue;
 
-         if ((select_files && !S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK)==0)) ||
-            (!select_files && S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK | X_OK)==0))) {
+         if ((select_files && !S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK) == 0)) ||
+            (!select_files && S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK | X_OK) == 0))) {
             if (!res) res = new dabc::Object(nullptr, "FilesList");
             new dabc::Object(res, fullitemname);
          }

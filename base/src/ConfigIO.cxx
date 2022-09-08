@@ -41,17 +41,17 @@ dabc::ConfigIO::ConfigIO(const ConfigIO& src) :
 
 bool dabc::ConfigIO::FindItem(const char* name)
 {
-   if (fCurrItem==0) return false;
+   if (!fCurrItem) return false;
 
-   if (fCurrChld==0)
+   if (!fCurrChld)
       fCurrChld = Xml::GetChild(fCurrItem);
    else
       fCurrChld = Xml::GetNext(fCurrChld);
 
-   while (fCurrChld!=0) {
+   while (fCurrChld) {
       if (fCfg->IsNodeName(fCurrChld, name)) {
          fCurrItem = fCurrChld;
-         fCurrChld = 0;
+         fCurrChld = nullptr;
          return true;
       }
       fCurrChld = Xml::GetNext(fCurrChld);
@@ -63,11 +63,11 @@ bool dabc::ConfigIO::FindItem(const char* name)
 bool dabc::ConfigIO::CheckAttr(const char* name, const char* value)
 {
    // make extra check - if fCurrChld!=0 something was wrong already
-   if ((fCurrChld!=0) || (fCurrItem==0)) return false;
+   if (fCurrChld || !fCurrItem) return false;
 
    bool res = true;
 
-   if (value==0) {
+   if (!value) {
       res = Xml::HasAttr(fCurrItem, name);
    } else {
       const char* attr = Xml::GetAttr(fCurrItem, name);
@@ -101,17 +101,18 @@ dabc::Object* dabc::ConfigIO::GetObjParent(Object* obj, int lvl)
    // make hack for the objects, which are not registered in the object manager,
    // but which are want to use config files. Make special case:
 
-   if ((obj!=0) && (obj->GetParent()==0) && (lvl==1) && (obj!=dabc::mgr())) return dabc::mgr();
+   if (obj && !obj->GetParent() && (lvl == 1) && (obj != dabc::mgr())) return dabc::mgr();
 
-   if (lvl==0) return obj;
+   if (lvl == 0) return obj;
 
-   while ((obj!=0) && (lvl-->0)) obj = obj->GetParent();
+   while (obj&& (lvl-- > 0))
+      obj = obj->GetParent();
    return obj;
 }
 
 dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const char* name)
 {
-   if ((node==0) || (name==0) || (strlen(name)==0)) return node;
+   if (!node || !name || (strlen(name) == 0)) return node;
 
    const char* pos = strchr(name, '/');
    if (pos==0) return fCfg->FindChild(node, name);
@@ -122,9 +123,10 @@ dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const 
 
 std::string dabc::ConfigIO::ResolveEnv(const char* value)
 {
-   if ((value==0) || (*value==0)) return std::string();
+   if (!value || (*value == 0)) return std::string();
 
-   if ((strstr(value,"${")==0) || (fCfg==0)) return std::string(value);
+   if ((strstr(value,"${") == nullptr) || !fCfg)
+      return std::string(value);
 
    return fCfg->ResolveEnv(value, fCgfId);
 }
@@ -185,7 +187,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
 
       while (level >= 0) {
          // maximal level is manager itself, all other is several parents (if any)
-         prnt = (level==maxlevel) ? dabc::mgr() :  GetObjParent(obj, level);
+         prnt = (level == maxlevel) ? dabc::mgr() :  GetObjParent(obj, level);
 
          DOUT3("Search with loop %d path level = %d obj = %s class %s", dcnt,  level, DNAME(prnt), (prnt ? prnt->ClassName() : "---"));
 
@@ -208,11 +210,11 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
             XMLNodePointer_t itemnode = FindSubItem(fCurrItem, itemname.c_str());
 
             if (field!=0) {
-               const char* attrvalue = 0;
-               if (itemnode!=0) attrvalue = Xml::GetAttr(itemnode, "value");
-               if (attrvalue==0) attrvalue = Xml::GetAttr(fCurrItem, itemname.c_str());
+               const char* attrvalue = nullptr;
+               if (itemnode) attrvalue = Xml::GetAttr(itemnode, "value");
+               if (!attrvalue) attrvalue = Xml::GetAttr(fCurrItem, itemname.c_str());
 
-               if (attrvalue!=0) {
+               if (attrvalue) {
                   field->SetStr(ResolveEnv(attrvalue));
                   DOUT3("For item %s find value %s", itemname.c_str(), attrvalue);
                   return true;
@@ -233,25 +235,25 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
                   }
                }
             } else
-            if ((fieldsmap!=0) && (itemnode!=0)) {
+            if (fieldsmap && itemnode) {
                isany = true;
 
                for (XMLAttrPointer_t attr = Xml::GetFirstAttr(itemnode); attr!=0; attr = Xml::GetNextAttr(attr)) {
                   const char* attrname = Xml::GetAttrName(attr);
                   const char* attrvalue = Xml::GetAttrValue(attr);
-                  if ((attrname==0) || (attrvalue==0)) continue;
+                  if (!attrname || !attrvalue) continue;
 
                   if (!fieldsmap->HasField(attrname))
                      fieldsmap->Field(attrname).SetStr(ResolveEnv(attrvalue));
                }
 
-               for (XMLNodePointer_t child = Xml::GetChild(itemnode); child!=0; child = Xml::GetNext(child)) {
+               for (XMLNodePointer_t child = Xml::GetChild(itemnode); child != nullptr; child = Xml::GetNext(child)) {
 
                   if (strcmp(Xml::GetNodeName(child), "dabc:field")!=0) continue;
 
                   const char* attrname = Xml::GetAttr(child,"name");
                   const char* attrvalue = Xml::GetAttr(child,"value");
-                  if ((attrname==0) || (attrvalue==0)) continue;
+                  if (!attrname || !attrvalue) continue;
 
                   if (!fieldsmap->HasField(attrname))
                      fieldsmap->Field(attrname).SetStr(ResolveEnv(attrvalue));

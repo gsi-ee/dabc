@@ -98,7 +98,7 @@ dabc::BufferSize_t dabc::Buffer::GetTotalSize() const
 
 void dabc::Buffer::SetTotalSize(BufferSize_t len)
 {
-   if (len==0) {
+   if (len == 0) {
       Release();
       return;
    }
@@ -138,7 +138,7 @@ void dabc::Buffer::SetTotalSize(BufferSize_t len)
 
 void dabc::Buffer::CutFromBegin(BufferSize_t len)
 {
-   if (len==0) return;
+   if (len == 0) return;
 
    if (len>=GetTotalSize()) {
       Release();

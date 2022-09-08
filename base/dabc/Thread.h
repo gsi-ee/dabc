@@ -85,9 +85,9 @@ namespace dabc {
 
       inline EventId& operator=(uint64_t _value) { value = _value; return *this; }
 
-      inline bool isnull() const { return value==0; }
+      inline bool isnull() const { return value == 0; }
 
-      inline bool notnull() const { return value!=0; }
+      inline bool notnull() const { return value != 0; }
 
       inline uint16_t GetCode() const { return value &0xffffLU; }
       inline uint16_t GetItem() const { return value >> 48; }
@@ -403,7 +403,7 @@ namespace dabc {
          inline void _PushEvent(const EventId& arg, int nq)
          {
             #ifdef DABC_EXTRA_CHECKS
-            if ((fNumQueues==0) || (fQueues==0) || (nq>=fNumQueues)) {
+            if ((fNumQueues == 0) || !fQueues || (nq >= fNumQueues)) {
                EOUT("False arguments fNumQueues:%d nq:%d", fNumQueues, nq);
                return;
             }

@@ -134,13 +134,13 @@ namespace dabc {
      * Main aim of this class is to generate periodical or single "shoot" events,
      * which can be used in module for different purposes.
      * If period parameter is positive, timer will produces periodical events.
-     * Timer can work in synchrone or asynchrone mode. In first case it will try to produce
+     * Timer can work in sync or async mode. In first case it will try to produce
      * as many events per second as it should - 1/Period. In case if some events
      * postponed, next events comes faster.
-     * In asynchron mode period only specifies minimum distance between two events,
+     * In async mode period only specifies minimum distance between two events,
      * therefore number of events per second can be less than 1s/Period.
      * One can also makes single shoots of the timer for activate timer event
-     * only once. If delay==0, event will be activated as soon as possible,
+     * only once. If delay == 0, event will be activated as soon as possible,
      * delay>0 - after specified interval (in seconds). When delay<0, no shoot
      * will be done and previous shoot will be canceled. If SingleShoot() was called
      * several times before event is produced, only last call has an effect.
