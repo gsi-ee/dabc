@@ -187,7 +187,7 @@ bool mbs::ReadIterator::NextSubEvent()
 unsigned mbs::ReadIterator::NumEvents(const dabc::Buffer& buf)
 {
    ReadIterator iter(buf);
-   unsigned cnt(0);
+   unsigned cnt = 0;
    while (iter.NextEvent()) cnt++;
    return cnt;
 }
@@ -268,7 +268,7 @@ dabc::Buffer mbs::WriteIterator::CloseAndTransfer(dabc::Buffer& newbuf)
 
    unsigned subptr_shift = fEvPtr.distance_to(fSubPtr);
    unsigned copy_size = subptr_shift;
-   unsigned subdata_shift(0);
+   unsigned subdata_shift = 0;
 
    if (!fSubData.null()) {
       if (!fSubData.is_same_buf(fSubPtr)) EOUT("Place 222");

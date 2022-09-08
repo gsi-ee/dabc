@@ -826,7 +826,7 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
    if (fBNETsend)
       fCheckBNETProblems = chkActive; // activate testing again
 
-   unsigned maxnumsubev(0), droppeddata(0);
+   unsigned maxnumsubev = 0, droppeddata = 0;
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       unsigned numsubev = 0;

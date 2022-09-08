@@ -634,14 +634,14 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if (sz>99) wlen = 3; else
    if (sz>999) wlen = 4;
 
-   unsigned long long epoch(0);
-   double tm, ch0tm(0);
+   unsigned long long epoch = 0;
+   double tm, ch0tm = 0;
 
    errmask = 0;
 
-   bool haschannel0(false);
-   unsigned channel(0), maxch(0), coarse(0), fine(0), ndebug(0), nheader(0), isrising(0), dkind(0), dvalue(0), rawtime(0);
-   int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
+   bool haschannel0 = false;
+   unsigned channel = 0, maxch = 0, coarse = 0, fine = 0, ndebug = 0, nheader = 0, isrising = 0, dkind = 0, dvalue = 0, rawtime = 0;
+   int epoch_channel = -11; // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
    static unsigned NumCh = 66;
 
@@ -1453,7 +1453,7 @@ int main(int argc, char* argv[])
                substat2.sizesum+=datalen;
                if (as_tdc) {
                   substat2.istdc = true;
-                  unsigned errmask(0);
+                  unsigned errmask = 0;
                   PrintTdcData(sub, ix, datalen, 0, errmask, &substat2);
                   unsigned mask = 1;
                   for (int k = 0; k < NumTdcErr; k++,mask*=2)

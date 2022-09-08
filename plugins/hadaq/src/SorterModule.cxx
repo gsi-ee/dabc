@@ -50,10 +50,16 @@ void hadaq::SorterModule::DecremntInputIndex(unsigned cnt)
    // remove *cnt* buffers from the input queue
    // all references should be removed
 
-   if (fNextBufIndx>cnt) fNextBufIndx-=cnt; else fNextBufIndx = 0;
-   if (fReadyBufIndx>cnt) fReadyBufIndx-=cnt; else fReadyBufIndx = 0;
+   if (fNextBufIndx > cnt)
+      fNextBufIndx -= cnt;
+   else
+      fNextBufIndx = 0;
+   if (fReadyBufIndx > cnt)
+      fReadyBufIndx -= cnt;
+   else
+      fReadyBufIndx = 0;
 
-   unsigned tgt(0);
+   unsigned tgt = 0;
 
    for (unsigned n=0;n<fSubs.size();n++) {
       if (fSubs[n].buf<cnt) continue;
@@ -74,7 +80,7 @@ bool hadaq::SorterModule::RemoveUsedSubevents(unsigned num)
 
    if (num >= fSubs.size()) {
       // this is full clear of indexed data
-      unsigned maxbuf(0);
+      unsigned maxbuf = 0;
       for (unsigned n=0;n<fSubs.size();n++)
          if (fSubs[n].buf>maxbuf) maxbuf = fSubs[n].buf;
 

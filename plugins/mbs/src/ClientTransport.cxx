@@ -367,7 +367,7 @@ unsigned mbs::ClientTransport::Read_Complete(dabc::Buffer& buf)
 
          mbs::ReadIterator iter(buf);
 
-         unsigned useful_sz(0), last_sz(0);
+         unsigned useful_sz = 0, last_sz = 0;
 
          while (iter.NextEvent()) {
             useful_sz += last_sz;

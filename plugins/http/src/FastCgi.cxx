@@ -93,7 +93,7 @@ http::FastCgi::FastCgi(const std::string &name, dabc::Command cmd) :
    fCgiPort(9000),
    fDebugMode(false),
    fSocket(0),
-   fThrd(0)
+   fThrd(nullptr)
 {
    fCgiPort = Cfg("port", cmd).AsInt(9000);
    fDebugMode = Cfg("debug", cmd).AsBool(false);
@@ -104,7 +104,7 @@ http::FastCgi::~FastCgi()
    if (fThrd) {
       fThrd->Kill();
       delete fThrd;
-      fThrd = 0;
+      fThrd = nullptr;
    }
 
    if (fSocket>0) {
@@ -149,7 +149,7 @@ void* http::FastCgi::RunFunc(void* args)
 
    FCGX_InitRequest(&request, server->fSocket, 0);
 
-   int count(0);
+   int count = 0;
 
    while (1) {
 

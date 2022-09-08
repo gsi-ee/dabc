@@ -183,7 +183,7 @@ bool hadaq::ReadIterator::NextSubEvent()
    if (fSubPtr.null()) {
       if (fEvPtr.null()) return false;
       // this function is used both in hadtu and in event mode. Check out mode:
-      dabc::BufferSize_t headsize(0), containersize(0);
+      dabc::BufferSize_t headsize = 0, containersize = 0;
       if (fBufType == mbt_HadaqEvents) {
          headsize = sizeof(hadaq::RawEvent);
          containersize = evnt()->GetPaddedSize();
@@ -241,7 +241,7 @@ unsigned hadaq::ReadIterator::rawdata_maxsize() const
 unsigned hadaq::ReadIterator::NumEvents(const dabc::Buffer& buf)
 {
    ReadIterator iter(buf);
-   unsigned cnt(0);
+   unsigned cnt = 0;
    while (iter.NextEvent()) cnt++;
    return cnt;
 }

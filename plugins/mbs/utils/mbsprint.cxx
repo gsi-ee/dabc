@@ -76,10 +76,10 @@ int main(int argc, char* argv[])
    if (argc<2) return usage();
 
    long number = 10;
-   double tmout(5.), maxage(-1.), debug_delay(-1.);
-   unsigned slowsubevid(0);
+   double tmout = 5., maxage = -1., debug_delay = -1.;
+   unsigned slowsubevid = 0;
 
-   bool printdata(false), ashex(true), aslong(true), showrate(false), reconnect(false);
+   bool printdata = false, ashex = true, aslong = true, showrate = false, reconnect = false;
 
    int n = 1;
    while (++n<argc) {

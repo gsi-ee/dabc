@@ -70,7 +70,7 @@ void http::Civetweb::OnThreadAssigned()
    DOUT0("Starting HTTP server on port(s) %s", sport.c_str());
 
    const char *options[20];
-   int op(0);
+   int op = 0;
 
    options[op++] = "listening_ports";
    options[op++] = sport.c_str();

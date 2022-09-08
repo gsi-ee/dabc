@@ -324,7 +324,7 @@ void mbs::Monitor::FillStatistic(const std::string &options, const std::string &
 
    int bl_file = 0, bl_server = 0, bl_mbs = 0, bl_streams = 0;
 
-   int l_free_stream(0), l_trans_stream(0), l_serv_stream(0);
+   int l_free_stream = 0, l_trans_stream = 0, l_serv_stream = 0;
 
    char c_head0[1000];
    char c_head[1000];

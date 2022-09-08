@@ -43,8 +43,8 @@ int main(int argc, char* argv[])
 {
    if (argc < 2) return usage();
 
-   int logport(6007), cmdport(6019), statport(0);
-   double tmout(5.), waittm(1.);
+   int logport = 6007, cmdport = 6019, statport = 0;
+   double tmout = 5., waittm = 1.;
 
    std::vector<std::string> cmds;
 

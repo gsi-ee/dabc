@@ -274,7 +274,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
 bool mbs::CombinerModule::BuildEvent()
 {
-   mbs::EventNumType mineventid(0), maxeventid(0), triggereventid(0);
+   mbs::EventNumType mineventid = 0, maxeventid = 0, triggereventid = 0;
 
    // indicate if some of main (non-optional) input queues are mostly full
    // if such queue will be found, incomplete event may be build when it is allowed

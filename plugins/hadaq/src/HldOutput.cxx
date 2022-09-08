@@ -271,7 +271,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       // scan event headers in buffer for run id change/consistency
       hadaq::ReadIterator bufiter(buf);
-      unsigned numevents(0), payload(0);
+      unsigned numevents = 0, payload = 0;
 
       while (bufiter.NextEvent()) {
          uint32_t nextrunid = bufiter.evnt()->GetRunNr();
