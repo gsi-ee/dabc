@@ -99,7 +99,7 @@ void dim::Monitor::ScanDimServices()
    int nservices = fDimBr->getServices(fDimMask.c_str());
    DOUT3("found %d DIM services", nservices);
 
-   while((type = fDimBr->getNextService(service_name, service_descr))!= 0)
+   while((type = fDimBr->getNextService(service_name, service_descr)) != 0)
    {
       nservices--;
 
@@ -107,7 +107,7 @@ void dim::Monitor::ScanDimServices()
 
       DOUT3("DIM type %d name %s descr %s", type, service_name, service_descr);
 
-      if (!service_descr || ((type!=1) && (type!=2))) continue;
+      if (!service_descr || ((type != 1) && (type != 2))) continue;
 
       DimServicesMap::iterator iter = fDimInfos.find(service_name);
       if (iter != fDimInfos.end()) {
@@ -145,7 +145,7 @@ void dim::Monitor::ScanDimServices()
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
       DimServicesMap::iterator iter = fDimInfos.begin();
-      while (iter!=fDimInfos.end()) {
+      while (iter != fDimInfos.end()) {
          if (iter->second.flag != 0) { iter++; continue; }
 
          delete iter->second.info;

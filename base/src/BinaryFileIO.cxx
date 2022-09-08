@@ -85,7 +85,7 @@ unsigned dabc::BinaryFileInput::Read_Complete(Buffer& buf)
       return di_Error;
    }
 
-   if (buf.NumSegments()!=1) {
+   if (buf.NumSegments() != 1) {
       EOUT(("Segmented buffer not supported - can be easily done"));
       return di_Error;
    }

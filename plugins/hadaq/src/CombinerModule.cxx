@@ -740,7 +740,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
          int diff = CalcTrigNumDiff(cfg.fLastTrigNr, (trignr >> 8) & fTriggerRangeMask);
 
-         if (diff!=1) {
+         if (diff != 1) {
 
             if (cfg.fResortIndx < 0) {
                cfg.fResortIndx = 0;
@@ -1188,7 +1188,7 @@ bool hadaq::CombinerModule::BuildEvent()
       int diff = 1;
       if (fLastTrigNr != 0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
 
-      //if (fBNETsend && (diff!=1))
+      //if (fBNETsend && (diff != 1))
       //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);
       // if (fBNETsend) DOUT0("%s trig %x size %u", GetName(), buildevid, subeventssize);
 

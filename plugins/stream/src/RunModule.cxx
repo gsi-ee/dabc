@@ -214,7 +214,7 @@ void stream::RunModule::OnThreadAssigned()
          if (fname.rfind(".root") == fname.length() - 5) {
             fProcMgr->SetTriggeredAnalysis(true);
             int kind = url.GetOptionInt("kind", -1);
-            if (kind!=-1) fProcMgr->SetStoreKind(kind);
+            if (kind != -1) fProcMgr->SetStoreKind(kind);
             if (!fProcMgr->CreateStore(fFileUrl.c_str()))
                EOUT("Fail to create store %s - check if libDabcRoot.so plugin in the xml file", fFileUrl.c_str());
          }

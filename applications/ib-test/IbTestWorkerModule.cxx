@@ -529,8 +529,8 @@ int IbTestWorkerModule::Pool_Check(int &bufindx, int& lid, int &nremote, double 
 
    int res = cq->Wait(waittime, fasttime);
 
-   if (res==2) return -1;
-   if (res!=1) return 0;
+   if (res == 2) return -1;
+   if (res != 1) return 0;
 
    uint64_t arg = cq->arg();
 
@@ -572,8 +572,8 @@ int IbTestWorkerModule::Pool_Check_Mcast(int &bufindx, double waittime, double f
 
    int res = cq->Wait(waittime, fasttime);
 
-   if (res==2) return -1;
-   if (res!=1) return 0;
+   if (res == 2) return -1;
+   if (res != 1) return 0;
 
    uint64_t arg = cq->arg();
 
@@ -717,7 +717,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
 
       if (msg_in->slave_shift != 0.) {
          fStamping.ChangeShift(msg_in->slave_shift);
-         if (msg_in->slave_scale!=1.)
+         if (msg_in->slave_scale != 1.)
             fStamping.ChangeScale(msg_in->slave_scale);
       }
 
@@ -1300,8 +1300,8 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
          double now = fStamping();
          double stoptm = now + 0.05;
 
-         int res_recv_index(-1), res_send_index(-1);
-         while ((now<stoptm) && ((res_recv_index<0) || (res_send_index<0))) {
+         int res_recv_index = -1, res_send_index = -1;
+         while ((now < stoptm) && ((res_recv_index < 0) || (res_send_index < 0))) {
             int resindx, resnode, reslid;
             int res = Pool_Check(resindx, reslid, resnode, stoptm - now, 0.001);
 
@@ -1634,8 +1634,8 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
             fRecvSch.Item(nslot, 0).Reset();
           }
 
-   double send_basetm(starttime), recv_basetm(starttime);
-   int send_slot(-1), recv_slot(-1);
+   double send_basetm = starttime, recv_basetm = starttime;
+   int send_slot = -1, recv_slot = -1;
 
    bool dosending = fSendSch.ShiftToNextOperation(Node(), send_basetm, send_slot);
    bool doreceiving = fRecvSch.ShiftToNextOperation(Node(), recv_basetm, recv_slot);

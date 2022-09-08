@@ -212,14 +212,15 @@ namespace mbs {
             num64 = 0;
             memcpy(&num64, ptr, sizeof(num64)); ptr+=sizeof(num64);
             fDoubleValues.reserve(num64);
-            for (uint64_t n=0;n<num64;n++) {
+            for (uint64_t n = 0; n < num64; n++) {
                double val = 0.;
-               memcpy(&val, ptr, sizeof(val)); ptr+=sizeof(val);
+               memcpy(&val, ptr, sizeof(val));
+               ptr += sizeof(val);
                fDoubleValues.emplace_back(val); // should be always 8 bytes
             }
 
             unsigned num = 0;
-            if (sscanf(ptr, "%u", &num)!=1) {
+            if (sscanf(ptr, "%u", &num) != 1) {
                printf("cannot get number of long names\n");
                return false;
             }
@@ -240,7 +241,7 @@ namespace mbs {
             }
 
             num = 0;
-            if (sscanf(ptr, "%u", &num)!=1) {
+            if (sscanf(ptr, "%u", &num) != 1) {
                printf("cannot get number of double names\n");
                return false;
             }

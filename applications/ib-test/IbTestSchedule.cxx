@@ -77,7 +77,7 @@ int IbTestClusterRouting::AddNode(const std::string &name, int lid, int* liddiff
 {
    NodesMap::iterator iter = fNodes.find(name);
 
-   int id(-1), diff(0);
+   int id = -1, diff = 0;
 
    if (iter == fNodes.end()) {
       id = fNumNodes;
@@ -94,7 +94,7 @@ int IbTestClusterRouting::AddNode(const std::string &name, int lid, int* liddiff
       }
    }
 
-   if (diff>=fNumLids) fNumLids = diff+1;
+   if (diff >= fNumLids) fNumLids = diff+1;
 
    if (liddiff) *liddiff = diff;
 
@@ -230,7 +230,7 @@ void IbTestClusterRouting::ReinjectOptimizedRoutes()
          if (n2==n1) continue;
 
          IbTestRoute r12 = GetRoute(n1, n2);
-         if (r12.GetNumHops()!=1) continue;
+         if (r12.GetNumHops() != 1) continue;
 
          IbTestRoute r21 = GetRoute(n2, n1);
 
@@ -861,7 +861,7 @@ void IbTestClusterRouting::FindSameRouteTwice(bool bothlanes, const IbTestRoute&
          nodes[n2] = true;
          switches[route1.GetHop3()] = true;
 
-         int dirk1(-1), dirk2(-1);
+         int dirk1 = -1, dirk2 = -1;
 
          for (int k1=0;(k1<NumNodes()) && !find;k1++) if (nodes.find(k1)==nodes.end())
             for (int k2=0;(k2<NumNodes()) && !find;k2++) if (nodes.find(k2)==nodes.end()) {
@@ -892,7 +892,7 @@ void IbTestClusterRouting::FindSameRouteTwice(bool bothlanes, const IbTestRoute&
          IbTestRoute rev_route;
          rev_route.Set3Hop(route1.GetHop3(), route1.GetHop2(), route1.GetHop1());
 
-         int revn1(-1), revn2(-1);
+         int revn1 = -1, revn2 = -1;
 
          find = false;
          for (int k1=0;(k1<NumNodes()) && !find;k1++) if (nodes.find(k1)==nodes.end())
@@ -917,7 +917,7 @@ void IbTestClusterRouting::FindSameRouteTwice(bool bothlanes, const IbTestRoute&
                }
             }
 
-         int revk1(-1), revk2(-1);
+         int revk1 = -1, revk2 = -1;
 
          find = false;
          for (int k1=0;(k1<NumNodes()) && !find;k1++) if (nodes.find(k1)==nodes.end())
@@ -1060,7 +1060,7 @@ bool IbTestClusterRouting::SelectNodes(const std::string &all_args, IbTestIntCol
 
    if (args.empty()) { ids.SetSize(0); return false; }
 
-   int cnt(0), find(-1);
+   int cnt = 0, find = -1;
 
    for (unsigned n=0;n<args.size();n++) {
       if (args[n] == "cpu") {
@@ -1922,7 +1922,7 @@ bool IbTestSchedule::TryMoveSender(const IbTestClusterRouting& routing, IbTestSc
             // could we try to move it more globally if route we select is simple -
             // means does not require hard resorting
 
-            if ((routekind!=1) || /*(nslot0!=842) || */ (nslot2>=0)) continue;
+            if ((routekind != 1) || /*(nslot0!=842) || */ (nslot2 >= 0)) continue;
 
             // first try for our "bad" slot
             bool didmove = TryMoveSender(routing, lst1, nsender1, nslot1, nslot, 0, nslot0, show);
@@ -2404,11 +2404,11 @@ bool IbTestSchedule::ReadFromFile(const std::string &fname)
    int numslots = 0, numsenders = 0;
 
    if (!fgets (sbuf, sizeof(sbuf), f) ||
-         sscanf(sbuf,"Num slots: %d", &numslots)!=1)
+         sscanf(sbuf,"Num slots: %d", &numslots) != 1)
          { fclose(f); EOUT("reading num slots"); return false; }
 
    if (!fgets (sbuf, sizeof(sbuf), f) ||
-         sscanf(sbuf,"Num senders: %d", &numsenders)!=1)
+         sscanf(sbuf,"Num senders: %d", &numsenders) != 1)
          { fclose(f); EOUT("reading num senders"); return false; }
 
 
@@ -2420,17 +2420,20 @@ bool IbTestSchedule::ReadFromFile(const std::string &fname)
 
       IbTestScheduleItem* slot = getScheduleSlot(nslot);
 
-      int filenslot(-1), filensend(-1);
+      int filenslot = -1, filensend = -1;
 
       if (!fgets (sbuf, sizeof(sbuf), f) ||
-            (sscanf(sbuf,"Slot: %d", &filenslot)!=1) || (filenslot!=nslot))
+            (sscanf(sbuf,"Slot: %d", &filenslot) != 1) || (filenslot != nslot))
             { fclose(f); EOUT("reading slot %d", nslot); return false; }
 
-      for (int nsend=0;nsend<numSenders();nsend++)
-         if (!fgets (sbuf, sizeof(sbuf), f) ||
-               (sscanf(sbuf,"%d -> %d %d", &filensend, &slot[nsend].node, &slot[nsend].lid)!=3) ||
-               (filensend!=nsend))
-         { fclose(f); EOUT("reading sender %d in slot %d", nsend, nslot); return false; }
+      for (int nsend = 0; nsend < numSenders(); nsend++)
+         if (!fgets(sbuf, sizeof(sbuf), f) ||
+             (sscanf(sbuf, "%d -> %d %d", &filensend, &slot[nsend].node, &slot[nsend].lid) != 3) ||
+             (filensend != nsend)) {
+            fclose(f);
+            EOUT("reading sender %d in slot %d", nsend, nslot);
+            return false;
+         }
    }
    fclose(f);
 

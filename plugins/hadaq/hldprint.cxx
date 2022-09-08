@@ -844,8 +844,11 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       }
    }
 
-   if (len < 2) { if (nheader!=1) errmask |= tdcerr_NoData; } else
-   if (!haschannel0 && (ndebug == 0) && (nbubble == 0)) errmask |= tdcerr_MissCh0;
+   if (len < 2) {
+      if (nheader != 1)
+         errmask |= tdcerr_NoData;
+   } else if (!haschannel0 && (ndebug == 0) && (nbubble == 0))
+      errmask |= tdcerr_MissCh0;
 
    for (unsigned n=1;n<NumCh;n++)
       if ((num_leading[n] > 0) && (num_trailing[n] > 0))

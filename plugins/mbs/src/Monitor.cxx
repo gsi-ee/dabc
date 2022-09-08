@@ -1154,7 +1154,7 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
    switch (evnt.GetCode()) {
       case dabc::SocketAddon::evntSocketRecvInfo: {
 
-         if (fRec.iOrder!=1)
+         if (fRec.iOrder != 1)
             mbs::SwapData(&fRec, 3 * sizeof(int32_t));
 
          if (fRec.iOrder==1) {

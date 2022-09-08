@@ -132,7 +132,7 @@ namespace mbs {
             fFileHdr.iUsedWords = 0;   // total words without header to read for type=100, free[2]
             fFileHdr.iFree3 = 0;       // free[3]
 
-            if (io->fwrite(&fFileHdr, sizeof(fFileHdr),1,fd)!=1) {
+            if (io->fwrite(&fFileHdr, sizeof(fFileHdr),1,fd) != 1) {
                fprintf(stderr, "Failure writing file %s header\n", fname);
                Close();
                return false;

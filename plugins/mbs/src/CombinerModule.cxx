@@ -281,8 +281,8 @@ bool mbs::CombinerModule::BuildEvent()
 
 //   DOUT0("BuildEvent method");
 
-   int mostly_full(-1);
-   bool required_missing(false);
+   int mostly_full = -1;
+   bool required_missing = false;
 
    for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
 //      DOUT0("  Port%u: pending %u capacity %u", ninp, port->InputPending(), port->InputQueueCapacity());
@@ -291,7 +291,7 @@ bool mbs::CombinerModule::BuildEvent()
 
       if (!IsInputConnected(ninp)) required_missing = true;
 
-      if (InputQueueFull(ninp) && (mostly_full<0))
+      if (InputQueueFull(ninp) && (mostly_full < 0))
          mostly_full = (int) ninp;
    }
 
@@ -299,9 +299,8 @@ bool mbs::CombinerModule::BuildEvent()
       // if some of important input missing than we should clean our queues
       // to let data flowing, no event will be produced to output
 
-      for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
-         if (InputQueueFull(ninp) ||
-             (fCfg[ninp].no_evnt_num && (NumCanRecv(ninp) > InputQueueCapacity(ninp) / 2))) {
+      for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
+         if (InputQueueFull(ninp) || (fCfg[ninp].no_evnt_num && (NumCanRecv(ninp) > InputQueueCapacity(ninp) / 2))) {
             ShiftToNextBuffer(ninp);
             SetInfo(dabc::format("Skip buffer on input %u while some other input is disconnected", ninp));
             DOUT0("Skip buffer on input %u",ninp);

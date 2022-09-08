@@ -214,7 +214,7 @@ bool hadaq::SorterModule::retransmit()
       if (fLastTrigger != 0xffffffff)
          diff = Diff(fLastTrigger, fSubs[cnt].trig);
 
-      if (diff!=1) {
+      if (diff != 1) {
 
          if (diff<0) {
             EOUT("Buf:%3d problem in sorting - older events appeared. Most probably, flush time has wrong value", fBufCnt);
