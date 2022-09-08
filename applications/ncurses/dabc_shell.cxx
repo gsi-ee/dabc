@@ -38,22 +38,22 @@ struct LevelItem {
    {
       Hide();
 
-      if (my_items!=0) {
+      if (my_items) {
          for(unsigned n = 0; n < num_items; n++)
             free_item(my_items[n]);
          delete[] my_items;
-         my_items = 0;
+         my_items = nullptr;
          num_items = 0;
       }
 
-      if (my_menu!=0) {
+      if (my_menu) {
          free_menu(my_menu);
-         my_menu = 0;
+         my_menu = nullptr;
       }
 
-      if (my_menu_win!=0) {
+      if (my_menu_win) {
          delwin(my_menu_win);
-         my_menu_win = 0;
+         my_menu_win = nullptr;
       }
    }
 

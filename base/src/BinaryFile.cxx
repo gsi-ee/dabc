@@ -91,7 +91,7 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
          std::string fullitemname;
          if (slash) fullitemname += pathname;
          fullitemname += item;
-         if (stat(fullitemname.c_str(), &buf)!=0) continue;
+         if (stat(fullitemname.c_str(), &buf) != 0) continue;
 
          if ((select_files && !S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK) == 0)) ||
             (!select_files && S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK | X_OK) == 0))) {

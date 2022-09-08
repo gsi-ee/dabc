@@ -175,7 +175,7 @@ bool dabc::FileInput::TakeNextFileName()
       if (!fLoop || !InitFilesList()) return false;
    }
    const char* nextname = fFilesList.GetChild(0).GetName();
-   if (nextname!=0) fCurrentName = nextname;
+   if (nextname) fCurrentName = nextname;
    fFilesList.GetChild(0).Destroy();
    return !fCurrentName.empty();
 }

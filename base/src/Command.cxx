@@ -202,7 +202,7 @@ void dabc::Command::Release()
 void dabc::Command::Cancel()
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont!=0) {
+   if (cont) {
       LockGuard lock(ObjectMutex());
       cont->fCanceled = true;
    }
@@ -213,7 +213,7 @@ void dabc::Command::Cancel()
 bool dabc::Command::IsCanceled()
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont!=0) {
+   if (cont) {
       LockGuard lock(ObjectMutex());
       return cont->fCanceled;
    }
@@ -225,7 +225,7 @@ void dabc::Command::Reply(int res)
 {
    if (null()) return;
 
-   if (res>=0) SetResult(res);
+   if (res >= 0) SetResult(res);
 
    while (!null()) {
 

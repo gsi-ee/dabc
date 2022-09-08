@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
       evnt->Dump();
 
       hadaq::RawSubevent* sub = nullptr;
-      while ((sub=evnt->NextSubevent(sub))!=0) {
+      while ((sub = evnt->NextSubevent(sub)) != nullptr) {
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
          unsigned ix = 0;

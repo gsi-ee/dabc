@@ -155,7 +155,7 @@ void* http::FastCgi::RunFunc(void* args)
 
       int rc = FCGX_Accept_r(&request);
 
-      if (rc!=0) continue;
+      if (rc != 0) continue;
 
       count++;
 

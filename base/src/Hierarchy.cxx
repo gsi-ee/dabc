@@ -750,7 +750,7 @@ uint64_t dabc::HierarchyContainer::GetNextVersion() const
 {
    const HierarchyContainer* top = this, *prnt = this;
 
-   while (prnt!=0) {
+   while (prnt) {
      top = prnt;
      prnt = dynamic_cast<const HierarchyContainer*> (prnt->GetParent());
    }
@@ -1083,7 +1083,7 @@ bool dabc::Hierarchy::FillBinHeader(const std::string &itemname, dabc::Command& 
       master = item.FindMaster();
    }
 
-   if (!master.null() && (mhash!=0) && (master.GetField(dabc::prop_hash).AsUInt()!=mhash)) {
+   if (!master.null() && (mhash != 0) && (master.GetField(dabc::prop_hash).AsUInt()!=mhash)) {
       master.SetField(dabc::prop_hash, mhash);
       master.SetFieldProtected(dabc::prop_hash, true);
       master.MarkChangedItems();

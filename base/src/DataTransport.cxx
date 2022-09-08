@@ -140,9 +140,8 @@ bool dabc::InputTransport::ProcessBuffer(unsigned pool)
 
 void dabc::InputTransport::CloseInput()
 {
-   if ((fInput!=0) && fInputOwner) {
+   if (fInput && fInputOwner)
       delete fInput;
-   }
    fInput = nullptr;
    fInputOwner = false;
 
@@ -294,7 +293,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
    if (fInpState == inpReconnect) {
 
-      if (fInput!=0) {
+      if (fInput) {
          EOUT("Reconnect when input non 0 - ABORT");
          CloseTransport(true);
          return false;

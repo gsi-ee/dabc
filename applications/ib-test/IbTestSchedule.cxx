@@ -357,7 +357,7 @@ int IbTestClusterRouting::CheckUsefulLIDs()
    DOUT0("Maximum number of LIDs = %d minimum = %d", maxlid, minlid);
 
    for (int n=0;n<20;n++)
-      if (hist[n]!=0)
+      if (hist[n] != 0)
          DOUT0("   Hist[%d] = %d", n, hist[n]);
 
    for (int spine=0;spine<NumSpines();spine++)
@@ -793,14 +793,14 @@ void IbTestClusterRouting::PrintDifferecne(IbTestClusterRouting& other)
    }
 
    for (int node = 0; node < NumNodes(); node++) {
-      if (strcmp(NodeName(node), other.NodeName(node))!=0) {
+      if (strcmp(NodeName(node), other.NodeName(node)) != 0) {
          EOUT("Node %d names mismatch %s %s", node, NodeName(node), other.NodeName(node));
          return;
       }
    }
 
    for (int sw = 0; sw < NumSwitches(); sw++) {
-      if (strcmp(SwitchName(sw), other.SwitchName(sw))!=0) {
+      if (strcmp(SwitchName(sw), other.SwitchName(sw)) != 0) {
          EOUT("Switch %d names mismatch %s %s", sw, SwitchName(sw), other.SwitchName(sw));
          return;
       }
@@ -1170,11 +1170,11 @@ bool IbTestClusterRouting::LoadNodesList(const std::string &fname, IbTestIntColu
    while (fgets (sbuf, sizeof(sbuf), f)) {
 
       char* pos = strchr(sbuf, '\n');
-      if (pos!=0) *pos = 0;
+      if (pos) *pos = 0;
 
       int id = FindNode(sbuf);
 
-      if (id>=0)
+      if (id >= 0)
          ids(cnt++) = id;
       else
          EOUT("Node %s not found", sbuf);
@@ -1223,23 +1223,23 @@ IbTestSchedule::~IbTestSchedule()
 
 void IbTestSchedule::Allocate(int maxnumslots, int numsend)
 {
-   if (fSchedule!=0) {
+   if (fSchedule) {
      for(int n=0;n<fMaxNumSlots;n++)
        delete[] fSchedule[n];
      delete[] fSchedule;
-     fSchedule = 0;
+     fSchedule = nullptr;
    }
 
-   if (fTimeSlots!=0) {
+   if (fTimeSlots) {
       delete[] fTimeSlots;
-      fTimeSlots = 0;
+      fTimeSlots = nullptr;
    }
 
    fNumSenders = numsend;
    fMaxNumSlots = maxnumslots;
    fNumSlots = maxnumslots;
 
-   if ((fNumSenders>0) && (fMaxNumSlots>0)) {
+   if ((fNumSenders > 0) && (fMaxNumSlots > 0)) {
       fSchedule = new IbTestScheduleItem* [fMaxNumSlots];
       for(int n=0;n<fMaxNumSlots;n++)
          fSchedule[n] = new IbTestScheduleItem[fNumSenders];

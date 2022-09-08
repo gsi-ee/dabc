@@ -758,7 +758,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          case tdckind_Hit2:
             channel = (msg >> 22) & 0x7F;
             if (channel == 0) haschannel0 = true;
-            if (epoch_channel==-1) epoch_channel = channel;
+            if (epoch_channel == -1) epoch_channel = channel;
             isrising = (msg >> 11) & 0x1;
             if (maxch<channel) maxch = channel;
             if (channel < NumCh) {

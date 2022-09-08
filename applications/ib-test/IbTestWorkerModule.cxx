@@ -180,9 +180,10 @@ IbTestWorkerModule::~IbTestWorkerModule()
 
 void IbTestWorkerModule::AllocResults(int size)
 {
-   if (fResults!=0) delete[] fResults;
-   fResults = 0;
-   if (size>0) {
+   if (fResults)
+      delete[] fResults;
+   fResults = nullptr;
+   if (size > 0) {
       fResults = new double[size];
       for (int n=0;n<size;n++) fResults[n] = 0.;
    }
@@ -325,31 +326,31 @@ bool IbTestWorkerModule::CloseQPs()
 
 #ifdef WITH_VERBS
 
-   if (fMultiQP!=0) { delete fMultiQP; fMultiQP = 0; }
-   if (fMultiCQ!=0) { delete fMultiCQ; fMultiCQ = 0; }
-   if (fMultiPool!=0) { delete fMultiPool; fMultiPool = 0; }
+   if (fMultiQP) { delete fMultiQP; fMultiQP = nullptr; }
+   if (fMultiCQ) { delete fMultiCQ; fMultiCQ = nullptr; }
+   if (fMultiPool) { delete fMultiPool; fMultiPool = nullptr; }
 
    for (int lid=0; lid<NumLids(); lid++) {
-      if (fQPs[lid]!=0) {
+      if (fQPs[lid]) {
          for (int n=0;n<NumNodes();n++) delete fQPs[lid][n];
          delete[] fQPs[lid];
-         fQPs[lid] = 0;
+         fQPs[lid] = nullptr;
       }
 
-      delete[] fSendQueue[lid]; fSendQueue[lid] = 0;
-      delete[] fRecvQueue[lid]; fRecvQueue[lid] = 0;
+      delete[] fSendQueue[lid]; fSendQueue[lid] = nullptr;
+      delete[] fRecvQueue[lid]; fRecvQueue[lid] = nullptr;
 
    }
 
-   if (fCQ!=0) {
+   if (fCQ) {
       delete fCQ;
-      fCQ = 0;
+      fCQ = nullptr;
    }
 
 
    if (fPool) {
       delete fPool;
-      fPool = 0;
+      fPool = nullptr;
    }
 
 
@@ -365,7 +366,7 @@ bool IbTestWorkerModule::CreateCommPool(int64_t* pars)
 
 #ifdef WITH_VERBS
 
-   if (fPool!=0) { delete fPool; fPool = 0; }
+   if (fPool) { delete fPool; fPool = nullptr; }
 
    fPool = new verbs::MemoryPool(fIbContext, "Pool", pars[0], pars[1], false);
 
@@ -391,7 +392,7 @@ bool IbTestWorkerModule::CreateCommPool(int64_t* pars)
 //   DOUT0("Create comm pool %p  size %u X %u", fPool, pars[0], pars[1]);
 
 
-   return fPool!=0;
+   return fPool != nullptr;
 
 #endif
 
@@ -485,12 +486,12 @@ verbs::ComplQueue* IbTestWorkerModule::Pool_CQ_Check(bool &iserror, double waitt
    // returns CQ, which gets event, if nothing, return 0
 
    iserror = false;
-   verbs::ComplQueue* cq = 0;
+   verbs::ComplQueue* cq = nullptr;
    int res = 0;
 
 #ifdef WITH_VERBS
 
-   if (fCQ!=0) {
+   if (fCQ) {
       cq = fCQ;
       if (TotalRecvQueue()+TotalSendQueue() > 0)
          res = cq->Wait(waittime);
@@ -691,7 +692,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
          }
       }
 
-      if ((res!=1) || (resnode!=0) || (reslid!=sync_lid)) {
+      if ((res != 1) || (resnode != 0) || (reslid != sync_lid)) {
          EOUT("Error when receive %d sync message res:%d resindx:%d resnode:%d reslid:%d", repeatcounter, res, resindx, resnode, reslid);
          return false;
       }
@@ -714,7 +715,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
          fStamping.ChangeShift(msg_in->master_time - now);
       }
 
-      if (msg_in->slave_shift!=0.) {
+      if (msg_in->slave_shift != 0.) {
          fStamping.ChangeShift(msg_in->slave_shift);
          if (msg_in->slave_scale!=1.)
             fStamping.ChangeScale(msg_in->slave_scale);
@@ -795,7 +796,7 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
       msg->cmddatasize = cmddatasize;
       msg->delay = 0;
       msg->getresults = resultpernode;
-      if ((cmddatasize>0) && (cmddata!=0)) {
+      if ((cmddatasize > 0) && cmddata) {
          if (incremental_data)
             memcpy(msg->cmddata(), (uint8_t*) cmddata + node * cmddatasize, cmddatasize);
          else
@@ -846,15 +847,16 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
       if (rcv->cmdid!=cmdid) { EOUT("Wrong ID"); return false; }
       if (rcv->node != nodeid) { EOUT("Wrong node"); return false; }
 
-      if ((allresults!=0) && (resultpernode>0) && (rcv->cmddatasize == resultpernode)) {
+      if (allresults && (resultpernode > 0) && (rcv->cmddatasize == resultpernode)) {
          // DOUT0("Copy from node %d buffer %d", nodeid, resultpernode);
          memcpy((uint8_t*)allresults + nodeid*resultpernode, rcv->cmddata(), resultpernode);
       }
 
       finished = true;
 
-      for (unsigned n=0;n<replies.size();n++)
-         if (fActiveNodes[n] && !replies[n]) finished = false;
+      for (unsigned n = 0; n < replies.size(); n++)
+         if (fActiveNodes[n] && !replies[n])
+            finished = false;
    }
 
    // Should we call slave method here ???
@@ -1008,7 +1010,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
          break;
 
       case IBTEST_CMD_COLLECT:
-         if ((msg->getresults > 0) && (fResults!=0)) {
+         if ((msg->getresults > 0) && fResults) {
             msg->cmddatasize = msg->getresults;
             sendpacketsize += msg->cmddatasize;
             memcpy(msg->cmddata(), fResults, msg->getresults);
@@ -1048,7 +1050,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
       int64_t firstpoint = ((int64_t*) msg_in->cmddata)[0];
       int64_t recvrate = ((int64_t*) msg_in->cmddata)[1];
       Ratemeter* mtr = recvrate>0 ? fRecvRatemeter : fSendRatemeter;
-      if ((mtr!=0) && (fWorkRatemeter!=0))
+      if (mtr && fWorkRatemeter)
          for(int n=0;n<msg_in->getresults;n++) {
             double val = mtr->GetPoint(firstpoint + n);
             if (val==0)
@@ -1795,7 +1797,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
           recv_compl.Fill(recv_time - sendtime);
 
           recvrate.Packet(bufsize, recv_time);
-          if ((fIndividualRates!=0) && (fIndividualRates[resnode]!=0))
+          if (fIndividualRates && fIndividualRates[resnode])
              fIndividualRates[resnode]->Packet(bufsize, recv_time);
 
           if (fRecvRatemeter) fRecvRatemeter->Packet(bufsize, recv_time);
@@ -2082,7 +2084,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
              sendmulticounter, skipmulticounter,
              100.*skipmulticounter/(1.*sendmulticounter+skipmulticounter));
 
-   if (fIndividualRates!=0) {
+   if (fIndividualRates) {
 
       char fname[100];
       snprintf(fname, sizeof(fname), "recv_rates_%d.txt",Node());
@@ -2609,7 +2611,7 @@ void IbTestWorkerModule::MasterCleanup(int mainnode)
 
    (void) summulti; // avoid compiler warnings
 
-   if ((sumsend!=0.) || (sumrecv!=0.)) {
+   if ((sumsend != 0.) || (sumrecv != 0.)) {
 
       int64_t pars[2];
       pars[0] = mainnode;

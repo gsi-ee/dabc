@@ -450,12 +450,11 @@ dabc::Buffer dabc::Buffer::CreateBuffer(const void* ptr, unsigned size, bool own
 bool dabc::Buffer::CanSafelyChange() const
 {
    MemoryPool* pool = PoolPtr();
-   if (!null() && (pool!=0))
+   if (!null() && pool)
       return pool->IsSingleSegmRefs(GetObject()->fSegm, GetObject()->fNumSegments);
    return true;
 
 }
-
 
 
 void dabc::Buffer::AllocateContainer(unsigned capacity)

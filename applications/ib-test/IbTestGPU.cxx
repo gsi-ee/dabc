@@ -90,22 +90,22 @@ void opencl::Context::CloseGPU()
    maxDimensions = 0;
    totalLocalMemory = 0;
 
-   if (fDevices!=0) {
+   if (fDevices) {
       std::free(fDevices);
       fDevices = nullptr;
    }
 
-   if (maxWorkItemSizes!=0) {
+   if (maxWorkItemSizes) {
       std::free(maxWorkItemSizes);
       maxWorkItemSizes = nullptr;
    }
 
-   if (fContext!=0) {
+   if (fContext) {
 
       status = clReleaseContext(fContext);
       if (status != CL_SUCCESS)
          EOUT("clReleaseContext failed.");
-      fContext = 0;
+      fContext = nullptr;
    }
 }
 
@@ -339,9 +339,9 @@ opencl::Memory::Memory(const ContextRef& ctx, unsigned sz) :
 
 void opencl::Memory::Allocate(const ContextRef& ctx, unsigned sz)
 {
-   if (ctx.null() || (sz==0)) return;
+   if (ctx.null() || (sz == 0)) return;
 
-   if (fSize!=0) return;
+   if (fSize != 0) return;
 
    cl_int status = 0;
 
@@ -389,7 +389,7 @@ void opencl::CommandsQueue::Allocate(ContextRef& ctx)
       return;
    }
 
-   if (fQueue!=0) return;
+   if (fQueue) return;
 
    cl_command_queue_properties prop = 0;
    cl_int status = 0;
@@ -400,7 +400,7 @@ void opencl::CommandsQueue::Allocate(ContextRef& ctx)
                 &status);
 
    if(status != 0) {
-      fQueue = 0;
+      fQueue = nullptr;
       EOUT("clCreateCommandQueue failed.");
    }
 }

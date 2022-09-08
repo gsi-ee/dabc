@@ -120,7 +120,7 @@ int main(int numc, char* args[])
          //dorun = false;
       } else {
          const char* separ = strchr(arg,'=');
-         if ((separ!=0) && (separ!=arg)) {
+         if (separ && (separ != arg)) {
             std::string argname, argvalue;
             argname.append(arg, separ - arg);
             argvalue = separ+1;

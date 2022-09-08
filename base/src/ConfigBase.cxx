@@ -236,8 +236,8 @@ bool dabc::ConfigBase::NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mas
 
       if (IsWildcard(maskvalue)) isanywildcard = true;
 
-      if ((value!=0) && (maskvalue!=0))
-         if (fnmatch(maskvalue, value, FNM_NOESCAPE)!=0) return false;
+      if (value && maskvalue)
+         if (fnmatch(maskvalue, value, FNM_NOESCAPE) != 0) return false;
 
       xmlattr = Xml::GetNextAttr(xmlattr);
    }
@@ -392,7 +392,7 @@ bool dabc::ConfigBase::IsWildcard(const char* str)
 {
    if (!str) return false;
 
-   return (strchr(str,'*')!=0) || (strchr(str,'?') != 0);
+   return (strchr(str,'*') != nullptr) || (strchr(str,'?') != nullptr);
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::RootNode()
@@ -489,11 +489,11 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string &arg, int id)
             }
             name.erase(--pos1, 1);
          } else
-         if ((id>=0) && (pos1 < name.length()) && (name[pos1] == '#') && !value.empty()) {
+         if ((id >= 0) && (pos1 < name.length()) && (name[pos1] == '#') && !value.empty()) {
             name.erase(pos1, 1);
             // extract element of array
             if ((value[0]!='[') || (value[value.length()-1]!=']')) {
-               if (id!=0) value.clear();
+               if (id != 0) value.clear();
             } else {
                int cnt = 0;
                size_t prev = 1;
@@ -508,7 +508,7 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string &arg, int id)
                      cnt++;
                   }
                }
-               if (prev!=0) value.clear();
+               if (prev != 0) value.clear();
             }
 
          }

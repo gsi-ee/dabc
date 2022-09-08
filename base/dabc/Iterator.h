@@ -61,7 +61,7 @@ namespace dabc {
          {
             while (next(goinside)) {
                ptr = dynamic_cast<T*>(current());
-               if (ptr!=0) return true;
+               if (ptr) return true;
             }
             return false;
          }

@@ -209,7 +209,7 @@ class IbTestColumn {
      T operator()(int n) const { return fVector[n]; }
      T& operator()(int n) { return fVector[n]; }
 
-     bool Remove(int indx) 
+     bool Remove(int indx)
      {
        if ((indx<0) || (indx>=size())) return false;
        for (int n=indx;n<size()-1;n++)
@@ -255,15 +255,15 @@ class IbTestColumn {
       }
 
       void Clean() {
-         if (fVector!=0) {
+         if (fVector) {
            delete[] fVector;
-           fVector = 0;
+           fVector = nullptr;
            fSize = 0;
          }
       }
 
-      int  fSize;
-      T*   fVector;
+      int  fSize{0};
+      T*   fVector{nullptr};
 };
 
 typedef IbTestMatrix<int> IbTestIntMatrix;
