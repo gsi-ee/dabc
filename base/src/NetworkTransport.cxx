@@ -43,7 +43,7 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
 
    fNet = (NetworkInetrface*) fAddon.Notify("GetNetworkTransportInetrface");
 
-   if (fNet==0) {
+   if (!fNet) {
       EOUT("Cannot obtain network addon for the NetworkTransport");
       exit(345);
    }
@@ -65,7 +65,7 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
 
    if (inpport.QueueCapacity() > 0) {
 
-      if (NumPools()==0) {
+      if (NumPools() == 0) {
          EOUT("No memory pool specified to provided buffers for network transport");
          exit(444);
       }
@@ -92,15 +92,15 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
          fRecs[n].kind = 0;
          fRecs[n].extras = 0;
          // fRecs[n].buf.Release();
-         fRecs[n].header = 0;
-         fRecs[n].inlinebuf = 0;
+         fRecs[n].header = nullptr;
+         fRecs[n].inlinebuf = nullptr;
       }
    }
 
    if (IsInputTransport() && fUseAckn)
       fAcknSendQueue.Allocate(fOutputQueueCapacity);
 
-   if (IsInputTransport() && (NumPools()==0)) {
+   if (IsInputTransport() && (NumPools() == 0)) {
       EOUT("Pool required for input transport or for the acknowledge queue");
       return;
    }
@@ -230,12 +230,12 @@ void dabc::NetworkTransport::FillRecvQueue(Buffer* freebuf, bool onlyfreebuf)
    unsigned newitems = 0, numcansubmit = 0;
 
    if (IsInputTransport()) {
-      if (NumPools()==0) {
+      if (NumPools() == 0) {
          EOUT("No memory pool in input transport");
          CloseTransport(true);
          return;
       }
-      if (NumOutputs()==0) {
+      if (NumOutputs() == 0) {
          EOUT("No output port for input transport");
          CloseTransport(true);
          return;
@@ -286,7 +286,7 @@ bool dabc::NetworkTransport::CheckAcknReadyCounter(unsigned newitems)
 
    DOUT5("CheckAcknReadyCounter ackn:%s pool:%s inp:%s", DBOOL(fUseAckn), PoolName().c_str(), DBOOL(IsInputTransport()));
 
-   if (!fUseAckn || (NumPools()==0) || !IsInputTransport()) return false;
+   if (!fUseAckn || (NumPools() == 0) || !IsInputTransport()) return false;
 
    fAcknReadyCounter+=newitems;
 

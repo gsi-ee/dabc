@@ -90,10 +90,10 @@ bool dabc::ReferencesVector::AddAt(Reference& ref, unsigned pos) throw()
 
 bool dabc::ReferencesVector::Remove(Object* obj) throw()
 {
-   if ((obj==0) || (GetSize()==0)) return false;
+   if (!obj || (GetSize() == 0)) return false;
 
    unsigned n = GetSize();
-   while (n-->0)
+   while (n-- > 0)
       if (fVector->at(n).GetObject()==obj) RemoveAt(n);
 
    return true;
@@ -102,7 +102,7 @@ bool dabc::ReferencesVector::Remove(Object* obj) throw()
 
 void dabc::ReferencesVector::RemoveAt(unsigned n) throw()
 {
-   if (n>=fVector->size()) return;
+   if (n >= fVector->size()) return;
 
    Reference ref;
    ref << fVector->at(n);

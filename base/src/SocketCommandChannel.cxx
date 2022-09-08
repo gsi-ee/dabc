@@ -96,7 +96,7 @@ bool dabc::SocketCommandClient::EnsureRecvBuffer(unsigned strsize)
 
    fRecvBuf = new char[fRecvBufSize];
 
-   if (fRecvBuf==0) {
+   if (!fRecvBuf) {
       EOUT("Cannot allocate buffer %u", fRecvBufSize);
       fRecvBufSize = 0;
       return false;
@@ -217,7 +217,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
    dabc::Command cmd;
 
-   if (fRecvHdr.data_cmdsize==0) {
+   if (fRecvHdr.data_cmdsize == 0) {
       CloseClient(true, "received empty command");
       return;
    }

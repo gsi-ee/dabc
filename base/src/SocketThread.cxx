@@ -147,7 +147,7 @@ void dabc::SocketAddon::OnSocketError(int msg, const std::string &)
 {
    if (IsDeliverEventsToWorker()) {
       DOUT2("Addon:%p Connection closed - worker should process", this);
-      FireWorkerEvent(msg==0 ? evntSocketCloseInfo : evntSocketErrorInfo);
+      FireWorkerEvent(msg == 0 ? evntSocketCloseInfo : evntSocketErrorInfo);
    } else
    if (fDeleteWorkerOnClose) {
       DOUT2("Connection closed - destroy socket");
@@ -164,9 +164,11 @@ ssize_t dabc::SocketAddon::DoRecvBuffer(void* buf, ssize_t len)
 {
    ssize_t res = recv(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnSocketError(0, "closed during recv()"); else
-   if (res<0) {
-      if (errno!=EAGAIN) OnSocketError(errno, "when recv()");
+   if (res == 0)
+      OnSocketError(0, "closed during recv()");
+   else if (res < 0) {
+      if (errno != EAGAIN)
+         OnSocketError(errno, "when recv()");
    }
 
    return res;
@@ -194,9 +196,11 @@ ssize_t dabc::SocketAddon::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
 
    ssize_t res = recvmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnSocketError(0, "when recvmsg()"); else
-   if (res<0) {
-      if (errno!=EAGAIN) OnSocketError(errno, "when recvmsg()");
+   if (res == 0)
+      OnSocketError(0, "when recvmsg()");
+   else if (res < 0) {
+      if (errno != EAGAIN)
+         OnSocketError(errno, "when recvmsg()");
    }
 
    return res;
@@ -206,9 +210,11 @@ ssize_t dabc::SocketAddon::DoSendBuffer(void* buf, ssize_t len)
 {
    ssize_t res = send(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnSocketError(0, "when send()"); else
-   if (res<0) {
-      if (errno!=EAGAIN) OnSocketError(errno, "When send()");
+   if (res == 0)
+      OnSocketError(0, "when send()");
+   else if (res < 0) {
+      if (errno != EAGAIN)
+         OnSocketError(errno, "When send()");
    }
 
    return res;
@@ -237,9 +243,11 @@ ssize_t dabc::SocketAddon::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
 
    ssize_t res = sendmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnSocketError(0, "when sendmsg()"); else
-   if (res<0) {
-      if (errno!=EAGAIN) OnSocketError(errno, "When sendmsg()");
+   if (res == 0)
+      OnSocketError(0, "when sendmsg()");
+   else if (res < 0) {
+      if (errno != EAGAIN)
+         OnSocketError(errno, "When sendmsg()");
    }
 
    return res;
@@ -316,7 +324,7 @@ void dabc::SocketIOAddon::SetSendAddr(const std::string &host, int port)
 */
 
    struct hostent *h = gethostbyname(host.c_str());
-   if ((h==0) || (h->h_addrtype!=AF_INET) || host.empty()) {
+   if (!h || (h->h_addrtype != AF_INET) || host.empty()) {
       EOUT("Cannot get host information for %s", host.c_str());
       return;
    }
@@ -390,7 +398,7 @@ bool dabc::SocketIOAddon::StartSend(const void* buf1, unsigned size1,
       indx++;
    }
 
-   if (indx==0) {
+   if (indx == 0) {
       EOUT("No buffer specified");
       return false;
    }
@@ -408,7 +416,7 @@ bool dabc::SocketIOAddon::StartSend(const void* buf1, unsigned size1,
 
 bool dabc::SocketIOAddon::StartRecv(void* buf, size_t size)
 {
-   return StartRecvHdr(0, 0, buf, size);
+   return StartRecvHdr(nullptr, 0, buf, size);
 }
 
 bool dabc::SocketIOAddon::StartSend(const Buffer& buf)
@@ -416,7 +424,7 @@ bool dabc::SocketIOAddon::StartSend(const Buffer& buf)
    // this is simple version,
    // where only buffer itself without header is transported
 
-   return StartNetSend(0, 0, buf);
+   return StartNetSend(nullptr, 0, buf);
 }
 
 bool dabc::SocketIOAddon::StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size)

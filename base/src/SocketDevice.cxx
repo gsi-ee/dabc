@@ -251,7 +251,7 @@ std::string dabc::SocketDevice::StartServerAddon()
 
 void dabc::SocketDevice::AddRec(NewConnectRec* rec)
 {
-   if (rec==0) return;
+   if (!rec) return;
 
    bool firetmout = false;
    {
@@ -264,7 +264,7 @@ void dabc::SocketDevice::AddRec(NewConnectRec* rec)
 
 void dabc::SocketDevice::DestroyRec(NewConnectRec* rec, bool res)
 {
-   if (rec==0) return;
+   if (!rec) return;
    if (rec->fClient) EOUT("Is client %p is destroyed?", rec->fClient);
    if (rec->fProtocol) EOUT("Is protocol %p is destroyed?", rec->fProtocol);
 
@@ -531,7 +531,7 @@ bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char
    if (destr) return true;
 
    bool res = true;
-   if (inmsg) res = (strcmp(inmsg, "accepted")==0);
+   if (inmsg) res = (strcmp(inmsg, "accepted") == 0);
 
    if (inmsg) DOUT3("Reply from server: %s", inmsg);
 

@@ -245,7 +245,7 @@ void dabc::HStore::CloseNode(const char * /* nodename */)
    }
 }
 
-void dabc::HStore::BeforeNextChild(const char* basename)
+void dabc::HStore::BeforeNextChild(const char *basename)
 {
    // called before next child node created
 
@@ -261,7 +261,7 @@ void dabc::HStore::BeforeNextChild(const char* basename)
    if (numchilds.back()++ == 0) {
       NewLine();
 
-      if (basename==0) basename = "_childs";
+      if (!basename) basename = "_childs";
 
       buf.append(dabc::format("%*s\"%s\"", (compact() > 0) ? 0 : lvl * 4 - 2, "", basename));
       switch(compact()) {
@@ -480,21 +480,21 @@ bool dabc::RecordField::AsBool(bool dflt) const
    switch (fKind) {
       case kind_none: return dflt;
       case kind_bool:
-      case kind_int: return valueInt!=0;
+      case kind_int: return valueInt != 0;
       case kind_datime:
-      case kind_uint: return valueUInt!=0;
-      case kind_double: return valueDouble!=0.;
-      case kind_arrint: if (valueInt>0) return arrInt[0]!=0; break;
-      case kind_arruint: if (valueInt>0) return arrUInt[0]!=0; break;
-      case kind_arrdouble: if (valueInt>0) return arrDouble[0]!=0; break;
+      case kind_uint: return valueUInt != 0;
+      case kind_double: return valueDouble != 0.;
+      case kind_arrint: if (valueInt>0) return arrInt[0] != 0; break;
+      case kind_arruint: if (valueInt>0) return arrUInt[0] != 0; break;
+      case kind_arrdouble: if (valueInt>0) return arrDouble[0] != 0; break;
       case kind_string:
       case kind_arrstr: {
-         if (strcmp(valueStr,xmlTrueValue)==0) return true;
-         if (strcmp(valueStr,xmlFalseValue)==0) return false;
+         if (strcmp(valueStr,xmlTrueValue) == 0) return true;
+         if (strcmp(valueStr,xmlFalseValue) == 0) return false;
          break;
       }
-      case kind_buffer: if (valueBuf!=0) return valueBuf->SegmentSize()!=0; break;
-      case kind_reference: if (valueRef!=0) return !valueRef->null(); break;
+      case kind_buffer: if (valueBuf) return valueBuf->SegmentSize() != 0; break;
+      case kind_reference: if (valueRef) return !valueRef->null(); break;
    }
    return dflt;
 }
@@ -765,7 +765,7 @@ std::string dabc::RecordField::AsStr(const std::string &dflt) const
       case kind_arrstr: {
 
          std::vector<std::string> vect = AsStrVect();
-         if (vect.size()==0) return dflt;
+         if (vect.size() == 0) return dflt;
 
          std::string res("[");
          for (unsigned n=0; n<vect.size();n++) {
@@ -892,7 +892,7 @@ std::string dabc::RecordField::AsJson() const
          return res;
       }
       case kind_string: {
-         if (valueStr==0) return "\"\"";
+         if (!valueStr) return "\"\"";
          std::string res("\"");
          if (NeedJsonReformat(valueStr))
             res.append(JsonReformat(valueStr));
@@ -902,7 +902,7 @@ std::string dabc::RecordField::AsJson() const
          return res;
       }
       case kind_buffer: {
-         if (valueBuf==0) return "null";
+         if (!valueBuf) return "null";
          std::string res("[");
          uint8_t* ptr = (uint8_t*) valueBuf->SegmentPtr();
          for (unsigned n=0;n<valueBuf->SegmentSize();n++) {
@@ -913,7 +913,7 @@ std::string dabc::RecordField::AsJson() const
          return res;
       }
       case kind_reference: {
-         if (valueRef==0) return "null";
+         if (!valueRef) return "null";
          // no idea how to store reference
          return "\"<Refernce>\"";
       }
@@ -993,7 +993,7 @@ bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& 
       while (*pos==' ') pos++; // exclude possible spaces in the begin
       if ((*pos=='\'') || (*pos == '\"')) {
          const char* p1 = strchr(pos+1, *pos);
-         if (p1==0) {
+         if (!p1) {
             if (verbose) EOUT("Error syntax in array %s after char:%u - closing quote not found ", str, (unsigned) (pos - str));
             vect.clear();
             return false;
@@ -1002,7 +1002,7 @@ bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& 
          pos = p1 + 1;
       } else {
          const char* p1 = strpbrk(pos+1, ",]");
-         if (p1==0) {
+         if (!p1) {
             if (verbose) EOUT("Error syntax in array %s after char:%u - ',' or ']' not found ", str, (unsigned) (pos - str));
             vect.clear();
             return false;
@@ -1146,7 +1146,7 @@ bool dabc::RecordField::SetStr(const char* v)
 {
    if (cannot_modify()) return false;
 
-   if ((fKind == kind_string) && v && (strcmp(v,valueStr)==0)) return modified(false);
+   if ((fKind == kind_string) && v && (strcmp(v, valueStr) == 0)) return modified(false);
 
    release();
    size_t len = !v ? 0 : strlen(v);
@@ -1230,7 +1230,7 @@ bool dabc::RecordField::SetArrInt(int64_t size, int64_t* arr, bool owner)
    }
 
    if ((fKind == kind_arrint) && (size==valueInt))
-      if (memcmp(arrInt, arr, size*sizeof(int64_t))==0) {
+      if (memcmp(arrInt, arr, size*sizeof(int64_t)) == 0) {
          if (owner) delete [] arr;
          return modified(false);
       }
@@ -1266,7 +1266,7 @@ bool dabc::RecordField::SetArrUInt(int64_t size, uint64_t* arr, bool owner)
    if (size <= 0) return false;
 
    if ((fKind == kind_arruint) && (valueInt == size))
-      if (memcmp(arrUInt, arr, size*sizeof(uint64_t))==0) {
+      if (memcmp(arrUInt, arr, size*sizeof(uint64_t)) == 0) {
          if (owner) delete [] arr;
          return modified(false);
       }
@@ -1315,7 +1315,7 @@ bool dabc::RecordField::SetArrDouble(int64_t size, double* arr, bool owner)
    if (size <= 0) return false;
 
    if ((fKind == kind_arrdouble) && (valueInt == size))
-      if (memcmp(arrDouble, arr, size*sizeof(double))==0) {
+      if (memcmp(arrDouble, arr, size*sizeof(double)) == 0) {
          if (owner) delete[] arr;
          return modified(false);
       }
@@ -1396,10 +1396,10 @@ bool dabc::RecordFieldsMap::RemoveField(const std::string &name)
 
 std::string dabc::RecordFieldsMap::FieldName(unsigned n) const
 {
-   if (n>=fMap.size()) return "";
+   if (n >= fMap.size()) return "";
 
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (n==0) return iter->first;
+   for (auto iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      if (n == 0) return iter->first;
       n--;
    }
 
@@ -1410,7 +1410,7 @@ bool dabc::RecordFieldsMap::WasChanged() const
 {
    if (fChanged) return true;
 
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+   for (auto iter = fMap.begin(); iter!=fMap.end(); iter++)
       if (iter->second.IsModified()) return true;
 
    return false;
@@ -1423,7 +1423,7 @@ bool dabc::RecordFieldsMap::WasChangedWith(const std::string &prefix)
 
    for (auto &&fld: fMap) {
       if (fld.second.IsModified())
-         if (fld.first.find(prefix)==0) return true;
+         if (fld.first.find(prefix) == 0) return true;
    }
 
    return false;

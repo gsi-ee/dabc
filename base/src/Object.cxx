@@ -202,8 +202,8 @@ void dabc::Object::SetLogging(bool on)
 
 bool dabc::Object::IsName(const char* str, int len) const
 {
-   if ((len==0) || (str == nullptr)) return false;
-   if (len<0) return fObjectName.compare(str) == 0;
+   if ((len == 0) || !str) return false;
+   if (len < 0) return fObjectName.compare(str) == 0;
    return ((int) fObjectName.length()==len) && (fObjectName.compare(0, len, str,len) == 0);
 }
 
@@ -336,7 +336,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
       if (do_decrement) {
 
-         if (fObjectRefCnt==0) {
+         if (fObjectRefCnt == 0) {
             EOUT("Obj %p name:%s class:%s Reference counter is already 0", this, GetName(), ClassName());
             throw dabc::Exception(ex_Object, "Reference counter is 0 - cannot decrease", GetName());
             return false;
@@ -454,7 +454,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
          if (GetFlag(flLogging))
             DOUT0("Obj:%s %p Class:%s IncReference ---+-- %u", GetName(), this, ClassName(), fObjectRefCnt);
       } else
-      if (fObjectRefCnt==0) {
+      if (fObjectRefCnt == 0) {
          // no need to deal with manager - can call destructor immediately
          DOUT3("Obj:%p can be destroyed", this);
          if (_DoDeleteItself()) {
@@ -486,7 +486,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
    LockGuard guard(fObjectMutex);
 
-   if (fObjectRefCnt==0) {
+   if (fObjectRefCnt == 0) {
       // no need to deal with manager - can call destructor immediately
       if (_DoDeleteItself()) {
          SetState(stWaitForDestructor);
@@ -569,7 +569,7 @@ bool dabc::Object::AddChild(Object* child, bool withmutex) throw()
 
 bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
 {
-   if (child==0) return false;
+   if (!child) return false;
 
    if (!child->fObjectParent.null() && (child->GetParent() != this)) {
       EOUT("Cannot add child from other parent directly - first remove from old");
@@ -603,7 +603,7 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
 
 bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
 {
-   if (child==0) return false;
+   if (!child) return false;
 
    if (child->fObjectParent() != this) return false;
 
@@ -636,7 +636,7 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
             } else {
                fObjectRefCnt = 0;
                if (fObjectChilds->GetSize() > 0)
-                  DOUT0("Object %p %s refcnt==0 when numchild %u", this, GetName(), fObjectChilds->GetSize());
+                  DOUT0("Object %p %s refcnt == 0 when numchild %u", this, GetName(), fObjectChilds->GetSize());
             }
          }
          break;
@@ -654,7 +654,7 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
       DOUT0("Object %s Retry %d time before childs were unblocked", GetName(), 1000000-cnt);
    #endif
 
-   if (cnt==0) {
+   if (cnt == 0) {
       EOUT("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName());
       exit(055);
    }
@@ -743,7 +743,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 {
    if (ref.null()) return ref;
 
-   if (!name || (strlen(name)==0)) return ref;
+   if (!name || (strlen(name) == 0)) return ref;
 
    if (*name=='/') {
       if (firsttime) {
@@ -752,30 +752,32 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
          return SearchForChild(ref, name+1, false, force);
       } else {
          // skip all slashes in the beginning
-         while (*name=='/') name++;
-         if (*name==0) return ref;
+         while (*name == '/') name++;
+         if (*name == 0) return ref;
       }
    }
 
    int len = strlen(name);
 
-   if ((len>=2) && (name[0]=='.') && (name[1] == '.')) {
-      if (len==2) return Reference(ref()->GetParent());
+   if ((len >= 2) && (name[0] == '.') && (name[1] == '.')) {
+      if (len == 2)
+         return Reference(ref()->GetParent());
 
-      if (name[2]=='/') {
+      if (name[2] == '/') {
          ref = Reference(ref()->GetParent());
          return SearchForChild(ref, name + 3, false, force);
       }
    }
 
-   if ((len>=1) && (name[0]=='.')) {
-      if (len==1) return ref;
-      if (name[1]=='/')
+   if ((len >= 1) && (name[0] == '.')) {
+      if (len == 1)
+         return ref;
+      if (name[1] == '/')
          return SearchForChild(ref, name + 2, false, force);
    }
 
    const char* ptok = name;
-   while (*ptok!=0) {
+   while (*ptok != 0) {
       if (*ptok == '/') break;
       ptok++;
    }
@@ -805,7 +807,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 
    ref << newref;
 
-   if (*ptok==0) return ref;
+   if (*ptok == 0) return ref;
 
    return SearchForChild(ref, ptok+1, false, force);
 }
@@ -826,7 +828,7 @@ bool dabc::Object::RemoveChilds(bool cleanup)
 
    bool isowner = false;
 
-   while (--cnt>0) {
+   while (--cnt > 0) {
       LockGuard guard(fObjectMutex);
 
       // nothing to do
@@ -845,7 +847,7 @@ bool dabc::Object::RemoveChilds(bool cleanup)
       DOUT0("Object %s Retry %d times before childs were unblocked", 1000000-cnt);
    #endif
 
-   if (cnt==0) {
+   if (cnt == 0) {
       EOUT("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName());
       exit(055);
    }
@@ -1023,7 +1025,7 @@ bool dabc::Object::NameMatch(const std::string &name, const std::string &mask)
 
    if (mask == "*") return true;
 
-   return fnmatch(mask.c_str(), name.c_str(), FNM_NOESCAPE)==0;
+   return fnmatch(mask.c_str(), name.c_str(), FNM_NOESCAPE) == 0;
 }
 
 bool dabc::Object::NameMatchM(const std::string &name, const std::string &mask)

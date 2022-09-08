@@ -416,7 +416,8 @@ unsigned dabc::PoolHandle::NumStartEvents()
 
 dabc::Buffer dabc::PoolHandle::TakeBuffer(BufferSize_t size)
 {
-   if (QueueCapacity()==0) return ((MemoryPool*)fPool())->TakeBuffer(size);
+   if (QueueCapacity() == 0)
+      return ((MemoryPool*)fPool())->TakeBuffer(size);
 
    return TakeRequestedBuffer();
 }

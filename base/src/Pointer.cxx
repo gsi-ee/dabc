@@ -53,7 +53,7 @@ void dabc::Pointer::long_shift(BufferSize_t len)
 
 dabc::BufferSize_t dabc::Pointer::copyfrom(const Pointer& src, BufferSize_t sz) throw()
 {
-   if (sz==0) sz = src.fullsize();
+   if (sz == 0) sz = src.fullsize();
 
    // this is the simplest case - just raw copy of original data
    if ((sz <= rawsize()) && (sz <= src.rawsize())) {
@@ -76,13 +76,13 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const Pointer& src, BufferSize_t sz) 
 
    while (sz > 0) {
       unsigned copylen = (tgtptr.rawsize() < srcptr.rawsize()) ? tgtptr.rawsize() : srcptr.rawsize();
-      if (copylen>sz) copylen = sz;
-      if (copylen==0) break;
+      if (copylen > sz) copylen = sz;
+      if (copylen == 0) break;
 
       ::memcpy(tgtptr(), srcptr(), copylen);
 
-      res+=copylen;
-      sz-=copylen;
+      res += copylen;
+      sz -= copylen;
       tgtptr.shift(copylen);
       srcptr.shift(copylen);
    }
@@ -97,7 +97,7 @@ dabc::BufferSize_t dabc::Pointer::copyto(Pointer& src, BufferSize_t sz) const th
 
 dabc::BufferSize_t dabc::Pointer::copyto(void* tgt, BufferSize_t sz) const throw()
 {
-   if (sz==0) return 0;
+   if (sz == 0) return 0;
 
    if (sz <= rawsize()) {
       ::memcpy(tgt, ptr(), sz);
@@ -116,7 +116,7 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const void *src, BufferSize_t sz)
       sz = fullsize();
    }
 
-   if (sz==0) return sz;
+   if (sz == 0) return sz;
 
    // this is special and simple case, treat is separately
    if (sz > rawsize())

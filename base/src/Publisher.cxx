@@ -271,9 +271,9 @@ double dabc::Publisher::ProcessTimeout(double)
       fGlobal.Duplicate(fLocal);
       fLastLocalVers = fLocal.GetVersion();
 
-      for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
+      for (auto iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
 
-         if (iter->local || (iter->version==0)) continue;
+         if (iter->local || (iter->version == 0)) continue;
 
          //DOUT0("REMOTE %s version before:%u now:%u", iter->fulladdr.c_str(), (unsigned) iter->lastglvers, (unsigned) iter->version);
 
@@ -397,7 +397,7 @@ dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string &path, bool* islo
 
 bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string &itemname, bool& islocal, std::string& producer_name, std::string& request_name)
 {
-   if (asproducer && (itemname.length()==0)) return false;
+   if (asproducer && itemname.empty()) return false;
 
    dabc::Hierarchy h = fLocal.GetFolder(itemname);
    if (!h.null()) {
@@ -552,7 +552,7 @@ dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::
          if (part.empty()) break;
 
          size_t p = part.find("=");
-         if ((p==std::string::npos) || (p==0) || (p==part.length()-1)) break;
+         if ((p == std::string::npos) || (p == 0) || (p == part.length()-1)) break;
 
          std::string parname = part.substr(0,p);
          std::string parvalue = part.substr(p+1);
@@ -628,12 +628,12 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       std::string path = cmd.GetStr("Path");
       std::string worker = cmd.GetStr("Worker");
       bool ismgrpath = false;
-      if (path.find("$MGR$")==0) {
+      if (path.find("$MGR$") == 0) {
          ismgrpath = true;
          path.erase(0, 5);
          path = fMgrPath + path;
       } else
-      if (path.find("$CONTEXT$")==0) {
+      if (path.find("$CONTEXT$") == 0) {
          path.erase(0, 9);
          path = dabc::format("/%s", dabc::mgr.GetName()) + path;
       }

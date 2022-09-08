@@ -112,7 +112,8 @@ dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout)
 dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout)
 {
    PoolHandle* handle = Pool(poolindx);
-   if (!handle) return (poolindx==0) ? TakeDfltBuffer() : Buffer();
+   if (!handle)
+      return (poolindx == 0) ? TakeDfltBuffer() : Buffer();
 
    do {
       if (handle->CanTakeBuffer())
@@ -221,7 +222,7 @@ int dabc::ModuleSync::PreviewCommand(Command cmd)
    // when module is stopped, commands will be executed immediately
    if (!fSyncCommands && (cmd_res==cmd_ignore) && IsRunning()) {
 
-      if (fNewCommands==0)
+      if (!fNewCommands)
          fNewCommands = new CommandsQueue(CommandsQueue::kindSubmit);
 
       fNewCommands->Push(cmd);
