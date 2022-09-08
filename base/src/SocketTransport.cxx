@@ -102,7 +102,7 @@ void dabc::SocketNetworkInetrface::OnSendCompleted()
 
 //   DOUT0("SocketNetworkInetrface::OnSendCompleted status %d ", fSendStatus);
 
-   if (fSendStatus==1) {
+   if (fSendStatus == 1) {
       tr->ProcessSendCompl(fSendRecid);
       fSendRecid = 0;
       fSendStatus = 0;
@@ -151,7 +151,7 @@ void dabc::SocketNetworkInetrface::OnRecvCompleted()
 
 do_compl:
 
-   if (fRecvStatus==2) {
+   if (fRecvStatus == 2) {
       // if we complete receiving of the buffer
 
       tr->ProcessRecvCompl(fRecvRecid);
@@ -159,7 +159,7 @@ do_compl:
       fRecvStatus = 0;
    }
 
-   if (fRecvStatus==1) {
+   if (fRecvStatus == 1) {
       // analyze header, set new recv operation and so on
 
       fRecvStatus = 2;

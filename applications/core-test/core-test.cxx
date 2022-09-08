@@ -62,11 +62,11 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
          DOUT3("Create module:%s kind = %d Class %s", GetName(), fKind, ClassName());
 
-         if (fKind==0) CreatePoolHandle("Pool", 0 /*QUEUESIZE*/);
+         if (fKind == 0) CreatePoolHandle("Pool", 0 /*QUEUESIZE*/);
 
-         if (fKind>0) CreateInput("Input", QUEUESIZE);
+         if (fKind > 0) CreateInput("Input", QUEUESIZE);
 
-         if (fKind<2) CreateOutput("Output", QUEUESIZE);
+         if (fKind < 2) CreateOutput("Output", QUEUESIZE);
       }
 
       virtual ~TestModuleAsync()
@@ -94,7 +94,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
          // DOUT0("core-test ProcessRecv module %s", GetName());
 
-         if (fKind==1)
+         if (fKind == 1)
             if (!CanSend()) return false;
 
          dabc::Buffer buf = Recv(port);
@@ -102,7 +102,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
          if (buf.null()) { EOUT("CCCCCCCCCC"); exit(1); }
 
-         if (fKind==2) {
+         if (fKind == 2) {
             buf.Release();
             if (global_cnt_fill) global_cnt++;
          } else {
@@ -119,11 +119,11 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
          fCntSend++;
 
-         if (fKind==0) {
+         if (fKind == 0) {
             if (!CanTakeBuffer()) return false;
             buf = TakeBuffer();
          } else
-         if (fKind==1) {
+         if (fKind == 1) {
             if (!CanRecv()) return false;
             buf = Recv();
             fNumRecv++;
@@ -145,9 +145,9 @@ class TestModuleAsync : public dabc::ModuleAsync {
       virtual void AfterModuleStop()
       {
 //         DOUT0("Module %s CntRecv %2d CntSend %2d NumSend %d NumRecv %d", GetName(), fCntRecv, fCntSend, fNumSend, fNumRecv);
-//         if (fKind==0) DOUT0("Module %s CanSend:%s", GetName(), DBOOL(CanSend());
-//         if (fKind==1) DOUT0("Module %s CanRecv:%s CanSend:%s", GetName(), DBOOL(CanRecv()), DBOOL(CanSend());
-//         if (fKind==2) DOUT0("Module %s CanRecv:%s", GetName(), DBOOL(CanRecv());
+//         if (fKind == 0) DOUT0("Module %s CanSend:%s", GetName(), DBOOL(CanSend());
+//         if (fKind == 1) DOUT0("Module %s CanRecv:%s CanSend:%s", GetName(), DBOOL(CanRecv()), DBOOL(CanSend());
+//         if (fKind == 2) DOUT0("Module %s CanRecv:%s", GetName(), DBOOL(CanRecv());
 
 
          DOUT3("TestModuleAsync %s stops, cnt = %ld", GetName(), global_cnt);
@@ -157,7 +157,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
 class TestModuleSync : public dabc::ModuleSync {
    protected:
-      int                 fKind; // 0 - first in chain, 1 - repeater, 2 - last in chain,
+      int                 fKind{0}; // 0 - first in chain, 1 - repeater, 2 - last in chain,
 
    public:
       TestModuleSync(const std::string &name, dabc::Command cmd = nullptr) :
@@ -166,7 +166,7 @@ class TestModuleSync : public dabc::ModuleSync {
       {
          fKind = Cfg("Kind", cmd).AsInt(0);
 
-         if (fKind==0) CreatePoolHandle("Pool", QUEUESIZE);
+         if (fKind == 0) CreatePoolHandle("Pool", QUEUESIZE);
 
          if (fKind>0) CreateInput("Input", QUEUESIZE);
 
@@ -288,14 +288,16 @@ void TestChain(bool isM, int number, int testkind = 0, double test_tm = 2.)
 {
    DOUT0("===============================================");
    DOUT0("Test chain of %d %s modules, using %d threads",
-            number, (isM ? "Sync" : "Async"), (testkind==0 ? number : testkind));
+            number, (isM ? "Sync" : "Async"), (testkind == 0 ? number : testkind));
 
    dabc::mgr.CreateMemoryPool("Pool", BUFFERSIZE, number*QUEUESIZE*2);
 
    for (int n=0;n<number;n++) {
       int kind = 1;
-      if (n==0) kind = 0; else
-      if (n==(number-1)) kind = 2;
+      if (n == 0)
+         kind = 0;
+      else if (n == (number - 1))
+         kind = 2;
 
       if (isM) {
          dabc::CmdCreateModule cmd("TestModuleSync", dabc::format("Module%d",n));
@@ -430,7 +432,7 @@ void TestTimers(int number)
    DOUT0("Test timers with %d modules, running in the same thread", number);
 
    for (int n=0;n<number;n++) {
-      dabc::ModuleRef m = new TimeoutTestModuleAsync(dabc::format("Module%d",n), (number==1));
+      dabc::ModuleRef m = new TimeoutTestModuleAsync(dabc::format("Module%d",n), (number == 1));
 
       m.MakeThreadForWorker("MainThread");
    }
@@ -808,7 +810,7 @@ void TestCmdChain(int number, bool timeout = false, bool samecmd = true)
 
       m.MakeThreadForWorker(n % 2 ? "MainThread0" : "MainThread1");
 
-      if (n==0) m0 = m;
+      if (n == 0) m0 = m;
    }
 
    dabc::mgr.StartAllModules();

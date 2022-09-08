@@ -204,7 +204,7 @@ void verbs::VerbsNetworkInetrface::SubmitSend(uint32_t recid)
       // FIXME: dangerous, acquire memory pool mutex when transport mutex is locked
       fPoolReg()->CheckMRStructure();
 
-      for (unsigned seg=0;seg<rec->buf.NumSegments();seg++) {
+      for (unsigned seg = 0; seg < rec->buf.NumSegments(); seg++) {
          f_sge[segid+1+seg].addr   = (uintptr_t) rec->buf.SegmentPtr(seg);
          f_sge[segid+1+seg].length = rec->buf.SegmentSize(seg);
          f_sge[segid+1+seg].lkey   = fPoolReg()->GetLkey(rec->buf.SegmentId(seg));
@@ -213,7 +213,7 @@ void verbs::VerbsNetworkInetrface::SubmitSend(uint32_t recid)
       f_swr[recid].num_sge  += rec->buf.NumSegments();
    }
 
-   if ((f_swr[recid].num_sge==1) && (f_sge[segid].length<=256))
+   if ((f_swr[recid].num_sge == 1) && (f_sge[segid].length <= 256))
       // try to send small portion of data as inline
       f_swr[recid].send_flags = (ibv_send_flags) (IBV_SEND_SIGNALED | IBV_SEND_INLINE);
 

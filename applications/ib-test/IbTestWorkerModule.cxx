@@ -502,7 +502,7 @@ verbs::ComplQueue* IbTestWorkerModule::Pool_CQ_Check(bool &iserror, double waitt
 
    iserror = (res==2);
 
-   return (res==1) ? cq : 0;
+   return (res == 1) ? cq : nullptr;
 }
 
 int IbTestWorkerModule::Pool_Check(int &bufindx, int& lid, int &nremote, double waittime, double fasttime)
@@ -675,12 +675,12 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
 
       int res = 0, resnode = 0, resindx = -1, reslid = -1;
 
-      while ((res==0) && (now < stoptm)) {
+      while ((res == 0) && (now < stoptm)) {
          res = Pool_Check(resindx, reslid, resnode, stoptm-now, 0.001);
 
          now = fStamping();
 
-         if (res==10) {
+         if (res == 10) {
             if ((resindx==sendbufindx) && (resnode==0) && (reslid==sync_lid)) {
                res = 0;
                nsendcomplited++;
@@ -1306,11 +1306,11 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
             now = fStamping();
 
             if ((res>0) && ((resnode!=nremote) || (reslid != sync_lid))) {
-              EOUT("Error node number %d or lid %d when complete %s operation", resnode, reslid, ((res==10) ? "send" : "receive") );
+              EOUT("Error node number %d or lid %d when complete %s operation", resnode, reslid, ((res == 10) ? "send" : "receive") );
               return false;
             }
-            if (res==10) { res_send_index = resindx; } else
-            if (res==1) { recv_time = now; res_recv_index = resindx; }
+            if (res == 10) { res_send_index = resindx; } else
+            if (res == 1) { recv_time = now; res_recv_index = resindx; }
          }
 
           if (res_recv_index<0) {
@@ -1358,7 +1358,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
       DOUT0("Round trip to %2d: %5.2f microsec", nremote, m_to_s.Mean(max_cut)*1e6 + s_to_m.Mean(max_cut)*1e6);
       DOUT0("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", m_to_s.Mean(max_cut)*1e6, m_to_s.Dev(max_cut)*1e6, m_to_s.Max()*1e6, m_to_s.Min()*1e6);
       DOUT0("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", s_to_m.Mean(max_cut)*1e6, s_to_m.Dev(max_cut)*1e6, s_to_m.Max()*1e6, s_to_m.Min()*1e6);
-//      if (nremote==1) a1.ShowHist();
+//      if (nremote == 1) a1.ShowHist();
 
       if (debug_output) {
          std::string fname1 = dabc::format("m_to_s%d.txt", nremote);
@@ -1769,11 +1769,11 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
 //      bool wascompletion = false;
 
-      if (res<0) {
+      if (res < 0) {
          EOUT("Error when Pool_Check");
          break;
       } else
-      if (res==1) { // start of receiving part
+      if (res == 1) { // start of receiving part
 //          wascompletion = true;
           double* mem = (double*) GetPoolBuffer(resindx);
           double sendtime = *mem++;
@@ -1783,7 +1783,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 //             EOUT("Receive error: source:%d last pkt:%ld  curr:%ld diff:%ld",resnode, recvcounter[resnode], sendcnt, sendcnt-recvcounter[resnode]);
 
           int lost = sendcnt - recvcounter(reslid, resnode) - 1;
-          if (lost>0) {
+          if (lost > 0) {
              numlostpackets += lost;
              recvskipcounter(reslid, resnode) += lost;
           }
@@ -1812,7 +1812,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
              ReleaseExclusive(resindx);
           }
       } else      // end of receiving part
-      if (res==10) {
+      if (res == 10) {
 //         wascompletion = true;
          double* mem = (double*) GetPoolBuffer(resindx);
          double sendtime = *mem;
@@ -2534,26 +2534,26 @@ void IbTestWorkerModule::ProcessAskQueue()
       isanydata = false;
       res = Pool_Check(resindx, reslid, resnode, 0.001);
 
-      if (res<0) {
+      if (res < 0) {
            EOUT("Error when Pool_Check");
       } else
-      if (res==1) { // start of receiving part
+      if (res == 1) { // start of receiving part
          ReleaseExclusive(resindx);
          isanydata = true;
       } else      // end of receiving part
-      if (res==10) {
+      if (res == 10) {
         ReleaseExclusive(resindx);
         isanydata = true;
       }  // end of send complition part
 
       // here a part where milticast data can be received
       if (fMultiCQ && fMultiPool)
-         if (fMultiCQ->Poll()==1) {
+         if (fMultiCQ->Poll() == 1) {
             isanydata = true;
             int bufindx = fMultiCQ->arg() % 1000000;
             ReleaseExclusive(bufindx, fMultiPool);
 
-            if (fMultiCQ->arg()>=1000000)
+            if (fMultiCQ->arg() >= 1000000)
                fMultiSendQueue--;
             else
                fMultiRecvQueue--;
@@ -2676,7 +2676,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
 
       res = Pool_Check(resindx, reslid, resnode, 0.001);
 
-      if (res==1) {
+      if (res == 1) {
          // process recv compl event
          int* mem = (int*) GetPoolBuffer(resindx);
          if ((reslid==0) && (*mem++==-7654321)) {
@@ -2697,7 +2697,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
          else
             ReleaseExclusive(resindx);
       } else
-      if (res==10) {
+      if (res == 10) {
          // process send complition event
          ReleaseExclusive(resindx);
       } else

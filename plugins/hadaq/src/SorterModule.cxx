@@ -166,7 +166,7 @@ bool hadaq::SorterModule::retransmit()
          bool ok(true);
          for (unsigned n=0;n<fSubs.size();n++) {
             if (prev!=0xffffffff) {
-               ok = Diff(prev, fSubs[n].trig)==1;
+               ok = Diff(prev, fSubs[n].trig) == 1;
                if (!ok) break;
             }
             prev = fSubs[n].trig;

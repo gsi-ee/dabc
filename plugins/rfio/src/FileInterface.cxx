@@ -150,7 +150,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 int rfio::FileInterface::GetFileIntPar(Handle, const char* parname)
 {
    if (strcmp(parname, "RFIO") == 0) return 8; // return RFIO version number
-   if (fRemote && strcmp(parname, "DataMoverIndx")==0) return fDataMoverIndx;
+   if (fRemote && strcmp(parname, "DataMoverIndx") == 0) return fDataMoverIndx;
    return 0;
 }
 

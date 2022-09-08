@@ -46,7 +46,7 @@ namespace mbs {
          uint16_t    fFirstProcId{0};         ///< procid of first subevent
          uint32_t    fSubeventSize{0};        ///< size of each subevent
          bool        fIsGo4RandomFormat{false}; ///< is subevents should be filled with random numbers
-         uint32_t    fFullId{0};              ///< subevent id, if number subevents==1 and nonzero
+         uint32_t    fFullId{0};              ///< subevent id, if number subevents == 1 and nonzero
          uint64_t    fTotalSize{0};           ///< total size of generated events
          uint64_t    fTotalSizeLimit{0};      ///< limit of generated events size
          double      fGenerTimeout{0};        ///< timeout used to avoid 100% CPU load

@@ -300,7 +300,7 @@ void dim::Monitor::infoHandler()
          dabc::RecordField fld;
          switch(kind) {
             case 'I' :
-               if (size==1) {
+               if (size == 1) {
                   fld.SetInt(*((int*)ptr));
                } else {
                  std::vector<int64_t> vect;
@@ -310,7 +310,7 @@ void dim::Monitor::infoHandler()
                ptr += sizeof(int) * size;
                break;
             case 'F' :
-               if (size==1) {
+               if (size == 1) {
                   fld.SetDouble(*((float*)ptr));
                } else {
                  std::vector<double> vect;
@@ -320,7 +320,7 @@ void dim::Monitor::infoHandler()
                ptr += sizeof(float) * size;
                break;
             case 'D' :
-               if (size==1) {
+               if (size == 1) {
                   fld.SetDouble(*((double*)ptr));
                } else {
                  std::vector<double> vect;

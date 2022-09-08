@@ -363,8 +363,8 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
       tdc->LoadCalibration(fCalibrFile.c_str());
    }
 
-   if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
-   if (fAutoToTRange==1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
+   if (fAutoTdcMode == 1) tdc->SetUseLinear(); // force linear
+   if (fAutoToTRange == 1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
 
    if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
    if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
@@ -384,8 +384,9 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
 bool stream::TdcCalibrationModule::MatchTdcId(uint32_t dataid)
 {
    if (dataid == 0x5555) return false;
-   for (unsigned n=0;n<fTdcMin.size();++n)
-      if ((dataid>=fTdcMin[n]) && (dataid<fTdcMax[n])) return true;
+   for (unsigned n = 0; n < fTdcMin.size(); ++n)
+      if ((dataid >= fTdcMin[n]) && (dataid < fTdcMax[n]))
+         return true;
    return false;
 }
 
@@ -708,7 +709,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
          if (cmd.GetStr("mode") == "start") {
-            tdc->BeginCalibration(fAutoTdcMode==1 ? fCountLinear : fCountNormal);
+            tdc->BeginCalibration(fAutoTdcMode == 1 ? fCountLinear : fCountNormal);
          } else {
 
             std::string s1 = dabc::format("BEFORE mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());

@@ -118,8 +118,8 @@ namespace mbs {
             char      c_cmd[512];   /* command to execute - or reply info */
 
             bool CheckByteOrder() {
-               if (l_order!=1) mbs::SwapData(this, 3*4);
-               return l_order==1;
+               if (l_order != 1) mbs::SwapData(this, 3*4);
+               return l_order == 1;
             }
          };
 

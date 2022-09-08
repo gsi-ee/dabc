@@ -175,16 +175,16 @@ MbsDisplay.prototype.SetRateTrending = function(history) {
 
 MbsDisplay.prototype.SetFileLogMode = function(mode, history, deltat){
 
-   if(history==0)
-      history=document.getElementById("Loglength").value;
+   if(history == 0)
+      history = document.getElementById("Loglength").value;
 
-   if(deltat==0)
-      deltat=document.getElementById("Loginterval").value;
+   if(deltat == 0)
+      deltat = document.getElementById("Loginterval").value;
 
    this.fLoggingHistory=history;
    this.fRateInterval=deltat;
 
-   if(mode!=0) this.fFileLogMode=mode;
+   if(mode != 0) this.fFileLogMode=mode;
 
    console.log("SetFileLogMode with mode="+mode+" , history="+history +" , deltat="+deltat);
    switch (this.fFileLogMode) {

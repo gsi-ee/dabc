@@ -90,7 +90,7 @@ unsigned mbs::GeneratorInput::Read_Complete(dabc::Buffer& buf)
       for (unsigned subcnt = 0; subcnt < fNumSubevents; subcnt++)
          if (iter.NewSubevent(fSubeventSize, fFirstProcId + subcnt + 1, fFirstProcId + subcnt)) {
 
-            if ((fFullId!=0) && (fNumSubevents==1))
+            if ((fFullId != 0) && (fNumSubevents == 1))
                iter.subevnt()->fFullId = fFullId;
 
             unsigned subsz = fSubeventSize;

@@ -449,8 +449,8 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
       cmd.SetInt("NumClients", cnt);
       cmd.SetInt("NumCanRecv", NumCanRecv());
 
-      if (cnt==1) cmd.SetField("NumCanSend", cansend[0]); else
-      if (cnt>1) cmd.SetField("NumCanSend", cansend); else
+      if (cnt == 1) cmd.SetField("NumCanSend", cansend[0]); else
+      if (cnt > 1) cmd.SetField("NumCanSend", cansend); else
       cmd.SetField("NumCanSend", 0);
 
       cmd.SetStr("MbsKind", mbs::ServerKindToStr(fKind));

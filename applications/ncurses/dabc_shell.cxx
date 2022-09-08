@@ -220,14 +220,14 @@ int main(int argc, char* argv[])
          case 10:
             mvprintw(LINES - 4, 0, "Pressed Enter");
 
-            if ((level==0) && items[level].is_current_last()) { doagain = false; break; }
+            if ((level == 0) && items[level].is_current_last()) { doagain = false; break; }
 
             if (items[level].is_current_last()) {
 
                items[level].Delete();
                level--;
                items[level].Show();
-               if (level==0) curr.Release();
+               if (level == 0) curr.Release();
                         else curr = dabc::Hierarchy(curr.GetParent());
             } else {
 
@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
                      mvprintw(LINES - 4, 0, "Child not found");
                      break;
                   }
-                  if (child.NumChilds()==0) {
+                  if (child.NumChilds() == 0) {
                      mvprintw(LINES - 4, 0, "Child %s has no more levels", child.GetName());
                      break;
                   }
@@ -260,14 +260,14 @@ int main(int argc, char* argv[])
          case 27:
             mvprintw(LINES - 4, 0, "Pressed ESC");
 
-            if (level==0) { doagain = false; break; }
+            if (level == 0) { doagain = false; break; }
 
             items[level].Delete();
             level--;
             items[level].Show();
 
-            if (level==0) curr.Release();
-                     else curr = dabc::Hierarchy(curr.GetParent());
+            if (level == 0) curr.Release();
+                       else curr = dabc::Hierarchy(curr.GetParent());
 
             break;
          default:

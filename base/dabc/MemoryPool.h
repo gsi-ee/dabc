@@ -94,7 +94,7 @@ namespace dabc {
          /** Decrease references of specified segments */
          void DecreaseSegmRefs(MemSegment* segm, unsigned num);
 
-         /** Return true when all segments has refcnt==1 */
+         /** Return true when all segments has refcnt == 1 */
          bool IsSingleSegmRefs(MemSegment* segm, unsigned num);
 
          void OnThreadAssigned() override

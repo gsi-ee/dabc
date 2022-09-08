@@ -273,29 +273,35 @@ namespace dabc {
 
       bool ShiftCurrent(int sz = 1)
       {
-         for(int n=0;n<sz;n++) {
-            if (fCurrent>=fMaxAddr) EOUT("Error remains???");
+         for (int n = 0; n < sz; n++) {
+            if (fCurrent >= fMaxAddr)
+               EOUT("Error remains???");
 
-            if (*fCurrent==10) fCurrentLine++;
-            if (fCurrent>=fLimitAddr) {
+            if (*fCurrent == 10)
+               fCurrentLine++;
+            if (fCurrent >= fLimitAddr) {
                ShiftStream();
-               if (fCurrent>=fMaxAddr) return false;
+               if (fCurrent >= fMaxAddr)
+                  return false;
             }
             fCurrent++;
          }
-         fTotalPos+=sz;
+         fTotalPos += sz;
          return true;
       }
 
       bool SkipSpaces(bool tillendl = false)
       {
-         while(fCurrent<fMaxAddr) {
+         while (fCurrent < fMaxAddr) {
             char symb = *fCurrent;
-            if ((symb>26) && (symb!=' ')) return true;
+            if ((symb > 26) && (symb != ' '))
+               return true;
 
-            if (!ShiftCurrent()) return false;
+            if (!ShiftCurrent())
+               return false;
 
-            if (tillendl && (symb==10)) return true;
+            if (tillendl && (symb == 10))
+               return true;
          }
          return false;
       }

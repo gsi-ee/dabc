@@ -297,7 +297,7 @@ namespace dabc {
       Buffer GetNextPart(Pointer& ptr, BufferSize_t len, bool allowsegmented = true) throw();
 
       /** Returns true when user can modify buffer
-       * content without any doubts. It happens when refcnt==1 for each memory segments */
+       * content without any doubts. It happens when refcnt == 1 for each memory segments */
       bool CanSafelyChange() const;
 
       // ===================================================================================

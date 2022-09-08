@@ -265,10 +265,10 @@ catch (const saftbus::Error& error)
     if(fVerbose) DOUT0("saftdabc::Input::Write_Mbs begins new event %d, mutex=0x%x, instance=0x%x",
         fEventNumber, &fQueueMutex, (unsigned long) this);
     //unsigned size = 0;
-    unsigned ec=0;
-    while (!fTimingEventQueue.empty ())
+    unsigned ec = 0;
+    while (!fTimingEventQueue.empty())
     {
-      if(fSingleEvents && (ec==1))
+      if(fSingleEvents && (ec == 1))
         {
           if(fVerbose){
             DOUT0("saftdabc::Input::Write_Mbs has filled single event, closing container.");
@@ -359,7 +359,7 @@ catch (const saftbus::Error& error)
       unsigned ec=0;
       while (!fTimingEventQueue.empty ())
       {
-        if(fSingleEvents && (ec==1))
+        if(fSingleEvents && (ec == 1))
           {
             if(fVerbose){
               DOUT0("saftdabc::Input::Write_Hadaq has filled single event, closing container.");
@@ -396,7 +396,7 @@ catch (const saftbus::Error& error)
         rawsize+=len;
         cursor+=len;
 
-        fTimingEventQueue.pop ();
+        fTimingEventQueue.pop();
 
         // Disable event statistics, not usable with blocked device thread
         //fDevice.AddEventStatistics(1);

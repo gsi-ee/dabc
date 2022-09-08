@@ -305,7 +305,7 @@ void stream::RunModule::ProduceMergedHierarchy()
             double* arr2 = item2.GetFieldPtr("bins")->GetDoubleArr();
             int indx = item1.GetField("_kind").AsStr()=="ROOT.TH1D" ? 2 : 5;
             int len = item1.GetFieldPtr("bins")->GetArraySize();
-            if (n==1) nhist++;
+            if (n == 1) nhist++;
 
             if (arr1 && arr2)
               while (++indx<len) arr1[indx]+=arr2[indx];

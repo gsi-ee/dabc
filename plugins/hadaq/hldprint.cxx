@@ -233,9 +233,9 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
       // this is error - first bit always 1
       if ((n == 0) && ((data & 1) == 0)) { return -1; }
 
-      for (unsigned b=0;b<16;b++) {
+      for (unsigned b = 0; b < 16; b++) {
          if ((data & 1) != last) {
-            if (last==1) {
+            if (last == 1) {
                if (p1 == 0) p1 = pos; // take first change from 1 to 0
             } else {
                p2 = pos; // use last change from 0 to 1
@@ -733,7 +733,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                time_t t = (time_t) rawtime;
                snprintf(sbuf, sizeof(sbuf), "  design 0x%08x %s", rawtime, ctime(&t));
                int len2 = strlen(sbuf);
-               if (sbuf[len2-1]==10) sbuf[len2-1] = 0;
+               if (sbuf[len2-1] == 10) sbuf[len2-1] = 0;
             } else if (dkind == 0xE)
                snprintf(sbuf, sizeof(sbuf), " %3.1fC", dvalue/16.);
 

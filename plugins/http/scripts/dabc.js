@@ -810,7 +810,7 @@ constructor(hpainter, itemname) {
             let hv = Math.floor(diff/3600),
                 h = hv.toString(),
                 m = Math.round((diff - hv)/60).toString();
-            if (m.length==1) m = "0"+m;
+            if (m.length == 1) m = "0"+m;
             info = h+"h"+m+"m";
             if (h>720) { if (quality>0.1) quality = 0.1; title = "To long time without calibration, "; } else
             if (h>240) { if (quality>0.6) quality = 0.6; title = "Consider to peform calibration, "; }

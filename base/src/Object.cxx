@@ -1148,11 +1148,15 @@ void dabc::Object::DebugObject(const char* classname, Object* instance, int kind
       }
    } else {
       std::string name(classname);
-      if (kind<0) cnts[name]--;
-             else cnts[name]++;
+      if (kind < 0)
+         cnts[name]--;
+      else
+         cnts[name]++;
 
-      if (kind==10) objs[name].emplace_back(instance); else
-      if (kind==-10) objs[name].remove(instance);
+      if (kind == 10)
+         objs[name].emplace_back(instance);
+      else if (kind == -10)
+         objs[name].remove(instance);
    }
 }
 

@@ -623,7 +623,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
                sum+=switches[n](sw1,sw2);
                if (switches[n](sw1,sw2) > max) max = switches[n](sw1,sw2);
             }
-            if ((sum==0) || ((loop==1) && (max<=48))) continue;
+            if ((sum == 0) || ((loop == 1) && (max <= 48))) continue;
 
             std::string sbuf;
 
@@ -649,7 +649,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
 
 
    for (int loop=0;loop<2;loop++) {
-      if (loop==1) {
+      if (loop == 1) {
          DOUT0("=====================================================");
          DOUT0("Now with relative values");
       }
@@ -667,7 +667,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
          int total = 0;
          for (int n=0;n<NumSpines();n++) total+=sum[n];
 
-         if (total==0) continue;
+         if (total == 0) continue;
 
          std::string sbuf;
 
@@ -691,7 +691,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
    DOUT0("  maximum number of routes via single spine is 24x%d x 24/NumSpines() = %d", (NumLeafs()-1), 24*(NumLeafs()-1)*24/NumSpines());
 
    for (int loop=0; loop<2; loop++) {
-      if (loop==1) {
+      if (loop == 1) {
          DOUT0("=====================================================");
          DOUT0("Now with relative values");
       }
@@ -709,7 +709,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
          int total = 0;
          for (int n=0;n<NumSpines();n++) total+=sum[n];
 
-         if (total==0) continue;
+         if (total == 0) continue;
 
          std::string sbuf;
 
@@ -1640,7 +1640,7 @@ bool IbTestSchedule::BuildRegularSchedule(IbTestClusterRouting& routing, IbTestI
 
             for (int lid=0;lid<routing.NumLids();lid++) {
                IbTestRoute route = routing.GetRoute(code_nsend, code_nrecv, lid);
-               if (route.GetNumHops()==1) {
+               if (route.GetNumHops() == 1) {
                   slot[code_nsend].lid = lid;
                   break;
                }
@@ -1700,7 +1700,7 @@ bool IbTestSchedule::BuildRegularSchedule(IbTestClusterRouting& routing, IbTestI
                IbTestRoute route = routing.GetRoute(nsend, slot[nsend].node, lid);
                if (route.IsNull()) continue;
 
-               if (route.GetNumHops()==1) {
+               if (route.GetNumHops() == 1) {
                   newslot[nsend].node = slot[nsend].node;
                   newslot[nsend].lid = lid;
                   need_new_slot = false;
@@ -1886,16 +1886,16 @@ bool IbTestSchedule::TryMoveSender(const IbTestClusterRouting& routing, IbTestSc
         break;
      }
 
-   if (nsender1>=0) {
+   if (nsender1 >= 0) {
 
       if (routekind==0) return false;
 
       // here lid is not matter, one want to see if route is short or long
       IbTestRoute route1 = routing.GetRoute(nsender1, nreceiver0, 0);
 
-      if ((route1.GetNumHops()==1) && (routekind!=1)) return false;
+      if ((route1.GetNumHops() == 1) && (routekind != 1)) return false;
 
-      if ((route1.GetNumHops()==3) && (routekind!=2)) return false;
+      if ((route1.GetNumHops() == 3) && (routekind != 2)) return false;
    }
 
 //   if (nslot0==842) {
@@ -1905,7 +1905,7 @@ bool IbTestSchedule::TryMoveSender(const IbTestClusterRouting& routing, IbTestSc
    IbTestScheduleMoveList lst1;
 
    // try to move nsender1 to some other slot
-   if (nsender1>=0)
+   if (nsender1 >= 0)
       for (int nslot=0; nslot<numSlots(); nslot++) {
          if ((nslot==nslot0) || (nslot==nslot1) || (nslot==nslot2) || !IsEmptyItem(nslot, nsender1)) continue;
 

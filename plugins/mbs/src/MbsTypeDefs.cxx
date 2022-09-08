@@ -109,7 +109,7 @@ unsigned mbs::EventHeader::NumSubevents() const
 
 void mbs::EventHeader::PrintHeader()
 {
-   if (Type()==10) {
+   if (Type() == 10) {
       printf("Event   %9u Type %2u/%1u Length %5u[w] Trigger %2u\n",
             (unsigned) EventNumber(), (unsigned) Type(), (unsigned) SubType(), (unsigned) FullSize()/2, (unsigned) TriggerNumber());
    } else {
