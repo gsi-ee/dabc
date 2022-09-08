@@ -316,7 +316,7 @@ bool IbTestClusterRouting::CheckTargetRoutes()
 
 int IbTestClusterRouting::CheckUsefulLIDs()
 {
-   int maxlid(1), minlid(NumLids());
+   int maxlid = 1, minlid = NumLids();
 
    int hist[20];
    for (int n=0;n<20;n++) hist[n] = 0;
@@ -330,7 +330,7 @@ int IbTestClusterRouting::CheckUsefulLIDs()
 
          if (GetRoute(n1,n2).GetNumHops() != 3) continue;
 
-         int mask(0), lid(0);
+         int mask = 0, lid = 0;
 
          for (lid=0; lid <NumLids(); lid++) {
             IbTestRoute r = GetRoute(n1, n2, lid);
@@ -2133,7 +2133,7 @@ bool IbTestSchedule::TryToCompress(IbTestClusterRouting& routing, bool show, dou
       //   in the second loop only local sending to the nreceiver0 will be searched and moved
       //   in the third loop global sending to the nreceiver0 will be searched
 
-      bool can_move(false);
+      bool can_move = false;
 
       for (int nloop1 = 0; (nloop1<3) && !can_move; nloop1++)
          for (int nslot1 = 0; (nslot1 < numSlots()) && !can_move; nslot1++)

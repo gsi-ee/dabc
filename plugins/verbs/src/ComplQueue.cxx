@@ -99,7 +99,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
    dabc::TimeStamp finish = now + timeout;
    dabc::TimeStamp fastfinish = now + fasttm;
 
-   bool is_event(false);
+   bool is_event = false;
 
    while (now < finish) {
 

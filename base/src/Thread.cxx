@@ -718,7 +718,7 @@ bool dabc::Thread::Stop(double timeout_sec)
          _Fire(EventId(evntStopThrd), priorityHighest);
    }
 
-   bool res(false);
+   bool res = false;
 
    DOUT3("Start doing thread %s stop with timeout %f s", GetName(),timeout_sec);
 
@@ -738,7 +738,7 @@ bool dabc::Thread::Stop(double timeout_sec)
 
       int cnt = 0;
       double spent_time = 0.;
-      bool did_cancel(false);
+      bool did_cancel = false;
 
       do {
          if (cnt++>1000) dabc::Sleep(0.001);

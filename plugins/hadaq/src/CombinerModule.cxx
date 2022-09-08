@@ -688,7 +688,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 #endif
 
 
-   bool foundevent(false), doshift(true), tryresort(cfg.fResort);
+   bool foundevent = false, doshift = true, tryresort = cfg.fResort;
 
    if (cfg.fResortIndx >= 0) {
       doshift = false; // do not shift event in main iterator
@@ -711,7 +711,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       if (doshift) res = iter.NextSubEvent();
       doshift = true;
 
-      if (!res || (iter.subevnt() == 0)) {
+      if (!res || !iter.subevnt()) {
          DOUT5("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp);
 
          // retry in next hadtu container
@@ -1013,7 +1013,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // second input loop: skip all subevents until we reach current trignum
    // select inputs which will be used for building
    //bool eventIsBroken=false;
-   bool dataError(false), tagError(false);
+   bool dataError = false, tagError = false;
 
    bool hasCompleteEvent = true;
 

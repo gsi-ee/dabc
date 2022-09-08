@@ -557,7 +557,7 @@ bool dabc::Manager::ProcessParameterEvents()
 
       if (rec.par.null()) continue;
 
-      bool checkadd(false), checkremove(false);
+      bool checkadd = false, checkremove = false;
 
       switch (rec.event) {
          case parCreated:
@@ -753,7 +753,7 @@ int dabc::Manager::PreviewCommand(Command cmd)
 
    std::string url = cmd.GetReceiver();
 
-   bool islocal(true);
+   bool islocal = true;
    std::string server,itemname;
 
    if (!url.empty() && DecomposeAddress(url, islocal, server, itemname)) {
@@ -1732,7 +1732,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string &remnode
 
    Hierarchy rem_hierarchy;
 
-   bool first(true);
+   bool first = true;
 
    while (true) {
 
@@ -2094,7 +2094,7 @@ bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, c
    //       One should avoid multiple parallel subscription to remote node
 
    std::string server, itemname;
-   bool islocal(true);
+   bool islocal = true;
 
    if (!DecomposeAddress(mask, islocal, server, itemname)) {
       EOUT("Wrong parameter mask %s", mask.c_str());

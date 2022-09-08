@@ -170,7 +170,7 @@ double dabc::Publisher::ProcessTimeout(double)
    // when application terminated - do not try to update any records
    if (dabc::mgr.IsTerminated()) return -1;
 
-   bool is_any_global(false);
+   bool is_any_global = false;
    bool rebuild_global = fLocal.GetVersion() > fLastLocalVers;
 /*
    static int mycnt = 0;
@@ -456,7 +456,7 @@ bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string &itemname,
 bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string &itemname)
 {
    std::string producer_name, request_name;
-   bool islocal(true);
+   bool islocal = true;
 
    DOUT3("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
 
@@ -467,7 +467,7 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string &item
 
    DOUT3("ITEM %s PRODUCER %s REQUEST %s", itemname.c_str(), producer_name.c_str(), request_name.c_str());
 
-   bool producer_local(true);
+   bool producer_local = true;
    std::string producer_server, producer_item;
 
    if (!dabc::mgr.DecomposeAddress(producer_name, producer_local, producer_server, producer_item)) {
@@ -515,7 +515,7 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string &item
 
 dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::string &query, dabc::Command res)
 {
-   bool islocal(true);
+   bool islocal = true;
    dabc::Hierarchy def = GetWorkItem(path, &islocal);
    if (def.null()) return nullptr;
 

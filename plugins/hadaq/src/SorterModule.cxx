@@ -163,7 +163,7 @@ bool hadaq::SorterModule::retransmit()
       // all ids are in the order and corresponds to previous values
       if ((fReadyBufIndx == fNextBufIndx) && was_empty) {
          uint32_t prev = fLastTrigger;
-         bool ok(true);
+         bool ok = true;
          for (unsigned n=0;n<fSubs.size();n++) {
             if (prev != 0xffffffff) {
                ok = Diff(prev, fSubs[n].trig) == 1;

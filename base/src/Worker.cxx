@@ -748,15 +748,15 @@ int dabc::Worker::PreviewCommand(Command cmd)
       unsigned hlimit = 0;
       uint64_t version = 0;
       int compact = 0;
-      bool with_childs(false);
+      bool with_childs = false;
 
       if (url.HasOption("history")) {
          int hist = url.GetOptionInt("history", 0);
-         if (hist>0) hlimit = (unsigned) hist;
+         if (hist > 0) hlimit = (unsigned) hist;
       }
       if (url.HasOption("version")) {
          int v = url.GetOptionInt("version", 0);
-         if (v>0) version = (unsigned) v;
+         if (v > 0) version = (unsigned) v;
       }
       if (url.HasOption("compact"))
          compact = url.GetOptionInt("compact", 3);
@@ -885,7 +885,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
    if (tmout > 0.) cmd.SetTimeout(tmout);
 
    ThreadRef thrd;
-   bool exe_direct(false);
+   bool exe_direct = false;
 
    if (IsLogging())
       DOUT0("Worker %p %s Executes command %s", this, GetName(), cmd.GetName());

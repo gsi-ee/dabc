@@ -100,9 +100,9 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
       if (!buf.null()) { EOUT("Something went wrong - buffer is not null here"); exit(3); }
 
-      if (fSignalOut==2) fSignalOut = 3; // mark that output operation done
+      if (fSignalOut == 2) fSignalOut = 3; // mark that output operation done
 
-      bool makesig(false);
+      bool makesig = false;
 
       // only if input port still connected, deliver events to it
       if (fConnected & MaskInp)
@@ -152,7 +152,7 @@ bool dabc::LocalTransport::Recv(Buffer& buf)
 
       if (fSignalInp == 2) fSignalInp = 3;
 
-      bool makesig(false);
+      bool makesig = false;
 
       switch (fOutSignKind) {
          case Port::SignalNone: return true;
@@ -209,7 +209,7 @@ void dabc::LocalTransport::SignalWhenFull()
       } else {
          if (fSignalInp == 2) fSignalInp = 3;
 
-         bool makesig(false);
+         bool makesig = false;
 
          switch (fOutSignKind) {
             case Port::SignalNone: return;
@@ -279,7 +279,7 @@ void dabc::LocalTransport::Disconnect(bool isinp, bool witherr)
    dabc::WorkerRef m1, m2;
    unsigned id1, id2;
 
-   bool cleanup(false);
+   bool cleanup = false;
 
    {
       // we remove all references from queue itself

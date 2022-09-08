@@ -939,7 +939,7 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::
       return ConstructorPair();
 
    const char* fullname = fullnamearg.empty() ? "---" : fullnamearg.c_str();
-   bool isrootfolder(false), isskipparent(false);
+   bool isrootfolder = false, isskipparent = false;
    while (*fullname=='/') {
       isrootfolder = true;
       fullname++;
@@ -1032,7 +1032,7 @@ bool dabc::Object::NameMatchM(const std::string &name, const std::string &mask)
 {
    size_t separ = mask.find_first_of(':');
 
-   if (separ==std::string::npos) return NameMatch(name, mask);
+   if (separ == std::string::npos) return NameMatch(name, mask);
 
    size_t lastsepar = 0;
 

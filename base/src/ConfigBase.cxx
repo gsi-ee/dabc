@@ -593,7 +593,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    std::string copycmd, logcmd;
 
-   bool backgr(false), addcopycmd(false);
+   bool backgr = false, addcopycmd = false;
 
    if (copycfg) {
       copycmd = "scp -q ";

@@ -328,7 +328,7 @@ void dabc::NetworkTransport::ProcessSendCompl(uint32_t recid)
 {
    if (recid>=fNumRecs) { EOUT("Recid fail %u %u", recid, fNumRecs); return; }
 
-   bool checkackn(false);
+   bool checkackn = false;
 
    fRecs[recid].buf.Release();
 

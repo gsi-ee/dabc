@@ -91,8 +91,8 @@ dabc::RecordField dabc::ParameterContainer::GetField(const std::string &name) co
 
 bool dabc::ParameterContainer::SetField(const std::string &_name, const RecordField &value)
 {
-   bool res(false), fire(false), doworker(false);
-   double ratevalue(0.);
+   bool res = false, fire = false, doworker = false;
+   double ratevalue = 0.;
    std::string svalue;
 
    std::string name = _name.empty() ? DefaultFiledName() : _name;
@@ -659,9 +659,9 @@ dabc::Command dabc::CommandDefinition::MakeCommand() const
 
    int num = NumArgs();
 
-   for (int n=0;n<num;n++) {
+   for (int n = 0; n < num; n++) {
       std::string name, kind, dflt;
-      bool required(false);
+      bool required = false;
       if (GetArg(n,name,kind,required, dflt))
          if (required || !dflt.empty()) cmd.SetStr(name, dflt);
    }

@@ -272,7 +272,7 @@ void root::Monitor::ProcessActionsInRootContext(THttpServer* serv, TRootSniffer*
       fHierarchy.Update(fRoot);
    }
 
-   bool doagain(true);
+   bool doagain = true;
    dabc::Command cmd;
 
    while (doagain) {

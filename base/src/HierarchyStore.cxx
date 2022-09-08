@@ -272,7 +272,7 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string &
 
    Reference dirs = fIO->fmatch(mask.c_str(), false);
 
-   bool isanysubdir(false), isanydatedir(false);
+   bool isanysubdir = false, isanydatedir = false;
 
    std::vector<uint64_t> files;
 

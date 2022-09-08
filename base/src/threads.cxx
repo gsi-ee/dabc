@@ -357,7 +357,7 @@ void dabc::PosixThread::Start(Runnable* run)
 {
    if (!run) return;
 
-   bool isany(false);
+   bool isany = false;
    for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
       if (CPU_ISSET(cpu, &fCpuSet)) isany = true;
 

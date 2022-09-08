@@ -84,11 +84,11 @@ dabc::ConnectionObject::EState dabc::ConnectionObject::GetState()
 
 void dabc::ConnectionObject::ChangeState(EState state, bool force)
 {
-   bool signal(false);
+   bool signal = false;
 
    {
       LockGuard lock(ObjectMutex());
-      if (fConnState==state) return;
+      if (fConnState == state) return;
 
       // if state transition is not forced by caller, first check if previous state is corresponds
       if (!force) {

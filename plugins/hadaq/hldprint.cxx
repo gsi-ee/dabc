@@ -1272,7 +1272,7 @@ int main(int argc, char* argv[])
 
       hadaq::RawSubevent* sub = nullptr;
       while ((sub = evnt->NextSubevent(sub)) != nullptr) {
-         bool print_sub_header(false);
+         bool print_sub_header = false;
          if ((onlytdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;

@@ -994,7 +994,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
    msg->cmddatasize = 0;
    int sendpacketsize = sizeof(IbTestCommandMessage);
 
-   bool cmd_res(false);
+   bool cmd_res = false;
 
    switch (cmdid) {
       case IBTEST_CMD_TEST:
@@ -1939,7 +1939,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
           // first check if already submitted events completed
           while (!gpu_write_ev.Empty()) {
-             bool do_again(false);
+             bool do_again = false;
              switch (gpu_write_queue->CheckComplete(gpu_write_ev.Front())) {
                case -1:
                   EOUT("GPU WaitWrite failed");
@@ -1980,7 +1980,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
          // first check if already submitted events are processed
          while (!gpu_read_ev.Empty()) {
-            bool do_again(false);
+            bool do_again = false;
             switch (gpu_read_queue->CheckComplete(gpu_read_ev.Front())) {
                case -1:
                   EOUT("GPU WaitRead failed");
