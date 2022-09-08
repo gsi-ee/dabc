@@ -418,7 +418,7 @@ bool opencl::CommandsQueue::SubmitWrite(QueueEvent& evt, Memory& mem, void* src,
 {
    if (copysize==0) copysize = mem.size();
 
-   if (mem.null() || (src==0) || (copysize==0)) return false;
+   if (mem.null() || !src || (copysize==0)) return false;
 
    cl_int   status;
 
@@ -445,7 +445,7 @@ bool opencl::CommandsQueue::SubmitRead(QueueEvent& evt, Memory& mem, void* tgt, 
 {
    if (copysize==0) copysize = mem.size();
 
-   if (mem.null() || (tgt==0) || (copysize==0)) return false;
+   if (mem.null() || !tgt || (copysize==0)) return false;
 
    cl_int   status;
 

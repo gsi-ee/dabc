@@ -156,9 +156,9 @@ class IbTestWorkerModule : public dabc::ModuleSync {
 
       void AllocResults(int size);
 
-      int GetExclusiveIndx(verbs::MemoryPool* pool = 0);
-      void* GetPoolBuffer(int indx, verbs::MemoryPool* pool = 0);
-      void ReleaseExclusive(int indx, verbs::MemoryPool* pool = 0);
+      int GetExclusiveIndx(verbs::MemoryPool* pool = nullptr);
+      void* GetPoolBuffer(int indx, verbs::MemoryPool* pool = nullptr);
+      void ReleaseExclusive(int indx, verbs::MemoryPool* pool = nullptr);
 
       inline int SendQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fSendQueue[lid] ? fSendQueue[lid][node] : 0; }
       inline int RecvQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fRecvQueue[lid] ? fRecvQueue[lid][node] : 0; }

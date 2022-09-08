@@ -996,7 +996,7 @@ void IbTestClusterRouting::FillInteractiveNodes(IbTestIntColumn& column) const
 
    for (int n=0; n<NumNodes(); n++) {
       const char* name = NodeName(n);
-      if (name==0) continue;
+      if (!name) continue;
 
       if (strstr(name,"node")==name)
          column(cnt++) = n;
@@ -1015,9 +1015,7 @@ void IbTestClusterRouting::FillRandomIds(IbTestIntColumn& column) const
 {
    column.Fill(-1);
 
-   int cnt = 0;
-
-   int ntry = 0;
+   int cnt = 0, ntry = 0;
 
    while ((cnt<column.size()) && (ntry++ < column.size()*1000)) {
 
@@ -1141,7 +1139,7 @@ bool IbTestClusterRouting::SaveNodesList(const std::string &fname, const IbTestI
 {
    FILE *f = fopen (fname.c_str(), "w");
 
-   if (f==0) {
+   if (!f) {
       EOUT("Cannot open file %s for writing", fname.c_str());
       return false;
    }
@@ -1159,13 +1157,13 @@ bool IbTestClusterRouting::LoadNodesList(const std::string &fname, IbTestIntColu
 
    FILE *f = fopen (fname.c_str(), "r");
 
-   if (f==0) {
+   if (!f) {
       EOUT("Cannot open file %s for reading", fname.c_str());
       return false;
    }
 
    ids.SetSize(NumNodes());
-   int cnt(0);
+   int cnt = 0;
 
    char sbuf[100];
 
@@ -1424,7 +1422,7 @@ void IbTestSchedule::FillRoundRoubin(IbTestIntColumn* ids, double schstep)
       for(int nsend=0;nsend<numsenders;nsend++) {
          int nrecv = (nsend + nslot + 1) % numsenders;
 
-         if (ids==0)
+         if (!ids)
             slot_sch[nsend].node = nrecv;
          else
             slot_sch[(*ids)(nsend)].node = (*ids)(nrecv);
@@ -1471,7 +1469,7 @@ bool IbTestSchedule::BuildOptimized(IbTestClusterRouting& routing, IbTestIntColu
       // from here we start to fill new time slot into the schedule
 
       IbTestScheduleItem* slot = getScheduleSlot(fNumSlots++);
-      if (slot==0) {
+      if (!slot) {
          EOUT("No more slots");
          return false;
       }
@@ -1605,7 +1603,7 @@ bool IbTestSchedule::BuildRegularSchedule(IbTestClusterRouting& routing, IbTestI
 
    for (int nslot=0; nslot < regular_num_slots; nslot++) {
       IbTestScheduleItem* slot = getScheduleSlot(nslot);
-      if (slot==0) {
+      if (!slot) {
          EOUT("No more slots nslot = %d NumSlots = %d Max = %d", nslot, numSlots(), maxNumSlots());
          return false;
       }
@@ -1673,7 +1671,7 @@ bool IbTestSchedule::BuildRegularSchedule(IbTestClusterRouting& routing, IbTestI
 
          for (int nslotnew = regular_num_slots; nslotnew<numSlots(); nslotnew++) {
             IbTestScheduleItem* newslot = getScheduleSlot(nslotnew);
-            if (newslot==0) return false;
+            if (!newslot) return false;
             if (!newslot[nsend].Empty()) continue;
 
             bool to_next_slot = false;
@@ -1725,7 +1723,7 @@ bool IbTestSchedule::BuildRegularSchedule(IbTestClusterRouting& routing, IbTestI
             // add new slot for our sender
 
             IbTestScheduleItem* newslot = getScheduleSlot(fNumSlots++);
-            if (newslot==0) return false;
+            if (!newslot) return false;
             for (int nsend1 = 0; nsend1 < numSenders(); nsend1++) newslot[nsend1].Reset();
 
             newslot[nsend].node = slot[nsend].node;
@@ -1747,7 +1745,7 @@ void IbTestSchedule::PrintSlotWithRouting(const IbTestClusterRouting& routing, i
    if ((nslot<0) || (nslot >= numSlots())) return;
 
    IbTestScheduleItem* slot = getScheduleSlot(nslot);
-   if (slot==0) return;
+   if (!slot) return;
 
    int cnt = 0;
    for (int nsend=0;nsend<numSenders();nsend++)
@@ -2274,7 +2272,7 @@ bool IbTestSchedule::ProveSchedule(IbTestIntColumn* ids)
       }
    }
 
-   if (ids==0) {
+   if (!ids) {
       for (int n1=0;n1<numSenders();n1++)
          for (int n2=0;n2<numSenders();n2++) {
             int expected = n1==n2 ? 0 : 1;
@@ -2373,7 +2371,7 @@ bool IbTestSchedule::SaveToFile(const std::string &fname)
 {
    FILE *f = fopen (fname.c_str(), "w");
 
-   if (f==0) {
+   if (!f) {
       EOUT("Cannot open file %s for writing", fname.c_str());
       return false;
    }
@@ -2401,9 +2399,9 @@ bool IbTestSchedule::ReadFromFile(const std::string &fname)
 
    FILE* f = fopen (fname.c_str(), "r");
 
-   if (f==0) return false;
+   if (!f) return false;
 
-   int numslots(0), numsenders(0);
+   int numslots = 0, numsenders = 0;
 
    if (!fgets (sbuf, sizeof(sbuf), f) ||
          sscanf(sbuf,"Num slots: %d", &numslots)!=1)

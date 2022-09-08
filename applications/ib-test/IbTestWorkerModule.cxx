@@ -239,7 +239,7 @@ int IbTestWorkerModule::NodeRecvQueue(int node) const
 bool IbTestWorkerModule::CreateQPs(void* data)
 {
    CloseQPs();
-   if (data==0) return true;
+   if (!data) return true;
 
 #ifdef WITH_VERBS
 
@@ -251,7 +251,7 @@ bool IbTestWorkerModule::CreateQPs(void* data)
 
    IbTestConnRec* recs = (IbTestConnRec*) data;
 
-   if (fIbContext.null() || (recs==0)) return false;
+   if (fIbContext.null() || !recs) return false;
 
    fCQ = new verbs::ComplQueue(fIbContext, NumNodes() * qpdepth * 6, 0, true);
 
@@ -291,7 +291,7 @@ bool IbTestWorkerModule::ConnectQPs(void* data)
 
    IbTestConnRec* recs = (IbTestConnRec*) data;
 
-   if (recs==0) return false;
+   if (!recs) return false;
 
    for (int lid=0; lid<NumLids(); lid++) {
 
@@ -403,7 +403,7 @@ bool IbTestWorkerModule::Pool_Post(bool issend, int bufindx, int lid, int nremot
 {
 #ifdef WITH_VERBS
 
-   if ((fPool==0) || (lid>=NumLids()) || (fQPs[lid]==0) || (fQPs[lid][nremote]==0) || (bufindx<0)) {
+   if (!fPool || (lid>=NumLids()) || !fQPs[lid] || (fQPs[lid][nremote]==0) || (bufindx < 0)) {
 
       return false;
    }
@@ -448,7 +448,7 @@ bool IbTestWorkerModule::Pool_Post(bool issend, int bufindx, int lid, int nremot
 bool IbTestWorkerModule::Pool_Post_Mcast(bool issend, int bufindx, int size)
 {
 #ifdef WITH_VERBS
-   if ((fMultiPool==0) || (fMultiQP==0) || (bufindx<0)) return false;
+   if (!fMultiPool || !fMultiQP || (bufindx < 0)) return false;
 
    bool res = false;
    uint64_t arg = bufindx + (issend ? 1000000U : 0);
@@ -520,11 +520,11 @@ int IbTestWorkerModule::Pool_Check(int &bufindx, int& lid, int &nremote, double 
 
    // bool iserror = false;
    // verbs::ComplQueue* cq = Pool_CQ_Check(iserror, waittime);
-   // if (cq==0) return 0;
+   // if (!cq) return 0;
    // if (iserror) return -1;
 
    verbs::ComplQueue* cq = fCQ;
-   if (cq==0) return -1;
+   if (!cq) return -1;
 
    int res = cq->Wait(waittime, fasttime);
 
@@ -563,11 +563,11 @@ int IbTestWorkerModule::Pool_Check_Mcast(int &bufindx, double waittime, double f
 
    // bool iserror = false;
    // verbs::ComplQueue* cq = Pool_CQ_Check(iserror, waittime);
-   // if (cq==0) return 0;
+   // if (!cq) return 0;
    // if (iserror) return -1;
 
    verbs::ComplQueue* cq = fMultiCQ;
-   if (cq==0) return -1;
+   if (!cq) return -1;
 
    int res = cq->Wait(waittime, fasttime);
 
@@ -602,7 +602,7 @@ bool IbTestWorkerModule::IsMulticastSupported()
 
 int IbTestWorkerModule::GetExclusiveIndx(verbs::MemoryPool* pool)
 {
-   if (pool==0) pool = fPool;
+   if (!pool) pool = fPool;
 #ifdef WITH_VERBS
    unsigned indx;
    if (pool && pool->TakeRawBuffer(indx)) return indx;
@@ -612,7 +612,7 @@ int IbTestWorkerModule::GetExclusiveIndx(verbs::MemoryPool* pool)
 
 void* IbTestWorkerModule::GetPoolBuffer(int indx, verbs::MemoryPool* pool)
 {
-   if (pool==0) pool = fPool;
+   if (!pool) pool = fPool;
 #ifdef WITH_VERBS
    if (pool && (indx>=0)) return pool->GetSendBufferLocation(indx);
 #endif
@@ -621,7 +621,7 @@ void* IbTestWorkerModule::GetPoolBuffer(int indx, verbs::MemoryPool* pool)
 
 void IbTestWorkerModule::ReleaseExclusive(int indx, verbs::MemoryPool* pool)
 {
-   if (pool==0) pool = fPool;
+   if (!pool) pool = fPool;
 #ifdef WITH_VERBS
    if (pool && (indx>=0)) pool->ReleaseRawBuffer(indx);
 #endif
@@ -638,7 +638,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
    int sync_lid = cmddata[2];
    bool time_sync_short = cmddata[3] > 0;
 
-   if (fPool==0) return false;
+   if (!fPool) return false;
 
    DOUT3("Start SlaveTimeSync");
 
@@ -668,9 +668,12 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
          if (!Pool_Post(false, GetExclusiveIndx(), sync_lid, 0)) return false;
 
       // very first time wait longer, while it may take some time to come
-      if (repeatcounter==0) stoptm+=10.; else stoptm+=0.1;
+      if (repeatcounter == 0)
+         stoptm += 10.;
+      else
+         stoptm += 0.1;
 
-      int res(0), resnode(0), resindx(-1), reslid(-1);
+      int res = 0, resnode = 0, resindx = -1, reslid = -1;
 
       while ((res==0) && (now < stoptm)) {
          res = Pool_Check(resindx, reslid, resnode, stoptm-now, 0.001);
@@ -801,7 +804,7 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
 
       buf.SetTotalSize(fullpacketsize);
 
-      if (node==0) {
+      if (node == 0) {
          buf0 << buf;
       } else {
 //         DOUT0("Send buffer to slave %d", node);
@@ -1197,7 +1200,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
    pars[3] = time_sync_short ? 1 : 0;
    if (!MasterCommandRequest(IBTEST_CMD_TIMESYNC, pars, sizeof(pars))) return false;
 
-   if (fSyncTimes==0) {
+   if (!fSyncTimes) {
       fSyncTimes = new double[NumNodes()];
       for (int n=0;n<NumNodes();n++)
          fSyncTimes[n] = 0.;
@@ -1454,7 +1457,7 @@ bool IbTestWorkerModule::ExecuteTiming(double* arguments)
          Pool_Post(false, GetExclusiveIndx(), 0, 0);
    }
 
-   double start(0), stop(0);
+   double start = 0, stop = 0;
 
    int noper = numtestbuf;
    if (Node()==0) noper*=(NumNodes()-1);
@@ -1524,9 +1527,9 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    // this is interval for ratemeter, which can be requested later from master
    if (ratemeterinterval>0) {
-       if (fRecvRatemeter==0) fRecvRatemeter = new dabc::Ratemeter;
-       if (fSendRatemeter==0) fSendRatemeter = new dabc::Ratemeter;
-       if (fWorkRatemeter==0) fWorkRatemeter = new dabc::Ratemeter;
+       if (!fRecvRatemeter) fRecvRatemeter = new dabc::Ratemeter;
+       if (!fSendRatemeter) fSendRatemeter = new dabc::Ratemeter;
+       if (!fWorkRatemeter) fWorkRatemeter = new dabc::Ratemeter;
 
        long npoints = lrint((stoptime-starttime) / ratemeterinterval);
        if (npoints>1000000) npoints=1000000;
@@ -2192,7 +2195,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 
    const int queue_size = 2;
 
-   if ((fBufferSize==0) || (fPool==0)) {
+   if ((fBufferSize==0) || !fPool) {
       EOUT("No suitable local memory for GPU tests");
       return false;
    }
@@ -2225,7 +2228,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 
    dabc::TimeStamp start = dabc::Now();
 
-   int cnt1(0), cnt2(0);
+   int cnt1 = 0, cnt2 = 0;
 
    while (!start.Expired(duration)) {
 
@@ -2345,7 +2348,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
 
    if (needmulticast) {
       if ((pattern==5) || (pattern==6) || (pattern==7)) {
-         if (!fromperfmtest || (fMultiQP==0))
+         if (!fromperfmtest || !fMultiQP)
             if (!MasterInitMulticast(1, 2048, 20, 50)) return false;
       } else {
          // all nodes, except first can receive (and send) multicast messages
@@ -2629,7 +2632,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
 
 //   DOUT((0,"Start cleanup mcast send = %d recv = %d", fMultiSendQueue, fMultiRecvQueue));
 
-   if (fPool==0) return;
+   if (!fPool) return;
 
    int64_t mainnode = pars[0];
    int64_t maxmultiqueue = pars[1];
@@ -2781,14 +2784,14 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
       // here a part where milticast data can be received
       if (fMultiCQ && fMultiPool) {
          int bufindx;
-         if (Pool_Check_Mcast(bufindx, 0.001)>0)
+         if (Pool_Check_Mcast(bufindx, 0.001) > 0)
             ReleaseExclusive(bufindx, fMultiPool);
       }
 
       if (fMultiCQ && fMultiPool)
-         is_ok = (fMultiSendQueue==0) && (fMultiRecvQueue==0);
+         is_ok = (fMultiSendQueue == 0) && (fMultiRecvQueue == 0);
 
-      bool isownpending(false), isotherspending(false), iscontrolpending(false);
+      bool isownpending = false, isotherspending = false, iscontrolpending = false;
 
       for (int node=0;node<NumNodes();node++) {
          if ((node==Node()) || !fActiveNodes[node]) continue;
