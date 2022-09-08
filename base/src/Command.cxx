@@ -72,7 +72,7 @@ void dabc::Command::AddCaller(Worker* worker, bool* exe_ready)
 
    LockGuard lock(ObjectMutex());
 
-   cont->fCallers.push_back(CommandContainer::CallerRec(worker, exe_ready));
+   cont->fCallers.emplace_back(CommandContainer::CallerRec(worker, exe_ready));
 }
 
 void dabc::Command::RemoveCaller(Worker* worker, bool* exe_ready)

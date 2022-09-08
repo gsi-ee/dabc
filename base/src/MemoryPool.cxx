@@ -299,8 +299,8 @@ bool dabc::MemoryPool::_GetPoolInfo(std::vector<void*>& bufs, std::vector<unsign
 
    if (fMem!=0)
       for(unsigned n=0;n<fMem->fNumber;n++) {
-         bufs.push_back(fMem->fArr[n].buf);
-         sizes.push_back(fMem->fArr[n].size);
+         bufs.emplace_back(fMem->fArr[n].buf);
+         sizes.emplace_back(fMem->fArr[n].size);
       }
 
    if (changecnt!=0) *changecnt = fChangeCounter;
@@ -664,7 +664,7 @@ int dabc::MemoryPool::ExecuteCommand(Command cmd)
             EOUT("Cannot create port");
             exit(444);
          }
-         fReqests.push_back(RequesterReq());
+         fReqests.emplace_back(RequesterReq());
       }
 
       cmd.SetStr("PortName", name);

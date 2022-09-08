@@ -442,7 +442,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
       std::vector<uint64_t> cansend;
       for(unsigned n=0;n<NumOutputs();n++) {
          if (IsOutputConnected(n)) {
-            cnt++; cansend.push_back(NumCanSend(n));
+            cnt++; cansend.emplace_back(NumCanSend(n));
          }
       }
 

@@ -436,7 +436,7 @@ bool dabc::Manager::ProcessDestroyQueue()
          if (iter->fire != 0) {
             if (iter->fire & 2) {
                clr_vect.Add(iter->src);
-               ptr_vect.push_back(iter->tgt);
+               ptr_vect.emplace_back(iter->tgt);
             } else
             if (iter->fire & 1) {
                rel_vect.Add(iter->src);
@@ -1211,7 +1211,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       if (cmd.GetBool("IsSubscribe")) {
 
          // first add empty record to avoid usage of copy constructor
-         fParEventsReceivers->push_back(ParamEventReceiverRec());
+         fParEventsReceivers->emplace_back(ParamEventReceiverRec());
          ParamEventReceiverRec& rec = fParEventsReceivers->back();
 
          if (worker) worker->SetCleanupBit();
@@ -1498,7 +1498,7 @@ bool dabc::Manager::RegisterDependency(Object* src, Object* tgt, bool bidirectio
    {
       LockGuard guard(fMgrMutex);
 
-      fDepend->push_back(rec);
+      fDepend->emplace_back(rec);
    }
 
    if (!bidirectional) return true;

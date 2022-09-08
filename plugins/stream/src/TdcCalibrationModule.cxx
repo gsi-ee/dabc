@@ -254,7 +254,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
             for (auto &subitem : errlog) {
                logitem.SetField("value", subitem);
                logitem.MarkChangedItems();
-               if (res_msgs) res_msgs->push_back(subitem);
+               if (res_msgs) res_msgs->emplace_back(subitem);
             }
          }
 
@@ -281,15 +281,15 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
             }
          }
 
-         tdcs.push_back(tdc->GetID());
-         tdc_progr.push_back((int) (progr*100.));
-         status.push_back(sname);
-         tdc_quality.push_back(quality);
+         tdcs.emplace_back(tdc->GetID());
+         tdc_progr.emplace_back((int) (progr*100.));
+         status.emplace_back(sname);
+         tdc_quality.emplace_back(quality);
       } else {
-         tdcs.push_back(0);
-         tdc_progr.push_back(0);
-         status.push_back("Init");
-         tdc_quality.push_back(0);
+         tdcs.emplace_back(0);
+         tdc_progr.emplace_back(0);
+         status.emplace_back("Init");
+         tdc_quality.emplace_back(0);
       }
    }
 
@@ -308,7 +308,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
       std::string subitem = "Acknowledge quality";
       logitem.SetField("value", subitem);
       logitem.MarkChangedItems();
-      if (res_msgs) res_msgs->push_back(subitem);
+      if (res_msgs) res_msgs->emplace_back(subitem);
    }
 
    if (!is_any_progress) worse_progress = 0;
@@ -734,7 +734,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          msg += " quality = ";
          msg += std::to_string(fQuality);
       }
-      fLogMessages.push_back(msg);
+      fLogMessages.emplace_back(msg);
 
       SetTRBStatus(item, logitem, fTrbProc, fEnableProgressUpdate, &fProgress, &fQuality, &fState, &fLogMessages);
 
@@ -799,7 +799,7 @@ bool stream::TdcCalibrationModule::RecordTRBStatus(bool do_write, dabc::Hierarch
 
       int cnt = 1000;
       while (fgets(sbuf, sizeof(sbuf), f) && (cnt-- > 0)) {
-         fLogMessages.push_back(sbuf);
+         fLogMessages.emplace_back(sbuf);
          logitem.SetField("value", sbuf);
          logitem.MarkChangedItems();
       }

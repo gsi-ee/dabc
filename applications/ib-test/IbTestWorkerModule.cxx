@@ -862,7 +862,7 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
 bool IbTestWorkerModule::MasterCollectActiveNodes()
 {
    fActiveNodes.clear();
-   fActiveNodes.push_back(true); // master itself is active
+   fActiveNodes.emplace_back(true); // master itself is active
 
    uint8_t buff[NumNodes()];
 
@@ -871,7 +871,7 @@ bool IbTestWorkerModule::MasterCollectActiveNodes()
 
    for(int node=1;node<NumNodes();node++) {
       bool active = IsInputConnected(node-1);
-      fActiveNodes.push_back(active);
+      fActiveNodes.emplace_back(active);
       if (active) cnt++;
       buff[node] = active ? 1 : 0;
    }
@@ -1116,7 +1116,7 @@ bool IbTestWorkerModule::ExecuteSlaveCommand(int cmdid)
 
          fActiveNodes.clear();
          for (int n=0;n<fCmdDataSize;n++)
-            fActiveNodes.push_back(buff[n]>0);
+            fActiveNodes.emplace_back(buff[n]>0);
 
          break;
       }
@@ -1326,8 +1326,8 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
           } else
           if (repeatcounter>0) {
 //             a1.Fill((rcv->slave_time - send_time)*1e6);
-             m_to_s.push_back(rcv->slave_time - send_time);
-             s_to_m.push_back(recv_time - rcv->slave_time);
+             m_to_s.emplace_back(rcv->slave_time - send_time);
+             s_to_m.emplace_back(recv_time - rcv->slave_time);
           }
 
           if (rcv->msgid!=repeatcounter) {

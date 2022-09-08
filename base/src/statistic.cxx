@@ -96,7 +96,7 @@ bool dabc::CpuStatistic::Measure()
       unsigned long user(0), sys(0), idle(0);
 
       if (cnt>=fCPUs.size()) {
-         fCPUs.push_back(SingleCpu());
+         fCPUs.emplace_back(SingleCpu());
       } else {
          user = curr_user - fCPUs[cnt].last_user;
          sys = curr_sys - fCPUs[cnt].last_sys;

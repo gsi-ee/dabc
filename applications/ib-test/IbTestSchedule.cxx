@@ -18,10 +18,10 @@ void Tokanize(std::string str, StringsVector& arr)
       if (str.length()==0) return;
       size_t pos = str.find_first_of(" \n\t");
       if (pos==str.npos) {
-         arr.push_back(str);
+         arr.emplace_back(str);
          return;
       } else {
-         arr.push_back(str.substr(0, pos));
+         arr.emplace_back(str.substr(0, pos));
          str.erase(0, pos);
       }
    }
@@ -1858,7 +1858,7 @@ bool IbTestSchedule::RollBack(IbTestScheduleMoveList& lst)
 
 void IbTestSchedule::MoveSender(IbTestScheduleMoveList& lst, int nsender, int src_slot, int tgt_slot, int lid)
 {
-   lst.push_back(IbTestScheduleMove(nsender, src_slot, tgt_slot, lid>=0 ? Item(src_slot, nsender).lid : -1));
+   lst.emplace_back(IbTestScheduleMove(nsender, src_slot, tgt_slot, lid>=0 ? Item(src_slot, nsender).lid : -1));
 
    Item(tgt_slot, nsender) = Item(src_slot, nsender);
    if (lid>=0) Item(tgt_slot, nsender).lid = lid;
@@ -2508,8 +2508,8 @@ extern "C" void CompareRouting()
    if (files.length()>0) {
       Tokanize(files, arr);
    } else {
-      arr.push_back(dabc::mgr()->cfg()->GetUserPar("FileName1"));
-      arr.push_back(dabc::mgr()->cfg()->GetUserPar("FileName2"));
+      arr.emplace_back(dabc::mgr()->cfg()->GetUserPar("FileName1"));
+      arr.emplace_back(dabc::mgr()->cfg()->GetUserPar("FileName2"));
    }
 
    if (arr.size()<2) {

@@ -260,7 +260,7 @@ void dabc::SocketDevice::AddRec(NewConnectRec* rec)
    bool firetmout = false;
    {
       LockGuard guard(DeviceMutex());
-      fConnRecs.push_back(rec);
+      fConnRecs.emplace_back(rec);
       firetmout = (fConnRecs.size() == 1);
    }
    if (firetmout) ActivateTimeout(0.);
@@ -306,7 +306,7 @@ bool dabc::SocketDevice::CleanupRecs(double tmout)
          if ((rec->fTmOut<0) || (tmout<0)) {
             if (tmout>0) EOUT("Record %u timedout", n);
             fConnRecs.remove_at(n);
-            del_recs.push_back(rec);
+            del_recs.emplace_back(rec);
          } else
             n++;
       }
@@ -425,7 +425,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
          thread().MakeWorkerFor(proto, connid);
 
          LockGuard guard(DeviceMutex());
-         fProtocols.push_back(proto);
+         fProtocols.emplace_back(proto);
       } else if (typ == "Client") {
          SocketProtocolAddon* proto = nullptr;
 
@@ -475,7 +475,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
       thread().MakeWorkerFor(proto, fCmdChannelId);
 
       LockGuard guard(DeviceMutex());
-      fProtocols.push_back(proto);
+      fProtocols.emplace_back(proto);
 
       cmd_res = cmd_true;
 

@@ -132,7 +132,7 @@ fesa::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
          #ifdef WITH_FESA
          rdaDabcHandler* handler = new rdaDabcHandler(this, services[n]);
          if (handler->subscribe(fDevice, fCycle))
-           fHandlers.push_back(handler);
+           fHandlers.emplace_back(handler);
          else
            delete handler;
          #endif
@@ -221,7 +221,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             unsigned long size = 0;
             const bool* arr = entry->getBooleanArray(size);
             std::vector<int64_t> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back(arr[n] ? 1 : 0);
+            for (unsigned n=0;n<size;n++) vect.emplace_back(arr[n] ? 1 : 0);
             item.SetField(tag, vect);
             break;
          }
@@ -236,7 +236,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             unsigned long size = 0;
             const signed char* arr = entry->getByteArray(size);
             std::vector<int64_t> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back((int64_t)arr[n]);
+            for (unsigned n=0;n<size;n++) vect.emplace_back((int64_t)arr[n]);
             item.SetField(tag, vect);
             break;
          }
@@ -251,7 +251,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             unsigned long size = 0;
             const short* arr = entry->getShortArray(size);
             std::vector<int64_t> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back((int64_t)arr[n]);
+            for (unsigned n=0;n<size;n++) vect.emplace_back((int64_t)arr[n]);
             item.SetField(tag, vect);
             break;
          }
@@ -267,7 +267,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             const int* arr = entry->getIntArray(size);
 
             std::vector<int64_t> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
+            for (unsigned n=0;n<size;n++) vect.emplace_back(arr[n]);
             item.SetField(tag, vect);
             break;
          }
@@ -282,7 +282,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             unsigned long size = 0;
             const long long* arr = entry->getLongArray(size);
             std::vector<int64_t> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back((int64_t)arr[n]);
+            for (unsigned n=0;n<size;n++) vect.emplace_back((int64_t)arr[n]);
             item.SetField(tag, vect);
             break;
          }
@@ -297,7 +297,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             unsigned long size = 0;
             const float* arr = entry->getFloatArray(size);
             std::vector<double> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
+            for (unsigned n=0;n<size;n++) vect.emplace_back(arr[n]);
             item.SetField(tag, vect);
             break;
          }
@@ -312,7 +312,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             unsigned long size = 0;
             const double* arr = entry->getDoubleArray(size);
             std::vector<double> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
+            for (unsigned n=0;n<size;n++) vect.emplace_back(arr[n]);
             item.SetField(tag, vect);
             break;
          }
@@ -326,7 +326,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData*
             unsigned long size = 0;
             const char** arr = entry->getStringArray(size);
             std::vector<std::string> vect;
-            for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
+            for (unsigned n=0;n<size;n++) vect.emplace_back(arr[n]);
             item.SetField(tag, vect);
             break;
          }

@@ -131,7 +131,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
          Long64_t val = *plong++;
          if (fVerbose)
             printf("   Long[%d] = %lld\n", i, val);
-         fLongRecords.push_back(val);
+         fLongRecords.emplace_back(val);
       }
 
       // get header with number of double records
@@ -158,7 +158,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
          if (fVerbose)
             printf("   Double[%d] = int:%lld float:%f\n", i, valint, val);
 
-         fDoubleRecords.push_back(val);
+         fDoubleRecords.emplace_back(val);
       }
 
       pdata = (Int_t*) plong;
@@ -230,7 +230,7 @@ TEpicsProc::VariableHist* TEpicsProc::CreateHist(const char* varname)
    TString obtitle;
 
    VariableHist dummy;
-   all_hists.push_back(dummy);
+   all_hists.emplace_back(dummy);
 
    obname.Form("%s/Statistics/Stat_%s", dirname, varname);
    obtitle.Form("EPICS variable %s statistics", varname);

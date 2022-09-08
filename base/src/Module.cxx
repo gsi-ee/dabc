@@ -121,7 +121,7 @@ unsigned dabc::Module::CreateTimer(const std::string &name, double period_sec, b
 
    if (systimer) fSysTimerIndex = timer->ItemSubId();
 
-   fTimers.push_back(timer);
+   fTimers.emplace_back(timer);
 
    return timer->ItemSubId();
 }
@@ -211,7 +211,7 @@ unsigned dabc::Module::CreateUserItem(const std::string &name)
 
    item->SetItemSubId(fUsers.size());
 
-   fUsers.push_back(item);
+   fUsers.emplace_back(item);
 
    return item->ItemSubId();
 }
@@ -477,15 +477,15 @@ int dabc::Module::PreviewCommand(Command cmd)
 
       std::vector<int64_t> outq, inpq, cansend, canrecv, cantake;
       for (unsigned indx=0;indx<NumOutputs();++indx) {
-         outq.push_back(OutputQueueCapacity(indx));
-         cansend.push_back(fOutputs[indx]->NumCanSend());
+         outq.emplace_back(OutputQueueCapacity(indx));
+         cansend.emplace_back(fOutputs[indx]->NumCanSend());
       }
       for (unsigned indx=0;indx<NumInputs();++indx) {
-         inpq.push_back(InputQueueCapacity(indx));
-         canrecv.push_back(fInputs[indx]->NumCanRecv());
+         inpq.emplace_back(InputQueueCapacity(indx));
+         canrecv.emplace_back(fInputs[indx]->NumCanRecv());
       }
       for (unsigned indx=0;indx<NumPools();++indx) {
-         cantake.push_back(fPools[indx]->CanTakeBuffer() ? 0 : 1);
+         cantake.emplace_back(fPools[indx]->CanTakeBuffer() ? 0 : 1);
       }
 
       info.SetField("InputQueueCapacity", inpq);
@@ -622,7 +622,7 @@ unsigned dabc::Module::CreatePoolHandle(const std::string &poolname, unsigned qu
    AddModuleItem(handle);
 
    handle->SetItemSubId(fPools.size());
-   fPools.push_back(handle);
+   fPools.emplace_back(handle);
 
    return handle->ItemSubId();
 }
@@ -634,7 +634,7 @@ void dabc::Module::AddModuleItem(ModuleItem* item)
 
    unsigned id = fItems.size();
 
-   fItems.push_back(item);
+   fItems.emplace_back(item);
 
    item->SetItemId(id);
 
@@ -714,7 +714,7 @@ unsigned dabc::Module::CreateInput(const std::string &name, unsigned queue)
    AddModuleItem(port);
 
    port->SetItemSubId(fInputs.size());
-   fInputs.push_back(port);
+   fInputs.emplace_back(port);
 
    if (!port->fRateName.empty() && port->fRate.null()) {
       if (Par(port->fRateName).null())
@@ -737,7 +737,7 @@ unsigned dabc::Module::CreateOutput(const std::string &name, unsigned queue)
    AddModuleItem(port);
 
    port->SetItemSubId(fOutputs.size());
-   fOutputs.push_back(port);
+   fOutputs.emplace_back(port);
 
    if (!port->fRateName.empty() && port->fRate.null()) {
       if (Par(port->fRateName).null())

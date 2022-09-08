@@ -399,7 +399,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          unsigned len = NumCanRecv(n);
          info.append(" ");
          info.append(std::to_string(len));
-         qsz.push_back(len);
+         qsz.emplace_back(len);
       }
       fBnetInfo = info;
 
@@ -421,9 +421,9 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       for (unsigned n=0;n<fCfg.size();n++) {
          InputCfg &inp = fCfg[n];
 
-         hubs.push_back(inp.fHubId);
-         ports.push_back(inp.fUdpPort);
-         calibr.push_back(inp.fCalibr);
+         hubs.emplace_back(inp.fHubId);
+         ports.emplace_back(inp.fUdpPort);
+         calibr.emplace_back(inp.fCalibr);
 
          unsigned nbuf = NumCanRecv(n);
          uint64_t bufsz = TotalSizeCanRecv(n);
@@ -433,8 +433,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             bufsz += inp.fIter.remained_size();
          }
 
-         recv_bufs.push_back(nbuf);
-         recv_sizes.push_back(bufsz);
+         recv_bufs.emplace_back(nbuf);
+         recv_sizes.emplace_back(bufsz);
 
          if (!inp.fCalibrReq && !inp.fCalibr.empty()) {
             dabc::Command cmd("GetCalibrState");
@@ -488,8 +488,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             sinfo += inp.TriggerRingAsStr(16);
          }
 
-         hubs_dropev.push_back(inp.fDroppedTrig);
-         hubs_lostev.push_back(inp.fLostTrig);
+         hubs_dropev.emplace_back(inp.fDroppedTrig);
+         hubs_lostev.emplace_back(inp.fLostTrig);
 
          if (!inp.fCalibr.empty() && (inp.fCalibrQuality < hub_quality)) {
             hub_state = inp.fCalibrState;
@@ -505,11 +505,11 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             node_state = hub_state;
          }
 
-         hubs_state.push_back(hub_state);
-         hubs_info.push_back(sinfo);
-         hubs_quality.push_back(hub_quality);
-         hubs_progress.push_back(hub_progress);
-         hubs_rates.push_back(rate);
+         hubs_state.emplace_back(hub_state);
+         hubs_info.emplace_back(sinfo);
+         hubs_quality.emplace_back(hub_quality);
+         hubs_progress.emplace_back(hub_progress);
+         hubs_rates.emplace_back(rate);
       }
 
       std::string info = "BnetSend:";
@@ -518,7 +518,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          unsigned len = NumCanSend(n);
          info.append(" ");
          info.append(std::to_string(len));
-         qsz.push_back(len);
+         qsz.emplace_back(len);
       }
       fBnetInfo = info;
 

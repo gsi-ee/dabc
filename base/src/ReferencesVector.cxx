@@ -43,7 +43,7 @@ void dabc::ReferencesVector::ExpandVector()
 
    // make shift, which does not require any locking
    for (unsigned n=0;n<fVector->size();n++) {
-      vect->push_back(dabc::Reference());
+      vect->emplace_back(dabc::Reference());
       vect->back() << fVector->at(n);
    }
 
@@ -59,7 +59,7 @@ bool dabc::ReferencesVector::Add(Reference& ref) throw()
 
    ExpandVector();
 
-   fVector->push_back(Reference());
+   fVector->emplace_back(Reference());
 
    // by such action no any locking is required -
    fVector->back() << ref;
@@ -74,7 +74,7 @@ bool dabc::ReferencesVector::AddAt(Reference& ref, unsigned pos) throw()
 
    ExpandVector();
 
-   fVector->push_back(Reference());
+   fVector->emplace_back(Reference());
 
    if (pos >= fVector->size()) {
       fVector->back() << ref;

@@ -49,8 +49,8 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
    for (unsigned n=0;n<NumInputs();n++) {
       DOUT0(" MBS COMBINER  Port%u: Capacity %u", n, InputQueueCapacity(n));
 
-      fInp.push_back(ReadIterator());
-      fCfg.push_back(InputCfg());
+      fInp.emplace_back(ReadIterator());
+      fCfg.emplace_back(InputCfg());
       fInp[n].Close();
       fCfg[n].Reset();
    }

@@ -87,14 +87,14 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
 
          currcmd = "gosipcmd " + currcmd;
 
-         if (log_output) gosiplog.push_back(currcmd);
+         if (log_output) gosiplog.emplace_back(currcmd);
 
          // DOUT0("CMD %s", currcmd.c_str());
 
          FILE* pipe = popen(currcmd.c_str(), "r");
 
          if (!pipe) {
-            gosipres.push_back("<err>");
+            gosipres.emplace_back("<err>");
             break;
          }
 
@@ -108,7 +108,7 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
             while ((size>0) && ((buf[size-1]==' ') || (buf[size-1]=='\n'))) size--;
             buf[size] = 0;
             totalsize+=size;
-            if (log_output && (size>0)) gosiplog.push_back(buf);
+            if (log_output && (size>0)) gosiplog.emplace_back(buf);
             // DOUT0("Get %s", buf);
          }
 
@@ -119,30 +119,30 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
             // DOUT0("Writing res:%s len %d", buf, strlen(buf));
 
             if (strlen(buf) > 2) {
-               gosipres.push_back("<err>");
+               gosipres.emplace_back("<err>");
                break;
             }
 
-            gosipres.push_back("<ok>");
+            gosipres.emplace_back("<ok>");
             continue;
          }
 
          if (isreading) {
             long value = 0;
             if (!dabc::str_to_lint(buf,&value)) {
-               gosipres.push_back("<err>");
+               gosipres.emplace_back("<err>");
                break;
             }
             // DOUT0("Reading ok %ld", value);
-            gosipres.push_back(dabc::format("%ld", value));
+            gosipres.emplace_back(dabc::format("%ld", value));
             continue;
          }
 
          // no idea that should be returned by other commands
-         gosipres.push_back("<undef>");
+         gosipres.emplace_back("<undef>");
       }
 
-      while (gosipres.size() < gosipcmd.size()) gosipres.push_back("<skip>");
+      while (gosipres.size() < gosipcmd.size()) gosipres.emplace_back("<skip>");
 
       cmd.SetField("res", gosipres);
       if (log_output)

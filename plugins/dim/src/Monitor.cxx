@@ -304,7 +304,7 @@ void dim::Monitor::infoHandler()
                   fld.SetInt(*((int*)ptr));
                } else {
                  std::vector<int64_t> vect;
-                 for (int n=0;n<size;n++) vect.push_back(((int*)ptr)[n]);
+                 for (int n=0;n<size;n++) vect.emplace_back(((int*)ptr)[n]);
                  fld.SetVectInt(vect);
                }
                ptr += sizeof(int) * size;
@@ -314,7 +314,7 @@ void dim::Monitor::infoHandler()
                   fld.SetDouble(*((float*)ptr));
                } else {
                  std::vector<double> vect;
-                 for (int n=0;n<size;n++) vect.push_back(((float*)ptr)[n]);
+                 for (int n=0;n<size;n++) vect.emplace_back(((float*)ptr)[n]);
                  fld.SetVectDouble(vect);
                }
                ptr += sizeof(float) * size;
@@ -324,7 +324,7 @@ void dim::Monitor::infoHandler()
                   fld.SetDouble(*((double*)ptr));
                } else {
                  std::vector<double> vect;
-                 for (int n=0;n<size;n++) vect.push_back(((double*)ptr)[n]);
+                 for (int n=0;n<size;n++) vect.emplace_back(((double*)ptr)[n]);
                  fld.SetVectDouble(vect);
                }
                ptr += sizeof(double) * size;

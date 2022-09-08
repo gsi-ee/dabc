@@ -113,8 +113,8 @@ namespace mbs {
                      return;
                   }
 
-            fLongRecords.push_back(name);
-            fLongValues.push_back(value);
+            fLongRecords.emplace_back(name);
+            fLongValues.emplace_back(value);
          }
 
          /** Method add double record. If specified, name duplication will be checked  */
@@ -126,8 +126,8 @@ namespace mbs {
                      fDoubleValues[n] = value;
                      return;
                   }
-            fDoubleRecords.push_back(name);
-            fDoubleValues.push_back(value);
+            fDoubleRecords.emplace_back(name);
+            fDoubleValues.emplace_back(value);
          }
 
          unsigned NumLongs() const { return fLongRecords.size(); }
@@ -206,7 +206,7 @@ namespace mbs {
             for (uint64_t n=0;n<num64;n++) {
                int64_t val = 0;
                memcpy(&val, ptr, sizeof(val)); ptr+=sizeof(val);
-               fLongValues.push_back(val);
+               fLongValues.emplace_back(val);
             }
 
             num64 = 0;
@@ -215,7 +215,7 @@ namespace mbs {
             for (uint64_t n=0;n<num64;n++) {
                double val = 0.;
                memcpy(&val, ptr, sizeof(val)); ptr+=sizeof(val);
-               fDoubleValues.push_back(val); // should be always 8 bytes
+               fDoubleValues.emplace_back(val); // should be always 8 bytes
             }
 
             unsigned num = 0;
@@ -235,7 +235,7 @@ namespace mbs {
                   printf("decoding error\n");
                   return false;
                }
-               fLongRecords.push_back(ptr);
+               fLongRecords.emplace_back(ptr);
                ptr  = ptr + strlen(ptr) + 1;
             }
 
@@ -256,7 +256,7 @@ namespace mbs {
                   printf("decoding error\n");
                   return false;
                }
-               fDoubleRecords.push_back(ptr);
+               fDoubleRecords.emplace_back(ptr);
                ptr  = ptr + strlen(ptr) + 1;
             }
 

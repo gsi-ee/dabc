@@ -275,9 +275,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
                dabc::number_to_str(info->fTotalProducedBuffers).c_str()));
          fCalibr[n].lastrecv = info->fTotalRecvBytes;
 
-         ports.push_back(info->fNPort);
-         recvbytes.push_back(info->fTotalRecvBytes);
-         inprates.push_back(rate);
+         ports.emplace_back(info->fNPort);
+         recvbytes.emplace_back(info->fTotalRecvBytes);
+         inprates.emplace_back(rate);
       }
 
       sbuf.append(dabc::format(" %3d %6s %5s %5s",
@@ -286,9 +286,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
                    dabc::number_to_str(cfg.fDroppedTrig,0).c_str(),
                    dabc::number_to_str(cfg.fLostTrig,0).c_str()));
 
-      inperrbits.push_back(cfg.fErrorBitsCnt);
-      inpdrop.push_back(cfg.fDroppedTrig);
-      inplost.push_back(cfg.fLostTrig);
+      inperrbits.emplace_back(cfg.fErrorBitsCnt);
+      inpdrop.emplace_back(cfg.fDroppedTrig);
+      inplost.emplace_back(cfg.fLostTrig);
 
       if (cfg.fCalibr.length() > 0) {
          sbuf.append(dabc::format(" 0x%04x", fCalibr[n].trb));

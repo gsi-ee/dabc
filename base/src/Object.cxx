@@ -397,7 +397,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
             {
               LockGuard lock(gObjectGarbageMutex);
               if (!gObjectGarbageCollector.has_ptr(this))
-                 gObjectGarbageCollector.push_back(this);
+                 gObjectGarbageCollector.emplace_back(this);
             }
             #endif
             return false;
@@ -470,7 +470,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
          {
             LockGuard lock(gObjectGarbageMutex);
             if (!gObjectGarbageCollector.has_ptr(this))
-               gObjectGarbageCollector.push_back(this);
+               gObjectGarbageCollector.emplace_back(this);
          }
          #endif
          return false;
@@ -709,7 +709,7 @@ bool dabc::Object::GetAllChildRef(ReferencesVector* vect) const
    PointersVector ptrs;
 
    for (unsigned n=0; n<fObjectChilds->GetSize(); n++)
-      ptrs.push_back(fObjectChilds->GetObject(n));
+      ptrs.emplace_back(fObjectChilds->GetObject(n));
 
    IntGuard block(fObjectBlock);
 
@@ -1149,7 +1149,7 @@ void dabc::Object::DebugObject(const char* classname, Object* instance, int kind
       if (kind<0) cnts[name]--;
              else cnts[name]++;
 
-      if (kind==10) objs[name].push_back(instance); else
+      if (kind==10) objs[name].emplace_back(instance); else
       if (kind==-10) objs[name].remove(instance);
    }
 }

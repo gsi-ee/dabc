@@ -255,7 +255,7 @@ bool dabc::HierarchyReading::ScanFiles(const std::string &dirname, const DateTim
          continue;
       }
 
-      vect.push_back(dt.AsJSDate());
+      vect.emplace_back(dt.AsJSDate());
    }
 
    return true;

@@ -306,9 +306,9 @@ bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint6
   try
   {
     dabc::LockGuard gard(fConditionMutex);
-    fActionSinks.push_back (saftlib::SoftwareActionSink_Proxy::create (fTimingReceiver->NewSoftwareActionSink ("")));
+    fActionSinks.emplace_back (saftlib::SoftwareActionSink_Proxy::create (fTimingReceiver->NewSoftwareActionSink ("")));
     fActionSinks.back()->OverflowCount.connect(sigc::mem_fun (receiver, &saftdabc::Input::OverflowHandler));
-    fConditionProxies.push_back (
+    fConditionProxies.emplace_back (
         saftlib::SoftwareCondition_Proxy::create (fActionSinks.back ()->NewCondition (true, id, mask, offset)));
     fConditionProxies.back ()->Action.connect (sigc::mem_fun (receiver, &saftdabc::Input::EventHandler));
 
@@ -456,7 +456,7 @@ bool saftdabc::Device::ClearConditions ()
         // JAM: why does saft-io-ctl example use here container
         //     std::vector <Glib::RefPtr<saftlib::InputCondition_Proxy> > prox;
         // with statements like:
-        //         prox.push_back ( saftlib::InputCondition_Proxy::create(name));
+        //         prox.emplace_back ( saftlib::InputCondition_Proxy::create(name));
         //         prox.back()->Destroy();
         // non optimized code or mandatory for some reasons?
         //

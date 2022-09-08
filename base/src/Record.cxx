@@ -153,14 +153,14 @@ void dabc::HStore::CreateNode(const char *nodename)
       if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
       if (nodename!=0)
          buf.append(dabc::format(" _name=\"%s\"", nodename));
-      numchilds.push_back(0);
-      numflds.push_back(0);
+      numchilds.emplace_back(0);
+      numflds.emplace_back(0);
       lvl++;
    } else {
       buf.append(dabc::format("%*s{", (compact() > 0) ? 0 : lvl * 4, ""));
       lvl++;
-      numflds.push_back(0);
-      numchilds.push_back(0);
+      numflds.emplace_back(0);
+      numchilds.emplace_back(0);
       if (nodename!=0)
          SetField("_name", dabc::format("\"%s\"",nodename).c_str());
    }
@@ -578,24 +578,24 @@ std::vector<int64_t> dabc::RecordField::AsIntVect() const
    switch (fKind) {
       case kind_none: break;
       case kind_bool:
-      case kind_int: res.push_back(valueInt); break;
+      case kind_int: res.emplace_back(valueInt); break;
       case kind_datime:
-      case kind_uint: res.push_back((int64_t) valueUInt); break;
-      case kind_double: res.push_back((int64_t) valueDouble); break;
+      case kind_uint: res.emplace_back((int64_t) valueUInt); break;
+      case kind_double: res.emplace_back((int64_t) valueDouble); break;
       case kind_arrint:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back(arrInt[n]);
+            res.emplace_back(arrInt[n]);
          break;
       case kind_arruint:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back((int64_t) arrUInt[n]);
+            res.emplace_back((int64_t) arrUInt[n]);
          break;
       case kind_arrdouble:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back((int64_t) arrDouble[n]);
+            res.emplace_back((int64_t) arrDouble[n]);
          break;
       case kind_string: {
          std::vector<std::string> svect;
@@ -604,10 +604,10 @@ std::vector<int64_t> dabc::RecordField::AsIntVect() const
          if (StrToStrVect(valueStr, svect, false)) {
            for (unsigned n=0;n<svect.size();n++)
               if (str_to_lint(svect[n].c_str(), &res0))
-                 res.push_back(res0);
+                 res.emplace_back(res0);
            break;
          }
-         if (str_to_lint(valueStr, &res0)) res.push_back(res0);
+         if (str_to_lint(valueStr, &res0)) res.emplace_back(res0);
          break;
       }
       case kind_arrstr: {
@@ -617,7 +617,7 @@ std::vector<int64_t> dabc::RecordField::AsIntVect() const
 
          for (int64_t n=0;n<valueInt;n++) {
             if (!str_to_lint(p, &res0)) res0 = 0;
-            res.push_back(res0);
+            res.emplace_back(res0);
             p += strlen(p)+1;
          }
          break;
@@ -636,24 +636,24 @@ std::vector<uint64_t> dabc::RecordField::AsUIntVect() const
    switch (fKind) {
       case kind_none: break;
       case kind_bool:
-      case kind_int: res.push_back((uint64_t) valueInt); break;
+      case kind_int: res.emplace_back((uint64_t) valueInt); break;
       case kind_datime:
-      case kind_uint: res.push_back(valueUInt); break;
-      case kind_double: res.push_back((uint64_t) valueDouble); break;
+      case kind_uint: res.emplace_back(valueUInt); break;
+      case kind_double: res.emplace_back((uint64_t) valueDouble); break;
       case kind_arrint:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back((uint64_t) arrInt[n]);
+            res.emplace_back((uint64_t) arrInt[n]);
          break;
       case kind_arruint:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back(arrUInt[n]);
+            res.emplace_back(arrUInt[n]);
          break;
       case kind_arrdouble:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back((uint64_t) arrDouble[n]);
+            res.emplace_back((uint64_t) arrDouble[n]);
          break;
       case kind_string: {
          std::vector<std::string> svect;
@@ -662,11 +662,11 @@ std::vector<uint64_t> dabc::RecordField::AsUIntVect() const
          if (StrToStrVect(valueStr, svect, false)) {
            for (unsigned n=0;n<svect.size();n++)
               if (str_to_luint(svect[n].c_str(), &res0))
-                 res.push_back(res0);
+                 res.emplace_back(res0);
            break;
          }
 
-         if (str_to_luint(valueStr, &res0)) res.push_back(res0);
+         if (str_to_luint(valueStr, &res0)) res.emplace_back(res0);
          break;
       }
       case kind_arrstr: {
@@ -676,7 +676,7 @@ std::vector<uint64_t> dabc::RecordField::AsUIntVect() const
 
          for (int64_t n=0;n<valueInt;n++) {
             if (!str_to_luint(p, &res0)) res0 = 0;
-            res.push_back(res0);
+            res.emplace_back(res0);
             p += strlen(p)+1;
          }
          break;
@@ -696,24 +696,24 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
    switch (fKind) {
       case kind_none: break;
       case kind_bool:
-      case kind_int: res.push_back((double) valueInt); break;
+      case kind_int: res.emplace_back((double) valueInt); break;
       case kind_datime:
-      case kind_uint: res.push_back((double) valueUInt); break;
-      case kind_double: res.push_back(valueDouble); break;
+      case kind_uint: res.emplace_back((double) valueUInt); break;
+      case kind_double: res.emplace_back(valueDouble); break;
       case kind_arrint:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back((double) arrInt[n]);
+            res.emplace_back((double) arrInt[n]);
          break;
       case kind_arruint:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back((double) arrUInt[n]);
+            res.emplace_back((double) arrUInt[n]);
          break;
       case kind_arrdouble:
          res.reserve(valueInt);
          for (int64_t n=0;n<valueInt;n++)
-            res.push_back(arrDouble[n]);
+            res.emplace_back(arrDouble[n]);
          break;
       case kind_string: {
          std::vector<std::string> svect;
@@ -722,10 +722,10 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
          if (StrToStrVect(valueStr, svect, false)) {
            for (unsigned n=0;n<svect.size();n++)
               if (str_to_double(svect[n].c_str(), &res0))
-                 res.push_back(res0);
+                 res.emplace_back(res0);
            break;
          }
-         if (str_to_double(valueStr, &res0)) res.push_back(res0);
+         if (str_to_double(valueStr, &res0)) res.emplace_back(res0);
          break;
       }
       case kind_arrstr: {
@@ -735,7 +735,7 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
 
          for (int64_t n=0;n<valueInt;n++) {
             if (!str_to_double(p, &res0)) res0 = 0.;
-            res.push_back(res0);
+            res.emplace_back(res0);
             p += strlen(p)+1;
          }
          break;
@@ -931,31 +931,31 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
       case kind_int:
       case kind_datime:
       case kind_uint:
-      case kind_double: res.push_back(AsStr()); break;
+      case kind_double: res.emplace_back(AsStr()); break;
       case kind_arrint: {
          for (int64_t n=0; n<valueInt;n++)
-            res.push_back(dabc::format("%ld", (long) arrInt[n]));
+            res.emplace_back(dabc::format("%ld", (long) arrInt[n]));
          break;
       }
       case kind_arruint: {
          for (int64_t n=0; n<valueInt;n++)
-            res.push_back(dabc::format("%lu", (long unsigned) arrUInt[n]));
+            res.emplace_back(dabc::format("%lu", (long unsigned) arrUInt[n]));
          break;
       }
       case kind_arrdouble: {
          for (int64_t n=0; n<valueInt;n++)
-            res.push_back(dabc::format("%g", arrDouble[n]));
+            res.emplace_back(dabc::format("%g", arrDouble[n]));
          break;
       }
       case kind_string: {
          if (!StrToStrVect(valueStr, res))
-            res.push_back(valueStr);
+            res.emplace_back(valueStr);
           break;
       }
       case kind_arrstr: {
          char* p = valueStr;
          for (int64_t n=0;n<valueInt;n++) {
-            res.push_back(p);
+            res.emplace_back(p);
             p += strlen(p)+1;
          }
          break;
@@ -998,7 +998,7 @@ bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& 
             vect.clear();
             return false;
          }
-         vect.push_back(std::string(pos+1, p1 - pos - 1));
+         vect.emplace_back(std::string(pos+1, p1 - pos - 1));
          pos = p1 + 1;
       } else {
          const char* p1 = strpbrk(pos+1, ",]");
@@ -1009,7 +1009,7 @@ bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& 
          }
          int spaces = 0;
          while ((p1 - spaces > pos + 1) && (*(p1-spaces-1)==' ')) spaces++;
-         vect.push_back(std::string(pos, p1 - pos - spaces));
+         vect.emplace_back(std::string(pos, p1 - pos - spaces));
          pos = p1;
       }
       while (*pos==' ') pos++; // exclude possible spaces at the end
@@ -1553,7 +1553,7 @@ void dabc::RecordFieldsMap::MoveFrom(RecordFieldsMap& src)
 
    for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       if (iter->second.IsProtected()) continue;
-      if (!src.HasField(iter->first)) delfields.push_back(iter->first);
+      if (!src.HasField(iter->first)) delfields.emplace_back(iter->first);
    }
 
    for (unsigned n=0;n<delfields.size();n++)
@@ -1573,7 +1573,7 @@ void dabc::RecordFieldsMap::MakeAsDiffTo(const RecordFieldsMap& current)
 
    for (auto &&fld : current.fMap) {
       if (!HasField(fld.first))
-         delfields.push_back(fld.first);
+         delfields.emplace_back(fld.first);
       else
          if (!fld.second.fModified) RemoveField(fld.first);
    }

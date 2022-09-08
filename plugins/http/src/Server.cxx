@@ -162,7 +162,7 @@ void http::Server::AddLocation(const std::string &filepath,
                                const std::string &nameprefix,
                                const std::string &nameprefixrepl)
 {
-   fLocations.push_back(Location());
+   fLocations.emplace_back(Location());
    fLocations.back().fFilePath = filepath;
    fLocations.back().fAbsPrefix = absprefix;
    fLocations.back().fNamePrefix = nameprefix;

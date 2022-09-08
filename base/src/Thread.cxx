@@ -164,7 +164,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
             Worker* work = fThread()->fWorkers[n]->work;
             if (work==0) continue;
             num++;
-            names.push_back(work->GetName());
+            names.emplace_back(work->GetName());
          }
 
          fWorkerHierarchy.GetHChild("NumWorkers").SetField("value", num);
@@ -238,7 +238,7 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
 
    DOUT3("---------- CNT:%2d Thread %s %p created", fThreadInstances, GetName(), this);
 
-   fWorkers.push_back(new WorkerRec(0,0)); // exclude id==0
+   fWorkers.emplace_back(new WorkerRec(0,0)); // exclude id==0
 
    fExec = new ExecWorker(this, cmd);
    //fExec->SetLogging(true);
@@ -267,7 +267,7 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
    if ((fThrdStopTimeout <= 0) && !dabc::mgr.null()) fThrdStopTimeout = dabc::mgr()->cfg()->GetThrdStopTime();
    if (fThrdStopTimeout <= 0) fThrdStopTimeout = 5.;
 
-   fWorkers.push_back(new WorkerRec(fExec,0));
+   fWorkers.emplace_back(new WorkerRec(fExec,0));
 
 //   SetLogging(true);
 
@@ -869,7 +869,7 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
          // we can use workers array outside mutex (as long as we are inside thread)
          // but we should lock mutex when we would like to change workers vector
-         fWorkers.push_back(new WorkerRec(worker, worker->fAddon()));
+         fWorkers.emplace_back(new WorkerRec(worker, worker->fAddon()));
 
          // from this moment on processor is fully functional
          worker->fWorkerId = fWorkers.size()-1;

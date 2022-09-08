@@ -149,7 +149,7 @@ bool hadaq::SorterModule::retransmit()
 
             // DOUT1("Event 0x%06x size %3u", rec.trig, rec.sz);
 
-            fSubs.push_back(rec);
+            fSubs.emplace_back(rec);
             new_data = true;
          }
 

@@ -224,7 +224,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
                      if (strcmp(Xml::GetNodeName(child), "item")!=0) continue;
                      const char* arritemvalue = Xml::GetAttr(child,"value");
                      if (arritemvalue!=0)
-                        arr.push_back(ResolveEnv(arritemvalue));
+                        arr.emplace_back(ResolveEnv(arritemvalue));
                   }
 
                   if (arr.size()>0) {

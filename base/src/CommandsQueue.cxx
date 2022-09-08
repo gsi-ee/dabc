@@ -75,7 +75,7 @@ uint32_t dabc::CommandsQueue::Push(Command cmd, EKind kind)
    // exclude zero id
    do { fIdCounter++; } while (fIdCounter==0);
 
-   fList.push_back(QueueRec());
+   fList.emplace_back(QueueRec());
 
    fList.back().cmd << cmd;
    fList.back().kind = kind;

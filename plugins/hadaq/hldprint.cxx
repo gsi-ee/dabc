@@ -1007,7 +1007,7 @@ bool is_hub(unsigned id)
 
    if (!autoid || ((id & 0xF000) != 0x8000)) return false;
 
-   hubs.push_back(id);
+   hubs.emplace_back(id);
 
    return true;
 }
@@ -1018,7 +1018,7 @@ bool is_tdc(unsigned id)
 
    if (autoid) {
       if (((id & 0xF000) == 0x0000) || ((id & 0xF000) == 0x1000)) {
-         tdcs.push_back(id);
+         tdcs.emplace_back(id);
          return true;
       }
    }
@@ -1064,9 +1064,9 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
       if ((strcmp(argv[n],"-event")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_eventid); dofind = true; } else
       if ((strcmp(argv[n],"-find")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_trigid); dofind = true; } else
-      if ((strcmp(argv[n],"-cts")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.push_back(ctsid); } else
-      if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
-      if ((strcmp(argv[n],"-new")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); newtdcs.push_back(tdcmask); } else
+      if ((strcmp(argv[n],"-cts")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.emplace_back(ctsid); } else
+      if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.emplace_back(tdcmask); } else
+      if ((strcmp(argv[n],"-new")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); newtdcs.emplace_back(tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
       if ((strcmp(argv[n],"-onlych")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &onlych); } else
@@ -1081,7 +1081,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
       if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
-      if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.push_back(hubmask); } else
+      if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.emplace_back(hubmask); } else
       if ((strcmp(argv[n],"-onlymonitor")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlymonitor); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else

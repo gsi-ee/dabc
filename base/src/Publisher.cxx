@@ -138,7 +138,7 @@ void dabc::Publisher::OnThreadAssigned()
 
    if (!fMgrHiearchy.null()) {
       DOUT3("dabc::Publisher::BeforeModuleStart mgr path %s", fMgrPath.c_str());
-      fPublishers.push_back(PublisherEntry());
+      fPublishers.emplace_back(PublisherEntry());
       fPublishers.back().id = fCnt++;
       fPublishers.back().path = fMgrPath;
       fPublishers.back().worker = ItemName();
@@ -591,8 +591,8 @@ dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::
             for (unsigned n=0;n<vect.size();n++) {
                double ddd;
                long iii;
-               if (str_to_double(vect[n].c_str(), &ddd)) dblvect.push_back(ddd);
-               if (str_to_lint(vect[n].c_str(), &iii)) intvect.push_back(ddd);
+               if (str_to_double(vect[n].c_str(), &ddd)) dblvect.emplace_back(ddd);
+               if (str_to_lint(vect[n].c_str(), &iii)) intvect.emplace_back(ddd);
             }
 
             if (intvect.size()==vect.size()) res.SetField(parname, intvect); else
@@ -661,7 +661,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
             DOUT3("PUBLISH folder %s", path.c_str());
 
-            fPublishers.push_back(PublisherEntry());
+            fPublishers.emplace_back(PublisherEntry());
             fPublishers.back().id = fCnt++;
             fPublishers.back().path = path;
             fPublishers.back().worker = worker;
@@ -714,7 +714,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                return cmd_false;
             }
 
-            fSubscribers.push_back(SubscriberEntry());
+            fSubscribers.emplace_back(SubscriberEntry());
 
             SubscriberEntry& entry = fSubscribers.back();
 
@@ -777,7 +777,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                }
             }
 
-            fPublishers.push_back(PublisherEntry());
+            fPublishers.emplace_back(PublisherEntry());
             fPublishers.back().id = fCnt++;
             fPublishers.back().path = "";
             fPublishers.back().worker = worker;
