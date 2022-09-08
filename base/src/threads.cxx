@@ -78,9 +78,9 @@ bool dabc::MutexPtr::TryLock()
 
 bool dabc::MutexPtr::IsLocked()
 {
-   if (fMutex==0) return false;
+   if (!fMutex) return false;
    int res = pthread_mutex_trylock(fMutex);
-   if (res==EBUSY) return true;
+   if (res == EBUSY) return true;
    pthread_mutex_unlock(fMutex);
    return false;
 }
@@ -112,7 +112,7 @@ bool dabc::Condition::_DoWait(double wait_seconds)
    // wait_seconds < 0 - wait forever until condition is fired
 
 
-   if (fFiredCounter==0) {
+   if (fFiredCounter == 0) {
       if (wait_seconds < 0.) {
          fWaiting = true;
          pthread_cond_wait(&fCond, &fCondMutex->fMutex);
@@ -185,18 +185,18 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
    CPU_ZERO(&fSpecialSet);
    CPU_ZERO(&fDfltSet);
 
-   if (!aff || (*aff==0)) return true;
+   if (!aff || (*aff == 0)) return true;
 
-   if ((*aff=='-') && (strlen(aff)>1)) {
+   if ((*aff == '-') && (strlen(aff) > 1)) {
       unsigned numspecial = 0;
-      if (!str_to_uint(aff+1, &numspecial) || (numspecial==0)) {
+      if (!str_to_uint(aff+1, &numspecial) || (numspecial == 0)) {
          EOUT("Wrong  default affinity format %s", aff);
          return false;
       }
 
       int res = sched_getaffinity(0, sizeof(fDfltSet), &fDfltSet);
 
-      if (res!=0) {
+      if (res != 0) {
          EOUT("sched_getaffinity res = %d", res);
          return false;
       }
@@ -224,8 +224,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
       return true;
    }
 
-
-   if ((*aff=='o') || (*aff=='x') || (*aff=='s')) {
+   if ((*aff == 'o') || (*aff == 'x') || (*aff == 's')) {
       unsigned cpu = 0;
       const char* curr = aff;
       bool isany(false);
@@ -246,7 +245,6 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
       }
 
       return true;
-
    }
 
    unsigned mask = 0;
@@ -256,7 +254,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
       return false;
    }
 
-   if (mask==0) return true;
+   if (mask == 0) return true;
 
    for (unsigned cpu = 0; (cpu < sizeof(mask)*8) && (cpu<CPU_SETSIZE); cpu++)
       if ((mask & (1 << cpu)) != 0)
@@ -287,7 +285,7 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
 {
    CPU_ZERO(&fCpuSet);
 
-   if (!aff || (*aff==0)) {
+   if (!aff || (*aff == 0)) {
       for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
          if (CPU_ISSET(cpu, &fDfltSet))
             CPU_SET(cpu, &fCpuSet);
@@ -342,7 +340,7 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
       return false;
    }
 
-   if (mask==0) {
+   if (mask == 0) {
       EOUT("Zero affinity mask specified %s", aff);
       return false;
    }
@@ -357,7 +355,7 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
 
 void dabc::PosixThread::Start(Runnable* run)
 {
-   if (run==0) return;
+   if (!run) return;
 
    bool isany(false);
    for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
@@ -425,7 +423,7 @@ bool dabc::PosixThread::GetDfltAffinity(char* buf, unsigned maxbuf)
 {
    unsigned last = 0;
 
-   if (maxbuf==0) return false;
+   if (maxbuf == 0) return false;
 
    for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++) {
       char symb = 'o';
@@ -450,8 +448,7 @@ bool dabc::PosixThread::GetDfltAffinity(char* buf, unsigned maxbuf)
 
 bool dabc::PosixThread::GetAffinity(bool actual, char* buf, unsigned maxbuf)
 {
-
-   if (maxbuf==0) return false;
+   if (maxbuf == 0) return false;
 
    cpu_set_t mask;
    cpu_set_t *arg = nullptr;

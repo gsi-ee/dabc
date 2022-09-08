@@ -53,7 +53,7 @@ bool dabc::Url::SetUrl(const std::string &url, bool showerr)
    fFileName.clear();
    fOptions.clear();
 
-   if (url.length()==0) return false;
+   if (url.empty()) return false;
 
    fUrl = url;
    fValid = true;
@@ -77,7 +77,7 @@ bool dabc::Url::SetUrl(const std::string &url, bool showerr)
 
    pos = s.find("/");
 
-   if (pos==0) {
+   if (pos == 0) {
       fFileName = s;
    } else
    if (pos != std::string::npos) {
@@ -123,15 +123,15 @@ void dabc::Url::ReplaceSpecialSymbols(std::string& opt)
 
 std::string dabc::Url::GetFullName() const
 {
-   if (fFileName.length()==0) return fHostName;
-   if (fHostName.length()==0) return fFileName;
+   if (fFileName.empty()) return fHostName;
+   if (fHostName.empty()) return fFileName;
 
    return dabc::format("%s/%s", fHostName.c_str(), fFileName.c_str());
 }
 
 std::string dabc::Url::GetPortStr() const
 {
-   if (fPort<=0) return std::string();
+   if (fPort <= 0) return std::string();
 
    return dabc::format("%d", fPort);
 }
@@ -141,7 +141,7 @@ std::string dabc::Url::GetHostNameWithPort(int dfltport) const
    int port = fPort;
    if (port <= 0) port = dfltport;
 
-   return (port>0) ?  fHostName + dabc::format(":%d", port) : fHostName;
+   return (port > 0) ?  fHostName + dabc::format(":%d", port) : fHostName;
 }
 
 std::string dabc::Url::ComposeItemName(int nodeid, const std::string &itemname)
@@ -172,7 +172,7 @@ bool dabc::Url::DecomposeItemName(const std::string &name, int& nodeid, std::str
 
    if (!url.SetUrl(name, false)) return false;
 
-   if (url.GetProtocol().length()==0) {
+   if (url.GetProtocol().empty()) {
       fullportname = url.GetFullName();
       nodeid = -1;
       return true;
@@ -217,7 +217,7 @@ bool dabc::Url::GetOption(const std::string &optname, int optionnumber, std::str
       // if (separ==std::string::npos) separ = fOptions.length();
 
 
-      bool q1(false), q2(false), special(false);
+      bool q1 = false, q2 = false, special = false;
 
       size_t separ = p, posequal = std::string::npos;
       for(;separ<fOptions.length();separ++) {
@@ -247,10 +247,10 @@ bool dabc::Url::GetOption(const std::string &optname, int optionnumber, std::str
          cnt++;
       } else
       if (separ-p >= optname.length()) {
-         bool find = fOptions.compare(p, optname.length(), optname)==0;
+         bool find = fOptions.compare(p, optname.length(), optname) == 0;
          if (find) {
 
-            p+=optname.length();
+            p += optname.length();
 
             // this is just option name, nothing else - value is empty http://host?option
             if (p==separ) return true;
@@ -293,7 +293,7 @@ int dabc::Url::GetOptionInt(const std::string &optname, int dflt) const
 
    if (res.empty()) return dflt;
 
-   int resi(0);
+   int resi = 0;
    if (str_to_int(res.c_str(), &resi)) return resi;
 
    return dflt;
@@ -305,7 +305,7 @@ double dabc::Url::GetOptionDouble(const std::string &optname, double dflt) const
 
    if (res.empty()) return dflt;
 
-   double resd(0.);
+   double resd = 0.;
    if (str_to_double(res.c_str(), &resd)) return resd;
 
    return dflt;

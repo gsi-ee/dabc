@@ -344,7 +344,7 @@ bool dabc::Worker::AssignToThread(ThreadRef thrd, bool sync)
      }
 
    Reference ref(this);
-   if (ref()==0) {
+   if (!ref()) {
       EOUT("Cannot obtain reference on itself");
       return false;
    }
@@ -409,7 +409,7 @@ void dabc::Worker::ProcessCoreEvent(EventId evnt)
          ProcessCommand(cmd);
 
          // check if we have postponed commands
-         while(fWorkerCommandsLevel==0) {
+         while(fWorkerCommandsLevel == 0) {
             {
                LockGuard lock(fThreadMutex);
                cmd = fWorkerCommands.PopWithKind(CommandsQueue::kindPostponed);
@@ -609,7 +609,7 @@ bool dabc::Worker::Find(ConfigIO &cfg)
 {
    DOUT3("Worker::Find %p name = %s parent %p", this, GetName(), GetParent());
 
-   if (GetParent()==0) return false;
+   if (!GetParent()) return false;
 
    while (cfg.FindItem(ClassName()))
       if (cfg.CheckAttr(xmlNameAttr, GetName())) return true;
@@ -893,7 +893,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
    {
       LockGuard lock(fThreadMutex);
 
-      if (fThread.null() || (fWorkerId==0)) {
+      if (fThread.null() || (fWorkerId == 0)) {
 
          // command execution possible without thread,
          // but only manager allows to do it without warnings
@@ -942,7 +942,7 @@ dabc::Command dabc::Worker::Assign(dabc::Command cmd)
    {
       LockGuard lock(fThreadMutex);
 
-      if (fThread()==0) {
+      if (!fThread()) {
          EOUT("Worker: %s - command %s cannot be assigned without thread", GetName(), cmd.GetName());
          return Command();
       }

@@ -128,14 +128,14 @@ bool dabc::TimeStamp::CheckLinuxTSC()
 
 void dabc::Sleep(double tm)
 {
-   if (tm<=0) return;
+   if (tm <= 0.) return;
 
    struct timespec t;
    t.tv_sec = lrint(tm); /* Whole seconds */
    if (t.tv_sec > tm) t.tv_sec--;
    t.tv_nsec = lrint((tm - t.tv_sec)*1e9); /* nanoseconds */
 
-   if (t.tv_sec==0)
+   if (t.tv_sec == 0)
       usleep(t.tv_nsec / 1000);
    else
       nanosleep (&t, 0);
@@ -288,11 +288,12 @@ std::string dabc::DateTime::OnlyTimeAsString(const char *separ, bool localtime) 
 
 bool dabc::DateTime::SetOnlyDate(const char* sbuf)
 {
-   if ((sbuf==0) || (strlen(sbuf)!=10)) return false;
+   if (!sbuf || (strlen(sbuf) != 10)) return false;
 
    unsigned year = 0, month = 0, day = 0;
    if (sscanf(sbuf,"%4u-%02u-%02u", &year, &month, &day)!=3) return false;
-   if ((year<1970) || (year>2100) || (month>12) || (month==0) || (day>31) || (day==0)) return false;
+   if ((year < 1970) || (year > 2100) || (month > 12) || (month == 0) || (day > 31) || (day == 0))
+      return false;
 
    struct tm res;
    time_t src = tv_sec;
@@ -307,11 +308,13 @@ bool dabc::DateTime::SetOnlyDate(const char* sbuf)
 
 bool dabc::DateTime::SetOnlyTime(const char* sbuf)
 {
-   if ((sbuf==0) || (strlen(sbuf)!=8)) return false;
+   if (!sbuf || (strlen(sbuf) != 8)) return false;
 
    unsigned hour = 0, min = 0, sec = 0;
-   if (sscanf(sbuf,"%02u:%02u:%02u", &hour, &min, &sec)!=3) return false;
-   if ((hour>23) || (min>59) || (sec>59)) return false;
+   if (sscanf(sbuf, "%02u:%02u:%02u", &hour, &min, &sec) != 3)
+      return false;
+   if ((hour > 23) || (min > 59) || (sec > 59))
+      return false;
 
    struct tm res;
    if (null()) {
@@ -343,5 +346,3 @@ double dabc::DateTime::DistanceTo(const DateTime& pnt) const
 
    return res;
 }
-
-

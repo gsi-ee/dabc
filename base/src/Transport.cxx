@@ -92,7 +92,7 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
 //   DOUT0("Create transport inp %s out %s poolname %s", DBOOL(fIsInputTransport), DBOOL(fIsOutputTransport), poolname.c_str());
 
-   if (!poolname.empty() && (NumPools()==0)) {
+   if (!poolname.empty() && (NumPools() == 0)) {
       // TODO: one should be able to configure if transport use pool requests or not
 
       // for output transport one not need extra memory, just link to pool for special cases like verbs
