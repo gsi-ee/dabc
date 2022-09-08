@@ -114,7 +114,7 @@ namespace mbs {
          iEventNumber = evnt;
       }
 
-      void CopyHeader(EventHeader* src)
+      void CopyHeader(EventHeader *src)
       {
          iDummy = src->iDummy;
          iTrigger = src->iTrigger;
@@ -134,9 +134,9 @@ namespace mbs {
          { return (SubeventHeader*) ((char*) this + sizeof(EventHeader)); }
 
       SubeventHeader* NextSubEvent(SubeventHeader* prev) const
-         { return prev == 0 ? (FullSize() > sizeof(EventHeader) ? SubEvents() : 0):
+         { return !prev ? (FullSize() > sizeof(EventHeader) ? SubEvents() : nullptr):
                 (((char*) this + FullSize() > (char*) prev + prev->FullSize() + sizeof(SubeventHeader)) ?
-                   (SubeventHeader*) (((char*) prev) + prev->FullSize()) : 0); }
+                   (SubeventHeader*) (((char*) prev) + prev->FullSize()) : nullptr); }
 
       unsigned NumSubevents() const;
 

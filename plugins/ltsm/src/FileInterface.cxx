@@ -131,10 +131,10 @@ if (url.HasOption("ltsmFSQDestination"))
   else
 #endif
     {
-      if (fSession == 0)
-   {
-           if(!OpenTSMSession(opt)) return 0;
-        } // if fSesssion==0
+       if (!fSession) {
+          if (!OpenTSMSession(opt))
+             return 0;
+       }
     }
 
   // default description is per file, not per session:
@@ -320,12 +320,10 @@ void ltsm::FileInterface::fclose(Handle f)
   DOUT3("ltsm::FileInterface::fclose END ");
 }
 
-size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
-   Handle f)
-    {
+size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f) {
 
-    if ((f == 0) || (ptr == 0) || (sz == 0))
-   return 0;
+   if (!f || !ptr || (sz == 0))
+      return 0;
 
     if (fIsClosing)
       {
@@ -391,36 +389,36 @@ size_t ltsm::FileInterface::fread(void* ptr, size_t sz, size_t nmemb, Handle f)
     }
 
 bool ltsm::FileInterface::fseek(Handle f, long int offset, bool relative)
-    {
-    if (f == 0)
+{
+   if (!f)
       return false;
-    //TODO: do we have such thing?
-    return false;
-    }
+   // TODO: do we have such thing?
+   return false;
+}
 
 bool ltsm::FileInterface::feof(Handle f)
-    {
-    if (f == 0)
+{
+   if (!f)
+      return false;
    return false;
-    return false;
 
-    //  return f==0 ? false : (ltsm_fendfile((RFILE*)f) > 0);
-    }
+   //  return f==0 ? false : (ltsm_fendfile((RFILE*)f) > 0);
+}
 
 bool ltsm::FileInterface::fflush(Handle f)
-    {
-    if (f == 0)
-   return false;
+{
+   if (!f)
+      return false;
 
-    return true;
+   return true;
 
-    // return f==0 ? false : ::fflush((FILE*)f)==0;
-    }
+   // return f==0 ? false : ::fflush((FILE*)f)==0;
+}
 
 dabc::Object* ltsm::FileInterface::fmatch(const char* fmask, bool select_files)
-    {
-    return 0;
-    }
+{
+   return nullptr;
+}
 
 
 
