@@ -96,11 +96,11 @@ void dabc::Command::RemoveCaller(Worker* worker, bool* exe_ready)
 bool dabc::Command::IsLastCallerSync()
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return false;
+   if (!cont) return false;
 
    LockGuard lock(ObjectMutex());
 
-   if ((cont->fCallers.size()==0)) return false;
+   if ((cont->fCallers.size() == 0)) return false;
 
    return cont->fCallers.back().exe_ready != 0;
 }
@@ -108,7 +108,7 @@ bool dabc::Command::IsLastCallerSync()
 dabc::Command& dabc::Command::SetTimeout(double tm)
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont!=0) {
+   if (cont) {
       LockGuard lock(ObjectMutex());
       if (tm<=0.) {
          cont->fTimeout.Reset();
@@ -124,7 +124,7 @@ dabc::Command& dabc::Command::SetTimeout(double tm)
 bool dabc::Command::IsTimeoutSet() const
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return false;
+   if (!cont) return false;
    LockGuard lock(ObjectMutex());
    return !cont->fTimeout.null();
 }
@@ -132,7 +132,7 @@ bool dabc::Command::IsTimeoutSet() const
 double dabc::Command::TimeTillTimeout(double extra) const
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return -1.;
+   if (!cont) return -1.;
 
    LockGuard lock(ObjectMutex());
    if (cont->fTimeout.null()) return -1.;
@@ -162,7 +162,7 @@ void* dabc::Command::GetPtr(const std::string &name, void* deflt) const
 
    void* p = nullptr;
    int res = sscanf(val.c_str(),"%p", &p);
-   return res>0 ? p : deflt;
+   return res > 0 ? p : deflt;
 }
 
 bool dabc::Command::SetRef(const std::string &name, Reference ref)
@@ -182,7 +182,6 @@ dabc::Reference dabc::Command::GetRef(const std::string &name)
 
    return ref;
 }
-
 
 void dabc::Command::AddValuesFrom(const dabc::Command& cmd, bool canoverwrite)
 {

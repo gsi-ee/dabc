@@ -139,14 +139,14 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
 
    int maxlevel = 0;
    Object* prnt = nullptr;
-   while ((prnt = GetObjParent(obj, maxlevel)) != 0) {
-      if (prnt==dabc::mgr()) break;
+   while ((prnt = GetObjParent(obj, maxlevel)) != nullptr) {
+      if (prnt == dabc::mgr()) break;
       maxlevel++;
       // if object want to be on the top xml level, count maxlevel+1 to add manager as artificial top parent
       if (prnt->IsTopXmlLevel()) break;
    }
    // TODO: could we read objects which are not in manager?
-   if (prnt==0) return false;
+   if (!prnt) return false;
 
    DOUT3("Start reading of obj %s item %s maxlevel %d", obj->ItemName().c_str(),  itemname.c_str(), maxlevel);
 
@@ -258,9 +258,9 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
                }
             }
 
-            fCurrChld = 0;
+            fCurrChld = nullptr;
          } else
-         if ((curr != fCurrItem) || (fCurrChld != 0)) {
+         if ((curr != fCurrItem) || fCurrChld) {
             EOUT("FIXME: should not happen");
             EOUT("FIXME: problem in hierarchy search for %s lvl %d prnt %s", obj->ItemName().c_str(), level, prnt->GetName());
             EOUT("fCurrChld %p   curr %p  fCurrItem %p", fCurrChld, curr, fCurrItem);
@@ -278,7 +278,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
          fCurrChld = fCurrItem;
          fCurrItem = Xml::GetParent(fCurrItem);
 
-         if (fCurrItem==0) {
+         if (!fCurrItem) {
             EOUT("FIXME: Wrong hierarchy search level = %d maxlevel = %d chld %p item %p dcnt = %d", level, maxlevel, fCurrChld, fCurrItem, dcnt);
             break;
          }

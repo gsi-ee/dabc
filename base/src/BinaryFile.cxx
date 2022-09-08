@@ -33,11 +33,11 @@ bool dabc::FileInterface::mkdir(const char* path)
    const char* part = path;
 
    // we should ensure that part is exists
-   while (part != 0) {
+   while (part) {
       part = strchr(part+1, '/');
 
       std::string subname;
-      if (part == 0)
+      if (!part)
          subname = path;
       else
          subname.append(path, part - path);

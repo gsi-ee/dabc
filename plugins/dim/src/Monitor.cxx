@@ -83,7 +83,7 @@ void dim::Monitor::OnThreadAssigned()
 
 void dim::Monitor::ScanDimServices()
 {
-   char *service_name, *service_descr;
+   char *service_name = nullptr, *service_descr = nullptr;
    int type;
 
 // DimClient::addErrorHandler(errHandler);
@@ -107,10 +107,10 @@ void dim::Monitor::ScanDimServices()
 
       DOUT3("DIM type %d name %s descr %s", type, service_name, service_descr);
 
-      if ((service_descr==0) || ((type!=1) && (type!=2))) continue;
+      if (!service_descr || ((type!=1) && (type!=2))) continue;
 
       DimServicesMap::iterator iter = fDimInfos.find(service_name);
-      if (iter!=fDimInfos.end()) {
+      if (iter != fDimInfos.end()) {
          iter->second.flag = type;  // mark entry as found
          continue;
       }
@@ -119,7 +119,7 @@ void dim::Monitor::ScanDimServices()
       entry.flag = type;
 
       // we processing call-back only for normal records
-      if (type==1)
+      if (type == 1)
          entry.info = new DimInfo(service_name, (void*) fNoLink, (int) sizeof(fNoLink), (DimInfoHandler*) this);
 
       fDimInfos[service_name] = entry;
@@ -128,7 +128,7 @@ void dim::Monitor::ScanDimServices()
 
       dabc::Hierarchy item = fWorkerHierarchy.CreateHChild(service_name);
 
-      if (type==1) {
+      if (type == 1) {
          item.EnableHistory(100);
       } else
       if (type==2) {
@@ -165,7 +165,7 @@ void dim::Monitor::ScanDimServices()
 
 void dim::Monitor::ProcessTimerEvent(unsigned timer)
 {
-   if (fDimBr==0) return;
+   if (!fDimBr) return;
 
    if (TimerName(timer) == "DimTimer")
       if (fLastScan.Expired(10.) || (fDimInfos.size()==0) || fNeedDnsUpdate)

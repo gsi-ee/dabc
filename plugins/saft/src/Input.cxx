@@ -422,16 +422,13 @@ catch (const saftbus::Error& error)
  }
 
 
-
-
-
 bool saftdabc::Input::SetupConditions ()
 {
   // PART I: treat the input conditions
   // this is mostly stolen from saft-io-ctl.cpp
   try
   {
-    unsigned errcnt (0);
+    unsigned errcnt = 0;
 
     // just loop over all DABC configured inputs, checking is done in device class
     for (std::vector<std::string>::iterator confit = fInput_Names.begin (); confit != fInput_Names.end (); ++confit)
@@ -446,16 +443,14 @@ bool saftdabc::Input::SetupConditions ()
       return false;
 
     // PART II: treat any WR events on the line:
-    for (std::vector<uint64_t>::iterator snit = fSnoop_Ids.begin (), mit = fSnoop_Masks.begin (), offit = fSnoop_Offsets
-        .begin (), flit = fSnoop_Flags.begin ();
-        snit != fSnoop_Ids.end (), mit != fSnoop_Masks.end (), offit != fSnoop_Offsets.end (), flit
-            != fSnoop_Flags.end (); ++snit, ++mit, ++offit, ++flit)
-    {
-      // TODO: may we treat the situation that snoop id is given, but masks etc is not defined as wildcard case?
-      bool rev = fDevice.RegisterEventCondition (this, *snit, *mit, *offit, (unsigned char) *flit);
-      if (!rev)
-        errcnt++;
-
+    for (std::vector<uint64_t>::iterator snit = fSnoop_Ids.begin(), mit = fSnoop_Masks.begin(),
+                                         offit = fSnoop_Offsets.begin(), flit = fSnoop_Flags.begin();
+         snit != fSnoop_Ids.end(), mit != fSnoop_Masks.end(), offit != fSnoop_Offsets.end(), flit != fSnoop_Flags.end();
+         ++snit, ++mit, ++offit, ++flit) {
+       // TODO: may we treat the situation that snoop id is given, but masks etc is not defined as wildcard case?
+       bool rev = fDevice.RegisterEventCondition(this, *snit, *mit, *offit, (unsigned char)*flit);
+       if (!rev)
+          errcnt++;
     }
     DOUT0("SetupConditions with %d errors for snoop conditions.", errcnt);
     if (errcnt > 0)
@@ -523,7 +518,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 
 
 
-    uint64_t doverflow= fOverflowCount-fLastOverflowCount;
+    uint64_t doverflow = fOverflowCount-fLastOverflowCount;
      if (fVerbose)
     {
       DOUT0("saftdabc::Input::EventHandler sees overflowcount=%lu, previous=%lu, delta=%lu",fOverflowCount, fLastOverflowCount, doverflow);
@@ -538,8 +533,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
       // do not call Read_CallBack again during transport running
       // issue callback to dabc transport here:
       dabc::InputTransport* tr = dynamic_cast<dabc::InputTransport*> (fTransport ());
-      if (tr != 0)
-      {
+      if (tr) {
         //unsigned datasize=fTimingEventQueue.size()* sizeof(saftdabc::Timing_Event) + sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
         // todo: adjust if using different output data format, e.g. hadtu
 
