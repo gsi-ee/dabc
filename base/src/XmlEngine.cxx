@@ -60,18 +60,18 @@ namespace dabc {
    class XmlOutputStream {
    protected:
 
-      std::ostream  *fOut;
-      std::string   *fOutStr;
-      char          *fBuf;
-      char          *fCurrent;
-      char          *fMaxAddr;
-      char          *fLimitAddr;
+      std::ostream  *fOut{nullptr};
+      std::string   *fOutStr{nullptr};
+      char          *fBuf{nullptr};
+      char          *fCurrent{nullptr};
+      char          *fMaxAddr{nullptr};
+      char          *fLimitAddr{nullptr};
 
    public:
       XmlOutputStream(const char* filename, int bufsize = 20000)
       {
          fOut = new std::ofstream(filename);
-         fOutStr = 0;
+         fOutStr = nullptr;
          Init(bufsize);
       }
 
@@ -110,8 +110,10 @@ namespace dabc {
 
       void OutputChar(char symb)
       {
-         if (fOut!=0) fOut->put(symb); else
-         if (fOutStr!=0) fOutStr->append(1, symb);
+         if (fOut)
+            fOut->put(symb);
+         else if (fOutStr)
+            fOutStr->append(1, symb);
       }
 
       void Write(const char* str)
@@ -147,31 +149,31 @@ namespace dabc {
    class XmlInputStream {
    protected:
 
-      std::istream  *fInp;
-      const char    *fInpStr;
-      int          fInpStrLen;
+      std::istream  *fInp{nullptr};
+      const char    *fInpStr{nullptr};
+      int            fInpStrLen{0};
 
-      char          *fBuf;
-      int          fBufSize;
+      char          *fBuf{nullptr};
+      int            fBufSize{0};
 
-      char          *fMaxAddr;
-      char          *fLimitAddr;
+      char          *fMaxAddr{nullptr};
+      char          *fLimitAddr{nullptr};
 
-      int          fTotalPos;
-      int          fCurrentLine;
+      int            fTotalPos{0};
+      int            fCurrentLine{0};
 
    public:
 
-      char           *fCurrent;
+      char           *fCurrent{nullptr};
 
       XmlInputStream(bool isfilename, const char* filename, int ibufsize)
       {
          if (isfilename) {
             fInp = new std::ifstream(filename);
-            fInpStr = 0;
+            fInpStr = nullptr;
             fInpStrLen = 0;
          } else {
-            fInp = 0;
+            fInp = nullptr;
             fInpStr = filename;
             fInpStrLen = filename==0 ? 0 : strlen(filename);
          }
@@ -179,8 +181,8 @@ namespace dabc {
          fBufSize = ibufsize;
          fBuf = (char *) std::malloc(fBufSize);
 
-         fCurrent = 0;
-         fMaxAddr = 0;
+         fCurrent = nullptr;
+         fMaxAddr = nullptr;
 
          int len = DoRead(fBuf, fBufSize);
          fCurrent = fBuf;
@@ -197,7 +199,7 @@ namespace dabc {
          std::free(fBuf); fBuf = nullptr;
       }
 
-      inline bool IsBad() { return fInp ? !(*fInp) : (fInpStr==nullptr); }
+      inline bool IsBad() { return fInp ? !(*fInp) : (fInpStr == nullptr); }
 
       inline bool SkipComments() const { return false; }
 
@@ -245,7 +247,7 @@ namespace dabc {
          fBuf = newbuf;
 
          int len = DoRead(fMaxAddr, fBufSize-curlength);
-         if (len==0) return false;
+         if (len == 0) return false;
          fMaxAddr += len;
          fLimitAddr += int(len*0.75);
          return true;
@@ -398,7 +400,7 @@ bool dabc::Xml::HasAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // checks if node has attribute of specified name
 
-   if ((xmlnode==0) || (name==0)) return false;
+   if (!xmlnode || !name) return false;
    SXmlAttr_t* attr = ((SXmlNode_t*)xmlnode)->fAttr;
    while (attr!=0) {
       if (strcmp(SXmlAttr_t::Name(attr),name)==0) return true;
@@ -478,7 +480,7 @@ void dabc::Xml::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // remove attribute from xmlnode
 
-   if (xmlnode==0) return;
+   if (!xmlnode) return;
    SXmlAttr_t* attr = ((SXmlNode_t*) xmlnode)->fAttr;
    SXmlAttr_t* prev = 0;
    while (attr!=0) {
@@ -501,7 +503,7 @@ void dabc::Xml::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
 void dabc::Xml::FreeAllAttr(XMLNodePointer_t xmlnode)
 {
    // Free all attributes of the node
-   if (xmlnode==0) return;
+   if (!xmlnode) return;
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
    SXmlAttr_t* attr = node->fAttr;
@@ -510,7 +512,7 @@ void dabc::Xml::FreeAllAttr(XMLNodePointer_t xmlnode)
       std::free(attr);
       attr = next;
    }
-   node->fAttr = 0;
+   node->fAttr = nullptr;
 }
 
 
@@ -690,7 +692,7 @@ bool dabc::Xml::AddComment(XMLNodePointer_t xmlnode, const char* comment)
 {
    // Adds comment line to the node
 
-   if ((xmlnode==0) || (comment==0)) return false;
+   if (!xmlnode || !comment) return false;
 
    int commentlen = strlen(comment);
 
@@ -706,7 +708,7 @@ bool dabc::Xml::AddDocComment(XMLDocPointer_t xmldoc, const char* comment)
 {
    // add comment line to the top of the document
 
-   if (xmldoc==0) return false;
+   if (!xmldoc) return false;
 
    XMLNodePointer_t rootnode = DocGetRootElement(xmldoc);
    UnlinkNode(rootnode);
@@ -725,7 +727,7 @@ bool dabc::Xml::AddRawLine(XMLNodePointer_t xmlnode, const char* line)
    // Line should has correct xml syntax that later it can be decoded by xml parser
    // For instance, it can be comment or processing instructions
 
-   if ((xmlnode==0) || (line==0)) return false;
+   if (!xmlnode || !line) return false;
 
    int linelen = strlen(line);
    SXmlNode_t* node = (SXmlNode_t*) AllocateNode(linelen, xmlnode);
@@ -766,11 +768,11 @@ bool dabc::Xml::AddStyleSheet(XMLNodePointer_t xmlnode,
    // Creates <?xml-stylesheet alternate="yes" title="compact" href="small-base.css" type="text/css"?>
    // Attributes href and type must be supplied,
    //  other attributes: title, alternate, media, charset are optional
-   // if alternate==0, attribyte alternate="no" will be created,
+   // if alternate==0, attribute alternate="no" will be created,
    // if alternate>0, attribute alternate="yes"
    // if alternate<0, attribute will not be created
 
-   if ((xmlnode==0) || (href==0) || (type==0)) return false;
+   if (!xmlnode || !href || !type) return false;
 
    const char* nodename = "xml-stylesheet";
    int nodenamelen = strlen(nodename);
@@ -779,16 +781,16 @@ bool dabc::Xml::AddStyleSheet(XMLNodePointer_t xmlnode,
    node->fType = kXML_PI_NODE;
    strncpy(SXmlNode_t::Name(node), nodename, nodenamelen+1);
 
-   if (alternate>=0)
-     NewAttr(node, 0, "alternate", (alternate>0) ? "yes" : "no");
+   if (alternate >= 0)
+     NewAttr(node, nullptr, "alternate", (alternate > 0) ? "yes" : "no");
 
-   if (title!=0) NewAttr(node, 0, "title", title);
+   if (title) NewAttr(node, nullptr, "title", title);
 
-   NewAttr(node, 0, "href", href);
-   NewAttr(node, 0, "type", type);
+   NewAttr(node, nullptr, "href", href);
+   NewAttr(node, nullptr, "type", type);
 
-   if (media!=0) NewAttr(node, 0, "media", media);
-   if (charset!=0) NewAttr(node, 0, "charset", charset);
+   if (media) NewAttr(node, nullptr, "media", media);
+   if (charset) NewAttr(node, nullptr, "charset", charset);
 
    return true;
 }
@@ -805,7 +807,7 @@ bool dabc::Xml::AddDocStyleSheet(XMLDocPointer_t xmldoc,
 {
    // Add style sheet definition on the top of document
 
-   if (xmldoc==0) return false;
+   if (!xmldoc) return false;
 
    XMLNodePointer_t rootnode = DocGetRootElement(xmldoc);
    UnlinkNode(rootnode);
@@ -823,12 +825,12 @@ void dabc::Xml::UnlinkNode(XMLNodePointer_t xmlnode)
 {
    // unlink (detach) xml node from parent
 
-   if (xmlnode==0) return;
+   if (!xmlnode) return;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
    SXmlNode_t* parent = node->fParent;
 
-   if (parent==0) return;
+   if (!parent) return;
 
    if (parent->fChild==node) {
       parent->fChild = node->fNext;
@@ -849,18 +851,18 @@ void dabc::Xml::FreeNode(XMLNodePointer_t xmlnode)
    // release all memory, allocated from this node and
    // destroyes node itself
 
-   if (xmlnode==0) return;
+   if (!xmlnode) return;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
    SXmlNode_t* child = node->fChild;
-   while (child!=0) {
+   while (child) {
       SXmlNode_t* next = child->fNext;
       FreeNode((XMLNodePointer_t)child);
       child = next;
    }
 
    SXmlAttr_t* attr = node->fAttr;
-   while (attr!=0) {
+   while (attr) {
       SXmlAttr_t* next = attr->fNext;
       //fNumNodes--;
       std::free(attr);
@@ -886,7 +888,7 @@ const char* dabc::Xml::GetNodeName(XMLNodePointer_t xmlnode)
 {
    // returns name of xmlnode
 
-   return xmlnode==0 ? 0 : SXmlNode_t::Name(xmlnode);
+   return !xmlnode ? nullptr : SXmlNode_t::Name(xmlnode);
 }
 
 //______________________________________________________________________________
@@ -935,8 +937,8 @@ void dabc::Xml::ShiftToNext(XMLNodePointer_t &xmlnode, bool tonode)
    // shifts specified node to next
 
    do {
-      xmlnode = xmlnode==0 ? 0 : (XMLNodePointer_t) ((SXmlNode_t*) xmlnode)->fNext;
-      if ((xmlnode==0) || !tonode) return;
+      xmlnode = !xmlnode ? nullptr : (XMLNodePointer_t) ((SXmlNode_t*) xmlnode)->fNext;
+      if (!xmlnode || !tonode) return;
 
    } while (((SXmlNode_t*) xmlnode)->fType != kXML_NODE);
 }
@@ -946,7 +948,7 @@ bool dabc::Xml::IsEmptyNode(XMLNodePointer_t xmlnode)
 {
    // return true is this is node with special data like comments to data processing instructions
 
-   return xmlnode==0 ? true : (((SXmlNode_t*) xmlnode)->fType != kXML_NODE);
+   return !xmlnode ? true : (((SXmlNode_t*) xmlnode)->fType != kXML_NODE);
 }
 
 //______________________________________________________________________________
@@ -963,18 +965,18 @@ void dabc::Xml::CleanNode(XMLNodePointer_t xmlnode)
 {
    // remove all childs node from xmlnode
 
-   if (xmlnode==0) return;
+   if (!xmlnode) return;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
    SXmlNode_t* child = node->fChild;
-   while (child!=0) {
+   while (child) {
       SXmlNode_t* next = child->fNext;
       FreeNode((XMLNodePointer_t)child);
       child = next;
    }
 
-   node->fChild = 0;
-   node->fLastChild = 0;
+   node->fChild = nullptr;
+   node->fLastChild = nullptr;
 }
 
 //______________________________________________________________________________
@@ -991,8 +993,8 @@ dabc::XMLDocPointer_t dabc::Xml::NewDoc(const char* version)
       NewAttr(vernode, 0, "version", version);
    }
 
-   doc->fDtdName = 0;
-   doc->fDtdRoot = 0;
+   doc->fDtdName = nullptr;
+   doc->fDtdRoot = nullptr;
    return (XMLDocPointer_t) doc;
 }
 
@@ -1001,7 +1003,7 @@ void dabc::Xml::AssignDtd(XMLDocPointer_t xmldoc, const char* dtdname, const cha
 {
    // assignes dtd filename to document
 
-   if (xmldoc==0) return;
+   if (!xmldoc) return;
    SXmlDoc_t* doc = (SXmlDoc_t*) xmldoc;
    delete[] doc->fDtdName;
    doc->fDtdName = Makestr(dtdname);
@@ -1014,7 +1016,7 @@ void dabc::Xml::FreeDoc(XMLDocPointer_t xmldoc)
 {
    // frees allocated document data and deletes document itself
 
-   if (xmldoc==0) return;
+   if (!xmldoc) return;
    SXmlDoc_t* doc = (SXmlDoc_t*) xmldoc;
    FreeNode((XMLNodePointer_t) doc->fRootNode);
    delete[] doc->fDtdName;
@@ -1031,7 +1033,7 @@ void dabc::Xml::SaveDoc(XMLDocPointer_t xmldoc, const char* filename, int layout
    // if (layout>0) each node will be started from new line,
    // and number of spaces will correspond to structure depth.
 
-   if (xmldoc==0) return;
+   if (!xmldoc) return;
 
    SXmlDoc_t* doc = (SXmlDoc_t*) xmldoc;
 
@@ -1051,7 +1053,7 @@ void dabc::Xml::DocSetRootElement(XMLDocPointer_t xmldoc, XMLNodePointer_t xmlno
 {
    // set main (root) node for document
 
-   if (xmldoc==0) return;
+   if (!xmldoc) return;
 
    FreeNode(DocGetRootElement(xmldoc));
 
@@ -1250,13 +1252,13 @@ dabc::XMLAttrPointer_t dabc::Xml::AllocateAttr(int namelen, int valuelen, XMLNod
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
 
-   attr->fNext = 0;
+   attr->fNext = nullptr;
 
-   if (node->fAttr==0)
+   if (!node->fAttr) {
       node->fAttr = attr;
-   else {
+   } else {
       SXmlAttr_t* d = node->fAttr;
-      while (d->fNext!=0) d = d->fNext;
+      while (d->fNext) d = d->fNext;
       d->fNext = attr;
    }
 
@@ -1422,10 +1424,10 @@ void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int lay
    if ((content==0) && (layout>0))
       out->Put('\n');
 
-   if (content!=0) out->Write(content);
+   if (content) out->Write(content);
 
    SXmlNode_t* child = (SXmlNode_t*) GetChild(xmlnode);
-   while (child!=0) {
+   while (child) {
       if (content!=0) {
          content = 0;
          if (layout>0) out->Put('\n');
@@ -1435,7 +1437,7 @@ void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int lay
    }
 
    // add starting spaces
-   if ((content==0) && (layout>0)) out->Put(' ',level);
+   if (!content && (layout > 0)) out->Put(' ',level);
 
    out->Write("</");
    // we suppose that ns is always first attribute
@@ -1445,7 +1447,7 @@ void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int lay
    }
    out->Write(SXmlNode_t::Name(node));
    out->Put('>');
-   if (layout>0) out->Put('\n');
+   if (layout > 0) out->Put('\n');
 }
 
 //______________________________________________________________________________
@@ -1463,7 +1465,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
    if (!inp->SkipSpaces()) { resvalue = -1; return nullptr; }
    SXmlNode_t* parent = (SXmlNode_t*) xmlparent;
 
-   SXmlNode_t* node = 0;
+   SXmlNode_t* node = nullptr;
 
    // process comments before we start to analyze any node symbols
    while (inp->CheckFor("<!--")) {
