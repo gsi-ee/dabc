@@ -36,15 +36,15 @@ int main(int argc, char* argv[]) {
    bool skipzero = false;
 
    for (int n=1;n<argc;n++) {
-      if ((strcmp(argv[n],"-h")==0) && (n+1 < argc)) {
+      if ((strcmp(argv[n],"-h") == 0) && (n+1 < argc)) {
          inpfile = argv[++n];
          continue;
       }
-      if ((strcmp(argv[n],"-o")==0) && (n+1 < argc)) {
+      if ((strcmp(argv[n],"-o") == 0) && (n+1 < argc)) {
          outfile = argv[++n];
          continue;
       }
-      if (strcmp(argv[n],"-skip-zero")==0) {
+      if (strcmp(argv[n],"-skip-zero") == 0) {
          skipzero = true;
          continue;
       }
@@ -112,8 +112,8 @@ int main(int argc, char* argv[]) {
       }
 
       if (lastdir!=dirname) {
-         if ((lastdir.Length()>0) && (currcnt==0) && skipzero) {
-            if ((gDirectory->GetList()->GetSize()==0) && (gDirectory->GetListOfKeys()->GetSize()==0)) {
+         if ((lastdir.Length() > 0) && (currcnt == 0) && skipzero) {
+            if ((gDirectory->GetList()->GetSize() == 0) && (gDirectory->GetListOfKeys()->GetSize() == 0)) {
                printf("Deleting empty directory %s\n", lastdir.Data());
                f->rmdir(lastdir.Data());
             }

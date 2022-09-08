@@ -142,7 +142,7 @@ void verbs::PoolRegistry::SyncMRStructure()
 
          DOUT5("CreateMRStructure %p for pool %p mr[%u] = %p done", this, fPool, n, f_mr[n]);
 
-         if (f_mr[n]==0) {
+         if (f_mr[n] == 0) {
             EOUT("Fail to register VERBS memory - HALT");
             exit(138);
          }
@@ -212,9 +212,9 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
       fIbPort = ibport;
       if (fIbPort<=0) fIbPort = 1;
       for (int n=0;n<num_of_hcas;n++)
-         if (strcmp(ibv_get_device_name(dev_list[n]), devicename)==0)
+         if (strcmp(ibv_get_device_name(dev_list[n]), devicename) == 0)
             selected_device = dev_list[n];
-      if (selected_device==0) {
+      if (!selected_device) {
          EOUT("No verbs device with name %s", devicename);
       }
    }
@@ -222,7 +222,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
    if (!selected_device) goto cleanup;
 
    fContext = ibv_open_device(selected_device);
-   if (fContext==0) {
+   if (!fContext) {
       EOUT("Cannot open device %s", devicename);
       goto cleanup;
    }

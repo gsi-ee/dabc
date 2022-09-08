@@ -365,7 +365,7 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 
          // FIXME: ConnectionRequest should be used
          QueuePair* port_qp = CreatePortQP(req.GetConnThread(), port, 0, thrd);
-         if (port_qp==0) return dabc::cmd_false;
+         if (!port_qp) return dabc::cmd_false;
 
          std::string portid = dabc::format("%04X:%08X:%08X", (unsigned) fIbContext.lid(), (unsigned) port_qp->qp_num(), (unsigned) port_qp->local_psn());
          DOUT0("CREATE CONNECTION %s", portid.c_str());

@@ -106,7 +106,7 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
 {  // called by framework. We dont fill any output event here at all
    static saftdabc::Timing_Event lastEvent;
 
-   if ((GetInputEvent()==0) || (GetInputEvent()->IsA() != TGo4MbsEvent::Class())) {
+   if (!GetInputEvent() || (GetInputEvent()->IsA() != TGo4MbsEvent::Class())) {
       TGo4Log::Error("TSaftProc: no input MBS event found!");
       return kFALSE;
    }
@@ -247,8 +247,8 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
             std::cout << std::endl;
           }
 
-//// DEBUG occurence of unwanted events?
-//          if(strstr(buf,"IO1")==0)
+//// DEBUG occurrence of unwanted events?
+//          if(strstr(buf,"IO1") == 0)
 //          {
 //            printf("TSaftProc::BuildEvent unexpected timing event %s",buf);
 //            std::cout << std::endl;

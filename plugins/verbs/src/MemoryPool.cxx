@@ -107,7 +107,7 @@ struct ibv_send_wr* verbs::MemoryPool::GetSendWR(unsigned bufid, uint64_t size)
 
    if (!f_swr || !f_sge) return nullptr;
 
-   if (size==0) size = GetBufferSize(bufid) - fSendBufferOffset;
+   if (size == 0) size = GetBufferSize(bufid) - fSendBufferOffset;
 
    f_sge[bufid].addr   = (uintptr_t) GetSendBufferLocation(bufid);
    f_sge[bufid].length = size;

@@ -72,9 +72,9 @@ int verbs::ComplQueue::Poll()
 
    int ne = ibv_poll_cq(cq(), 1, &f_wc);
 
-   if (ne==0) return 0;
+   if (ne == 0) return 0;
 
-   if (ne<0) {
+   if (ne < 0) {
       EOUT("ibv_poll_cq error");
       return 2;
    }
@@ -93,7 +93,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
 {
    int res = Poll();
 
-   if ((res != 0) || (timeout<=0.) || (f_channel==0)) return res;
+   if ((res != 0) || (timeout <= 0.) || (f_channel == 0)) return res;
 
    dabc::TimeStamp now = dabc::Now();
    dabc::TimeStamp finish = now + timeout;
@@ -114,7 +114,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
          if (timeout_ms<0) { EOUT("Negative timeout!!!"); timeout_ms = 0; }
 
          // no need to wait while no timeout is remaining
-         // if (timeout_ms==0) return Poll();
+         // if (timeout_ms == 0) return Poll();
 
          timeout_ms = 1;
 
@@ -126,11 +126,11 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
 
          int status = poll(&ufds, 1, timeout_ms);
 
-         if (status==0) return Poll();
+         if (status == 0) return Poll();
 
-         if (status>0) { is_event = true; break; }
+         if (status > 0) { is_event = true; break; }
 
-         if ((status==-1) && (errno != EINTR)) {
+         if ((status == -1) && (errno != EINTR)) {
             EOUT("Error when waiting IB event");
             return 2;
          }
@@ -151,12 +151,12 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
 
          int retval = select(1, &rfds, nullptr, nullptr, &tv);
 
-         if (retval<0) {
+         if (retval < 0) {
             EOUT("Error when waiting IB event");
             return 2;
          }
 
-         if (retval==0) return Poll();
+         if (retval == 0) return Poll();
 
          break;
 */
@@ -169,7 +169,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
 
    if (!is_event) return Poll();
 
-   struct ibv_cq *ev_cq;
+   struct ibv_cq *ev_cq = nullptr;
    ComplQueueContext *ev_ctx = nullptr;
    if (ibv_get_cq_event(f_channel, &ev_cq, (void**)&ev_ctx)) {
       EOUT("Failed to get cq_event");
@@ -239,7 +239,7 @@ const char* verbs::ComplQueue::GetStrError(int err)
    };
 
    for (const discr_t *d = errors; d->name != nullptr; d++) {
-      if (err==d->code) return d->name;
+      if (err == d->code) return d->name;
    }
 
    return "noerror";

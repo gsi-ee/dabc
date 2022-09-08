@@ -122,7 +122,7 @@ bool verbs::OpenSM::Init()
 
    f_vendor = osm_vendor_new(f_log, 10);
 
-   if (f_vendor==0) {
+   if (!f_vendor) {
       //osm_log(f_log, OSM_LOG_ERROR, "Cannot create vendor\n" );
       EOUT("Cannot create vendor");
       return false;
@@ -257,7 +257,7 @@ bool verbs::OpenSM::ManageMultiCastGroup(bool isadd,
                                 uint8_t* mgid_raw,
                                 uint16_t* mlid)
 {
-   if ((mgid_raw==0) || (mlid==0)) return false;
+   if (!mgid_raw || !mlid) return false;
 
    ib_member_rec_t mc_req_rec;
    uint64_t     comp_mask=0;

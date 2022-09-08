@@ -112,7 +112,7 @@ bool stream::RecalibrateModule::retransmit()
             while (iter.NextEvent()) {
                fNumEv++;
                unsigned len = fHLD->TransformEvent(iter.evnt(), iter.evntsize(), tgt(), tgt.rawsize());
-               if (len==0) { EOUT("Fail to transform HLD event"); break; }
+               if (len == 0) { EOUT("Fail to transform HLD event"); break; }
                if (tgt.shift(len)!=len) { EOUT("no enough space to shift to next event"); exit(5); break; }
             }
 

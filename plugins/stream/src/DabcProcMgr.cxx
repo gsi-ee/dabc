@@ -119,14 +119,14 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
          options = nullptr;
       }
 
-      if (part.find("xbin:")==0) { xlbls = part; xlbls.erase(0, 5); } else
-      if (part.find("fill:")==0) { fillcolor = part; fillcolor.erase(0,5); } else
-      if (part.find("opt:")==0) { drawopt = part; drawopt.erase(0,4); } else
-      if (part.find("hmin:")==0) { hmin = part; hmin.erase(0,5); } else
-      if (part.find("hmax:")==0) { hmax = part; hmax.erase(0,5); } else
-      if (part.find("kind:")==0) { } else
-      if (part.find("reuse")==0) { reuse = true; } else
-      if (part.find("clear_protect")==0) { clear_protect = true; } else
+      if (part.find("xbin:") == 0) { xlbls = part; xlbls.erase(0, 5); } else
+      if (part.find("fill:") == 0) { fillcolor = part; fillcolor.erase(0,5); } else
+      if (part.find("opt:") == 0) { drawopt = part; drawopt.erase(0,4); } else
+      if (part.find("hmin:") == 0) { hmin = part; hmin.erase(0,5); } else
+      if (part.find("hmax:") == 0) { hmax = part; hmax.erase(0,5); } else
+      if (part.find("kind:") == 0) { } else
+      if (part.find("reuse") == 0) { reuse = true; } else
+      if (part.find("clear_protect") == 0) { clear_protect = true; } else
       if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
 
@@ -190,16 +190,16 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
          options = nullptr;
       }
 
-      if (part.find("xbin:")==0) { xlbls = part; xlbls.erase(0, 5); } else
-      if (part.find("ybin:")==0) { ylbls = part; ylbls.erase(0, 5); } else
-      if (part.find("fill:")==0) { fillcolor = part; fillcolor.erase(0,5); } else
-      if (part.find("opt:")==0) { drawopt = part; drawopt.erase(0,4); } else
-      if (part.find("hmin:")==0) { hmin = part; hmin.erase(0,5); } else
-      if (part.find("hmax:")==0) { hmax = part; hmax.erase(0,5); } else
-      if (part.find("kind:")==0) { } else
-      if (part.find("h2poly:")==0) { h2poly = part; h2poly.erase(0,7); } else
-      if (part.find("reuse")==0) { reuse = true; } else
-      if (part.find("clear_protect")==0) { clear_protect = true; } else
+      if (part.find("xbin:") == 0) { xlbls = part; xlbls.erase(0, 5); } else
+      if (part.find("ybin:") == 0) { ylbls = part; ylbls.erase(0, 5); } else
+      if (part.find("fill:") == 0) { fillcolor = part; fillcolor.erase(0,5); } else
+      if (part.find("opt:") == 0) { drawopt = part; drawopt.erase(0,4); } else
+      if (part.find("hmin:") == 0) { hmin = part; hmin.erase(0,5); } else
+      if (part.find("hmax:") == 0) { hmax = part; hmax.erase(0,5); } else
+      if (part.find("kind:") == 0) { } else
+      if (part.find("h2poly:") == 0) { h2poly = part; h2poly.erase(0,7); } else
+      if (part.find("reuse") == 0) { reuse = true; } else
+      if (part.find("clear_protect") == 0) { clear_protect = true; } else
       if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
 
@@ -340,7 +340,7 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
 {
    dabc::Buffer buf = folder.SaveToBuffer();
 
-   if (buf.GetTotalSize()==0) return false;
+   if (buf.GetTotalSize() == 0) return false;
 
    DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize());
    {

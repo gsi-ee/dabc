@@ -127,7 +127,7 @@ unsigned user::Input::Read_Complete (dabc::Buffer& buf)
   buf = iter.Close();
   if(fDebug)
    {
-      if(fNumEvents % 10000 ==0)
+      if(fNumEvents % 10000 == 0)
       {
          DOUT0("UserReadout has send %d events to input, last size:%ld, return value:%d, total buffers size:%d\n",
                  fNumEvents, (long) subsize,res, buf.GetTotalSize());

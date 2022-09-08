@@ -78,7 +78,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    fTRB = Cfg("TRB", cmd).AsUInt(0x0);
    int portid = cmd.GetInt("portid", 0); // this is portid parameter from hadaq::Factory
-   if (fTRB==0) fTRB = 0x8000 | portid;
+   if (fTRB == 0) fTRB = 0x8000 | portid;
 
    item.SetField("trb", fTRB);
 
@@ -184,8 +184,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       base::ProcMgr::ClearInstancePointer(fProcMgr);
    }
 
-   // in AutoTDCMode==0 no data is changed, but also no new buffer are required
-   if ((fAutoTdcMode==0) && !fReplace) fReplace = true;
+   // in AutoTDCMode == 0 no data is changed, but also no new buffer are required
+   if ((fAutoTdcMode == 0) && !fReplace) fReplace = true;
 
    // one need additional buffers
    if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
@@ -268,7 +268,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, dabc::Hie
          if (mode < 0) {
             explicitmode = false;
             // auto calibration
-            if (sname.find("Ready")==0) {
+            if (sname.find("Ready") == 0) {
                if (p1 > progr) p1 = progr;
             } else {
                if (p0 < progr) p0 = progr;
@@ -501,7 +501,7 @@ bool stream::TdcCalibrationModule::retransmit()
                // set field with TDCs
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
 
-               if ((numtdc==0) && (fWarningCnt <= 0)) {
+               if ((numtdc == 0) && (fWarningCnt <= 0)) {
                   DOUT0("No any TDC found in %s - please disable Mode in XML file", GetName());
                   fWarningCnt = 10;
                }
@@ -565,7 +565,7 @@ bool stream::TdcCalibrationModule::retransmit()
                         return true;
                      }
 
-                     sublen = fTrbProc->TransformSubEvent(sub, tgt, tgtlen - reslen, (fAutoTdcMode==0), fRecheckTdcs ? &newids : nullptr);
+                     sublen = fTrbProc->TransformSubEvent(sub, tgt, tgtlen - reslen, (fAutoTdcMode == 0), fRecheckTdcs ? &newids : nullptr);
                   }
 
                   if (tgt) {

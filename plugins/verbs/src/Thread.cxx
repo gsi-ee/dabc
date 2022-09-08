@@ -298,8 +298,8 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 
 #else
 
-   if (tmout_sec>=0.) {
-      if (fTimeout==0) {
+   if (tmout_sec >= 0.) {
+      if (fTimeout == 0) {
          fTimeout = new TimeoutWorker(this);
          fTimeout->AssignToThread(dabc::mgr()->thread(), false);
       }
@@ -333,7 +333,7 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
    } else
       ibv_ack_cq_events(ev_cq, 1);
 
-   } // nevents==0
+   } // nevents == 0
 
    dabc::LockGuard lock(ThreadMutex());
 

@@ -140,7 +140,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    if (fParallel >= 0) {
       fAsf = Cfg("asf",cmd).AsStr();
       // do not autosave is specified, module will not stop when data source disappears
-      if ((fAsf.length()==0) || (fParallel>0)) SetAutoStop(false);
+      if (fAsf.empty() || (fParallel > 0)) SetAutoStop(false);
       CreatePar("Events").SetRatemeter(false, 3.).SetUnits("Ev");
    } else {
       SetAutoStop(false);
@@ -198,7 +198,7 @@ void stream::RunModule::OnThreadAssigned()
 
       fProcMgr = new DabcProcMgr;
       fProcMgr->SetDefaultFill(fDefaultFill);
-      fProcMgr->SetTop(fWorkerHierarchy, fParallel==0);
+      fProcMgr->SetTop(fWorkerHierarchy, fParallel == 0);
 
       std::string src = "Source: ";
       src += FindPort(InputName(0)).Cfg("url").AsStr();
@@ -386,7 +386,7 @@ void stream::RunModule::BeforeModuleStart()
 
 void stream::RunModule::SaveHierarchy(dabc::Buffer buf)
 {
-   if (buf.GetTotalSize()==0) return;
+   if (buf.GetTotalSize() == 0) return;
 
    DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize());
    {
@@ -527,7 +527,7 @@ bool stream::RunModule::RedistributeBuffers()
       }
 
       // one need at least one output to be able send something
-      if (max==0) return false;
+      if (max == 0) return false;
 
       // in case of EOF one need that all outputs can accept at least one buffer
       if ((RecvQueueItem().GetTypeId() == dabc::mbt_EOF) && (min == 0))

@@ -66,33 +66,29 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
   fSnoop_Offsets = wrk.Cfg (saftdabc::xmlOffsets, cmd).AsUIntVect ();
   fSnoop_Flags = wrk.Cfg (saftdabc::xmlAcceptFlags, cmd).AsUIntVect ();
 
-  std::string format=wrk.Cfg (saftdabc::xmlEventFormat, cmd).AsStr("MBS");
+  std::string format = wrk.Cfg (saftdabc::xmlEventFormat, cmd).AsStr("MBS");
 
-  if(format.compare(std::string("RAW"))==0)
+  if(format.compare(std::string("RAW")) == 0)
       fEventFormat=saft_Format_Raw;
-  else if (format.compare(std::string("MBS"))==0)
+  else if (format.compare(std::string("MBS")) == 0)
       fEventFormat=saft_Format_Mbs;
-  else if (format.compare(std::string("HADAQ"))==0)
+  else if (format.compare(std::string("HADAQ")) == 0)
       fEventFormat=saft_Format_Hadaq;
   else
     fEventFormat=saft_Format_Mbs;
 
-
-  if (! (fSnoop_Ids.size () == fSnoop_Masks.size ()) &&
-        (fSnoop_Ids.size () == fSnoop_Offsets.size ()) &&
-        (fSnoop_Ids.size () == fSnoop_Flags.size ()))
-  {
-    EOUT(
-        "saftdabc::Input  %s - numbers for snoop event ids %d, masks %d, offsets %d, flags %d differ!!! - Please check configuration.", wrk.GetName(),
-          fSnoop_Ids.size(), fSnoop_Masks.size(), fSnoop_Offsets.size(), fSnoop_Flags.size());
-    return false;
+  if (!(fSnoop_Ids.size() == fSnoop_Masks.size()) && (fSnoop_Ids.size() == fSnoop_Offsets.size()) &&
+      (fSnoop_Ids.size() == fSnoop_Flags.size())) {
+     EOUT("saftdabc::Input  %s - numbers for snoop event ids %d, masks %d, offsets %d, flags %d differ!!! - Please "
+          "check configuration.",
+          wrk.GetName(), fSnoop_Ids.size(), fSnoop_Masks.size(), fSnoop_Offsets.size(), fSnoop_Flags.size());
+     return false;
   }
 
-
-  DOUT1(
-      "saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, format:%s, subevtid:%d, single event:%s, %d hardware inputs, %d snoop event ids, verbose=%s ",
-      wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), format.c_str(), fSubeventId, DBOOL(fSingleEvents), fInput_Names.size(), fSnoop_Ids.size(), DBOOL(fVerbose));
-
+  DOUT1("saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, format:%s, subevtid:%d, single event:%s, %d hardware "
+        "inputs, %d snoop event ids, verbose=%s ",
+        wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), format.c_str(), fSubeventId, DBOOL(fSingleEvents),
+        fInput_Names.size(), fSnoop_Ids.size(), DBOOL(fVerbose));
 
   // There set up the software conditions
   bool rev=SetupConditions();
