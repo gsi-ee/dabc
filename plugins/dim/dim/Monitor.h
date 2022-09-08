@@ -41,27 +41,27 @@ namespace dim {
       protected:
 
          struct MyEntry {
-            DimInfo* info;
-            int      flag;
-            long     fLong;      ///< buffer for long
-            double   fDouble;    ///< buffer for double
-            int      fKind;     ///< kind of new data (0 - none, 1 - long, 2 - double )
-            MyEntry() : info(0), flag(0), fLong(0), fDouble(0.), fKind(0) {}
+            DimInfo* info{nullptr};
+            int      flag{0};
+            long     fLong{0};      ///< buffer for long
+            double   fDouble{0.};   ///< buffer for double
+            int      fKind{0};      ///< kind of new data (0 - none, 1 - long, 2 - double )
+            MyEntry() {}
             MyEntry(const MyEntry& src) : info(src.info), flag(src.flag), fLong(src.fLong), fDouble(src.fDouble), fKind(src.fKind) {}
          };
 
          typedef std::map<std::string, MyEntry> DimServicesMap;
 
-         std::string    fDimDns;      ///<  name of DNS server
-         std::string    fDimMask;     ///<  mask of DIM services
-         double         fDimPeriod;   ///<  how often DIM records will be checked, default 1 s
-         ::DimBrowser*  fDimBr;       ///<  dim browser
-         DimServicesMap fDimInfos;    ///< all subscribed DIM services
-         dabc::TimeStamp fLastScan;   ///< last time when DIM services were scanned
-         char           fNoLink[10];  ///< buffer used to detect nolink
-         bool           fNeedDnsUpdate; ///< if true, should update DNS structures
+         std::string    fDimDns;          ///<  name of DNS server
+         std::string    fDimMask;         ///<  mask of DIM services
+         double         fDimPeriod{0.};   ///<  how often DIM records will be checked, default 1 s
+         ::DimBrowser*  fDimBr{nullptr};  ///<  dim browser
+         DimServicesMap fDimInfos;        ///< all subscribed DIM services
+         dabc::TimeStamp fLastScan;       ///< last time when DIM services were scanned
+         char           fNoLink[10];      ///< buffer used to detect nolink
+         bool           fNeedDnsUpdate;   ///< if true, should update DNS structures
 
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
          void ScanDimServices();
 

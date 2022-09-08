@@ -188,7 +188,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
          if (ret!=EZCA_OK) EOUT("Request double %s Ret = %s", GetDoubleRecord(ix).c_str(), CA_RetCode(ret));
       }
 
-      int *rcs(0), nrcs(0);
+      int *rcs = nullptr, nrcs = 0;
 
       if (ezcaEndGroupWithReport(&rcs, &nrcs) != EZCA_OK) {
          EOUT("EZCA error %s", CA_ErrorString().c_str());

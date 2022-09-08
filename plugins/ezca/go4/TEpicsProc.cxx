@@ -99,8 +99,8 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
    }
 
    evnt->ResetIterator();
-   TGo4MbsSubEvent *psubevt(0);
-   while((psubevt = evnt->NextSubEvent()) != 0) { // loop over subevents
+   TGo4MbsSubEvent *psubevt = nullptr;
+   while((psubevt = evnt->NextSubEvent()) != nullptr) { // loop over subevents
 
       if (psubevt->GetProcid() != CBM_EPIX_SUBID) return kFALSE;
 
@@ -171,7 +171,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
 
          std::istringstream input(std::string((const char*) pdata, rest), std::istringstream::in);
          char curbuf[256];
-         unsigned numlong(0), numdub(0);
+         unsigned numlong = 0, numdub = 0;
          // first get number of long records:
          input.getline(curbuf,256,'\0'); // use string separators '\0' here
          sscanf(curbuf, "%u", &numlong);

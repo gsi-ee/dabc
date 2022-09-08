@@ -330,7 +330,7 @@ void dim::Monitor::infoHandler()
                ptr += sizeof(double) * size;
                break;
             case 'C' : {
-               int slen(0);
+               int slen = 0;
                while ((slen<size) && (ptr[slen]!=0)) slen++;
                if (slen<size)
                   fld.SetStr(ptr);
@@ -349,7 +349,7 @@ void dim::Monitor::infoHandler()
          item.SetField(dabc::format("fld%d", fldcnt++), fld);
       }
    } else {
-      if (strlen(info->getFormat())>0)
+      if (strlen(info->getFormat()) > 0)
          EOUT("Not processed DIM format %s for record %s", info->getFormat(), info->getName());
       changed = false;
    }

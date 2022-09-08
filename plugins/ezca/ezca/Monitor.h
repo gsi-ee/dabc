@@ -51,7 +51,7 @@ namespace ezca {
          std::vector<bool> fDoubleRes;            ///< results of record readout
 
          /** Initialize some EZCA settings, do it from worker thread */
-         virtual void OnThreadAssigned();
+         void OnThreadAssigned() override;
 
          /* Wrapper for ezca get with long values. Contains error message handling.
           * Returns ezca error code.*/

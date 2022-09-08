@@ -660,20 +660,20 @@ void TestList()
    MyRec r;
 
    DOUT0("Push record");
-   l.push_back(r);
+   l.emplace_back(r);
 
    DOUT0("Pop record");
    r = l.front();
    l.pop_front();
 
    DOUT0("Push 3 records");
-   for (int n=0;n<3;n++) l.push_back(r);
+   for (int n=0;n<3;n++) l.emplace_back(r);
 
    DOUT0("Pop 3 records");
    for (int n=0;n<3;n++) l.pop_front();
 
    DOUT0("Push 2 records");
-   for (int n=0;n<2;n++) l.push_back(r);
+   for (int n=0;n<2;n++) l.emplace_back(r);
 
    DOUT0("Reset list");
    l.clear();
@@ -694,20 +694,20 @@ void TestVector()
    MyRec r;
 
    DOUT0("Push record");
-   l.push_back(r);
+   l.emplace_back(r);
 
    DOUT0("Pop record");
    r = l.back();
    l.pop_back();
 
    DOUT0("Push 3 records");
-   for (int n=0;n<3;n++) l.push_back(r);
+   for (int n=0;n<3;n++) l.emplace_back(r);
 
    DOUT0("Pop 3 records");
    for (int n=0;n<3;n++) l.pop_back();
 
    DOUT0("Push 2 records");
-   for (int n=0;n<2;n++) l.push_back(r);
+   for (int n=0;n<2;n++) l.emplace_back(r);
 
    DOUT0("Reset vector");
    l.clear();

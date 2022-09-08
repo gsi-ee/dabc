@@ -53,7 +53,7 @@ namespace dabc {
             size(0)
          {
             for (unsigned n=0;n<capacity;n++)
-               vect.push_back(dabc::Buffer());
+               vect.emplace_back(dabc::Buffer());
          }
 
          virtual ~BuffersQueue() { Cleanup(); }

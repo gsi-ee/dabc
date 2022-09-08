@@ -106,13 +106,13 @@ int dabc::Application::ExecuteCommand(dabc::Command cmd)
 
    if (cmd.IsName("AddAppObject")) {
       if (cmd.GetStr("kind") == "device")
-         fAppDevices.push_back(cmd.GetStr("name"));
+         fAppDevices.emplace_back(cmd.GetStr("name"));
       else
       if (cmd.GetStr("kind") == "pool")
-         fAppPools.push_back(cmd.GetStr("name"));
+         fAppPools.emplace_back(cmd.GetStr("name"));
       else
       if (cmd.GetStr("kind") == "module")
-         fAppModules.push_back(cmd.GetStr("name"));
+         fAppModules.emplace_back(cmd.GetStr("name"));
       else
          return cmd_false;
 
@@ -243,7 +243,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       const char *clname = Xml::GetAttr(node, xmlClassAttr);
       if (!name || !clname) continue;
 
-      fAppDevices.push_back(name);
+      fAppDevices.emplace_back(name);
 
       if (!dabc::mgr.CreateDevice(clname, name)) {
          EOUT("Fail to create device %s class %s", name, clname);
@@ -267,7 +267,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
 
    while (cfg->NextCreationNode(node, xmlMemoryPoolNode, true)) {
       const char *name = Xml::GetAttr(node, xmlNameAttr);
-      fAppPools.push_back(name);
+      fAppPools.emplace_back(name);
       DOUT2("Create memory pool %s", name);
       if (!dabc::mgr.CreateMemoryPool(name)) {
          EOUT("Fail to create memory pool %s", name);
@@ -291,7 +291,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       // FIXME: for old xml files, remove after 12.2014
       if (strcmp(clname, "dabc::Publisher")==0) continue;
 
-      fAppModules.push_back(name);
+      fAppModules.emplace_back(name);
 
       DOUT2("Create module %s class %s", name, clname);
 
