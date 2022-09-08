@@ -473,7 +473,7 @@ bool verbs::OpenSM::QueryMyltucastGroup(uint8_t* mgid, uint16_t& mlid)
   for( i = 0; i < num_recs; i++ ) {
     p_rec = (ib_member_rec_t*) osmv_get_query_result( fLastResult.p_result_madw, i );
 
-    if (memcmp(p_rec->mgid.raw, mgid, sizeof(uint8_t)*16)!=0) continue;
+    if (memcmp(p_rec->mgid.raw, mgid, sizeof(uint8_t)*16) != 0) continue;
 
     mlid = cl_ntoh16(p_rec->mlid);
     res = true;

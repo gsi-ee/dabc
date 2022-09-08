@@ -93,7 +93,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
 {
    int res = Poll();
 
-   if ((res!=0) || (timeout<=0.) || (f_channel==0)) return res;
+   if ((res != 0) || (timeout<=0.) || (f_channel==0)) return res;
 
    dabc::TimeStamp now = dabc::Now();
    dabc::TimeStamp finish = now + timeout;
@@ -106,7 +106,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
       if (now < fastfinish) {
          // polling some portion of time in the beginning
          res = Poll();
-         if (res!=0) return res;
+         if (res != 0) return res;
       } else {
 
          int timeout_ms = lrint((finish-now)*1000);

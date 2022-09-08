@@ -183,7 +183,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    while (options != nullptr) {
       const char* separ = strchr(options,';');
       std::string part = options;
-      if (separ!=0) {
+      if (separ) {
          part.resize(separ-options);
          options = separ+1;
       } else {
@@ -363,7 +363,7 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
 
    int res = std::system(args.c_str());
 
-   if (res!=0) {
+   if (res != 0) {
       EOUT("Fail to convert DABC histograms in ROOT file, check h-date-time.bin file");
       args = dabc::format("mv h.bin h-%s-%s.bin", dt.OnlyDateAsString("-", true).c_str(), dt.OnlyTimeAsString("-", true).c_str());
       std::system(args.c_str());

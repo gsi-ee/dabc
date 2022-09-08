@@ -240,13 +240,13 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
          mbs::SubeventHeader* subevnt = fInp[ninp].evnt()->SubEvents();
          fCfg[ninp].curr_evnt_num = 0;
 
-         while (subevnt!=0) {
+         while (subevnt) {
             // DOUT1("Saw subevent fullid %u", subevnt->fFullId);
             if (subevnt->fFullId == fCfg[ninp].evntsrc_fullid) break;
             subevnt = fInp[ninp].evnt()->NextSubEvent(subevnt);
          }
 
-         if (subevnt!=0) {
+         if (subevnt) {
             uint32_t* data = (uint32_t*) (((uint8_t*) subevnt->RawData()) + fCfg[ninp].evntsrc_shift);
 
             if (fCfg[ninp].evntsrc_shift + sizeof(uint32_t) <= subevnt->RawDataSize()) {

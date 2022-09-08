@@ -168,16 +168,16 @@ bool rfio::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
 
 void rfio::FileInterface::fclose(Handle f)
 {
-   if ((fRemote!=0) && (f==fRemote)) {
+   if (fRemote && (f == fRemote)) {
       rfio_fendfile((RFILE*) fRemote);
       fOpenedCounter--;
       if (fOpenedCounter < 0) EOUT("Too many close operations - counter (%d) is negative", fOpenedCounter);
       return;
    }
 
-   if (fRemote!=0) EOUT("Get RFIO::fclose with unexpected argument when fRemote!=0 cnt %d", fOpenedCounter);
+   if (fRemote) EOUT("Get RFIO::fclose with unexpected argument when fRemote!=0 cnt %d", fOpenedCounter);
 
-   if (f!=0) rfio_fclose((RFILE*)f);
+   if (f) rfio_fclose((RFILE*)f);
 }
 
 size_t rfio::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f)
@@ -202,7 +202,7 @@ bool rfio::FileInterface::fseek(Handle f, long int offset, bool relative)
    int fileid = rfio_ffileid((RFILE*)f);
 #endif
 
-   if (fileid<0) return false;
+   if (fileid < 0) return false;
 
    return rfio_lseek(fileid, offset, relative ? SEEK_CUR : SEEK_SET) >= 0;
 }

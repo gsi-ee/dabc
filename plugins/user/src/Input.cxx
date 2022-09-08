@@ -50,14 +50,12 @@ user::Input::~Input ()
 }
 
 
-
 bool user::Input::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
    DOUT1 ("Read_Init is executed...");
-  if(User_Init()!=0) return false;
+   if(User_Init() != 0) return false;
    return dabc::DataInput::Read_Init(wrk,cmd);
 }
-
 
 
 double user::Input::Read_Timeout ()

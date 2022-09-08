@@ -66,8 +66,8 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
          EOUT("Cannot create RFIO object, check if libDabcRfio.so loaded");
       }
    } else if(fLtsm) {
-	   dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("ltsm::FileInterface");
-	   if (io!=0) {
+	   auto io = (dabc::FileInterface *) dabc::mgr.CreateAny("ltsm::FileInterface");
+	   if (io) {
 		   fUrlOptions = url.GetOptions();
 		   fFile.SetIO(io, true);
 	   } else {
@@ -180,7 +180,7 @@ bool hadaq::HldOutput::StartNewFile()
    if (fRunSlave && fRfio)
       DOUT1("File %s is open for writing", CurrentFileName().c_str());
 
-   std::string info = dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
+   std::string info = dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
    if (!ShowInfo(0, info))
       DOUT0("%s", info.c_str());
 
@@ -253,7 +253,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    bool is_events = (buf.GetTypeId() == hadaq::mbt_HadaqEvents);
 
    if (!is_events && !is_eol && !is_subev) {
-      std::string info = dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()); 
+      std::string info = dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId());
       if (!ShowInfo(-1, info.c_str()))
          EOUT("%s", info.c_str());
 

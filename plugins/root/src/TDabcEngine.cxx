@@ -62,7 +62,7 @@ Bool_t TDabcEngine::Create(const char* args)
    //    serv->CreateEngine("dabc:http:8090?top=myapp");
 
 
-   if (args!=0) Info("Create", "args = %s", args);
+   if (args) Info("Create", "args = %s", args);
 
    dabc::Url url;
 
@@ -75,7 +75,7 @@ Bool_t TDabcEngine::Create(const char* args)
    if (strncmp(args,"master:",7) == 0) {
       url.SetUrl(std::string("dabc://") + (args+7), false);
    } else
-   if (strchr(args,':')!=0) {
+   if (strchr(args,':')) {
       url.SetUrl(std::string("dabc://") + args, false);
    } else {
       url.SetUrl(std::string("server://localhost:") + args, false);

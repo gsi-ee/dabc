@@ -110,7 +110,7 @@ fesa::Player::Player(const std::string &name, dabc::Command cmd) :
          EOUT("Device %s on server %s not found", fDeviceName.c_str(), fServerName.c_str());
       }
 
-      if ((fDevice!=0) && !fService.empty()) {
+      if (fDevice && !fService.empty()) {
          item = fWorkerHierarchy.CreateHChild(fService);
          item.SetField(dabc::prop_kind,"rate");
          item.EnableHistory(100);
@@ -157,7 +157,7 @@ void fesa::Player::ProcessTimerEvent(unsigned)
 
 
 #ifdef WITH_FESA
-   if ((fDevice!=0) && !fService.empty()) {
+   if (fDevice && !fService.empty()) {
       double res = doGet(fService, fField);
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
       fWorkerHierarchy.GetHChild(fService).SetField("value", res);
@@ -173,7 +173,6 @@ void fesa::Player::ProcessTimerEvent(unsigned)
 
    item()->bindata() = buf;
    item.SetField(dabc::prop_hash, fCounter);
-
 
    if (fCounter > 10) {
       // fill also second profile

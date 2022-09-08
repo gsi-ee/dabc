@@ -128,7 +128,7 @@ fesa::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
       dabc::Hierarchy item = fHierarchy.CreateHChild(services[n]);
       item.EnableHistory(100);
 
-      if (fDevice!=0) {
+      if (fDevice) {
          #ifdef WITH_FESA
          rdaDabcHandler* handler = new rdaDabcHandler(this, services[n]);
          if (handler->subscribe(fDevice, fCycle))

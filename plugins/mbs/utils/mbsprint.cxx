@@ -24,7 +24,7 @@
 
 int usage(const char* errstr = nullptr)
 {
-   if (errstr!=0) {
+   if (errstr) {
       printf("Error: %s\n\n", errstr);
    }
 
@@ -121,9 +121,9 @@ int main(int argc, char* argv[])
 
    if (ref.null()) return 1;
 
-   mbs::EventHeader* evnt(0);
+   mbs::EventHeader* evnt = nullptr;
 
-   long cnt(0), lastcnt(0);
+   long cnt = 0, lastcnt = 0;
 
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
@@ -134,11 +134,11 @@ int main(int argc, char* argv[])
    while (!dabc::CtrlCPressed()) {
 
       evnt = ref.NextEvent(maxage > 0 ? maxage/2. : 1., maxage);
-      if (debug_delay>0) dabc::Sleep(debug_delay);
+      if (debug_delay > 0) dabc::Sleep(debug_delay);
 
       dabc::TimeStamp curr = dabc::Now();
 
-      if (evnt!=0) {
+      if (evnt) {
          cnt++;
          lastevtm = curr;
       } else
@@ -162,10 +162,11 @@ int main(int argc, char* argv[])
       mbs::SubeventHeader* sub = nullptr;
       while ((sub = evnt->NextSubEvent(sub)) != nullptr) {
          sub->PrintHeader();
-         if ((slowsubevid!=0) && (sub->fFullId==slowsubevid)) {
+         if ((slowsubevid != 0) && (sub->fFullId == slowsubevid)) {
             PrintSlowSubevent(sub);
-         } else
-         if (printdata) sub->PrintData(ashex, aslong);
+         } else if (printdata) {
+            sub->PrintData(ashex, aslong);
+         }
       }
 
       if (cnt >= number) break;

@@ -167,7 +167,7 @@ double verbs::ProtocolAddon::ProcessTimeout(double)
 
 void verbs::ProtocolAddon::VerbsProcessSendCompl(uint32_t bufid)
 {
-   if (bufid!=0) {
+   if (bufid != 0) {
       EOUT("Wrong buffer id %u", bufid);
       return;
    }
@@ -181,7 +181,7 @@ void verbs::ProtocolAddon::VerbsProcessSendCompl(uint32_t bufid)
 
    const char* connid = (const char*) fPool->GetSendBufferLocation(bufid);
 
-   if (req.GetConnId().compare(connid)!=0) {
+   if (req.GetConnId().compare(connid) != 0) {
       EOUT("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str());
    }
 
@@ -200,7 +200,7 @@ void verbs::ProtocolAddon::VerbsProcessSendCompl(uint32_t bufid)
 
 void verbs::ProtocolAddon::VerbsProcessRecvCompl(uint32_t bufid)
 {
-   if (bufid!=0) {
+   if (bufid != 0) {
       EOUT("Wrong buffer id %u", bufid);
       return;
    }

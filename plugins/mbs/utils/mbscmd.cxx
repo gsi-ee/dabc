@@ -22,7 +22,7 @@
 
 int usage(const char* errstr = nullptr)
 {
-   if (errstr!=0) printf("Error: %s\n\n", errstr);
+   if (errstr) printf("Error: %s\n\n", errstr);
 
    printf("Utility for execute commands on remote MBS node\n");
    printf("   mbscmd nodename [args] -cmd cmd1 [-cmd cmd2] [-cmd cmd3] ...\n");

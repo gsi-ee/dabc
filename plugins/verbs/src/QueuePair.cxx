@@ -92,7 +92,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
                           IBV_QP_ACCESS_FLAGS));
    }
 
-   if (res!=0) {
+   if (res != 0) {
       EOUT("Failed to modify QP to INIT state");
       return;
    }

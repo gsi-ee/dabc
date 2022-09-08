@@ -360,7 +360,7 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 
          uint32_t procid = fMap[wc->qp_num];
 
-         if (procid!=0) {
+         if (procid != 0) {
             uint16_t evnt = 0;
             if (wc->status != IBV_WC_SUCCESS) {
                evnt = WorkerAddon::evntVerbsError;
