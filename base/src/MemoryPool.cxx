@@ -158,7 +158,7 @@ bool dabc::MemoryPool::Find(ConfigIO &cfg)
 {
    DOUT4("Module::Find %p name = %s parent %p", this, GetName(), GetParent());
 
-   if (GetParent()==0) return false;
+   if (!GetParent()) return false;
 
    // module will always have tag "Module", class could be specified with attribute
    while (cfg.FindItem(xmlMemoryPoolNode)) {
@@ -188,7 +188,7 @@ bool dabc::MemoryPool::_Allocate(BufferSize_t bufsize, unsigned number) throw()
 {
    if (fMem!=0) return false;
 
-   if (bufsize*number==0) return false;
+   if (bufsize*number == 0) return false;
 
    DOUT3("POOL:%s Create num:%u X size:%u buffers align:%u", GetName(), number, bufsize, fAlignment);
 
@@ -212,7 +212,7 @@ bool dabc::MemoryPool::Assign(bool isowner, const std::vector<void*>& bufs, cons
 
    if (fMem) return false;
 
-   if ((bufs.size() != sizes.size()) || (bufs.size()==0)) return false;
+   if ((bufs.size() != sizes.size()) || (bufs.size() == 0)) return false;
 
    fMem = new MemoryBlock;
    fMem->Assign(isowner, bufs, sizes);
@@ -238,7 +238,7 @@ bool dabc::MemoryPool::IsEmpty() const
 {
    LockGuard lock(ObjectMutex());
 
-   return fMem==0;
+   return !fMem;
 }
 
 unsigned dabc::MemoryPool::GetNumBuffers() const
@@ -278,7 +278,7 @@ unsigned dabc::MemoryPool::GetMinBufSize() const
    unsigned min = 0;
 
    for (unsigned id=0;id<fMem->fNumber;id++)
-      if ((min==0) || (fMem->fArr[id].size < min)) min = fMem->fArr[id].size;
+      if ((min == 0) || (fMem->fArr[id].size < min)) min = fMem->fArr[id].size;
 
    return min;
 }
@@ -349,7 +349,8 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
       return res;
    }
 
-   if ((size==0) && reserve_memory) size = fMem->fArr[fMem->fFree.Front()].size;
+   if ((size == 0) && reserve_memory)
+      size = fMem->fArr[fMem->fFree.Front()].size;
 
    // first check if required size is available
    BufferSize_t sum = 0;

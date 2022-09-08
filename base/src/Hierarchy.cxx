@@ -92,7 +92,7 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
       s.read_uint64(mask);
       fCrossBoundary = (mask & 1) != 0;
 
-      if (fArr.Capacity()==0)
+      if (fArr.Capacity() == 0)
          fArr.Allocate((int)storenum > hlimit ? (int) storenum : hlimit);
 
       for (uint32_t n=0;n<storenum;n++) {
@@ -286,7 +286,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       if (store_childs)
          for (unsigned n=0;n<NumChilds();n++) {
             dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-            if (child==0) continue;
+            if (!child) continue;
             s.write_str(child->GetName());
             child->Stream(s, kind, version, hlimit);
          }
@@ -425,7 +425,7 @@ bool dabc::HierarchyContainer::SaveTo(HStore& res, bool create_node)
    if ((res.mask() & storemask_NoChilds) == 0) {
       for (unsigned n=0;n<NumChilds();n++) {
          dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-         if (child==0) continue;
+         if (!child) continue;
          res.BeforeNextChild();
          child->SaveTo(res);
       }
@@ -479,7 +479,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    fNodeChanged = false;
    fChildsChanged = false;
 
-   if (cont==0) throw dabc::Exception(ex_Hierarchy, "empty container", ItemName());
+   if (!cont) throw dabc::Exception(ex_Hierarchy, "empty container", ItemName());
 
    // we do not check names here - top object name can be different
    // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
@@ -539,7 +539,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 
       dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) (GetChild(cnt2));
 
-      if ((child==0) || !child->IsName(cont_child.GetName())) {
+      if (!child || !child->IsName(cont_child.GetName())) {
          throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy item", ItemName());
          return false;
       }
@@ -603,7 +603,7 @@ void dabc::HierarchyContainer::BuildObjectsHierarchy(const Reference& top)
 
 void dabc::HierarchyContainer::AddHistory(RecordFieldsMap* diff)
 {
-   if (fHist.Capacity()==0) return;
+   if (fHist.Capacity() == 0) return;
    if (fHist()->fArr.Full()) fHist()->fArr.PopOnly();
    HistoryItem* h = fHist()->fArr.PushEmpty();
    h->version = fNodeVersion;
@@ -624,7 +624,7 @@ bool dabc::HierarchyContainer::ExtractHistoryStep(RecordFieldsMap* fields, unsig
 
 void dabc::HierarchyContainer::ClearHistoryEntries()
 {
-   if (fHist.Capacity()==0) return;
+   if (fHist.Capacity() == 0) return;
    while (fHist()->fArr.Size() > 0) fHist()->fArr.PopOnly();
 }
 
@@ -719,7 +719,7 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
       if (fChildsChanged) { fChildsVersion = ver; mask = mask | change_Childs; }
 
       if (fNodeChanged && fAutoTime) {
-         if (tm==0) tm = dabc::DateTime().GetNow().AsJSDate();
+         if (tm == 0) tm = dabc::DateTime().GetNow().AsJSDate();
          Fields().Field(prop_time).SetDatime(tm);
       }
 
@@ -728,7 +728,7 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
          // otherwise we will produce empty entry
          RecordFieldsMap *prev = fHist()->fPrev;
 
-         if (prev != nullptr) {
+         if (prev) {
             prev->MakeAsDiffTo(Fields());
             AddHistory(prev);
          }
@@ -951,8 +951,8 @@ dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string &name, bool allowsl
 
    size_t pos = name.rfind("/");
    if ((pos != std::string::npos) && !allowslahes) {
-      if (pos==0) return GetHChild(name.substr(1), allowslahes, force, sortorder);
-      if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), allowslahes, force, sortorder);
+      if (pos == 0) return GetHChild(name.substr(1), allowslahes, force, sortorder);
+      if (pos == name.length()-1) return GetHChild(name.substr(0, name.length()-1), allowslahes, force, sortorder);
       return GetHChild(name.substr(0, pos), allowslahes, force, sortorder).GetHChild(name.substr(pos+1), allowslahes, force, sortorder);
    }
 
@@ -1035,7 +1035,7 @@ bool dabc::Hierarchy::RemoveHChild(const std::string &path, bool allowslahes)
 
 dabc::Hierarchy dabc::Hierarchy::FindMaster() const
 {
-   if (null() || (GetParent()==0) || !HasField(dabc::prop_masteritem)) return dabc::Hierarchy();
+   if (null() || !GetParent() || !HasField(dabc::prop_masteritem)) return dabc::Hierarchy();
 
    std::string masteritem = GetField(dabc::prop_masteritem).AsStr();
 
@@ -1056,7 +1056,7 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string &itemname, uint64_t has
    if (item.null()) return true;
 
    // if there is no hash information provided, we always think that binary data is changed
-   if (hash==0) return true;
+   if (hash == 0) return true;
 
    if (item.Field(dabc::prop_hash).AsUInt() != hash) {
       item.SetField(dabc::prop_hash, hash);
@@ -1064,7 +1064,7 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string &itemname, uint64_t has
       item.MarkChangedItems();
    }
 
-   return (last_version==0) || (last_version<item.GetVersion());
+   return (last_version == 0) || (last_version < item.GetVersion());
 }
 
 

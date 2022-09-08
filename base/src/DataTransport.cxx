@@ -276,7 +276,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    // if transport was already closed, one should ignore any other events
    if (fInpState == inpClosed) return false;
 
-   if (NumPools()==0) {
+   if (NumPools() == 0) {
       EOUT("InputTransport %s - no memory pool!!!!", GetName());
       CloseTransport(true);
       return false;
@@ -308,7 +308,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       DataInput* inp = dabc::mgr.CreateDataInput(fReconnect);
 
-      if (inp==0) {
+      if (!inp) {
          ShootTimer("SysTimer", 1.);
          return false;
       }
@@ -318,7 +318,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       ChangeState(inpInit);
    }
 
-   if (fInput==0) {
+   if (!fInput) {
       EOUT("InputTransport %s - no input object!!!!", GetName());
       CloseTransport(true);
       return false;
@@ -651,7 +651,7 @@ bool dabc::OutputTransport::StartTransport()
 
    fStopRequested = false;
 
-   if (fOutput==0) {
+   if (!fOutput) {
       EOUT("Output was not specified!!!");
       return false;
    }
@@ -754,7 +754,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 
    if (fOutState == outReady) {
 
-      unsigned ret(do_Ok);
+      unsigned ret = do_Ok;
 
       unsigned buftyp = RecvQueueItem(port,0).GetTypeId();
 

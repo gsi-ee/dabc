@@ -390,7 +390,7 @@ void dabc::Manager::HaltManager()
 
       if (!thrd.null()) {
          thrd()->SingleLoop(0, 0.001);
-         if ((thrd()->TotalNumberOfEvents()==0) || tm1.Expired(halttime*0.7)) thrd.Release();
+         if ((thrd()->TotalNumberOfEvents() == 0) || tm1.Expired(halttime*0.7)) thrd.Release();
       } else {
          dabc::Sleep(0.001);
       }
@@ -549,7 +549,7 @@ bool dabc::Manager::ProcessParameterEvents()
       {
          DABC_LOCKGUARD(ObjectMutex(), "Extracting event from fParsQueue");
          // LockGuard lock(ObjectMutex());
-         if (fParsQueue.Size()==0) return false;
+         if (fParsQueue.Size() == 0) return false;
          rec.par << fParsQueue.Front().par;
          rec.event = fParsQueue.Front().event;
          fParsQueue.PopOnly();
@@ -590,7 +590,7 @@ bool dabc::Manager::ProcessParameterEvents()
 
       if (checkremove && fTimedPars) {
          fTimedPars->Remove(rec.par());
-         if (fTimedPars->GetSize()==0) {
+         if (fTimedPars->GetSize() == 0) {
             delete fTimedPars;
             fTimedPars = nullptr;
          }
@@ -615,7 +615,7 @@ bool dabc::Manager::ProcessParameterEvents()
          if (!iter->match(rec.par.GetName(), rec.event, fullname)) continue;
 
          // TODO: provide complete list of fields - mean complete xml record ?????
-         if (value.length()==0)
+         if (value.empty())
             value = rec.par.Value().AsStr();
 
          if (iter->queue > 1000) {
@@ -808,7 +808,7 @@ int dabc::Manager::PreviewCommand(Command cmd)
    Factory* factory = nullptr; \
    for (unsigned n=0; n<factories.GetSize(); n++) { \
       factory = dynamic_cast<Factory*> (factories.GetObject(n)); \
-      if (factory==0) continue; \
+      if (!factory) continue; \
       arg \
    } \
 }
@@ -1156,7 +1156,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       std::string name = cmd.GetStr(CmdModule::ModuleArg());
       dabc::WorkerRef ref;
 
-      if (name.compare("*")==0)
+      if (name.compare("*") == 0)
          ref = app();
       else
          ref = FindModule(name);
@@ -1452,7 +1452,7 @@ bool dabc::Manager::DecomposeAddress(const std::string &addr, bool& islocal, std
 
    if (!url.SetUrl(addr, false)) return false;
 
-   if (url.GetProtocol().length()==0) {
+   if (url.GetProtocol().empty()) {
       islocal = true;
       server.clear();
       itemtname = addr;
@@ -1466,7 +1466,7 @@ bool dabc::Manager::DecomposeAddress(const std::string &addr, bool& islocal, std
    itemtname = url.GetFileName();
 
    int nodeid = -1;
-   if (server.compare(0, 4, "node")==0) {
+   if (server.compare(0, 4, "node") == 0) {
       if (!str_to_int(server.c_str() + 4, &nodeid)) nodeid = -1;
    }
 
@@ -1487,13 +1487,13 @@ bool dabc::Manager::DecomposeAddress(const std::string &addr, bool& islocal, std
 
 bool dabc::Manager::RegisterDependency(Object* src, Object* tgt, bool bidirectional)
 {
-   if ((src==0) || (tgt==0)) return false;
+   if (!src || !tgt) return false;
 
    // one only need cleanup for tgt, for src Reference will force object call
    tgt->SetCleanupBit();
 
    // we create record outside that mutexes not block each other
-   DependPair rec(src,tgt);
+   DependPair rec(src, tgt);
 
    {
       LockGuard guard(fMgrMutex);
@@ -1508,7 +1508,7 @@ bool dabc::Manager::RegisterDependency(Object* src, Object* tgt, bool bidirectio
 
 bool dabc::Manager::UnregisterDependency(Object* src, Object* tgt, bool bidirectional)
 {
-   if ((src==0) || (tgt==0)) return false;
+   if (!src || !tgt) return false;
 
    DependPair rec;
 
@@ -1866,7 +1866,6 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string &remnode
          DOUT0("Command %s res = %d", cmd.GetName(), res);
    }
 }
-
 
 
 bool dabc::Manager::Find(ConfigIO &cfg)

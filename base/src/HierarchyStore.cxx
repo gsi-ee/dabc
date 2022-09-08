@@ -37,7 +37,7 @@ dabc::HierarchyStore::~HierarchyStore()
 
    if (fIO!=0) {
       delete fIO;
-      fIO = 0;
+      fIO = nullptr;
    }
 }
 
@@ -67,7 +67,7 @@ bool dabc::HierarchyStore::StartFile(dabc::Buffer buf)
 
    path.append(strdate);
 
-   if (fIO==0) fIO = new FileInterface;
+   if (!fIO) fIO = new FileInterface;
 
    if (!fIO->mkdir(path.c_str())) {
       EOUT("Cannot create path %s for hierarchy storage", path.c_str());
@@ -326,7 +326,7 @@ bool dabc::HierarchyReading::ScanTree()
 {
    fTree.Release();
    fTree.Create("TOP");
-   if (fIO==0) fIO = new FileInterface;
+   if (!fIO) fIO = new FileInterface;
    return ScanTreeDir(fTree, fBasePath);
 }
 
@@ -376,7 +376,7 @@ bool dabc::HierarchyReading::ProduceStructure(Hierarchy& tree, const DateTime& f
    int nfiles = tree.Field("dabc:files").GetArraySize();
    uint64_t* files = tree.Field("dabc:files").GetUIntArr();
 
-   if ((files==0) || (nfiles<=0)) return false;
+   if (!files || (nfiles <= 0)) return false;
 
    DateTime dt;
    dt.SetJSDate(files[0]);
@@ -431,7 +431,7 @@ bool dabc::HierarchyReading::GetStrucutre(Hierarchy& tgt, const DateTime& dt)
       if (!ScanTree()) return false;
    }
 
-   if (fIO==0) return false;
+   if (!fIO) return false;
 
    tgt.Release();
    tgt.Create("TOP");
@@ -447,7 +447,7 @@ dabc::Hierarchy dabc::HierarchyReading::GetSerie(const std::string &entry, const
       if (!ScanTree()) return res;
    }
 
-   if (fIO==0) return res;
+   if (!fIO) return res;
    h.Create("TOP");
 
    if (!ProduceStructure(fTree, from, till, entry, h)) return res;
@@ -464,5 +464,3 @@ dabc::Hierarchy dabc::HierarchyReading::GetSerie(const std::string &entry, const
 
    return res;
 }
-
-

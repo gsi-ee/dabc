@@ -27,7 +27,7 @@ bool dabc::Factory::LoadLibrary(const std::string &fname)
 {
    void* lib = dlopen(fname.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
-   if (lib==0) {
+   if (!lib) {
       EOUT("Cannot load library %s err:%s", fname.c_str(), dlerror());
       return false;
    }
@@ -94,9 +94,7 @@ dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::s
    return nullptr;
 }
 
-
 // ================================================
-
 
 dabc::FactoryPlugin::FactoryPlugin(Factory* f)
 {

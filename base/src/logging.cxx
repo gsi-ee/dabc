@@ -90,7 +90,7 @@ namespace dabc {
          {
             flist::iterator iter = fFiles.begin();
             while (iter != fFiles.end()) {
-               if ((*iter)->fFileName.compare(filename)==0) return *iter;
+               if ((*iter)->fFileName.compare(filename) == 0) return *iter;
                iter++;
             }
 
@@ -380,7 +380,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 
 void dabc::Logger::_DoCheckTimeout()
 {
-   if (fLogReopenDisabled || (fFile==0) || fLogFileName.empty() || !fLogFileModified) return;
+   if (fLogReopenDisabled || !fFile || fLogFileName.empty() || !fLogFileModified) return;
 
    double now = dabc::Now().AsDouble();
 
@@ -394,7 +394,7 @@ void dabc::Logger::_DoCheckTimeout()
 
 void dabc::Logger::CheckTimeout()
 {
-   if ((Instance()==0) || Instance()->fLogReopenDisabled) return;
+   if (!Instance() || Instance()->fLogReopenDisabled) return;
    LockGuard lock(Instance()->fMutex);
    Instance()->_DoCheckTimeout();
 }

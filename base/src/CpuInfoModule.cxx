@@ -51,7 +51,7 @@ void dabc::CpuInfoModule::ProcessTimerEvent(unsigned)
       return;
    }
 
-   if (fStat.NumCPUs()==0) return;
+   if (fStat.NumCPUs() == 0) return;
 
    Par("CPUutil").SetValue(fStat.CPUutil(0)*100.);
 

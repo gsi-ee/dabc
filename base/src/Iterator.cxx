@@ -43,7 +43,7 @@ dabc::Iterator::~Iterator()
 
 dabc::Object* dabc::Iterator::next(bool goinside)
 {
-   if (fCurrent()==0) {
+   if (!fCurrent()) {
       fCurrent = fTop;
       fIndexes.clear();
       fFolders.Clear();
@@ -66,7 +66,7 @@ dabc::Object* dabc::Iterator::next(bool goinside)
 
       while (doagain) {
 
-         if (sz==0) { fCurrent.Release(); break; }
+         if (sz == 0) { fCurrent.Release(); break; }
 
          fIndexes[sz-1]++;
 

@@ -226,7 +226,7 @@ void dabc::ConnectionManager::CheckDebugOutput(const std::string &msg)
 
 double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 {
-   if (fDoingConnection==0) return -1.;
+   if (fDoingConnection == 0) return -1.;
 
    if (fConnDebug)
       CheckDebugOutput();
@@ -350,17 +350,18 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 
    if ((cmd_tmout>0) && (cmd_tmout<mindelay)) mindelay = cmd_tmout;
 
-   CheckConnectionRecs(cmd_tmout==0.);
+   CheckConnectionRecs(cmd_tmout == 0.);
 
    return mindelay;
 }
 
 dabc::ConnectionRequestFull dabc::ConnectionManager::FindConnection(const std::string &local, const std::string &remote)
 {
-   for (unsigned n=0; n<fRecs.GetSize(); n++) {
+   for (unsigned n = 0; n < fRecs.GetSize(); n++) {
       ConnectionRequestFull req = fRecs[n];
 
-      if (req.match(local, remote)) return req;
+      if (req.match(local, remote))
+         return req;
    }
 
    return nullptr;

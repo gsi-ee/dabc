@@ -71,7 +71,7 @@ void dabc::Module::EnsurePorts(unsigned numinp, unsigned numout, const std::stri
    while (NumOutputs() < numout)
       CreateOutput(format("Output%u", NumOutputs()));
 
-   if (!poolname.empty() && (NumPools()==0) && ((NumInputs() + NumOutputs())>0))
+   if (!poolname.empty() && (NumPools() == 0) && ((NumInputs() + NumOutputs())>0))
       CreatePoolHandle(poolname);
 }
 
@@ -111,9 +111,9 @@ unsigned dabc::Module::CreateTimer(const std::string &name, double period_sec, b
    unsigned indx = FindTimer(name);
    if (IsValidTimer(indx)) return indx;
 
-   bool systimer = !IsValidTimer(fSysTimerIndex) && (name.find("Sys")==0);
+   bool systimer = !IsValidTimer(fSysTimerIndex) && (name.find("Sys") == 0);
 
-   dabc::Timer* timer = new Timer(this, systimer, name, period_sec, synchron);
+   dabc::Timer *timer = new Timer(this, systimer, name, period_sec, synchron);
 
    AddModuleItem(timer);
 
@@ -391,7 +391,7 @@ int dabc::Module::PreviewCommand(Command cmd)
 
       for (unsigned indx=0;indx<fPools.size();indx++) {
          PoolHandle* pool = fPools[indx];
-         if (pool->QueueCapacity()==0) continue;
+         if (pool->QueueCapacity() == 0) continue;
 
          if (cnt>0) { cnt--; continue; }
 
@@ -516,9 +516,7 @@ int dabc::Module::PreviewCommand(Command cmd)
 
 bool dabc::Module::Find(ConfigIO &cfg)
 {
-   DOUT4("Module::Find %p name = %s parent %p", this, GetName(), GetParent());
-
-   if (GetParent()==0) return false;
+   if (!GetParent()) return false;
 
    // module will always have tag "Module", class could be specified with attribute
    while (cfg.FindItem(xmlModuleNode)) {
@@ -539,8 +537,6 @@ void dabc::Module::ObjectCleanup()
    if (IsRunning()) DoStop();
 
    ModuleCleanup();
-
-   DOUT3("Module cleanup %s numchilds %u", GetName(), NumChilds());
 
    for (unsigned n=0;n<fItems.size();n++)
       if (fItems[n]) fItems[n]->DoCleanup();
@@ -882,7 +878,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
                ConnTimer* timer = dynamic_cast<ConnTimer*> (FindChild(timername.c_str()));
 
-               if (timer==0) {
+               if (!timer) {
                   timer = new ConnTimer(this, timername, port->GetName());
                   AddModuleItem(timer);
                }
@@ -899,11 +895,13 @@ void dabc::Module::ProcessEvent(const EventId& evid)
          }
 
          if (fAutoStop && IsRunning() && !dostop) {
-            for (unsigned n=0;n<NumOutputs();n++)
-               if (Output(n)->IsConnected() || Output(n)->IsDoingReconnect()) return;
+            for (unsigned n = 0; n < NumOutputs(); n++)
+               if (Output(n)->IsConnected() || Output(n)->IsDoingReconnect())
+                  return;
 
-            for (unsigned n=0;n<NumInputs();n++)
-               if (Input(n)->IsConnected() || Input(n)->IsDoingReconnect()) return;
+            for (unsigned n = 0; n < NumInputs(); n++)
+               if (Input(n)->IsConnected() || Input(n)->IsDoingReconnect())
+                  return;
 
             dostop = true;
          }

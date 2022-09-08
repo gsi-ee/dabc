@@ -126,7 +126,7 @@ void dabc::ConnectionRequest::SetAllowedField(const std::string &name)
 
 void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
 {
-   if ((node==0) || null()) return;
+   if (!node || null()) return;
 
    const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
    if (thrdname!=0) {
@@ -137,19 +137,19 @@ void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
    const char* useackn = Xml::GetAttr(node, xmlUseacknAttr);
    if (useackn!=0) {
       SetAllowedField(xmlUseacknAttr);
-      SetUseAckn(strcmp(useackn, xmlTrueValue)==0);
+      SetUseAckn(strcmp(useackn, xmlTrueValue) == 0);
    }
 
    const char* isserver = Xml::GetAttr(node, "server");
    if (isserver!=0) {
       SetAllowedField("server");
-      SetServerSide(strcmp(isserver, xmlTrueValue)==0);
+      SetServerSide(strcmp(isserver, xmlTrueValue) == 0);
    }
 
    const char* optional = Xml::GetAttr(node, xmlOptionalAttr);
    if (optional!=0) {
       SetAllowedField(xmlOptionalAttr);
-      SetOptional(strcmp(optional, xmlTrueValue)==0);
+      SetOptional(strcmp(optional, xmlTrueValue) == 0);
    }
 
    const char* poolname = Xml::GetAttr(node, xmlPoolAttr);
