@@ -253,13 +253,13 @@ dabc::SocketIOAddon::SocketIOAddon(int fd, bool isdatagram, bool usemsg) :
    fDatagramSocket(isdatagram),
    fUseMsgOper(usemsg),
    fSendUseMsg(true),
-   fSendIOV(0),
+   fSendIOV(nullptr),
    fSendIOVSize(0),
    fSendIOVFirst(0),
    fSendIOVNumber(0),
    fSendUseAddr(false),
    fRecvUseMsg(true),
-   fRecvIOV(0),
+   fRecvIOV(nullptr),
    fRecvIOVSize(0),
    fRecvIOVFirst(0),
    fRecvIOVNumber(0),
@@ -1077,8 +1077,8 @@ dabc::SocketThread::SocketThread(Reference parent, const std::string &name, Comm
    fWaitFire(false),
    fScalerCounter(10),
    f_sizeufds(0),
-   f_ufds(0),
-   f_recs(0),
+   f_ufds(nullptr),
+   f_recs(nullptr),
    fIsAnySocket(false),
    fCheckNewEvents(true),
    fBalanceCnt(0)
@@ -1112,11 +1112,11 @@ dabc::SocketThread::~SocketThread()
    if (fPipe[0]!=0) { close(fPipe[0]);  fPipe[0] = 0; }
    if (fPipe[1]!=0) { close(fPipe[1]);  fPipe[1] = 0; }
 
-   if (f_ufds!=0) {
+   if (f_ufds) {
       delete[] f_ufds;
       delete[] f_recs;
-      f_ufds = 0;
-      f_recs = 0;
+      f_ufds = nullptr;
+      f_recs = nullptr;
       f_sizeufds = 0;
    }
 
@@ -1491,7 +1491,7 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
 
 
    #ifdef DABC_EXTRA_CHECKS
-      unsigned sizebefore(0), sizeafter(0);
+      unsigned sizebefore = 0, sizeafter = 0;
    #endif
 
    {
@@ -1512,7 +1512,7 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
          tmout_sec = 0.;
       }
 
-      if (f_ufds==0) return false;
+      if (!f_ufds) return false;
 
       fWaitFire = true;
    }

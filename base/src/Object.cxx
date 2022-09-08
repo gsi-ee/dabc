@@ -1003,12 +1003,12 @@ bool dabc::Object::IsNameMatch(const std::string &mask) const
 
 bool dabc::Object::NameMatch(const std::string &name, const std::string &mask)
 {
-   if ((mask.length()==0) || (name.length()==0))
+   if (mask.empty() || name.empty())
       return name.length()==mask.length();
 
-   size_t lastsepar(0), separ = mask.find_first_of(';',lastsepar);
+   size_t lastsepar = 0, separ = mask.find_first_of(';',lastsepar);
 
-   if (separ!=std::string::npos) {
+   if (separ != std::string::npos) {
       do {
         // FIXME!!!! code missing
 

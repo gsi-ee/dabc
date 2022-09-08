@@ -37,7 +37,7 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
    fSendRawData(),
    fSendingActive(true), // mark as active until I/O object is not yet assigned
    fRecvHdr(),
-   fRecvBuf(0),
+   fRecvBuf(nullptr),
    fRecvBufSize(0),
    fSendQueue(),
    fWaitQueue(),
@@ -554,7 +554,7 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string &name, Socket
 std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string &url_str)
 {
    std::string server, itemname;
-   bool islocal(true);
+   bool islocal = true;
 
    if (dabc::mgr.DecomposeAddress(url_str, islocal, server, itemname))
       if (!islocal) return server;

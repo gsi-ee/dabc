@@ -52,9 +52,8 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
 
       friend class Thread;
 
-      bool fPublish;     ///! if true, different thread parameters will be published
-
-      int fCnt;
+      bool fPublish{false};     ///! if true, different thread parameters will be published
+      int fCnt{0};
 
    public:
       ExecWorker(Thread* parent, Command cmd) :
@@ -217,13 +216,13 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
    fThrdWorking(false),
    fRealThrd(true),
    fWorkCond(fObjectMutex),
-   fQueues(0),
+   fQueues(nullptr),
    fNumQueues(3),
    fNextTimeout(),
    fProcessingTimeouts(0),
    fWorkers(),
    fExplicitLoop(0),
-   fExec(0),
+   fExec(nullptr),
    fDidDecRefCnt(false),
    fCheckThrdCleanup(false),
    fProfiling(false),
@@ -738,8 +737,8 @@ bool dabc::Thread::Stop(double timeout_sec)
 
       TimeStamp tm1 = dabc::Now();
 
-      int cnt(0);
-      double spent_time(0.);
+      int cnt = 0;
+      double spent_time = 0.;
       bool did_cancel(false);
 
       do {
@@ -965,7 +964,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       return cmd_postponed;
    }
 
-   WorkerRec* rec(0);
+   WorkerRec* rec = nullptr;
 
    {
       LockGuard guard(ThreadMutex());
@@ -991,7 +990,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
    // before worker will be really destroyed indicate to the world that processor is disappear
    WorkersSetChanged();
 
-   if (rec!=0) {
+   if (rec) {
 
       if (rec->work && rec->work->IsLogging())
          DOUT0("Trying to destroy worker %p id %u via thread %s", rec->work, id, GetName());
@@ -1152,7 +1151,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
 
       case evntCleanupThrd: {
 
-         unsigned totalsize(0);
+         unsigned totalsize = 0;
          {
             LockGuard lock(ThreadMutex());
             totalsize = _TotalNumberOfEvents();
@@ -1228,7 +1227,7 @@ bool dabc::Thread::Execute(dabc::Command cmd, double tmout)
 
 bool dabc::Thread::HaltWorker(Worker* work)
 {
-   if (work==0) return false;
+   if (!work) return false;
 
    if (IsItself())
       return CheckWorkerCanBeHalted(work->fWorkerId, actHalt) == cmd_true;

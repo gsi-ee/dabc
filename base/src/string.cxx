@@ -28,8 +28,8 @@ void dabc::formats(std::string& sbuf, const char *fmt, ...)
    if (!fmt || (strlen(fmt)==0)) return;
 
    va_list args;
-   int length(256), result(0);
-   char *buffer(0);
+   int length = 256, result = 0;
+   char *buffer = nullptr;
    while (1) {
       if (buffer) delete [] buffer;
       buffer = new char [length];
@@ -51,8 +51,8 @@ std::string dabc::format(const char *fmt, ...)
    if (!fmt || (strlen(fmt)==0)) return std::string("");
 
    va_list args;
-   int length(256), result(0);
-   char *buffer(0);
+   int length = 256, result = 0;
+   char *buffer = nullptr;
    while (1) {
       if (buffer) delete [] buffer;
       buffer = new char [length];
@@ -141,12 +141,12 @@ std::string dabc::number_to_str(unsigned long num, int prec, int select)
 
 bool dabc::str_to_int(const char* val, int* res)
 {
-   if ((val==0) || (res==0)) return false;
+   if (!val || !res) return false;
 
    while (*val==' ') val++;
    if (*val==0) return false;
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
-      unsigned ures(0);
+      unsigned ures = 0;
       if (sscanf(val+2, "%x", &ures) == 1) {
          *res = ures;
          return true;
@@ -161,7 +161,7 @@ bool dabc::str_to_int(const char* val, int* res)
 
 bool dabc::str_to_lint(const char* val, long* res)
 {
-   if ((val==0) || (res==0)) return false;
+   if (!val || !res) return false;
 
    while (*val==' ') val++;
    if (*val==0) return false;
@@ -183,7 +183,7 @@ bool dabc::str_to_lint(const char* val, long* res)
 
 bool dabc::str_to_uint(const char* val, unsigned* res)
 {
-   if ((val==0) || (res==0)) return false;
+   if (!val || !res) return false;
 
    while (*val==' ') val++;
    if (*val==0) return false;
@@ -199,7 +199,7 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
 
 bool dabc::str_to_luint(const char* val, long unsigned* res)
 {
-   if ((val==0) || (res==0)) return false;
+   if (!val || !res) return false;
 
    while (*val==' ') val++;
    if (*val==0) return false;
@@ -215,11 +215,11 @@ bool dabc::str_to_luint(const char* val, long unsigned* res)
 
 bool dabc::str_to_double(const char* val, double* res)
 {
-   if ((val==0) || (res==0)) return false;
+   if (!val || !res) return false;
 
    if (sscanf(val, "%lf", res) == 1) return true;
 
-   unsigned ures(0);
+   unsigned ures = 0;
 
    if (str_to_uint(val, &ures)) { *res = ures; return true; }
 
@@ -228,7 +228,7 @@ bool dabc::str_to_double(const char* val, double* res)
 
 bool dabc::str_to_bool(const char* val, bool* res)
 {
-   if ((val==0) || (res==0)) return false;
+   if (!val || !res) return false;
    if (strcmp(val, xmlTrueValue)==0) { *res = true; return true; }
    if (strcmp(val, xmlFalseValue)==0) { *res = false; return true; }
    return false;

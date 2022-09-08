@@ -215,8 +215,8 @@ void dabc::ParameterContainer::ObjectCleanup()
 
 void dabc::ParameterContainer::ProcessTimeout(double last_dif)
 {
-   bool fire(false), res(false), doworker(false);
-   double value(0);
+   bool fire = false, res = false, doworker = false;
+   double value = 0.;
    std::string svalue;
 
 //   DOUT0("Par %s Process timeout !!!", GetName());

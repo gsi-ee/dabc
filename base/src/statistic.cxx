@@ -23,8 +23,8 @@
 #include "dabc/timing.h"
 
 dabc::CpuStatistic::CpuStatistic(bool withmem) :
-   fStatFp(0),
-   fProcStatFp(0),
+   fStatFp(nullptr),
+   fProcStatFp(nullptr),
    fCPUs(),
    fVmSize(0),
    fVmPeak(0),
@@ -33,7 +33,7 @@ dabc::CpuStatistic::CpuStatistic(bool withmem) :
    const char* cpu_stat_file = "/proc/stat";
 
    fStatFp = fopen (cpu_stat_file, "r");
-   if (fStatFp==0)
+   if (!fStatFp)
      EOUT("fopen of %s failed", cpu_stat_file);
 
 
@@ -53,18 +53,18 @@ dabc::CpuStatistic::CpuStatistic(bool withmem) :
 
 dabc::CpuStatistic::~CpuStatistic()
 {
-   if (fStatFp!=0)
+   if (fStatFp)
      if (fclose (fStatFp) != 0)
         EOUT("fclose of stat file failed");
 
-   if (fProcStatFp!=0)
+   if (fProcStatFp)
      if (fclose (fProcStatFp) != 0)
         EOUT("fclose of proc stat file failed");
 }
 
 bool dabc::CpuStatistic::Measure()
 {
-   if (fStatFp==0) return false;
+   if (!fStatFp) return false;
 
    rewind(fStatFp);
 
@@ -83,19 +83,15 @@ bool dabc::CpuStatistic::Measure()
       while ((*info!=' ') && (*info != 0)) info++;
       if (*info==0) break;
 
-      unsigned long curr_user(0), curr_nice(0), curr_sys(0), curr_idle(0);
+      unsigned long curr_user = 0, curr_nice = 0, curr_sys = 0, curr_idle = 0;
 
       sscanf(info, "%lu %lu %lu %lu", &curr_user, &curr_nice, &curr_sys, &curr_idle);
 
-      //DOUT0("Scan:%s", info));
-      //if (cnt==0)
-      //   DOUT0("Res:%lu %lu %lu %lu", curr_user, curr_nice, curr_sys, curr_idle);
-
       curr_user += curr_nice;
 
-      unsigned long user(0), sys(0), idle(0);
+      unsigned long user = 0, sys = 0, idle = 0;
 
-      if (cnt>=fCPUs.size()) {
+      if (cnt >= fCPUs.size()) {
          fCPUs.emplace_back(SingleCpu());
       } else {
          user = curr_user - fCPUs[cnt].last_user;
@@ -121,20 +117,18 @@ bool dabc::CpuStatistic::Measure()
       cnt++;
    }
 
-   if (fProcStatFp != 0) {
+   if (fProcStatFp) {
       rewind(fProcStatFp);
       fflush(fProcStatFp);
 
       while (fgets(buffer, sizeof(buffer), fProcStatFp)) {
-         if (strncmp(buffer, "VmSize:", 7)==0)
+         if (strncmp(buffer, "VmSize:", 7) == 0)
             sscanf(buffer + 7, "%lu", &fVmSize);
-         else
-         if (strncmp(buffer, "VmPeak:", 7)==0)
+         else if (strncmp(buffer, "VmPeak:", 7) == 0)
             sscanf(buffer + 7, "%lu", &fVmPeak);
-         else
-         if (strncmp(buffer, "Threads:", 8)==0) {
-           sscanf(buffer + 8, "%lu", &fNumThreads);
-           break;
+         else if (strncmp(buffer, "Threads:", 8) == 0) {
+            sscanf(buffer + 8, "%lu", &fNumThreads);
+            break;
          }
       }
    }
@@ -171,7 +165,6 @@ long dabc::CpuStatistic::GetProcVirtMem()
 }
 
 // ____________________________________________________________________________
-
 
 
 dabc::Ratemeter::Ratemeter()

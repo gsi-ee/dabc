@@ -20,14 +20,14 @@
 
 dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport, bool useackn, WorkerAddon* addon) :
     dabc::Transport(cmd, inpport, outport),
-    fNet(0),
+    fNet(nullptr),
     fTransportId(0),
     fUseAckn(useackn),
     fInputQueueCapacity(0),
     fOutputQueueCapacity(0),
     fNumRecs(0),
     fRecsCounter(0),
-    fRecs(0),
+    fRecs(nullptr),
     fOutputQueueSize(0),
     fAcknAllowedOper(0),
     fAcknSendQueue(),
@@ -121,11 +121,11 @@ void dabc::NetworkTransport::TransportCleanup()
    DOUT3("NetworkTransport::TransportCleanup");
 
    // at this moment net should be destroyed by the addon cleanup
-   fNet = 0;
+   fNet = nullptr;
 
    fAcknSendQueue.Reset();
 
-   if (fNumRecs>0) {
+   if (fNumRecs > 0) {
       for (uint32_t n=0;n<fNumRecs;n++) {
          fRecs[n].used = false;
          fRecs[n].buf.Release();

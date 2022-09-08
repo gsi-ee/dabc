@@ -21,7 +21,7 @@ dabc::ModuleSync::ModuleSync(const std::string &name, Command cmd) :
    fDisconnectExcept(false),
    fSyncCommands(false),
    fNewCommands(nullptr),
-   fWaitItem(0),
+   fWaitItem(nullptr),
    fWaitId(0),
    fWaitRes(false),
    fInsideMainLoop(false)
@@ -68,7 +68,7 @@ bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout)
 {
    OutputPort* port = Output(indx);
 
-   if ((port==0) || buf.null()) return false;
+   if (!port || buf.null()) return false;
 
    uint16_t evid(evntModuleNone);
 
@@ -92,7 +92,7 @@ dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout)
 {
    InputPort* port = Input(indx);
 
-   if (port==0) return Buffer();
+   if (!port) return Buffer();
 
    uint16_t evid(evntModuleNone);
 
@@ -112,7 +112,7 @@ dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout)
 dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout)
 {
    PoolHandle* handle = Pool(poolindx);
-   if (handle==0) return (poolindx==0) ? TakeDfltBuffer() : Buffer();
+   if (!handle) return (poolindx==0) ? TakeDfltBuffer() : Buffer();
 
    do {
       if (handle->CanTakeBuffer())
@@ -125,9 +125,9 @@ dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout)
 
 dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout)
 {
-   uint16_t evid(evntModuleNone);
-   ModuleItem* resitem(0);
-   unsigned shift(0);
+   uint16_t evid = evntModuleNone;
+   ModuleItem* resitem = nullptr;
+   unsigned shift = 0;
 
    do {
       if ((evid == evntPortDisconnect) || (evid==evntPortError))
@@ -158,7 +158,7 @@ bool dabc::ModuleSync::WaitInput(unsigned indx, unsigned minqueuesize, double ti
 {
    InputPort* port = Input(indx);
 
-   if (port==0) return false;
+   if (!port) return false;
 
    uint16_t evid(evntModuleNone);
 
@@ -259,16 +259,16 @@ void dabc::ModuleSync::ObjectCleanup()
 
 void dabc::ModuleSync::AsyncProcessCommands()
 {
-   if (fNewCommands==0) return;
+   if (!fNewCommands) return;
 
-   while (fNewCommands->Size()>0) {
+   while (fNewCommands->Size() > 0) {
       Command cmd = fNewCommands->Pop();
       int cmd_res = ExecuteCommand(cmd);
       if (cmd_res>=0) cmd.Reply(cmd_res);
    }
 
    delete fNewCommands;
-   fNewCommands = 0;
+   fNewCommands = nullptr;
 }
 
 void dabc::ModuleSync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
@@ -279,9 +279,9 @@ void dabc::ModuleSync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
    // no need to store any consequent events
    if (fWaitRes) return;
 
-   if (item==0) { EOUT("Zero item !!!!!!!!!!!!!"); }
+   if (!item) { EOUT("Zero item !!!!!!!!!!!!!"); }
 
-   if ((fWaitItem==item) || (fWaitItem==0)) {
+   if ((fWaitItem == item) || !fWaitItem) {
       fWaitRes = true;
       fWaitId = evid;
       fWaitItem = item;
@@ -290,7 +290,7 @@ void dabc::ModuleSync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
 
 bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *resevid, ModuleItem** resitem)
 {
-   if (tmout<0) return false;
+   if (tmout < 0) return false;
 
    fWaitItem = item;
    fWaitId = 0;

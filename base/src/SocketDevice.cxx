@@ -32,20 +32,18 @@ namespace dabc {
 
    class NewConnectRec {
       public:
-         std::string            fReqItem;    ///< reference in connection request
-         SocketClientAddon*     fClient;     ///< client-side processor, to establish connection
-         SocketProtocolAddon*   fProtocol;   ///< protocol processor, to verify connection id
-         double                 fTmOut;      ///< used by device to process connection timeouts
-         std::string            fConnId;     //! connection id
-         Command                fLocalCmd;   ///< command from connection manager which should be replied when connection established or failed
+         std::string            fReqItem;           ///< reference in connection request
+         SocketClientAddon*     fClient{nullptr};   ///< client-side processor, to establish connection
+         SocketProtocolAddon*   fProtocol{nullptr}; ///< protocol processor, to verify connection id
+         double                 fTmOut{0};          ///< used by device to process connection timeouts
+         std::string            fConnId;            ///<! connection id
+         Command                fLocalCmd;          ///< command from connection manager which should be replied when connection established or failed
 
          NewConnectRec() :
             fReqItem(),
-            fClient(0),
-            fProtocol(0),
+            fClient(nullptr),
             fTmOut(1.),
-            fConnId(),
-            fLocalCmd()
+            fConnId()
          {
          }
 
@@ -54,9 +52,7 @@ namespace dabc {
                        SocketClientAddon* clnt) :
             fReqItem(item),
             fClient(clnt),
-            fProtocol(0),
-            fTmOut(0.),
-            fLocalCmd()
+            fTmOut(0.)
          {
             fTmOut = req.GetConnTimeout() + SocketServerTmout;
             fConnId = req.GetConnId();
@@ -80,9 +76,9 @@ namespace dabc {
 
          enum EState { stServerProto, stClientProto, stRedirect, stDone, stError };
 
-         SocketDevice* fDevice;
-         NewConnectRec* fRec;
-         EState fState;
+         SocketDevice* fDevice{nullptr};
+         NewConnectRec* fRec{nullptr};
+         EState fState{stServerProto};
          char fInBuf[SocketDevice::ProtocolMsgSize];
          char fOutBuf[SocketDevice::ProtocolMsgSize];
       public:
@@ -220,7 +216,7 @@ dabc::SocketDevice::~SocketDevice()
 
    CleanupRecs(-1);
 
-   while (fProtocols.size()>0) {
+   while (fProtocols.size() > 0) {
       SocketProtocolAddon* pr = (SocketProtocolAddon*) fProtocols[0];
       fProtocols.remove_at(0);
       dabc::Object::Destroy(pr);

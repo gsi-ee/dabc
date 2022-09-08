@@ -24,7 +24,7 @@
 bool dabc::iostream::skip_object()
 {
    if (!is_input()) return false;
-   uint32_t storesz(0);
+   uint32_t storesz = 0;
    read_uint32(storesz);
 
    return shift(((uint64_t) storesz)*8-4);
@@ -56,7 +56,7 @@ bool dabc::iostream::verify_size(uint64_t pos, uint64_t sz)
    if (is_input()) return shift(sz-actualsz);
 
    while (actualsz < sz) {
-      uint64_t buf(0);
+      uint64_t buf = 0;
       uint64_t portion = sz - actualsz;
       if (portion>8) portion = 8;
       write(&buf, portion);
@@ -96,7 +96,7 @@ bool dabc::iostream::read_str(std::string& str)
 {
    uint64_t pos = size();
 
-   uint32_t storesz(0);
+   uint32_t storesz = 0;
    read_uint32(storesz);
    uint64_t sz = ((uint64_t) storesz) * 8;
 
@@ -346,7 +346,7 @@ bool dabc::RecordField::Stream(iostream& s)
    uint64_t pos = s.size();
    uint64_t sz = 0;
 
-   uint32_t storesz(0), storekind(0), storeversion(0);
+   uint32_t storesz = 0, storekind = 0, storeversion = 0;
 
    if (s.is_output()) {
       sz = s.is_real() ? StoreSize() : 0;
@@ -436,7 +436,7 @@ bool dabc::RecordField::Stream(iostream& s)
             break;
          }
          case kind_buffer: {
-            uint64_t bufsz(0);
+            uint64_t bufsz = 0;
             s.read_uint64(bufsz);
             valueBuf = new Buffer;
             *valueBuf = Buffer::CreateBuffer((storesz-1)*8);
@@ -1466,8 +1466,8 @@ bool dabc::RecordFieldsMap::match_prefix(const std::string &name, const std::str
 
 bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string &nameprefix)
 {
-   uint32_t storesz(0), storenum(0), storevers(0);
-   uint64_t sz(0);
+   uint32_t storesz = 0, storenum = 0, storevers = 0;
+   uint64_t sz = 0;
 
    uint64_t pos = s.size();
 

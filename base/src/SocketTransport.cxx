@@ -18,7 +18,7 @@
 dabc::SocketNetworkInetrface::SocketNetworkInetrface(int fd, bool datagram) :
    SocketIOAddon(fd, datagram, true),
    NetworkInetrface(),
-   fHeaders(0),
+   fHeaders(nullptr),
    fSendQueue(),
    fRecvQueue(),
    fRecvStatus(0),
