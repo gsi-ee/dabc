@@ -119,12 +119,12 @@ dabc::Logger::Logger(bool withmutex)
    fErrorMask = lPrefix | lTStamp  | lFile | lFunc | lLine | lMessage;
    fFileMask = lNoPrefix | lTime; // disable prefix and enable time
 
-   fMutex = withmutex ? new Mutex(true) : 0;
+   fMutex = withmutex ? new Mutex(true) : nullptr;
    fMaxLine = 0;
-   fLines = 0;
+   fLines = nullptr;
 
    fLogFileName = "";
-   fFile = 0;
+   fFile = nullptr;
    fSyslogPrefix = "";
    fLogReopenTime = 0.;
    fLogFileModified = false;
@@ -155,7 +155,7 @@ dabc::Logger::~Logger()
      _ExtendLines(0);
    }
 
-   delete fMutex; fMutex = 0;
+   delete fMutex; fMutex = nullptr;
 }
 
 void dabc::Logger::CloseFile()
@@ -163,7 +163,7 @@ void dabc::Logger::CloseFile()
    LockGuard lock(fMutex);
 
    if (fFile) fclose(fFile);
-   fFile = 0;
+   fFile = nullptr;
 }
 
 
@@ -184,13 +184,12 @@ void dabc::Logger::SetSyslogLevel(int level)
    fSyslogLevel = level;
 }
 
-
 void dabc::Logger::_ExtendLines(unsigned max)
 {
-   if ((max>0) && (max<fMaxLine)) return;
+   if ((max > 0) && (max < fMaxLine)) return;
 
-   LoggerLineEntry **lin = 0;
-   if (max>0) {
+   LoggerLineEntry **lin = nullptr;
+   if (max > 0) {
 
 //      printf("Extend logger lines %u\n", max);
 
@@ -198,7 +197,7 @@ void dabc::Logger::_ExtendLines(unsigned max)
       unsigned n = 0;
 
       while (n < fMaxLine) { lin[n] = fLines[n]; n++; }
-      while (n < max) { lin[n] = 0; n++; }
+      while (n < max) { lin[n] = nullptr; n++; }
    }
 
    if (fLines) delete[] fLines;
@@ -212,10 +211,9 @@ void dabc::Logger::LogFile(const char* fname)
    LockGuard lock(fMutex);
 
    if (fFile) fclose(fFile);
+   fFile = nullptr;
 
-   fFile = 0;
-
-   if ((fname!=0) && (strlen(fname)>0)) {
+   if (fname && (strlen(fname) > 0)) {
       fLogFileName = fname;
       fFile = fopen(fname, "a");
       fLogReopenTime = dabc::Now().AsDouble();
@@ -234,7 +232,7 @@ void dabc::Logger::Syslog(const char* prefix)
 void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* entry)
 {
    str.clear();
-   if (mask==0) return;
+   if (mask == 0) return;
 
    if ((mask & lPrefix) && ((mask & lNoPrefix) == 0))
       if (fPrefix.length() > 0) {
@@ -312,7 +310,6 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    std::string syslogout;
 
    {
-
    LockGuard lock(fMutex);
 
    if (linenumber>=fMaxLine)
@@ -320,7 +317,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 
    LoggerLineEntry* lentry = fLines[linenumber];
 
-   if (lentry == 0) {
+   if (!lentry) {
       lentry = new LoggerLineEntry(linenumber);
       fLines[linenumber] = lentry;
    }
@@ -412,13 +409,13 @@ void dabc::Logger::ShowStat(bool tofile)
    LockGuard lock(fMutex);
 
    FILE* out = tofile ? fFile : stdout;
-   if (out==0) out = stdout;
+   if (!out) out = stdout;
 
    fprintf(out,"\n=======  Begin debug statistic =============\n");
 
    for (unsigned n=0; n<fMaxLine;n++) {
       LoggerLineEntry* entry = fLines[n];
-      if (entry==0) continue;
+      if (!entry) continue;
 
       LoggerLineEntry::flist::iterator iter = entry->fFiles.begin();
 
@@ -428,15 +425,15 @@ void dabc::Logger::ShowStat(bool tofile)
       }
    }
 
-   std::string* currfile = 0;
+   std::string* currfile = nullptr;
 
    do {
 
-      currfile = 0;
+      currfile = nullptr;
 
       for (unsigned n=0; n<fMaxLine;n++) {
          LoggerLineEntry* entry = fLines[n];
-         if (entry==0) continue;
+         if (!entry) continue;
 
          LoggerLineEntry::flist::iterator iter = entry->fFiles.begin();
 
@@ -445,9 +442,9 @@ void dabc::Logger::ShowStat(bool tofile)
 
             if (fentry->fShown) continue;
 
-            if ((currfile!=0) && (fentry->fFileName.compare(*currfile) != 0)) continue;
+            if (currfile && (fentry->fFileName.compare(*currfile) != 0)) continue;
 
-            if (currfile==0) {
+            if (!currfile) {
                currfile = &(fentry->fFileName);
                fprintf(out, "\nFile: %s\n", currfile->c_str());
             }
@@ -458,7 +455,7 @@ void dabc::Logger::ShowStat(bool tofile)
             fentry->fShown = true;
          }
       }
-   } while (currfile != 0);
+   } while (currfile);
 
    fprintf(out,"\n=======  Stop debug statistic =============\n");
 

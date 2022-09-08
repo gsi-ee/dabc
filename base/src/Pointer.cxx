@@ -34,7 +34,7 @@ void dabc::Pointer::long_shift(BufferSize_t len)
    fFullSize -= rawsize();
    len -= rawsize();
    fRawSize = 0;
-   fPtr = 0;
+   fPtr = nullptr;
    fSegm++;
 
    while ((fSegm < fBuf.NumSegments()) && (fBuf.SegmentSize(fSegm) < len)) {
@@ -72,9 +72,9 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const Pointer& src, BufferSize_t sz) 
    }
 
    Pointer tgtptr(*this), srcptr(src);
-   unsigned res(0);
+   unsigned res = 0;
 
-   while (sz>0) {
+   while (sz > 0) {
       unsigned copylen = (tgtptr.rawsize() < srcptr.rawsize()) ? tgtptr.rawsize() : srcptr.rawsize();
       if (copylen>sz) copylen = sz;
       if (copylen==0) break;
@@ -142,7 +142,7 @@ int dabc::Pointer::distance_to(const Pointer& child) const
    if (fSegm > child.fSegm) return -child.distance_to(*this);
 
    Pointer left(*this);
-   BufferSize_t dist(0);
+   BufferSize_t dist = 0;
 
    while (left.fSegm < child.fSegm) {
       dist += left.rawsize();

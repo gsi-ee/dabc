@@ -575,8 +575,8 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 // ====================================================================================
 
 dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport, DataOutput* out, bool owner) :
-   dabc::Transport(cmd, 0, outport),
-   fOutput(0),
+   dabc::Transport(cmd, nullptr, outport),
+   fOutput(nullptr),
    fOutputOwner(false),
    fOutState(outReady),
    fCurrentBuf(),
@@ -606,13 +606,13 @@ void dabc::OutputTransport::SetDataOutput(DataOutput* out, bool owner)
 
    CloseOutput();
 
-   if (out==0) return;
+   if (!out) return;
 
    fOutput = out;
    fOutputOwner = false;
    WorkerAddon* addon = out->Write_GetAddon();
 
-   if (addon==0) {
+   if (!addon) {
       fOutputOwner = owner;
    } else
    if (owner)
@@ -624,10 +624,10 @@ void dabc::OutputTransport::SetDataOutput(DataOutput* out, bool owner)
 
 void dabc::OutputTransport::CloseOutput()
 {
-   if ((fOutput!=0) && fOutputOwner)
+   if (fOutput && fOutputOwner)
       delete fOutput;
 
-   fOutput = 0;
+   fOutput = nullptr;
    fOutputOwner = false;
 
    fCurrentBuf.Release();

@@ -133,7 +133,7 @@ void dabc::NetworkTransport::TransportCleanup()
 
       delete[] fRecs;
    }
-   fRecs = 0;
+   fRecs = nullptr;
    fNumRecs = 0;
    fNumUsedRecs = 0;
 }
@@ -172,7 +172,7 @@ uint32_t dabc::NetworkTransport::TakeRec(Buffer& buf, uint32_t kind, uint32_t ex
 
 void dabc::NetworkTransport::ReleaseRec(uint32_t recid)
 {
-   if (recid<fNumRecs) {
+   if (recid < fNumRecs) {
       if (!fRecs[recid].buf.null()) EOUT("Buffer is not empty when record is released !!!!");
       fRecs[recid].used = false;
       fNumUsedRecs--;
@@ -227,7 +227,7 @@ void dabc::NetworkTransport::FillRecvQueue(Buffer* freebuf, bool onlyfreebuf)
 
    if (isTransportError()) return;
 
-   unsigned newitems(0), numcansubmit(0);
+   unsigned newitems = 0, numcansubmit = 0;
 
    if (IsInputTransport()) {
       if (NumPools()==0) {
@@ -317,7 +317,7 @@ bool dabc::NetworkTransport::CheckAcknReadyCounter(unsigned newitems)
 
 void dabc::NetworkTransport::SubmitAllowedSendOperations()
 {
-   while ((fAcknAllowedOper>0) && (fAcknSendQueue.Size()>0)) {
+   while ((fAcknAllowedOper > 0) && (fAcknSendQueue.Size() > 0)) {
       uint32_t recid = fAcknSendQueue.Pop();
       fAcknAllowedOper--;
       fNet->SubmitSend(recid);

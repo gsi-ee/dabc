@@ -1250,8 +1250,8 @@ bool dabc::RecordField::SetArrInt(int64_t size, int64_t* arr, bool owner)
 
 bool dabc::RecordField::SetVectInt(const std::vector<int64_t>& v)
 {
-   int64_t* arr = 0;
-   if (v.size()>0) {
+   int64_t* arr = nullptr;
+   if (v.size() > 0) {
       arr = new int64_t[v.size()];
       for (unsigned n=0;n<v.size();n++)
          arr[n] = v[n];
@@ -1263,7 +1263,7 @@ bool dabc::RecordField::SetVectInt(const std::vector<int64_t>& v)
 bool dabc::RecordField::SetArrUInt(int64_t size, uint64_t* arr, bool owner)
 {
    if (cannot_modify()) return false;
-   if (size<=0) return false;
+   if (size <= 0) return false;
 
    if ((fKind == kind_arruint) && (valueInt == size))
       if (memcmp(arrUInt, arr, size*sizeof(uint64_t))==0) {
@@ -1286,8 +1286,8 @@ bool dabc::RecordField::SetArrUInt(int64_t size, uint64_t* arr, bool owner)
 
 bool dabc::RecordField::SetVectUInt(const std::vector<uint64_t>& v)
 {
-   uint64_t* arr = 0;
-   if (v.size()>0) {
+   uint64_t* arr = nullptr;
+   if (v.size() > 0) {
       arr = new uint64_t[v.size()];
       for (unsigned n=0;n<v.size();n++)
          arr[n] = v[n];
@@ -1298,8 +1298,8 @@ bool dabc::RecordField::SetVectUInt(const std::vector<uint64_t>& v)
 
 bool dabc::RecordField::SetVectDouble(const std::vector<double>& v)
 {
-   double* arr = 0;
-   if (v.size()>0) {
+   double* arr = nullptr;
+   if (v.size() > 0) {
       arr = new double[v.size()];
       for (unsigned n=0;n<v.size();n++)
          arr[n] = v[n];
@@ -1312,7 +1312,7 @@ bool dabc::RecordField::SetVectDouble(const std::vector<double>& v)
 bool dabc::RecordField::SetArrDouble(int64_t size, double* arr, bool owner)
 {
    if (cannot_modify()) return false;
-   if (size<=0) return false;
+   if (size <= 0) return false;
 
    if ((fKind == kind_arrdouble) && (valueInt == size))
       if (memcmp(arrDouble, arr, size*sizeof(double))==0) {

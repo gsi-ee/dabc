@@ -629,8 +629,8 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
 
          _ChildsChanged();
 
-         if (child->fObjectParent.fObj==this) {
-            child->fObjectParent.fObj = 0; // not very nice, but will work
+         if (child->fObjectParent.fObj == this) {
+            child->fObjectParent.fObj = nullptr; // not very nice, but will work
             if (fObjectRefCnt>1) {
                fObjectRefCnt--;
             } else {

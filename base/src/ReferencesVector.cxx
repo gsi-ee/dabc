@@ -29,7 +29,7 @@ dabc::ReferencesVector::~ReferencesVector() throw()
 {
    Clear();
    delete fVector;
-   fVector = 0;
+   fVector = nullptr;
 }
 
 void dabc::ReferencesVector::ExpandVector()

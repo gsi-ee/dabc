@@ -216,8 +216,8 @@ namespace dabc {
          void SetSendAddr(const std::string &host = "", int port = 0);
 
          bool StartSend(const void* buf, unsigned size,
-                        const void* buf2 = 0, unsigned size2 = 0,
-                        const void* buf3 = 0, unsigned size3 = 0);
+                        const void* buf2 = nullptr, unsigned size2 = 0,
+                        const void* buf3 = nullptr, unsigned size3 = 0);
          bool StartRecv(void* buf, size_t size);
 
          bool StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size);

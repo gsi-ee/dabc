@@ -144,7 +144,7 @@ namespace dabc {
          void SendCommand(dabc::Command cmd, bool asreply = false);
 
          /** \brief Called when connection must be closed due to the error */
-         void CloseClient(bool iserr = false, const char* msg = 0);
+         void CloseClient(bool iserr = false, const char* msg = nullptr);
 
          double ExtraClientTimeout() const { return 1.0; }
          double ExtraServerTimeout() const { return 0.1; }

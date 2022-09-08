@@ -355,7 +355,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
                continue;
             }
 
-            dabc::HierarchyContainer* child = 0;
+            dabc::HierarchyContainer* child = nullptr;
 
             // try to find item with such name in the current list
             unsigned findindx = candeletechilds ? tgtcnt : 0;
@@ -367,7 +367,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
                findindx++;
             }
 
-            if (child == 0) {
+            if (!child) {
                // if no child with such name found, create and add it in current position
                child = new dabc::HierarchyContainer(childname);
 
