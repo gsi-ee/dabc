@@ -54,7 +54,7 @@ dabc::Object* dabc::Iterator::next(bool goinside)
 
       Reference child;
 
-      if (goinside && (fCurrent()!=0) && ((fMaxLevel<0) || (sz<fMaxLevel)))
+      if (goinside && fCurrent() && ((fMaxLevel < 0) || (sz < fMaxLevel)))
          child = fCurrent()->GetChildRef(0);
 
       if (!child.null()) {
@@ -90,7 +90,7 @@ dabc::Object* dabc::Iterator::next(bool goinside)
 
 dabc::Object* dabc::Iterator::parent(unsigned lvl)
 {
-   return (lvl<fFolders.GetSize()) ? fFolders[lvl].GetObject() : 0;
+   return (lvl<fFolders.GetSize()) ? fFolders[lvl].GetObject() : nullptr;
 }
 
 

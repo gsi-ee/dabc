@@ -334,7 +334,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 
    if (drop_msg && ((mask & lNoDrop) == 0) && ((fmask & lNoDrop) == 0)) return;
 
-   entry->fMsgTime = time(0);
+   entry->fMsgTime = time(nullptr);
    entry->fLastMsg = message;
 
    if ((!drop_msg || (mask & lNoDrop)) && (level<=fDebugLevel)) {

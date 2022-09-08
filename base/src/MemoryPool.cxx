@@ -36,12 +36,12 @@ namespace dabc {
 
          typedef Queue<unsigned, false> FreeQueue;
 
-         Entry*    fArr;       ///< array of buffers
-         unsigned  fNumber;    ///< number of buffers
-         FreeQueue fFree;      ///< list of free buffers
+         Entry*    fArr{nullptr}; ///< array of buffers
+         unsigned  fNumber{0};    ///< number of buffers
+         FreeQueue fFree;        ///< list of free buffers
 
          MemoryBlock() :
-            fArr(0),
+            fArr(nullptr),
             fNumber(0),
             fFree()
          {
@@ -84,10 +84,10 @@ namespace dabc {
 
             for (unsigned n=0;n<fNumber;n++) {
 
-               void* buf(0);
+               void* buf = nullptr;
                int res = posix_memalign(&buf, align, size);
 
-               if ((res!=0) || (buf==0)) {
+               if ((res != 0) || !buf) {
                   EOUT("Cannot allocate data for new Memory Block");
                   throw dabc::Exception(ex_Pool, "Cannot allocate buffer", "MemBlock");
                   return false;
@@ -275,7 +275,7 @@ unsigned dabc::MemoryPool::GetMinBufSize() const
 
    if (!fMem) return 0;
 
-   unsigned min(0);
+   unsigned min = 0;
 
    for (unsigned id=0;id<fMem->fNumber;id++)
       if ((min==0) || (fMem->fArr[id].size < min)) min = fMem->fArr[id].size;
@@ -288,22 +288,22 @@ void* dabc::MemoryPool::GetBufferLocation(unsigned id) const
 {
    LockGuard lock(ObjectMutex());
 
-   return (fMem==0) || (id>=fMem->fNumber) ? 0 : fMem->fArr[id].buf;
+   return !fMem || (id>=fMem->fNumber) ? nullptr : fMem->fArr[id].buf;
 }
 
 bool dabc::MemoryPool::_GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes, unsigned* changecnt)
 {
-   if (changecnt!=0) {
+   if (changecnt) {
       if (*changecnt == fChangeCounter) return false;
    }
 
-   if (fMem!=0)
+   if (fMem)
       for(unsigned n=0;n<fMem->fNumber;n++) {
          bufs.emplace_back(fMem->fArr[n].buf);
          sizes.emplace_back(fMem->fArr[n].size);
       }
 
-   if (changecnt!=0) *changecnt = fChangeCounter;
+   if (changecnt) *changecnt = fChangeCounter;
 
    return true;
 }
@@ -318,7 +318,7 @@ bool dabc::MemoryPool::GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigne
 bool dabc::MemoryPool::TakeRawBuffer(unsigned& indx)
 {
    LockGuard lock(ObjectMutex());
-   if ((fMem==0) || !fMem->IsAnyFree()) return false;
+   if (!fMem || !fMem->IsAnyFree()) return false;
    indx = fMem->fFree.Pop();
    return true;
 }
@@ -337,9 +337,9 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
 //   DOUT0("_TakeBuffer obj %p", &res);
 
    // if no memory is available, try to allocate it
-   if (fMem==0) _Allocate();
+   if (!fMem) _Allocate();
 
-   if (fMem==0) {
+   if (!fMem) {
       if (except) throw dabc::Exception(ex_Pool, "No memory allocated in the pool", ItemName());
       return res;
    }
@@ -352,9 +352,9 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
    if ((size==0) && reserve_memory) size = fMem->fArr[fMem->fFree.Front()].size;
 
    // first check if required size is available
-   BufferSize_t sum(0);
-   unsigned cnt(0);
-   while (sum<size) {
+   BufferSize_t sum = 0;
+   unsigned cnt = 0;
+   while (sum < size) {
       if (cnt>=fMem->fFree.Size()) {
          if (except) throw dabc::Exception(ex_Pool, "Cannot reserve buffer of requested size", ItemName());
          return res;
@@ -424,7 +424,7 @@ void dabc::MemoryPool::IncreaseSegmRefs(MemSegment* segm, unsigned num)
 {
    LockGuard lock(ObjectMutex());
 
-   if (fMem==0)
+   if (!fMem)
       throw dabc::Exception(ex_Pool, "Memory was not allocated in the pool", ItemName());
 
    for (unsigned cnt=0;cnt<num;cnt++) {
@@ -520,7 +520,7 @@ bool dabc::MemoryPool::RecheckRequests(bool from_recv)
       return false;
    }
 
-   int cnt(100);
+   int cnt = 100;
 
    fProcessingReq = true;
 
@@ -630,9 +630,9 @@ double dabc::MemoryPool::GetUsedRatio() const
 {
    LockGuard lock(ObjectMutex());
 
-   if (fMem==0) return 0.;
+   if (!fMem) return 0.;
 
-   double sum1(0.), sum2(0.);
+   double sum1 = 0., sum2 = 0.;
    for(unsigned n=0;n<fMem->fNumber;n++) {
       sum1 += fMem->fArr[n].size;
       if (fMem->fArr[n].refcnt>0)

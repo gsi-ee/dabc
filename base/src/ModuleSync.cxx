@@ -20,7 +20,7 @@ dabc::ModuleSync::ModuleSync(const std::string &name, Command cmd) :
    fTmoutExcept(false),
    fDisconnectExcept(false),
    fSyncCommands(false),
-   fNewCommands(0),
+   fNewCommands(nullptr),
    fWaitItem(0),
    fWaitId(0),
    fWaitRes(false),
@@ -36,10 +36,10 @@ dabc::ModuleSync::~ModuleSync()
       EOUT("Problem in sync module %s destructor - cannot leave normally main loop, must crash :-O", GetName());
    }
 
-   if (fNewCommands!=0) {
+   if (fNewCommands) {
       EOUT("Some commands remain event in module %s destructor - BAD", GetName());
       delete fNewCommands;
-      fNewCommands = 0;
+      fNewCommands = nullptr;
    }
 }
 

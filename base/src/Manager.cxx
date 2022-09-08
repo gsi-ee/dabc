@@ -130,7 +130,7 @@ namespace dabc {
             } else {
                TimeStamp tm;
                tm.GetNow();
-               int cnt(0);
+               int cnt = 0;
                while (!tm.Expired(fBlockTm)) cnt++;
             }
             return do_Ok;

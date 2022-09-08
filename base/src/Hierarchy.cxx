@@ -88,7 +88,7 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
       // storevers = storenum >> 24;
       storenum = storenum & 0xffffff;
 
-      uint64_t mask(0);
+      uint64_t mask = 0;
       s.read_uint64(mask);
       fCrossBoundary = (mask & 1) != 0;
 
@@ -170,7 +170,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string &name) :
    fDisableReadingAsChild(false),
    fBinData(),
    fHist(),
-   fHierarchyMutex(0)
+   fHierarchyMutex(nullptr)
 {
    #ifdef DABC_EXTRA_CHECKS
    DebugObject("Hierarchy", this, 1);
@@ -187,25 +187,25 @@ dabc::HierarchyContainer::~HierarchyContainer()
 
 //   DOUT0("Destructor %s %p", GetName(), this);
 
-   if (fHierarchyMutex!=0) {
+   if (fHierarchyMutex) {
       delete fHierarchyMutex;
-      fHierarchyMutex = 0;
+      fHierarchyMutex = nullptr;
    }
 }
 
 
 void dabc::HierarchyContainer::CreateHMutex()
 {
-   if (fHierarchyMutex==0) fHierarchyMutex = new Mutex;
+   if (!fHierarchyMutex) fHierarchyMutex = new Mutex;
 }
 
 dabc::HierarchyContainer* dabc::HierarchyContainer::TopParent()
 {
    dabc::HierarchyContainer* parent = this;
 
-   while (parent!=0) {
+   while (parent) {
       dabc::HierarchyContainer* top = dynamic_cast<dabc::HierarchyContainer*> (parent->GetParent());
-      if (top==0) return parent;
+      if (!top) return parent;
       parent = top;
    }
 
@@ -230,12 +230,12 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
    uint64_t pos = s.size();
    uint64_t sz = 0;
 
-   uint32_t storesz(0), storenum(0), storevers(0);
+   uint32_t storesz = 0, storenum = 0, storevers = 0;
 
    //DOUT0("dabc::HierarchyContainer::Stream %s isout %s isreal %s", GetName(), DBOOL(s.is_output()), DBOOL(s.is_real()));
 
    if (s.is_output()) {
-      bool store_fields(true), store_childs(true), store_history(false), store_diff(false);
+      bool store_fields = true, store_childs = true, store_history = false, store_diff = false;
       std::string fields_prefix;
 
       switch (kind) {
@@ -249,13 +249,13 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
          case stream_Value: // only fields are stored
             store_fields = true;
             store_childs = false;
-            store_history = !fHist.null() && (hlimit>0);
+            store_history = !fHist.null() && (hlimit > 0);
             store_diff = false;
             break;
          default: // full stream
             store_fields = fNodeVersion >= version;
             store_childs = fChildsVersion >= version;
-            store_history = !fHist.null() && (hlimit>0);
+            store_history = !fHist.null() && (hlimit > 0);
             break;
       }
 
@@ -301,7 +301,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       // storevers = storenum >> 24;
       storenum = storenum & 0xffffff;
 
-      uint64_t mask(0);
+      uint64_t mask = 0;
       s.read_uint64(mask);
 
       if (mask & maskFieldsStored) {
@@ -490,8 +490,8 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 
    // now we should check if any childs were changed
 
-   unsigned cnt1(0); // counter over source container
-   unsigned cnt2(0); // counter over existing childs
+   unsigned cnt1 = 0; // counter over source container
+   unsigned cnt2 = 0; // counter over existing childs
 
    // skip first permanent childs from update procedure
    while (cnt2 < NumChilds() && ((HierarchyContainer*) GetChild(cnt2))->fPermanent) cnt2++;
@@ -509,8 +509,8 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
          return false;
       }
 
-      bool findchild(false);
-      unsigned findindx(0);
+      bool findchild = false;
+      unsigned findindx = 0;
 
       for (unsigned n=cnt2;n<NumChilds();n++)
          if (GetChild(n)->IsName(cont_child.GetName())) {
@@ -1190,16 +1190,16 @@ namespace dabc {
 
       protected:
          Hierarchy fSrc;
-         int fCnt;
+         int fCnt{0};
 
          bool next()
          {
             if (fSrc.null()) return false;
 
-            if (fCnt<=0) {
+            if (fCnt <= 0) {
                RecordFieldsMap* fields = fSrc()->Fields().Clone();
                SetFieldsMap(fields);
-               fCnt=1;
+               fCnt = 1;
                return true;
             }
 

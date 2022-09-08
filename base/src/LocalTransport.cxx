@@ -43,7 +43,7 @@ dabc::LocalTransport::~LocalTransport()
 {
 //   DOUT3("Destroy dabc::LocalTransport %p size %u", this, fQueue.Size());
 
-   if (fConnected!=0)
+   if (fConnected != 0)
       EOUT("Queue was not correctly disconnected %u", fConnected);
 
    if (fQueue.Size() != 0) {
@@ -67,7 +67,7 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
    dabc::Buffer skipbuf;
    dabc::WorkerRef mdl;
-   unsigned id(0);
+   unsigned id = 0;
 
    {
       dabc::LockGuard lock(QueueMutex());
@@ -141,7 +141,7 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 bool dabc::LocalTransport::Recv(Buffer& buf)
 {
    dabc::WorkerRef mdl;
-   unsigned id(0);
+   unsigned id = 0;
 
    {
       dabc::LockGuard lock(QueueMutex());
@@ -197,7 +197,7 @@ void dabc::LocalTransport::SignalWhenFull()
 
 
    dabc::WorkerRef mdl;
-   unsigned id(0), evnt(0);
+   unsigned id = 0, evnt = 0;
 
    {
       dabc::LockGuard lock(QueueMutex());
@@ -330,7 +330,7 @@ void dabc::LocalTransport::CleanupQueue()
 void dabc::LocalTransport::PortActivated(int itemkind, bool on)
 {
    dabc::WorkerRef other;
-   unsigned otherid(0);
+   unsigned otherid = 0;
 
    {
       dabc::LockGuard lock(QueueMutex());
@@ -373,7 +373,7 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref, C
       q_inp.Release();
    }
 
-   bool withmutex(true), assign_out(true), assign_inp(true);
+   bool withmutex = true, assign_out = true, assign_inp = true;
 
    if (m1.IsSameThread(m2)) {
       DOUT3("!!!! Can create queue without mutex !!!");

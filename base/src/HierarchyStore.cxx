@@ -19,7 +19,7 @@
 
 dabc::HierarchyStore::HierarchyStore() :
    fBasePath(),
-   fIO(0),
+   fIO(nullptr),
    fFile(),
    fLastStoreTm(),
    fLastFlushTm(),
@@ -337,7 +337,7 @@ dabc::Buffer dabc::HierarchyReading::ReadBuffer(dabc::BinaryFile& f)
 
    if (f.eof()) return buf;
 
-   uint64_t size(0), typ(0);
+   uint64_t size = 0, typ = 0;
    if (!f.ReadBufHeader(&size, &typ)) return buf;
 
    buf = dabc::Buffer::CreateBuffer(size);
