@@ -25,7 +25,7 @@
 
 void dabc::formats(std::string& sbuf, const char *fmt, ...)
 {
-   if (!fmt || (strlen(fmt)==0)) return;
+   if (!fmt || (strlen(fmt) == 0)) return;
 
    va_list args;
    int length = 256, result = 0;
@@ -74,7 +74,7 @@ std::string dabc::format(const char *fmt, ...)
 
 std::string dabc::size_to_str(unsigned long sz, int prec, int select)
 {
-   if (select==0) {
+   if (select == 0) {
       unsigned long mult = prec<=0 ? 10 : 1;
       if (sz < 0x1000LU) select = 1; else
       if (sz < 0x100000LU*mult) select = 2; else
@@ -106,7 +106,7 @@ std::string dabc::size_to_str(unsigned long sz, int prec, int select)
 
 std::string dabc::number_to_str(unsigned long num, int prec, int select)
 {
-   if (select==0) {
+   if (select == 0) {
       unsigned long mult = prec<=0 ? 10 : 1;
       if (num < 10000LU) select = 1; else
       if (num < 1000000LU*mult) select = 2; else
@@ -144,7 +144,7 @@ bool dabc::str_to_int(const char* val, int* res)
    if (!val || !res) return false;
 
    while (*val==' ') val++;
-   if (*val==0) return false;
+   if (*val == 0) return false;
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
       unsigned ures = 0;
       if (sscanf(val+2, "%x", &ures) == 1) {
@@ -164,7 +164,7 @@ bool dabc::str_to_lint(const char* val, long* res)
    if (!val || !res) return false;
 
    while (*val==' ') val++;
-   if (*val==0) return false;
+   if (*val == 0) return false;
 
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
       long unsigned ures = 0;
@@ -186,7 +186,7 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
    if (!val || !res) return false;
 
    while (*val==' ') val++;
-   if (*val==0) return false;
+   if (*val == 0) return false;
 
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
       return sscanf(val+2, "%x", res) == 1;
@@ -202,7 +202,7 @@ bool dabc::str_to_luint(const char* val, long unsigned* res)
    if (!val || !res) return false;
 
    while (*val==' ') val++;
-   if (*val==0) return false;
+   if (*val == 0) return false;
 
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
       return sscanf(val+2, "%lx", res) == 1;
@@ -229,8 +229,8 @@ bool dabc::str_to_double(const char* val, double* res)
 bool dabc::str_to_bool(const char* val, bool* res)
 {
    if (!val || !res) return false;
-   if (strcmp(val, xmlTrueValue)==0) { *res = true; return true; }
-   if (strcmp(val, xmlFalseValue)==0) { *res = false; return true; }
+   if (strcmp(val, xmlTrueValue) == 0) { *res = true; return true; }
+   if (strcmp(val, xmlFalseValue) == 0) { *res = false; return true; }
    return false;
 }
 
@@ -264,5 +264,3 @@ dabc::NumericLocale::~NumericLocale()
    if (!fPrev.empty())
       setlocale(LC_NUMERIC, fPrev.c_str());
 }
-
-

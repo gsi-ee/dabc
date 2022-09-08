@@ -69,7 +69,7 @@ void dabc::SocketNetworkInetrface::SubmitSend(uint32_t recid)
    fSendQueue.Push(recid);
 
    // we are in transport thread and can call event-processing methods directly
-   if ((fSendQueue.Size()==1) && (fSendStatus==0)) OnSendCompleted();
+   if ((fSendQueue.Size() == 1) && (fSendStatus == 0)) OnSendCompleted();
 }
 
 void dabc::SocketNetworkInetrface::SubmitRecv(uint32_t recid)
@@ -79,14 +79,14 @@ void dabc::SocketNetworkInetrface::SubmitRecv(uint32_t recid)
    fRecvQueue.Push(recid);
 
    // we are in transport thread and can call event-processing methods directly
-   if ((fRecvQueue.Size()==1) && (fRecvStatus==0)) OnRecvCompleted();
+   if ((fRecvQueue.Size() == 1) && (fRecvStatus == 0)) OnRecvCompleted();
 }
 
 
 void dabc::SocketNetworkInetrface::OnSocketError(int msg, const std::string &info)
 {
    NetworkTransport* tr = (NetworkTransport*) fWorker();
-   if (tr) tr->CloseTransport(msg!=0);
+   if (tr) tr->CloseTransport(msg != 0);
       else EOUT("Socket msg without transport %d %s", msg, info.c_str());
 }
 
@@ -95,7 +95,7 @@ void dabc::SocketNetworkInetrface::OnSendCompleted()
 {
    NetworkTransport* tr = (NetworkTransport*) fWorker();
 
-   if (tr==0) {
+   if (!tr) {
       EOUT("Transport not available!!!");
       return;
    }
@@ -117,14 +117,14 @@ void dabc::SocketNetworkInetrface::OnSendCompleted()
 
    int sendtyp = tr->PackHeader(fSendRecid);
 
-   if (sendtyp==0) {
+   if (sendtyp == 0) {
       EOUT("record %u failed", fSendRecid);
       throw dabc::Exception("send record failed - should never happen");
    }
 
    NetworkTransport::NetIORec* rec = tr->GetRec(fSendRecid);
 
-   if (rec==0) {
+   if (!rec) {
       EOUT("Completely wrong send recid %u", fSendRecid);
       exit(432);
    }
@@ -144,7 +144,7 @@ void dabc::SocketNetworkInetrface::OnRecvCompleted()
 
 //   DOUT0("dabc::SocketNetworkInetrface::OnRecvCompleted %p", tr);
 
-   if (tr==0) {
+   if (!tr) {
       EOUT("Transport not available!!!");
       return;
    }
@@ -166,7 +166,7 @@ do_compl:
 
       NetworkTransport::NetIORec* rec = tr->GetRec(fRecvRecid);
 
-      if (rec==0) {
+      if (!rec) {
          EOUT("Completely wrong recv rec id %u", fRecvRecid);
          exit(75);
       }
@@ -204,7 +204,7 @@ do_compl:
 
       NetworkTransport::NetIORec* rec = tr->GetRec(fRecvRecid);
 
-      if (rec==0) {
+      if (!rec) {
          EOUT("Completely wrong recv recid %u", fRecvRecid);
          exit(432);
       }

@@ -44,7 +44,7 @@ dabc::CpuStatistic::CpuStatistic(bool withmem) :
       snprintf(fname, sizeof(fname), "/proc/%d/status", id);
 
       fProcStatFp = fopen(fname,"r");
-      if (fProcStatFp==0)
+      if (!fProcStatFp)
          EOUT("fopen of %s failed", fname);
    }
 
@@ -81,7 +81,7 @@ bool dabc::CpuStatistic::Measure()
       const char* info = buffer;
 
       while ((*info!=' ') && (*info != 0)) info++;
-      if (*info==0) break;
+      if (*info == 0) break;
 
       unsigned long curr_user = 0, curr_nice = 0, curr_sys = 0, curr_idle = 0;
 
@@ -272,7 +272,7 @@ void dabc::Ratemeter::SaveRatesInFile(const char* fname, Ratemeter** rates, int 
       fprintf(f, "%7.1f", n*interval*1e3); // time in millisec
       double sum = 0.;
       for (int nr=0;nr<nrates;nr++) {
-         if (rates[nr]==0) continue;
+         if (rates[nr] == 0) continue;
          fprintf(f,"\t%5.1f", rates[nr]->fPoints[n]);
          sum+=rates[nr]->fPoints[n];
       }
@@ -374,7 +374,7 @@ void dabc::Average::Show(const char* name, bool showextr)
 
 void dabc::Average::ShowHist()
 {
-   if (!hist || (nhist==0)) return;
+   if (!hist || (nhist == 0)) return;
 
    long sum_h0 = 0;
    for (int n = 0; n < nhist+2; n++) sum_h0 += hist[n];

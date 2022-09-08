@@ -161,7 +161,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
 
          for (unsigned n=1;n<fThread()->fWorkers.size();n++) {
             Worker* work = fThread()->fWorkers[n]->work;
-            if (work==0) continue;
+            if (!work) continue;
             num++;
             names.emplace_back(work->GetName());
          }
@@ -237,7 +237,7 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
 
    DOUT3("---------- CNT:%2d Thread %s %p created", fThreadInstances, GetName(), this);
 
-   fWorkers.emplace_back(new WorkerRec(0,0)); // exclude id==0
+   fWorkers.emplace_back(new WorkerRec(0,0)); // exclude id == 0
 
    fExec = new ExecWorker(this, cmd);
    //fExec->SetLogging(true);
@@ -245,7 +245,7 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
    // keep numqueues 3 for the moment
    //fNumQueues = fExec->Cfg("NumQueues", cmd).AsUInt(fNumQueues);
 
-   if (fNumQueues>0) {
+   if (fNumQueues > 0) {
      fQueues = new EventsQueue[fNumQueues];
      for (int n=0;n<fNumQueues;n++) {
         fQueues[n].Init(256);
@@ -373,7 +373,7 @@ void dabc::Thread::ProcessNoneEvent()
 
    unsigned new_size(fWorkers.size());
 
-   while ((new_size>1) && (fWorkers[new_size-1]->work==0)) {
+   while ((new_size > 1) && !fWorkers[new_size-1]->work) {
       new_size--;
       delete fWorkers[new_size];
       fWorkers[new_size] = 0;
@@ -381,7 +381,7 @@ void dabc::Thread::ProcessNoneEvent()
 
    DOUT3("THREAD %s oldsize %u newsize %u", GetName(), fWorkers.size(), new_size);
 
-   if (new_size==fWorkers.size()) return;
+   if (new_size == fWorkers.size()) return;
 
    fWorkers.resize(new_size);
    DOUT3("Thrd:%s Shrink processors size to %u normal state %s refcnt %d", GetName(), new_size, DBOOL(_IsNormalState()), fObjectRefCnt);
@@ -404,10 +404,9 @@ bool dabc::Thread::_GetNextEvent(dabc::EventId& evnt)
    // If there are no events in the queue, one checks if thread should be cleaned up and
    // even destroyed
 
-
-   for(int nq=0; nq<fNumQueues; nq++)
-      if (fQueues[nq].Size()>0) {
-         if (--(fQueues[nq].scaler)>0) {
+   for (int nq = 0; nq < fNumQueues; nq++)
+      if (fQueues[nq].Size() > 0) {
+         if (--(fQueues[nq].scaler) > 0) {
             evnt = fQueues[nq].Pop();
             return true;
          }
@@ -794,7 +793,7 @@ bool dabc::Thread::SetExplicitLoop(Worker* proc)
 
 void dabc::Thread::RunExplicitLoop()
 {
-   if ((fExplicitLoop==0) || (fExplicitLoop>=fWorkers.size())) return;
+   if ((fExplicitLoop == 0) || (fExplicitLoop >= fWorkers.size())) return;
 
    DOUT4("Enter RunExplicitMainLoop");
 
@@ -854,7 +853,7 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
       DOUT2("AddWorker %p in thrd %p", worker, this);
 
-      if (worker==0) return cmd_false;
+      if (!worker) return cmd_false;
 
       if ((worker->fThread() != this) ||
           (worker->fThreadMutex != ThreadMutex())) {
@@ -915,14 +914,14 @@ void dabc::Thread::ChangeRecursion(unsigned id, bool inc)
    }
 #endif
 
-   if ((id>=fWorkers.size()) || (fWorkers[id]->work==0)) return;
+   if ((id >= fWorkers.size()) || !fWorkers[id]->work) return;
 
    if (inc) {
       fWorkers[id]->recursion++;
    } else {
       fWorkers[id]->recursion--;
 
-      if ((fWorkers[id]->recursion==0) && fWorkers[id]->doinghalt)
+      if ((fWorkers[id]->recursion == 0) && fWorkers[id]->doinghalt)
          CheckWorkerCanBeHalted(id);
    }
 }
@@ -931,7 +930,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 {
    DOUT4("THRD:%s CheckWorkerCanBeHalted %u", GetName(), id);
 
-   if ((id>=fWorkers.size()) || (fWorkers[id]->work==0)) {
+   if ((id >= fWorkers.size()) || !fWorkers[id]->work) {
       DOUT3("THRD:%s Worker %u no longer exists", GetName(), id);
 
       return cmd_false;
@@ -1072,12 +1071,12 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
 
       DOUT3("*** Thrd:%p proc:%p itemid:%u event:%u doinghalt:%u", this, worker, itemid, evnt.GetCode(), fWorkers[itemid]->doinghalt);
 
-      if (worker==0) return;
+      if (!worker) return;
 
       fWorkers[itemid]->processed++;
 
-      if (worker==dabc::mgr())
-         DOUT3("Process manager event %s fired:%u processed: %u", evnt.asstring().c_str(), worker->fWorkerFiredEvents, fWorkers[itemid]->processed);
+      //if (worker == dabc::mgr())
+      //   DOUT3("Process manager event %s fired:%u processed: %u", evnt.asstring().c_str(), worker->fWorkerFiredEvents, fWorkers[itemid]->processed);
 
       try {
 
@@ -1120,7 +1119,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          }
 
          WorkerRec* rec = fWorkers[evnt.GetArg()];
-         if (rec->work==0) {
+         if (!rec->work) {
             DOUT3("Worker no longer exists", evnt.GetArg());
             break;
          }
@@ -1138,7 +1137,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          }
 
          WorkerRec* rec = fWorkers[evnt.GetArg()];
-         if (rec->work==0) {
+         if (!rec->work) {
             DOUT3("Worker no longer exists", evnt.GetArg());
             break;
          }
@@ -1161,7 +1160,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
             if ((evnt.GetArg() < 100) && !_IsNormalState()) break;
          }
 
-         if (fWorkers.size()!=2) {
+         if (fWorkers.size() != 2) {
             // this is situation when cleanup was started by DecReference while
             // there is no more references on the thread and one can destroy thread
             // one need to ensure that no more other events existing
@@ -1241,7 +1240,7 @@ bool dabc::Thread::HaltWorker(Worker* work)
 
 void dabc::Thread::WorkerAddonChanged(Worker* work, bool assign)
 {
-   if (work==0) return;
+   if (!work) return;
 
    if (!IsItself()) {
       EOUT("Not allowed from other thread");
@@ -1260,7 +1259,7 @@ void dabc::Thread::WorkerAddonChanged(Worker* work, bool assign)
       exit(444);
    }
 
-   rec->addon = assign ? work->fAddon() : 0;
+   rec->addon = assign ? work->fAddon() : nullptr;
 
    WorkersSetChanged();
 }
@@ -1272,7 +1271,7 @@ bool dabc::Thread::InvokeWorkerDestroy(Worker* work)
    // therefore state of the thread must be checked
    // This action can only work asynchron
 
-   if (work==0) return false;
+   if (!work) return false;
 
    Command cmd("InvokeWorkerDestroy");
    cmd.SetUInt("WorkerId", work->fWorkerId);
@@ -1302,7 +1301,7 @@ double dabc::Thread::CheckTimeouts(bool forcerecheck)
 
    for (unsigned n=1;n<fWorkers.size();n++) {
       WorkerRec* rec = fWorkers[n];
-      if ((rec==0) || (rec->work==0)) continue;
+      if (!rec || !rec->work) continue;
 
       if (rec->tmout_worker.CheckNextProcess(now, min_tmout, last_diff)) {
 
@@ -1336,7 +1335,7 @@ void dabc::Thread::ObjectCleanup()
 
    // we keep exec worker for a while
    RemoveChild(fExec, false);
-   if (fExec->GetParent()!=0) EOUT("PARENT IS STILL THERE");
+   if (fExec->GetParent()) EOUT("PARENT IS STILL THERE");
 
    {
       LockGuard lock(ObjectMutex());
@@ -1357,7 +1356,7 @@ bool dabc::Thread::_DoDeleteItself()
 {
    // we are outside own thread - let other do dirty job for other, also if thread not working one cannot delete itself
    // FIXME :should we check that there is no events in the queues like
-   //          if (!IsItself() && (_TotalNumberOfEvents()==0)) return false;
+   //          if (!IsItself() && (_TotalNumberOfEvents() == 0)) return false;
 
    if (!IsItself() || !fThrdWorking || !fRealThrd) return false;
 
@@ -1380,8 +1379,8 @@ void dabc::Thread::Print(int lvl)
    for (unsigned n=1;n<fWorkers.size();n++) {
       Worker* work = fWorkers[n]->work;
 
-      if (work==0) continue;
-      dabc::lgr()->Debug(lvl, "file", 1, "func", dabc::format("   Worker: %u is %p %s %s", n, work, work->GetName(), work->ClassName()).c_str());
+      if (work)
+         dabc::lgr()->Debug(lvl, "file", 1, "func", dabc::format("   Worker: %u is %p %s %s", n, work, work->GetName(), work->ClassName()).c_str());
    }
 }
 
@@ -1389,7 +1388,7 @@ unsigned dabc::Thread::NumWorkers()
 {
    unsigned cnt = 0;
    for (unsigned n=1;n<fWorkers.size();n++)
-      if (fWorkers[n]->work != 0) cnt++;
+      if (fWorkers[n]->work) cnt++;
 
    return cnt;
 }
