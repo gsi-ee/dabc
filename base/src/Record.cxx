@@ -1386,8 +1386,8 @@ bool dabc::RecordFieldsMap::HasField(const std::string &name) const
 
 bool dabc::RecordFieldsMap::RemoveField(const std::string &name)
 {
-   FieldsMap::iterator iter = fMap.find(name);
-   if (iter==fMap.end()) return false;
+   auto iter = fMap.find(name);
+   if (iter == fMap.end()) return false;
    fMap.erase(iter);
    fChanged = true;
    return true;
@@ -1441,8 +1441,8 @@ dabc::RecordFieldsMap *dabc::RecordFieldsMap::Clone()
 {
    dabc::RecordFieldsMap *res = new dabc::RecordFieldsMap;
 
-   for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
-      res->Field(iter->first).SetValue(iter->second);
+   for (auto &entry: fMap)
+      res->Field(entry.first).SetValue(entry.second);
 
    return res;
 }
@@ -1475,17 +1475,17 @@ bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string &nameprefix)
       sz = s.is_real() ? StoreSize(nameprefix) : 0;
       storesz = sz/8;
       storenum = 0;
-      for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-         if (match_prefix(iter->first, nameprefix)) storenum++;
+      for (auto &entry : fMap) {
+         if (match_prefix(entry.first, nameprefix)) storenum++;
       }
 
       s.write_uint32(storesz);
       s.write_uint32(storenum  | (storevers<<24));
 
-      for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-         if (!match_prefix(iter->first, nameprefix)) continue;
-         s.write_str(iter->first);
-         iter->second.Stream(s);
+      for (auto &entry : fMap) {
+         if (!match_prefix(entry.first, nameprefix)) continue;
+         s.write_str(entry.first);
+         entry.second.Stream(s);
       }
 
    } else {
@@ -1502,8 +1502,8 @@ bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string &nameprefix)
       storenum = storenum & 0xffffff;
 
       // first clear touch flags
-      for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
-         iter->second.fTouched = false;
+      for (auto &entry : fMap)
+         entry.second.fTouched = false;
 
       for (uint32_t n=0;n<storenum;n++) {
          std::string name;
@@ -1513,9 +1513,9 @@ bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string &nameprefix)
          fld.fTouched = true;
       }
 
-      FieldsMap::iterator iter = fMap.begin();
+      auto iter = fMap.begin();
       // now we should remove all fields, which were not touched
-      while (iter!=fMap.end()) {
+      while (iter != fMap.end()) {
          if (iter->second.fTouched) { iter++; continue; }
          if (!match_prefix(iter->first, nameprefix)) { iter++; continue; }
          fMap.erase(iter++);
@@ -1528,42 +1528,43 @@ bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string &nameprefix)
 
 bool dabc::RecordFieldsMap::SaveTo(HStore& res)
 {
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+   for (auto &entry : fMap) {
 
-      if (iter->first.empty() || (iter->first[0]=='#')) continue;
+      if (entry.first.empty() || (entry.first[0] == '#')) continue;
 
       // discard attributes, which using quotes or any special symbols in the names
-      if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,") != std::string::npos) continue;
+      if (entry.first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,") != std::string::npos) continue;
 
-      res.SetField(iter->first.c_str(), iter->second.AsJson().c_str());
+      res.SetField(entry.first.c_str(), entry.second.AsJson().c_str());
    }
    return true;
 }
 
 void dabc::RecordFieldsMap::CopyFrom(const RecordFieldsMap& src, bool overwrite)
 {
-   for (FieldsMap::const_iterator iter = src.fMap.begin(); iter!=src.fMap.end(); iter++)
-      if (overwrite || !HasField(iter->first))
-         fMap[iter->first] = iter->second;
+   for (auto &entry : src.fMap)
+      if (overwrite || !HasField(entry.first))
+         fMap[entry.first] = entry.second;
 }
 
 void dabc::RecordFieldsMap::MoveFrom(RecordFieldsMap& src)
 {
    std::vector<std::string> delfields;
 
-   for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (iter->second.IsProtected()) continue;
-      if (!src.HasField(iter->first)) delfields.emplace_back(iter->first);
+   for (auto &entry : fMap) {
+      if (entry.second.IsProtected()) continue;
+      if (!src.HasField(entry.first))
+         delfields.emplace_back(entry.first);
    }
 
    for (unsigned n=0;n<delfields.size();n++)
       RemoveField(delfields[n]);
 
-   for (FieldsMap::iterator iter = src.fMap.begin(); iter!=src.fMap.end(); iter++) {
+   for (auto &entry : src.fMap) {
       // should we completely preserve protected fields???
       // if (iter->second.IsProtected()) continue;
 
-      fMap[iter->first].SetValue(iter->second);
+      fMap[entry.first].SetValue(entry.second);
    }
 }
 
@@ -1585,13 +1586,13 @@ void dabc::RecordFieldsMap::MakeAsDiffTo(const RecordFieldsMap& current)
 
 void dabc::RecordFieldsMap::ApplyDiff(const RecordFieldsMap& diff)
 {
-   for (FieldsMap::const_iterator iter = diff.fMap.begin(); iter!=diff.fMap.end(); iter++) {
-      if (iter->first != "dabc:del") {
-         fMap[iter->first] = iter->second;
-         fMap[iter->first].fModified = true;
+   for (auto &entry : diff.fMap) {
+      if (entry.first != "dabc:del") {
+         fMap[entry.first] = entry.second;
+         fMap[entry.first].fModified = true;
       } else {
-         std::vector<std::string> delfields = iter->second.AsStrVect();
-         for (unsigned n=0;n<delfields.size();n++)
+         std::vector<std::string> delfields = entry.second.AsStrVect();
+         for (unsigned n = 0; n < delfields.size(); n++)
             RemoveField(delfields[n]);
       }
    }

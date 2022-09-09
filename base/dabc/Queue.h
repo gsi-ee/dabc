@@ -363,9 +363,9 @@ namespace dabc {
             return true;
          }
 
-         bool remove(void* item)
+         bool remove(void *item)
          {
-            for (iterator iter = begin(); iter!=end(); iter++)
+            for (auto iter = begin(); iter!=end(); iter++)
                if (*iter == item) {
                   erase(iter);
                   return true;
