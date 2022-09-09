@@ -55,14 +55,14 @@ void dabc::CommandsQueue::Cleanup(Mutex* m, Worker* proc, int res)
 
 void dabc::CommandsQueue::ReplyTimedout()
 {
-   QueueRecsList::iterator iter = fList.begin();
+   auto iter = fList.begin();
    while (iter != fList.end()) {
 
       if (!iter->cmd.IsTimedout()) { iter++; continue; }
 
       iter->cmd.Reply(dabc::cmd_timedout);
 
-      QueueRecsList::iterator curr = iter++;
+      auto curr = iter++;
       fList.erase(curr);
    }
 }
@@ -100,7 +100,7 @@ dabc::Command dabc::CommandsQueue::Pop()
 
 dabc::Command dabc::CommandsQueue::PopWithKind(EKind kind)
 {
-   for (QueueRecsList::iterator iter = fList.begin(); iter != fList.end(); iter++) {
+   for (auto iter = fList.begin(); iter != fList.end(); iter++) {
       if (iter->kind == kind) {
          dabc::Command cmd;
          cmd << iter->cmd;
@@ -114,7 +114,7 @@ dabc::Command dabc::CommandsQueue::PopWithKind(EKind kind)
 
 dabc::Command dabc::CommandsQueue::PopWithId(uint32_t id)
 {
-   for (QueueRecsList::iterator iter = fList.begin(); iter != fList.end(); iter++) {
+   for (auto iter = fList.begin(); iter != fList.end(); iter++) {
       if (iter->id == id) {
          dabc::Command cmd;
          cmd << iter->cmd;
@@ -138,10 +138,10 @@ dabc::CommandsQueue::EKind dabc::CommandsQueue::FrontKind()
 
 uint32_t dabc::CommandsQueue::ChangeKind(Command& cmd, EKind kind)
 {
-   for (QueueRecsList::iterator iter = fList.begin(); iter != fList.end(); iter++) {
-      if (iter->cmd==cmd) {
-         iter->kind = kind;
-         return iter->id;
+   for (auto &elem : fList) {
+      if (elem.cmd == cmd) {
+         elem.kind = kind;
+         return elem.id;
       }
    }
 
