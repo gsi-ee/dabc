@@ -1138,12 +1138,12 @@ void dabc::Object::DebugObject(const char* classname, Object* instance, int kind
 
    if (classname == 0) {
       printf("NUM ENTRIES = %u\n", (unsigned) cnts.size());
-      for (counts_map::iterator iter = cnts.begin(); iter != cnts.end(); iter++) {
+      for (auto iter = cnts.begin(); iter != cnts.end(); iter++) {
          printf("   CLASS = %s  NUM = %d \n", iter->first.c_str(), iter->second);
 
-         full_map::iterator iter2 = objs.find(iter->first);
-         if (iter2!=objs.end())
-            for (obj_list::iterator iter3 = iter2->second.begin(); iter3 != iter2->second.end(); iter3++)
+         auto iter2 = objs.find(iter->first);
+         if (iter2 != objs.end())
+            for (auto iter3 = iter2->second.begin(); iter3 != iter2->second.end(); iter3++)
                printf("      OBJ:%p NAME = %s\n", *iter3, (*iter3)->GetName());
       }
    } else {

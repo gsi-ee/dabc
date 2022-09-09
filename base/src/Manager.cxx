@@ -431,7 +431,7 @@ bool dabc::Manager::ProcessDestroyQueue()
       vect = fDestroyQueue;
       fDestroyQueue = nullptr;
 
-      DependPairList::iterator iter = fDepend->begin();
+      auto iter = fDepend->begin();
       while (iter != fDepend->end()) {
          if (iter->fire != 0) {
             if (iter->fire & 2) {
@@ -472,7 +472,7 @@ bool dabc::Manager::ProcessDestroyQueue()
 
    if (!vect) return false;
 
-   ParamEventReceiverList::iterator iter = fParEventsReceivers->begin();
+   auto iter = fParEventsReceivers->begin();
 
    while (iter!=fParEventsReceivers->end()) {
       if (vect->HasObject(iter->recv()))
@@ -609,8 +609,7 @@ bool dabc::Manager::ProcessParameterEvents()
 
       FillItemName(rec.par(), fullname);
 
-      for (ParamEventReceiverList::iterator iter = fParEventsReceivers->begin();
-             iter != fParEventsReceivers->end(); iter++) {
+      for (auto iter = fParEventsReceivers->begin(); iter != fParEventsReceivers->end(); iter++) {
 
          if (!iter->match(rec.par.GetName(), rec.event, fullname)) continue;
 
@@ -644,7 +643,6 @@ bool dabc::Manager::ProcessParameterEvents()
          } else
             iter->recv.Submit(evnt);
       }
-
    }
 
    // generate one more event - we do not process all of records
@@ -1220,7 +1218,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          rec.name_mask = mask;
          rec.only_change = cmd.GetBool("OnlyChange");
       } else {
-         ParamEventReceiverList::iterator iter = fParEventsReceivers->begin();
+         auto iter = fParEventsReceivers->begin();
          while (iter != fParEventsReceivers->end()) {
             if ((iter->name_mask == mask) && (iter->recv == worker) && (iter->remote_recv == remote))
                fParEventsReceivers->erase(iter++);
@@ -1276,8 +1274,7 @@ bool dabc::Manager::ReplyCommand(Command cmd)
 
       void* origin = cmd.GetPtr("#Iterator");
 
-      for (ParamEventReceiverList::iterator iter = fParEventsReceivers->begin();
-            iter != fParEventsReceivers->end(); iter++) {
+      for (auto iter = fParEventsReceivers->begin(); iter != fParEventsReceivers->end(); iter++) {
 
          if (&(*iter) == origin) {
             iter->queue--;
@@ -1321,7 +1318,7 @@ bool dabc::Manager::DestroyObject(Reference ref)
       LockGuard lock(fMgrMutex);
 
       // analyze that object presented in some dependency lists and mark record to process it
-      DependPairList::iterator iter = fDepend->begin();
+      auto iter = fDepend->begin();
       while (iter != fDepend->end()) {
          if (iter->src() == obj) {
             iter->fire = iter->fire | 1;
@@ -1515,7 +1512,7 @@ bool dabc::Manager::UnregisterDependency(Object* src, Object* tgt, bool bidirect
 
    {
       LockGuard guard(fMgrMutex);
-      DependPairList::iterator iter = fDepend->begin();
+      auto iter = fDepend->begin();
       while (iter != fDepend->end()) {
          if ((iter->src() == src) && (iter->tgt == tgt)) {
             rec = *iter; // we should not release reference inside manager mutex
