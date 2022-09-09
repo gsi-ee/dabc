@@ -71,16 +71,14 @@ namespace dabc {
    class LoggerLineEntry {
       public:
 
-         typedef std::list<LoggerEntry*> flist;
-
-         flist fFiles;
+         std::list<LoggerEntry*> fFiles;
          unsigned  fLine;
 
          LoggerLineEntry(unsigned line) : fFiles(), fLine(line) {}
 
          ~LoggerLineEntry()
          {
-            while (fFiles.size()>0) {
+            while (fFiles.size() > 0) {
                delete fFiles.front();
                fFiles.pop_front();
             }
@@ -88,11 +86,9 @@ namespace dabc {
 
          LoggerEntry* GetFile(const char* filename, const char* funcname, int lvl)
          {
-            flist::iterator iter = fFiles.begin();
-            while (iter != fFiles.end()) {
-               if ((*iter)->fFileName.compare(filename) == 0) return *iter;
-               iter++;
-            }
+            for (auto entry : fFiles)
+               if (entry->fFileName.compare(filename) == 0)
+                  return entry;
 
             LoggerEntry* f = new LoggerEntry(filename, funcname, fLine, lvl);
             fFiles.push_front(f);
@@ -417,12 +413,8 @@ void dabc::Logger::ShowStat(bool tofile)
       LoggerLineEntry* entry = fLines[n];
       if (!entry) continue;
 
-      LoggerLineEntry::flist::iterator iter = entry->fFiles.begin();
-
-      while (iter != entry->fFiles.end()) {
-         (*iter)->fShown = false;
-         iter++;
-      }
+      for (auto fentry : entry->fFiles)
+         fentry->fShown = false;
    }
 
    std::string* currfile = nullptr;
@@ -435,11 +427,7 @@ void dabc::Logger::ShowStat(bool tofile)
          LoggerLineEntry* entry = fLines[n];
          if (!entry) continue;
 
-         LoggerLineEntry::flist::iterator iter = entry->fFiles.begin();
-
-         while (iter != entry->fFiles.end()) {
-            LoggerEntry* fentry = *iter++;
-
+         for (auto fentry : entry->fFiles) {
             if (fentry->fShown) continue;
 
             if (currfile && (fentry->fFileName.compare(*currfile) != 0)) continue;
