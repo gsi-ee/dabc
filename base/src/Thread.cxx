@@ -1293,11 +1293,11 @@ double dabc::Thread::CheckTimeouts(bool forcerecheck)
       if (fNextTimeout.null()) return -1.;
       now.GetNow();
       double dist = fNextTimeout - now;
-      if (dist>0.) return dist;
+      if (dist > 0.) return dist;
    } else
       now.GetNow();
 
-   double min_tmout(-1.), last_diff(0.);
+   double min_tmout = -1., last_diff = 0.;
 
    for (unsigned n=1;n<fWorkers.size();n++) {
       WorkerRec* rec = fWorkers[n];
@@ -1318,7 +1318,7 @@ double dabc::Thread::CheckTimeouts(bool forcerecheck)
       }
    }
 
-   if (min_tmout>=0.)
+   if (min_tmout >= 0.)
       fNextTimeout = now + min_tmout;
    else
       fNextTimeout.Reset();

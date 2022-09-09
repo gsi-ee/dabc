@@ -47,7 +47,7 @@ double dabc::TimeStamp::CalculateFastClockMult()
    slowclock_t slow1, slow2;
    fastclock_t fast1, fast2;
 
-   double sum1(0.), sum2(0.), coef(0.);
+   double sum1 = 0., sum2 = 0., coef = 0.;
 
    const int num = 10;
 
@@ -80,16 +80,14 @@ double dabc::TimeStamp::CalculateFastClockMult()
 
    double aver = num/sum1;
 
-   for (int n=0;n<num;n++) {
-      sum2 += (1/values[n] - aver)*(1/values[n] - aver);
+   for (int n = 0; n < num; n++) {
+      sum2 += (1 / values[n] - aver) * (1 / values[n] - aver);
    }
 
    double deviat = sqrt(sum2/num);
 
-//   printf("Frequency = %8.2f Hz Deviat = %8.2f (rel:%8.7f) hz\n", aver, deviat, deviat/aver);
-
-   if (deviat/aver>0.0001) {
-//      printf("Cannot use TSC for time measurement\n");
+   if (deviat/aver > 0.0001) {
+      //  Cannot use TSC for time measurement
       gFast = false;
    } else {
       gFast = true;

@@ -181,7 +181,7 @@ double dabc::Configuration::GetRunTime()
    if (!fSelected) return 0.;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlRunTime);
    if (res.empty()) return 0.;
-   double runtime(0.);
+   double runtime = 0.;
    return dabc::str_to_double(res.c_str(), &runtime) ? runtime : 0.;
 }
 
@@ -190,7 +190,7 @@ double dabc::Configuration::GetHaltTime()
    if (!fSelected) return 0.;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlHaltTime);
    if (res.empty()) return 0.;
-   double halttime(0.);
+   double halttime = 0.;
    return dabc::str_to_double(res.c_str(), &halttime) ? halttime : 0.;
 }
 
@@ -199,7 +199,7 @@ double dabc::Configuration::GetThrdStopTime()
    if (!fSelected) return 0.;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlThrdStopTime);
    if (res.empty()) return 0.;
-   double stoptime(0.);
+   double stoptime = 0.;
    return dabc::str_to_double(res.c_str(), &stoptime) ? stoptime : 0.;
 }
 

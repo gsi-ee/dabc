@@ -6,8 +6,7 @@ int main(int argc, char** argv) {
    if (argc>1) filename = argv[1];
 
    hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect(filename);
-   hadaq::RawEvent* evnt = nullptr;
-   while((evnt = ref.NextEvent(1.)) != 0) {
+   while(auto evnt = ref.NextEvent(1.)) {
       // any user code here
       evnt->Dump();
 

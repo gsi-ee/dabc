@@ -1748,14 +1748,14 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    int64_t totalrecvmulti = 0;
    int64_t skipsendcounter = 0;
 
-   double last_tm(-1.), curr_tm(0.);
+   double last_tm = -1., curr_tm = 0.;
 
    dabc::CpuStatistic cpu_stat;
 
    double cq_waittime = 0.;
-   if (patternid==-2) cq_waittime = 0.001;
+   if (patternid == -2) cq_waittime = 0.001;
 
-   if (dogpuwrite>0 || dogpuread>0)
+   if (dogpuwrite > 0 || dogpuread > 0)
       DOUT0("ExecuteAllToAll: Entering main loop, remains: %5.3fs", starttime - fStamping());
 
    while ((curr_tm=fStamping()) < stoptime) {
@@ -2162,13 +2162,14 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite
 
    int setsize = 2;
    double allres[setsize*NumNodes()];
-   for (int n=0;n<setsize*NumNodes();n++) allres[n] = 0.;
+   for (int n = 0; n < setsize * NumNodes(); n++)
+      allres[n] = 0.;
 
    if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
 
 //   DOUT((1,"Results of all-to-all test");
    DOUT0("  # |      Node |   Write |   Read ");
-   double sum1(0.), sum2(0.);
+   double sum1 = 0., sum2 = 0.;
 
    for (int n=0;n<NumNodes();n++) {
 
@@ -2418,13 +2419,14 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
 
    int setsize = 14;
    double allres[setsize*NumNodes()];
-   for (int n=0;n<setsize*NumNodes();n++) allres[n] = 0.;
+   for (int n = 0; n < setsize * NumNodes(); n++)
+      allres[n] = 0.;
 
    if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
 
 //   DOUT((1,"Results of all-to-all test");
    DOUT0("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU  | Multicast ");
-   double sum1send(0.), sum2recv(0.), sum3multi(0.), sum4cpu(0.);
+   double sum1send = 0., sum2recv = 0., sum3multi = 0., sum4cpu = 0.;
    int sumcnt = 0;
    bool isok = true;
    bool isskipok = true;
@@ -2582,9 +2584,9 @@ void IbTestWorkerModule::MasterCleanup(int mainnode)
    for (int n=0;n<NumNodes()*setsize;n++)
       allres[n] = 0.;
 
-   long maxmultiqueue(0);
+   long maxmultiqueue = 0;
 
-   double sumsend(0.), sumrecv(0.), summulti(0.);
+   double sumsend = 0., sumrecv = 0., summulti = 0.;
 
    if (!MasterCommandRequest(IBTEST_CMD_ASKQUEUE)) return;
 
