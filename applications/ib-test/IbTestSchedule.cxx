@@ -65,7 +65,7 @@ void IbTestClusterRouting::Reset()
 
 int IbTestClusterRouting::FindNode(const std::string &name)
 {
-   NodesMap::iterator iter = fNodes.find(name);
+   auto iter = fNodes.find(name);
 
    if (iter == fNodes.end()) return -1;
 
@@ -75,7 +75,7 @@ int IbTestClusterRouting::FindNode(const std::string &name)
 
 int IbTestClusterRouting::AddNode(const std::string &name, int lid, int* liddiff)
 {
-   NodesMap::iterator iter = fNodes.find(name);
+   auto iter = fNodes.find(name);
 
    int id = -1, diff = 0;
 
@@ -103,7 +103,7 @@ int IbTestClusterRouting::AddNode(const std::string &name, int lid, int* liddiff
 
 int IbTestClusterRouting::AddSwitch(const std::string &name)
 {
-   NamesMap::iterator iter = fSwitchNames.find(name);
+   auto iter = fSwitchNames.find(name);
 
    int id = -1;
 
@@ -118,7 +118,7 @@ int IbTestClusterRouting::AddSwitch(const std::string &name)
 
 int IbTestClusterRouting::FindSwitch(const std::string &name)
 {
-   NamesMap::iterator iter = fSwitchNames.find(name);
+   auto iter = fSwitchNames.find(name);
 
    if (iter == fSwitchNames.end()) return -1;
 
@@ -283,10 +283,10 @@ bool IbTestClusterRouting::CheckTargetRoutes()
          if (r.GetHop1()==sw) nodes[n] = true;
       }
 
-      for (IntMap::iterator iter1 = nodes.begin(); iter1!=nodes.end(); iter1++) {
-         for (IntMap::iterator iter2 = iter1; iter2!=nodes.end(); iter2++) {
-             int node1 = iter1->first;
-             int node2 = iter2->first;
+      for (auto &elem1 : nodes) {
+         for (auto &elem2 : nodes) {
+             int node1 = elem1.first;
+             int node2 = elem2.first;
              if (node1==node2) continue;
 
              for (int node=0;node<NumNodes();node++) {
@@ -411,9 +411,10 @@ void IbTestClusterRouting::GenerateFullTopology(int switchsize, bool manylids)
 
 const char* IbTestClusterRouting::NodeName(int nodeid) const
 {
-   NodesMap::const_iterator iter = fNodes.begin();
+   auto iter = fNodes.begin();
    while (iter != fNodes.end()) {
-      if (iter->second.id == nodeid) return iter->first.c_str();
+      if (iter->second.id == nodeid)
+         return iter->first.c_str();
       iter++;
    }
    return "---";
@@ -421,9 +422,10 @@ const char* IbTestClusterRouting::NodeName(int nodeid) const
 
 const char* IbTestClusterRouting::SwitchName(int id) const
 {
-   NamesMap::const_iterator iter = fSwitchNames.begin();
+   auto iter = fSwitchNames.begin();
    while (iter != fSwitchNames.end()) {
-      if (iter->second == id) return iter->first.c_str();
+      if (iter->second == id)
+         return iter->first.c_str();
       iter++;
    }
    return "---";
@@ -473,7 +475,7 @@ void IbTestClusterRouting::ExcludeNode(int nodeid)
          for (int lid=0;lid<NumLids();lid++)
             fMatrix[i][nn][lid] = fMatrix[i][nn+1][lid];
 
-   NodesMap::iterator iter = fNodes.begin();
+   auto iter = fNodes.begin();
    while (iter != fNodes.end()) {
       if (iter->second.id == nodeid)
          fNodes.erase(iter++);

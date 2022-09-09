@@ -53,9 +53,9 @@ dim::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
 
 dim::Monitor::~Monitor()
 {
-   for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end();iter++) {
-      delete iter->second.info;
-      iter->second.info = nullptr;
+   for (auto &entry : fDimInfos) {
+      delete entry.second.info;
+      entry.second.info = nullptr;
    }
    fDimInfos.clear();
 
@@ -91,8 +91,8 @@ void dim::Monitor::ScanDimServices()
    {
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
-      for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end();iter++) {
-         iter->second.flag = 0;
+      for (auto &entry : fDimInfos) {
+         entry.second.flag = 0;
       }
    }
 
@@ -109,7 +109,7 @@ void dim::Monitor::ScanDimServices()
 
       if (!service_descr || ((type != 1) && (type != 2))) continue;
 
-      DimServicesMap::iterator iter = fDimInfos.find(service_name);
+      auto iter = fDimInfos.find(service_name);
       if (iter != fDimInfos.end()) {
          iter->second.flag = type;  // mark entry as found
          continue;
@@ -144,7 +144,7 @@ void dim::Monitor::ScanDimServices()
    {
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
-      DimServicesMap::iterator iter = fDimInfos.begin();
+      auto iter = fDimInfos.begin();
       while (iter != fDimInfos.end()) {
          if (iter->second.flag != 0) { iter++; continue; }
 
@@ -228,8 +228,8 @@ void dim::Monitor::infoHandler()
       return;
    }
 
-   DimServicesMap::iterator iter = fDimInfos.find(info->getName());
-   if ((iter==fDimInfos.end()) || (iter->second.info!=info)) {
+   auto iter = fDimInfos.find(info->getName());
+   if ((iter == fDimInfos.end()) || (iter->second.info != info)) {
       EOUT("Did not found service %s in infos map", info->getName());
       return;
    }
@@ -365,10 +365,10 @@ unsigned dim::Monitor::GetRecRawSize()
    {
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
-      for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end(); iter++) {
-         switch (iter->second.fKind) {
-            case 1: fRec.AddLong(iter->first, iter->second.fLong); break;
-            case 2: fRec.AddDouble(iter->first, iter->second.fDouble); break;
+      for (auto &entry : fDimInfos) {
+         switch (entry.second.fKind) {
+            case 1: fRec.AddLong(entry.first, entry.second.fLong); break;
+            case 2: fRec.AddDouble(entry.first, entry.second.fDouble); break;
             default: break;
          }
       }
