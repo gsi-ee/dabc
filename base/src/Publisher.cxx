@@ -205,7 +205,7 @@ double dabc::Publisher::ProcessTimeout(double)
 */
    DateTime storetm; // stamp  used to mark time when next store operation was triggered
 
-   for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
+   for (auto iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
 
       if (!iter->local) {
          is_any_global = true;
@@ -289,10 +289,10 @@ double dabc::Publisher::ProcessTimeout(double)
       fLastLocalVers = 0;
    }
 
-   for (SubscribersList::iterator iter = fSubscribers.begin(); iter != fSubscribers.end(); iter++) {
-      if (iter->waiting_worker) continue;
+   for (auto &entry : fSubscribers) {
+      if (entry.waiting_worker) continue;
 
-      if (iter->hlimit < 0) continue;
+      if (entry.hlimit < 0) continue;
 
       // here direct request can be submitted, do it later, may be even not here
    }
@@ -302,20 +302,20 @@ double dabc::Publisher::ProcessTimeout(double)
 
 void dabc::Publisher::CheckDnsSubscribers()
 {
-   for (SubscribersList::iterator iter = fSubscribers.begin(); iter != fSubscribers.end(); iter++) {
-      if (iter->waiting_worker) continue;
+   for (auto &entry : fSubscribers) {
+      if (entry.waiting_worker) continue;
 
-      if (iter->hlimit >= 0) continue;
+      if (entry.hlimit >= 0) continue;
 
-      dabc::Hierarchy h = iter->local ? fLocal.GetFolder(iter->path) : fGlobal.GetFolder(iter->path);
+      dabc::Hierarchy h = entry.local ? fLocal.GetFolder(entry.path) : fGlobal.GetFolder(entry.path);
 
-      if (h.null()) { EOUT("Subscribed path %s not found", iter->path.c_str()); continue; }
+      if (h.null()) { EOUT("Subscribed path %s not found", entry.path.c_str()); continue; }
    }
 }
 
 bool dabc::Publisher::ApplyEntryDiff(unsigned recid, dabc::Buffer& diff, uint64_t version, bool witherror)
 {
-   PublishersList::iterator iter = fPublishers.begin();
+   auto iter = fPublishers.begin();
    while (iter != fPublishers.end()) {
       if (iter->id == recid) break;
       iter++;
@@ -411,10 +411,10 @@ bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string &itemname,
 
       islocal = true;
    } else
-   for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
-      if (iter->local) continue;
+   for (auto &entry : fPublishers) {
+      if (entry.local) continue;
 
-      h = iter->rem.GetFolder(itemname);
+      h = entry.rem.GetFolder(itemname);
       if (h.null()) continue;
 
       // we need to redirect command to remote node
@@ -479,17 +479,17 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string &item
       // this is local case, we need to redirect command to the appropriate worker
       // but first we should locate hierarchy which is assigned with the worker
 
-      for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
-         if (!iter->local) continue;
+      for (auto &entry : fPublishers) {
+         if (!entry.local) continue;
 
-         if ((iter->worker != producer_item) && (iter->worker != std::string("/") + producer_item)) continue;
+         if ((entry.worker != producer_item) && (entry.worker != std::string("/") + producer_item)) continue;
 
          // we redirect command to local worker
          // manager should find proper worker for execution
 
          DOUT3("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
-         cmd.SetReceiver(iter->worker);
-         cmd.SetPtr("hierarchy", iter->hier);
+         cmd.SetReceiver(entry.worker);
+         cmd.SetPtr("hierarchy", entry.hier);
          cmd.SetStr("subitem", request_name);
          dabc::mgr.Submit(cmd);
          return true;
@@ -641,8 +641,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       switch (cmd.GetInt("cmdid")) {
          case 1: { // REGISTER
 
-            for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
-               if (iter->path == path) {
+            for (auto &entry : fPublishers) {
+               if (entry.path == path) {
                   EOUT("Path %s already registered!!!", path.c_str());
                   return cmd_false;
                }
@@ -688,7 +688,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
          case 2:  { // UNREGISTER
             bool find = false;
-            for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
+            for (auto iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
                if (iter->local && (iter->path == path) && (iter->worker == worker)) {
 
                   if (!fLocal.RemoveEmptyFolders(path))
@@ -729,7 +729,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
          case 4: {   // UNSUBSCRIBE
 
-            SubscribersList::iterator iter = fSubscribers.begin();
+            auto iter = fSubscribers.begin();
             while (iter != fSubscribers.end()) {
                if ((iter->worker == worker) && (iter->path == path))
                   fSubscribers.erase(iter++);
@@ -744,7 +744,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
             DOUT2("Publisher removes worker %s", worker.c_str());
 
-            PublishersList::iterator iter = fPublishers.begin();
+            auto iter = fPublishers.begin();
             while (iter!=fPublishers.end()) {
                if (iter->worker == worker) {
                   DOUT2("Publisher removes path %s of worker %s", iter->path.c_str(), worker.c_str());
@@ -755,7 +755,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                }
             }
 
-            SubscribersList::iterator iter2 = fSubscribers.begin();
+            auto iter2 = fSubscribers.begin();
             while (iter2 != fSubscribers.end()) {
                if (iter2->worker == worker)
                   fSubscribers.erase(iter2++);
@@ -770,8 +770,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
             std::string remoteaddr = dabc::mgr.ComposeAddress(path, dabc::Publisher::DfltName());
 
-            for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
-               if ((iter->fulladdr == remoteaddr) && !iter->local) {
+            for (auto &entry : fPublishers) {
+               if ((entry.fulladdr == remoteaddr) && !entry.local) {
                   EOUT("Path %s already registered!!!", path.c_str());
                   return cmd_false;
                }
