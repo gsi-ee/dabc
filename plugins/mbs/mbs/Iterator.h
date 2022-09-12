@@ -155,7 +155,7 @@ namespace mbs {
 
          EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
          SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
-         void* rawdata() const { return subevnt() ? subevnt()->RawData() : 0; }
+         void* rawdata() const { return subevnt() ? subevnt()->RawData() : nullptr; }
          uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(SubeventHeader); }
    };
 
