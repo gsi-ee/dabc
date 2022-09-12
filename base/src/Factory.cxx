@@ -46,9 +46,9 @@ bool dabc::Factory::CreateManager(const std::string &name, Configuration* cfg)
 }
 
 
-void* dabc::Factory::FindSymbol(const std::string &symbol)
+void *dabc::Factory::FindSymbol(const std::string &symbol)
 {
-   return symbol.empty() ? 0 : dlsym(RTLD_DEFAULT, symbol.c_str());
+   return symbol.empty() ? nullptr : dlsym(RTLD_DEFAULT, symbol.c_str());
 }
 
 dabc::Factory::Factory(const std::string &name) :

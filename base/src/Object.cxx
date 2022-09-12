@@ -1081,7 +1081,7 @@ std::string dabc::Object::ItemName(bool compact) const
    if (IsParent(dabc::mgr()))
       dabc::mgr()->FillItemName(this, res, compact);
    else
-      FillFullName(res, 0);
+      FillFullName(res, nullptr);
 
    return res;
 }

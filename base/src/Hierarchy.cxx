@@ -131,19 +131,19 @@ bool dabc::History::SaveTo(HStore& res)
    // one cannot correctly reconstruct history backwards
    if (!cross_boundary) res.SetField("history_gap", xmlTrueValue);
 
-   for (unsigned n=first; n < GetObject()->fArr.Size();n++) {
-      HistoryItem& item = GetObject()->fArr.Item(n);
+   for (unsigned n = first; n < GetObject()->fArr.Size(); n++) {
+      HistoryItem &item = GetObject()->fArr.Item(n);
 
       // we have longer history as requested
       if ((res.version()>0) && (item.version <= res.version())) continue;
 
       res.BeforeNextChild("history");
 
-      res.CreateNode(0);
+      res.CreateNode(nullptr);
 
       item.fields->SaveTo(res);
 
-      res.CloseNode(0);
+      res.CloseNode(nullptr);
    }
 
    res.CloseChilds();
@@ -462,7 +462,7 @@ bool dabc::HierarchyContainer::DuplicateHierarchyFrom(HierarchyContainer* cont)
       HierarchyContainer* src_chld = (HierarchyContainer*) cont->GetChild(n);
 
       HierarchyContainer* child = (HierarchyContainer*) FindChild(src_chld->GetName());
-      if (child == 0) {
+      if (!child) {
          child = new HierarchyContainer(src_chld->GetName());
          AddChild(child);
       }
@@ -574,7 +574,7 @@ dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::str
 std::string dabc::HierarchyContainer::ItemName()
 {
    std::string res;
-   FillFullName(res, 0, true);
+   FillFullName(res, nullptr, true);
    return res;
 }
 
@@ -770,7 +770,7 @@ void dabc::HierarchyContainer::MarkChangedItems(uint64_t tm)
 
    // mark changes in parent
    HierarchyContainer* prnt = dynamic_cast<HierarchyContainer*> (GetParent());
-   while (prnt != 0) {
+   while (prnt) {
       prnt->fNodeChanged = true;
       if (mask & change_Names) prnt->fNamesChanged = true;
       if (mask & (change_Value | change_Childs)) prnt->fChildsChanged = true;

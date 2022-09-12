@@ -149,7 +149,7 @@ dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout)
             return p->Recv();
          }
       }
-   } while (WaitItemEvent(timeout, 0, &evid, &resitem));
+   } while (WaitItemEvent(timeout, nullptr, &evid, &resitem));
 
    return Buffer();
 }
@@ -188,7 +188,7 @@ uint16_t dabc::ModuleSync::WaitEvent(double timeout)
 {
    uint16_t evid = 0;
 
-   if (!WaitItemEvent(timeout, 0, &evid)) evid = 0;
+   if (!WaitItemEvent(timeout, nullptr, &evid)) evid = 0;
 
    return evid;
 }

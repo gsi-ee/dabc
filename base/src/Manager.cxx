@@ -301,7 +301,7 @@ dabc::Manager::Manager(const std::string &managername, Configuration* cfg) :
       for (unsigned n=0;n<sizeof(fFirstFactories)/sizeof(void*); n++)
          if (fFirstFactories[n]) {
             ProcessFactory(fFirstFactories[n]);
-            fFirstFactories[n] = 0;
+            fFirstFactories[n] = nullptr;
          }
    }
 
@@ -350,7 +350,7 @@ dabc::Manager::~Manager()
    if (dabc::mgr() == this) {
       DOUT1("Normal EXIT");
       if (dabc::Logger::Instance())
-         dabc::Logger::Instance()->LogFile(0);
+         dabc::Logger::Instance()->LogFile(nullptr);
    } else {
       EOUT("What ??? !!!");
    }
@@ -1565,8 +1565,8 @@ void dabc::Manager::ProcessFactory(Factory* factory)
    // printf("Manager is not exists when factory %s is created\n", factory->GetName());
 
    if (fFirstFactoriesId == MagicInstanceId) {
-      for (unsigned n=0;n<sizeof(fFirstFactories)/sizeof(void*); n++)
-         if (fFirstFactories[n] == 0) {
+      for (unsigned n = 0; n < sizeof(fFirstFactories) / sizeof(void *); n++)
+         if (!fFirstFactories[n]) {
             fFirstFactories[n] = factory;
             break;
          }
@@ -1574,9 +1574,9 @@ void dabc::Manager::ProcessFactory(Factory* factory)
       // printf("Init first factories arrary %u\n", (unsigned) (sizeof(fFirstFactories)/sizeof(void*)));
       fFirstFactoriesId = MagicInstanceId;
       fFirstFactories[0] = factory;
-      for (unsigned n=1;n<sizeof(fFirstFactories)/sizeof(void*); n++) fFirstFactories[n] = 0;
+      for (unsigned n = 1; n < sizeof(fFirstFactories) / sizeof(void *); n++)
+         fFirstFactories[n] = nullptr;
    }
-
 }
 
 void dabc::Manager::ProcessCtrlCSignal()
@@ -2084,7 +2084,7 @@ int dabc::ManagerRef::NumNodes() const
 
 bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string &mask, bool onlychangeevent)
 {
-   if (ptr == 0) return false;
+   if (!ptr) return false;
 
    // TODO: by the subscription to remote node first register receiver on local node and
    //       only then submit registration to remote.

@@ -19,7 +19,7 @@
 #include "dabc/Publisher.h"
 
 dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner) :
-   dabc::Transport(cmd, inpport, 0),
+   dabc::Transport(cmd, inpport, nullptr),
    fInput(nullptr),
    fInputOwner(false),
    fInpState(inpInit),

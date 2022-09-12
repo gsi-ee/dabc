@@ -689,7 +689,7 @@ void dabc::Module::RemoveModuleItem(ModuleItem* item)
       }
    }
 
-   fItems[id] = 0;
+   fItems[id] = nullptr;
 }
 
 

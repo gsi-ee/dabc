@@ -85,7 +85,7 @@ dabc::ConnectionRequest dabc::Port::GetConnReq(bool force)
 
    ConfigIO io(dabc::mgr()->cfg());
 
-   io.ReadRecordField(this, dabc::ConnectionObject::ObjectName(), 0, &(req()->Fields()));
+   io.ReadRecordField(this, dabc::ConnectionObject::ObjectName(), nullptr, &(req()->Fields()));
 
    req()->FireParEvent(parCreated);
 
