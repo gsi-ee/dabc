@@ -51,7 +51,7 @@ namespace dabc {
        int GetInlineDataSize() const { GET_PAR_FIELD(fInlineDataSize,0) }
        void SetInlineDataSize(int size) { SET_PAR_FIELD(fInlineDataSize, size) }
 
-       Reference TakeCustomData() { GET_PAR_FIELD(fCustomData,0) }
+       Reference TakeCustomData() { GET_PAR_FIELD(fCustomData,nullptr) }
        void SetCustomData(Reference ref) { SET_PAR_FIELD(fCustomData, ref) }
 
        std::string GetConnId() const { GET_PAR_FIELD(fConnId,"") }

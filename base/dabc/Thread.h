@@ -376,7 +376,7 @@ namespace dabc {
          inline Mutex* ThreadMutex() const { return ObjectMutex(); }
 
          /** Returns true is this is temporary thread for command execution */
-         bool IsTemporaryThread() const { return GetParent() == 0; }
+         bool IsTemporaryThread() const { return !GetParent(); }
 
          virtual int ExecuteThreadCommand(Command cmd);
 

@@ -110,7 +110,7 @@ namespace dabc {
          uint32_t TakeRec(Buffer& buf, uint32_t kind = 0, uint32_t extras = 0);
          void ReleaseRec(uint32_t recid);
 
-         void FillRecvQueue(Buffer* freebuf = 0, bool onlyfreebuf = false);
+         void FillRecvQueue(Buffer* freebuf = nullptr, bool onlyfreebuf = false);
          bool CheckAcknReadyCounter(unsigned newitems = 0);
          void SubmitAllowedSendOperations();
 

@@ -192,7 +192,7 @@ namespace dabc {
 
       ConnectionObject::EState GetState() const { return GetObject() ? GetObject()->GetState() : ConnectionObject::sInit; }
 
-      Reference GetPort() const { return Reference(GetObject() ? GetObject()->GetParent() : 0); }
+      Reference GetPort() const { return Reference(GetObject() ? GetObject()->GetParent() : nullptr); }
 
       std::string GetLocalUrl() const { GET_PAR_FIELD(fLocalUrl,"") }
 

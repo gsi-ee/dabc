@@ -97,7 +97,7 @@ namespace dabc {
          bool CloseBasicFile()
          {
             if (fd && io) io->fclose(fd);
-            fd = 0;
+            fd = nullptr;
             fReadingMode = true;
             return true;
          }
@@ -208,7 +208,7 @@ namespace dabc {
             CheckIO();
 
             fd = io->fopen(fname,  "r");
-            if (fd == 0) {
+            if (!fd) {
                fprintf(stderr, "File open failed %s for reading\n", fname);
                return false;
             }
@@ -238,7 +238,7 @@ namespace dabc {
             CheckIO();
 
             fd = io->fopen(fname, "w");
-            if (fd == 0) {
+            if (!fd) {
                fprintf(stderr, "File open failed %s for writing\n", fname);
                return false;
             }

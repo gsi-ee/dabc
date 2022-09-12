@@ -322,11 +322,11 @@ namespace dabc {
          double AsDouble(double dflt = 0.) const;
          std::string AsStr(const std::string &dflt = "") const;
          std::vector<int64_t> AsIntVect() const;
-         int64_t* GetIntArr() const { return fKind == kind_arrint ? arrInt : 0; }
+         int64_t* GetIntArr() const { return fKind == kind_arrint ? arrInt : nullptr; }
          std::vector<uint64_t> AsUIntVect() const;
-         uint64_t* GetUIntArr() const { return fKind == kind_arruint ? arrUInt : 0; }
+         uint64_t* GetUIntArr() const { return fKind == kind_arruint ? arrUInt : nullptr; }
          std::vector<double> AsDoubleVect() const;
-         double* GetDoubleArr() const { return fKind == kind_arrdouble ? arrDouble : 0; }
+         double* GetDoubleArr() const { return fKind == kind_arrdouble ? arrDouble : nullptr; }
          std::vector<std::string> AsStrVect() const;
          dabc::Buffer AsBuffer() const;
          dabc::Reference AsReference() const;
@@ -511,7 +511,7 @@ namespace dabc {
         { return null() ? RecordField() : GetObject()->GetField(name); }
 
       RecordField* GetFieldPtr(const std::string &name) const
-        { return HasField(name) ?  &(GetObject()->Fields().Field(name)) : 0; }
+        { return HasField(name) ?  &(GetObject()->Fields().Field(name)) : nullptr; }
 
       bool SetField(const std::string &name, const RecordField &v)
         { return null() ? false : GetObject()->SetField(name, v); }

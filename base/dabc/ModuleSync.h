@@ -169,7 +169,7 @@ namespace dabc {
 
          /** Receive buffer from any input port.
           * One also can obtain index of port */
-         Buffer RecvFromAny(unsigned* port = 0, double timeout = -1);
+         Buffer RecvFromAny(unsigned* port = nullptr, double timeout = -1);
 
          /** Take buffer from memory pool */
          Buffer TakeBuffer(unsigned pool = 0, double timeout = -1);

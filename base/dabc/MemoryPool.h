@@ -150,7 +150,7 @@ namespace dabc {
           * Could be used by devices and transport to map all buffers into internal structures.
           * Memory pool mutex must be locked at this point, changecnt can be used to identify
           * if memory pool was changed since last call */
-         bool _GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes, unsigned* changecnt = 0);
+         bool _GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes, unsigned *changecnt = nullptr);
 
          /** Return pointers and sizes of all memory buffers in the pool */
          bool GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes);

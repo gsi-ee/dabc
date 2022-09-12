@@ -194,7 +194,7 @@ namespace dabc {
          void ShootTimer(const std::string &name, double delay_sec = 0.)
            {  ShootTimer(FindTimer(name), delay_sec); }
 
-         ModuleItem* GetItem(unsigned id) const { return id<fItems.size() ? fItems[id] : 0; }
+         ModuleItem* GetItem(unsigned id) const { return id < fItems.size() ? fItems[id] : nullptr; }
 
          unsigned FindUserItem(const std::string &name);
          bool IsValidUserItem(unsigned indx) const { return indx < fUsers.size(); }
