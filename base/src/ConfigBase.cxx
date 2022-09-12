@@ -174,7 +174,7 @@ const char* dabc::ConfigBase::GetAttr(XMLNodePointer_t node, const char* attr, c
 
 int dabc::ConfigBase::GetIntAttr(XMLNodePointer_t node, const char* attr, int defvalue)
 {
-   const char* res = GetAttr(node, attr, 0);
+   const char* res = GetAttr(node, attr, nullptr);
    return res ? std::stoi(res) : defvalue;
 }
 
@@ -182,7 +182,7 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const 
 {
    if (!node) return nullptr;
    XMLNodePointer_t child = Xml::GetChild(node);
-   while (child!=nullptr) {
+   while (child) {
       if (IsNodeName(child, name)) return child;
       child = Xml::GetNext(child);
    }
@@ -307,7 +307,7 @@ std::string dabc::ConfigBase::Find1(XMLNodePointer_t node,
                                     const char* sub2,
                                     const char* sub3)
 {
-   XMLNodePointer_t res = FindMatch(0, node, sub1, sub2, sub3);
+   XMLNodePointer_t res = FindMatch(nullptr, node, sub1, sub2, sub3);
    if (!res) {
       if (sub2) {
          XMLNodePointer_t child = FindChild(node, sub1);
@@ -371,7 +371,7 @@ int dabc::ConfigBase::NodePort(unsigned id)
 bool dabc::ConfigBase::NodeActive(unsigned id)
 {
    XMLNodePointer_t contnode = FindContext(id);
-   if (contnode == 0) return false;
+   if (!contnode) return false;
 
    return Find1(contnode, "", xmlRunNode, xmlActive) != xmlFalseValue;
 }

@@ -274,7 +274,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs)
       segm[n + numrequired - NumSegments()] = segm[n];
       segm[n].datasize = 0;
       segm[n].id = 0;
-      segm[n].buffer = 0;
+      segm[n].buffer = nullptr;
    }
 
    MemSegment *srcsegm = ownbuf.Segments();

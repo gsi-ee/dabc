@@ -250,7 +250,7 @@ std::string dabc::Configuration::ConetextAppClass()
    }
 
    if (!node)
-      node = FindMatch(0, fSelected, xmlApplication);
+      node = FindMatch(nullptr, fSelected, xmlApplication);
 
    const char* res = Xml::GetAttr(node, xmlClassAttr);
 
@@ -263,7 +263,7 @@ bool dabc::Configuration::LoadLibs()
     if (!fSelected) return false;
 
     std::string libname;
-    XMLNodePointer_t last = 0;
+    XMLNodePointer_t last = nullptr;
 
     do {
        libname = FindN(fSelected, last, xmlRunNode, xmlUserLib);
@@ -288,7 +288,7 @@ bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char* n
 
       if (!check_name_for_multicast) break;
       const char* nameattr = Xml::GetAttr(prev, xmlNameAttr);
-      if (!nameattr || (strpbrk(nameattr,"*?") == 0)) break;
+      if (!nameattr || (strpbrk(nameattr,"*?") == nullptr)) break;
 
    } while (prev);
 

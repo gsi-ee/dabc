@@ -150,5 +150,5 @@ uint32_t dabc::CommandsQueue::ChangeKind(Command& cmd, EKind kind)
 
 void dabc::CommandsQueue::ReplyAll(int res)
 {
-   Cleanup(0, 0, res);
+   Cleanup(nullptr, nullptr, res);
 }

@@ -235,8 +235,8 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    // TODO: check that function is redefined
    if (CreateAppModules()) return cmd_true;
 
-   XMLNodePointer_t node = 0;
-   dabc::Configuration* cfg = dabc::mgr()->cfg();
+   XMLNodePointer_t node = nullptr;
+   dabc::Configuration *cfg = dabc::mgr()->cfg();
 
    while (cfg->NextCreationNode(node, xmlDeviceNode, true)) {
       const char *name = Xml::GetAttr(node, xmlNameAttr);
@@ -420,7 +420,7 @@ bool dabc::Application::StartModules()
 
 bool dabc::Application::StopModules()
 {
-   for (unsigned n=0;n<fAppModules.size();n++)
+   for (unsigned n = 0; n < fAppModules.size(); n++)
       dabc::mgr.StopModule(fAppModules[n]);
 
    return true;
@@ -428,13 +428,13 @@ bool dabc::Application::StopModules()
 
 bool dabc::Application::CleanupApplication()
 {
-   for (unsigned n=0;n<fAppModules.size();n++)
+   for (unsigned n = 0; n < fAppModules.size(); n++)
       dabc::mgr.DeleteModule(fAppModules[n]);
 
-   for (unsigned n=0;n<fAppPools.size();n++)
+   for (unsigned n = 0; n < fAppPools.size(); n++)
       dabc::mgr.DeletePool(fAppPools[n]);
 
-   for (unsigned n=0;n<fAppDevices.size();n++)
+   for (unsigned n = 0; n < fAppDevices.size(); n++)
       dabc::mgr.DeleteDevice(fAppDevices[n]);
 
    fAppModules.clear();

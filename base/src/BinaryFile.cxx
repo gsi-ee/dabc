@@ -75,7 +75,7 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
    }
 
    struct dirent **namelist;
-   int len = scandir(pathname.c_str(), &namelist, 0, alphasort);
+   int len = scandir(pathname.c_str(), &namelist, nullptr, alphasort);
    if (len < 0) return nullptr;
 
    Object* res = nullptr;

@@ -165,7 +165,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
 
       // only in first case we skipping context node
       int max_depth = 0;
-      fCurrItem = 0;
+      fCurrItem = nullptr;
       fCurrStrict = true;
 
       switch (dcnt) {
@@ -182,7 +182,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
          default: EOUT("INTERNAL ERROR");  break;
       }
 
-      fCurrChld = 0;
+      fCurrChld = nullptr;
       int level = max_depth;
 
       while (level >= 0) {
