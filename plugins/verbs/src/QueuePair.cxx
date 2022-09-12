@@ -262,7 +262,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
 
 bool verbs::QueuePair::Post_Send(struct ibv_send_wr* swr)
 {
-   struct ibv_send_wr* bad_swr = 0;
+   struct ibv_send_wr* bad_swr = nullptr;
 
    if (ibv_post_send(qp(), swr, &bad_swr)) {
       EOUT("ibv_post_send fails arg %lx", bad_swr->wr_id);
@@ -274,7 +274,7 @@ bool verbs::QueuePair::Post_Send(struct ibv_send_wr* swr)
 
 bool verbs::QueuePair::Post_Recv(struct ibv_recv_wr* rwr)
 {
-   struct ibv_recv_wr* bad_rwr = 0;
+   struct ibv_recv_wr* bad_rwr = nullptr;
 
    if (ibv_post_recv(qp(), rwr, &bad_rwr)) {
       EOUT("ibv_post_recv fails arg = %lx", bad_rwr->wr_id);

@@ -286,7 +286,7 @@ int hadaq::NewAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
 // ========================================================================================
 
 hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, double flush, double heartbeat) :
-   dabc::Transport(cmd, inpport, 0),
+   dabc::Transport(cmd, inpport, nullptr),
    fIdNumber(0),
    fNumReadyBufs(0),
    fBufAssigned(false),

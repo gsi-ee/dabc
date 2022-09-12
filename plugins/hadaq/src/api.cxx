@@ -76,7 +76,7 @@ hadaq::RawEvent *hadaq::ReadoutHandle::GetEvent()
 
    if (!mbsev) return nullptr;
 
-   mbs::SubeventHeader *mbssub = mbsev->NextSubEvent(0);
+   mbs::SubeventHeader *mbssub = mbsev->NextSubEvent(nullptr);
 
    if (mbssub && (mbssub->FullSize() == mbsev->SubEventsSize())) {
       hadaq::RawEvent *raw = (hadaq::RawEvent*) mbssub->RawData();

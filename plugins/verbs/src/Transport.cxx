@@ -146,14 +146,14 @@ void verbs::VerbsNetworkInetrface::AllocateNet(unsigned /* fulloutputqueue */, u
          }
 
          f_swr[n].wr_id    = 0; // must be set later
-         f_swr[n].sg_list  = 0;
+         f_swr[n].sg_list  = nullptr;
          f_swr[n].num_sge  = 1;
          f_swr[n].opcode   = IBV_WR_SEND;
          f_swr[n].next     = nullptr;
          f_swr[n].send_flags = IBV_SEND_SIGNALED;
 
          f_rwr[n].wr_id     = 0; // must be set later
-         f_rwr[n].sg_list   = 0;
+         f_rwr[n].sg_list   = nullptr;
          f_rwr[n].num_sge   = 1;
          f_rwr[n].next      = nullptr;
       }

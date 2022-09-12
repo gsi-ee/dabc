@@ -102,18 +102,19 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string &typ)
          if (portnum == DefualtServerPort(mbs::StreamServer)) kind = mbs::StreamServer;
       }
 
-      if (portnum<=0) portnum = DefualtServerPort(kind);
+      if (portnum <= 0)
+         portnum = DefualtServerPort(kind);
 
       if ((kind == mbs::NoServer) || (portnum == 0)) {
          EOUT("MBS server in url %s not specified correctly", typ.c_str());
-         return 0;
+         return nullptr;
       }
 
       int fd = dabc::SocketThread::StartClient(url.GetHostName(), portnum);
 
-      if (fd<=0) {
+      if (fd <= 0) {
          DOUT3("Fail connecting to host:%s port:%d", url.GetHostName().c_str(), portnum);
-         return 0;
+         return nullptr;
       }
 
       DOUT0("Connect MBS %s server %s:%d", mbs::ServerKindToStr(kind), url.GetHostName().c_str(),  portnum);
@@ -121,7 +122,7 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string &typ)
       return new mbs::ClientTransport(fd, kind);
    }
 
-   return 0;
+   return nullptr;
 }
 
 dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string &typ)
@@ -134,7 +135,7 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string &typ)
       return new mbs::LmdOutput(url);
    }
 
-   return 0;
+   return nullptr;
 }
 
 dabc::Module* mbs::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)

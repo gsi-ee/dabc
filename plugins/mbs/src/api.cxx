@@ -142,7 +142,7 @@ mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const c
 
    if (dabc::mgr.FindPool(dabc::xmlWorkPool).null()) {
       if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, 4*1024*1024, 40)) {
-         return 0;
+         return nullptr;
       }
    }
 
@@ -160,7 +160,7 @@ mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const c
       EOUT("Cannot create transport %s",url.c_str());
       mdl.Release();
       dabc::mgr.DeleteModule(name);
-      return 0;
+      return nullptr;
    }
 
    mdl.Start();
@@ -189,7 +189,7 @@ bool mbs::ReadoutHandle::Disconnect()
 
 mbs::EventHeader* mbs::ReadoutHandle::NextEvent(double tmout, double maxage)
 {
-   if (null()) return 0;
+   if (null()) return nullptr;
 
    bool intime = GetObject()->GetEventInTime(maxage);
 
@@ -200,17 +200,18 @@ mbs::EventHeader* mbs::ReadoutHandle::NextEvent(double tmout, double maxage)
    // here maxage means cleanup of complete queue when queue was full for long time
    cmd.SetDouble("maxage", 2.*maxage);
 
-   if (!Execute(cmd, tmout)) return 0;
+   if (!Execute(cmd, tmout))
+      return nullptr;
 
    if (GetObject()->fIter.NextEvent())
       return GetObject()->fIter.evnt();
 
-   return 0;
+   return nullptr;
 }
 
 mbs::EventHeader* mbs::ReadoutHandle::GetEvent()
 {
-  return null() ? 0 : GetObject()->fIter.evnt();
+  return null() ? nullptr : GetObject()->fIter.evnt();
 }
 
 // ============================================================================================
@@ -236,7 +237,8 @@ mbs::MonitorHandle mbs::MonitorHandle::Connect(const std::string &mbsnode, int c
    cmd.SetBool("publish", false);
    cmd.SetBool("printf", true);
 
-   if (!dabc::mgr.Execute(cmd)) return 0;
+   if (!dabc::mgr.Execute(cmd))
+      return nullptr;
 
    mbs::MonitorHandle mdl = dabc::mgr.FindModule(name);
 

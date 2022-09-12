@@ -99,8 +99,8 @@ class rdaDabcHandler : public rdaReplyHandler
 fesa::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    mbs::MonitorSlowControl(name, "Fesa", cmd),
    fHierarchy(),
-   fRDAService(0),
-   fDevice(0),
+   fRDAService(nullptr),
+   fDevice(nullptr),
    fHandlers(0),
    fBlockRec(false)
 {

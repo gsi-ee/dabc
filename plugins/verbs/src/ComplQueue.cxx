@@ -93,7 +93,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
 {
    int res = Poll();
 
-   if ((res != 0) || (timeout <= 0.) || (f_channel == 0)) return res;
+   if ((res != 0) || (timeout <= 0.) || !f_channel) return res;
 
    dabc::TimeStamp now = dabc::Now();
    dabc::TimeStamp finish = now + timeout;

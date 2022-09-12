@@ -94,7 +94,7 @@ dabc::Condition::Condition(Mutex* ext_mtx) :
    fFiredCounter(0),
    fWaiting(false)
 {
-   pthread_cond_init(&fCond, 0);
+   pthread_cond_init(&fCond, nullptr);
 }
 
 dabc::Condition::~Condition()

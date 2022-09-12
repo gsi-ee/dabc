@@ -347,7 +347,7 @@ int stream::RunModule::ExecuteCommand(dabc::Command cmd)
                // only in triggered mode storing is allowed
                if (fProcMgr->IsRawAnalysis()) fProcMgr->SetTriggeredAnalysis(true);
                fProcMgr->SetStoreKind(kind);
-               fProcMgr->UserPreLoop(0, true);
+               fProcMgr->UserPreLoop(nullptr, true);
 
             }
          return dabc::cmd_true;

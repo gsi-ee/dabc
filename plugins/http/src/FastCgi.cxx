@@ -266,5 +266,5 @@ void* http::FastCgi::RunFunc(void* args)
 
 #endif
 
-   return 0;
+   return nullptr;
 }

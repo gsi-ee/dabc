@@ -319,7 +319,7 @@ void mbs::ServerOutputAddon::OnSocketError(int err, const std::string &)
 // ===============================================================================
 
 mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, int portnum, dabc::SocketServerAddon* connaddon, const dabc::Url& url) :
-   dabc::Transport(cmd, 0, outport),
+   dabc::Transport(cmd, nullptr, outport),
    fKind(kind),
    fPortNum(portnum),
    fSlaveQueueLength(5),

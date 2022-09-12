@@ -102,7 +102,7 @@ void http::Civetweb::OnThreadAssigned()
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
 
-   mg_set_request_handler(fCtx,"/",http::Civetweb::begin_request_handler,0);
+   mg_set_request_handler(fCtx, "/", http::Civetweb::begin_request_handler, nullptr);
 
    if (!fCtx) EOUT("Fail to start civetweb on port %s", sport.c_str());
 }

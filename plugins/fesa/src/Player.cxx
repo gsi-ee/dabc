@@ -66,7 +66,7 @@ fesa::Player::Player(const std::string &name, dabc::Command cmd) :
    fCounter(0),
    fSniffer(nullptr),
    fHist(nullptr),
-   fRDAService(0),
+   fRDAService(nullptr),
    fDevice(nullptr)
 {
    fWorkerHierarchy.Create("FESA", true);

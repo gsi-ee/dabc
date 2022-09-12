@@ -40,7 +40,7 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid, const char* op
    CheckIO();
 
    fd = io->fopen(fname, "w", opt);
-   if (fd == 0) {
+   if (!fd) {
       fprintf(stderr, "File open failed %s for writing\n", fname);
       return false;
    }
@@ -72,7 +72,7 @@ bool hadaq::HldFile::OpenRead(const char* fname, const char* opt)
    CheckIO();
 
    fd = io->fopen(fname,  "r", opt);
-   if (fd == 0) {
+   if (!fd) {
       fprintf(stderr, "File open failed %s for reading\n", fname);
       return false;
    }

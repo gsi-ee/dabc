@@ -89,7 +89,7 @@ void verbs::PoolRegistry::CleanMRStructure()
    DOUT3("CleanMRStructure %s call ibv_dereg_mr %u", GetName(), f_nummr);
 
    for (unsigned n=0;n<f_nummr;n++)
-     if (f_mr[n] != 0) {
+     if (f_mr[n]) {
         DOUT5("CleanMRStructure %s mr[%u] = %p", GetName(), n, f_mr[n]);
 //        if (strcmp(GetName(),"TransportPool") != 0)
            ibv_dereg_mr(f_mr[n]);
@@ -142,7 +142,7 @@ void verbs::PoolRegistry::SyncMRStructure()
 
          DOUT5("CreateMRStructure %p for pool %p mr[%u] = %p done", this, fPool, n, f_mr[n]);
 
-         if (f_mr[n] == 0) {
+         if (!f_mr[n]) {
             EOUT("Fail to register VERBS memory - HALT");
             exit(138);
          }

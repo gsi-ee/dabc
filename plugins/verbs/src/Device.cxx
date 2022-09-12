@@ -283,7 +283,7 @@ verbs::QueuePair* verbs::Device::CreatePortQP(const std::string &thrd_name, dabc
                                    port_cq, output_size + 1, num_send_seg,
                                    port_cq, input_size + 1, 2);
 
-   if (port_qp->qp() == 0) {
+   if (!port_qp->qp()) {
       delete port_qp;
       port_qp = nullptr;
    }
@@ -402,7 +402,7 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 
          ProtocolAddon* proto = dynamic_cast<ProtocolAddon*> (prot_ref());
 
-         if (proto == 0) {
+         if (!proto) {
             EOUT("SOMETHING WRONG - NO PROTOCOL addon for the connection request");
             return dabc::cmd_false;
          }
