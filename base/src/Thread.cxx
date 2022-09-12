@@ -237,7 +237,7 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
 
    DOUT3("---------- CNT:%2d Thread %s %p created", fThreadInstances, GetName(), this);
 
-   fWorkers.emplace_back(new WorkerRec(0,0)); // exclude id == 0
+   fWorkers.emplace_back(new WorkerRec(nullptr, nullptr)); // exclude id == 0
 
    fExec = new ExecWorker(this, cmd);
    //fExec->SetLogging(true);
@@ -247,7 +247,7 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
 
    if (fNumQueues > 0) {
      fQueues = new EventsQueue[fNumQueues];
-     for (int n=0;n<fNumQueues;n++) {
+     for (int n = 0; n < fNumQueues; n++) {
         fQueues[n].Init(256);
         fQueues[n].scaler = 8;
      }
@@ -266,7 +266,7 @@ dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
    if ((fThrdStopTimeout <= 0) && !dabc::mgr.null()) fThrdStopTimeout = dabc::mgr()->cfg()->GetThrdStopTime();
    if (fThrdStopTimeout <= 0) fThrdStopTimeout = 5.;
 
-   fWorkers.emplace_back(new WorkerRec(fExec,0));
+   fWorkers.emplace_back(new WorkerRec(fExec, nullptr));
 
 //   SetLogging(true);
 
@@ -376,7 +376,7 @@ void dabc::Thread::ProcessNoneEvent()
    while ((new_size > 1) && !fWorkers[new_size-1]->work) {
       new_size--;
       delete fWorkers[new_size];
-      fWorkers[new_size] = 0;
+      fWorkers[new_size] = nullptr;
    }
 
    DOUT3("THREAD %s oldsize %u newsize %u", GetName(), fWorkers.size(), new_size);
@@ -975,7 +975,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
       DOUT5("Thrd:%s Remove record %u\n", GetName(), id);
 
-      fWorkers[id] = new WorkerRec(0, 0);
+      fWorkers[id] = new WorkerRec(nullptr, nullptr);
 
       // reset id
       if (rec->work) rec->work->fWorkerId = 0;

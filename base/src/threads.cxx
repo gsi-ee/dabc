@@ -50,7 +50,7 @@ dabc::Mutex::Mutex(bool recursive)
       pthread_mutex_init(&fMutex, &attr);
       pthread_mutexattr_destroy(&attr);
    } else {
-      pthread_mutex_init(&fMutex, 0);
+      pthread_mutex_init(&fMutex, nullptr);
    }
 }
 
@@ -117,10 +117,9 @@ bool dabc::Condition::_DoWait(double wait_seconds)
          fWaiting = true;
          pthread_cond_wait(&fCond, &fCondMutex->fMutex);
          fWaiting = false;
-      } else
-      if (wait_seconds > 0.) {
+      } else if (wait_seconds > 0.) {
          struct timeval tp;
-         gettimeofday(&tp, 0);
+         gettimeofday(&tp, nullptr);
 
          long wait_microsec = long(wait_seconds*1e6);
 

@@ -536,7 +536,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string &name, Command cmd) const
 
    // third - in xml file
    ConfigIO io(dabc::mgr()->cfg(), fWorkerCfgId);
-   if (io.ReadRecordField((Object*) this, name, &res, 0)) {
+   if (io.ReadRecordField((Object*) this, name, &res, nullptr)) {
       DOUT2("Worker %s Cfg %s xml %s", ItemName().c_str(), name.c_str(), res.AsStr().c_str());
       return res;
    }
@@ -566,7 +566,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string &name, const std::stri
 
       ConfigIO io(dabc::mgr()->cfg());
 
-      io.ReadRecordField(this, name, 0, &(cont->Fields()));
+      io.ReadRecordField(this, name, nullptr, &(cont->Fields()));
 
       par = cont;
 
@@ -916,7 +916,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
       thrd = dabc::mgr.CurrentThread();
 
    if (thrd()) {
-      return thrd()->RunCommandInTheThread(0, this, cmd) > 0;
+      return thrd()->RunCommandInTheThread(nullptr, this, cmd) > 0;
       //if (res!=cmd_ignore) return res>0;
       //return ProcessCommand(cmd) > 0;
    }
@@ -932,7 +932,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
 
    curr.Start(0, false);
 
-   return curr.RunCommandInTheThread(0, this, cmd) > 0;
+   return curr.RunCommandInTheThread(nullptr, this, cmd) > 0;
 }
 
 dabc::Command dabc::Worker::Assign(dabc::Command cmd)
@@ -950,7 +950,7 @@ dabc::Command dabc::Worker::Assign(dabc::Command cmd)
       fWorkerCommands.Push(cmd, CommandsQueue::kindAssign);
    }
 
-   cmd.AddCaller(this, 0);
+   cmd.AddCaller(this, nullptr);
 
    return cmd;
 }

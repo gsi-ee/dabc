@@ -139,7 +139,7 @@ dabc::Logger::~Logger()
 
    CloseFile();
 
-   Syslog(0);
+   Syslog(nullptr);
 
    {
      LockGuard lock(fMutex);

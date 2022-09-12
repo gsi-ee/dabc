@@ -136,7 +136,7 @@ void dabc::Sleep(double tm)
    if (t.tv_sec == 0)
       usleep(t.tv_nsec / 1000);
    else
-      nanosleep (&t, 0);
+      nanosleep(&t, nullptr);
 }
 
 // ====================================================

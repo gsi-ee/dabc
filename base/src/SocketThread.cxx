@@ -190,7 +190,7 @@ ssize_t dabc::SocketAddon::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
    msg.msg_namelen = srcaddrlen;
    msg.msg_iov = iov;
    msg.msg_iovlen = buf ? 2 : 1;
-   msg.msg_control = 0;
+   msg.msg_control = nullptr;
    msg.msg_controllen = 0;
    msg.msg_flags = 0;
 
@@ -237,7 +237,7 @@ ssize_t dabc::SocketAddon::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
    msg.msg_namelen = tgtaddrlen;
    msg.msg_iov = iov;
    msg.msg_iovlen = buf ? 2 : 1;
-   msg.msg_control = 0;
+   msg.msg_control = nullptr;
    msg.msg_controllen = 0;
    msg.msg_flags = 0;
 
@@ -461,7 +461,7 @@ bool dabc::SocketIOAddon::StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, s
 
 bool dabc::SocketIOAddon::StartRecv(Buffer& buf, BufferSize_t datasize)
 {
-   return StartNetRecv(0, 0, buf, datasize);
+   return StartNetRecv(nullptr, 0, buf, datasize);
 }
 
 bool dabc::SocketIOAddon::StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf, BufferSize_t datasize)
@@ -583,7 +583,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
              msg.msg_namelen = sizeof(fRecvAddr);
              msg.msg_iov = &(fRecvIOV[fRecvIOVFirst]);
              msg.msg_iovlen = fRecvIOVNumber - fRecvIOVFirst;
-             msg.msg_control = 0;
+             msg.msg_control = nullptr;
              msg.msg_controllen = 0;
              msg.msg_flags = 0;
 
@@ -689,11 +689,11 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 
              struct msghdr msg;
 
-             msg.msg_name = fSendUseAddr ? &fSendAddr : 0;
+             msg.msg_name = fSendUseAddr ? &fSendAddr : nullptr;
              msg.msg_namelen = fSendUseAddr ? sizeof(fSendAddr) : 0;
              msg.msg_iov = &(fSendIOV[fSendIOVFirst]);
              msg.msg_iovlen = fSendIOVNumber - fSendIOVFirst;
-             msg.msg_control = 0;
+             msg.msg_control = nullptr;
              msg.msg_controllen = 0;
              msg.msg_flags = 0;
 
@@ -802,7 +802,7 @@ void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
           // we accept more connections
           SetDoingInput(true);
 
-          int connfd = accept(Socket(), 0, 0);
+          int connfd = accept(Socket(), nullptr, nullptr);
 
           if (connfd < 0) {
              EOUT("Error with accept");
@@ -881,8 +881,6 @@ bool dabc::SocketServerAddon::RecreateSocket()
    return false;
 }
 
-
-
 // _____________________________________________________________________
 
 dabc::SocketClientAddon::SocketClientAddon(const struct addrinfo* serv_addr, int fd) :
@@ -918,7 +916,7 @@ dabc::SocketClientAddon::SocketClientAddon(const struct addrinfo* serv_addr, int
       else
          EOUT("Memory allocation error");
    }
-   fServAddr.ai_next = 0;
+   fServAddr.ai_next = nullptr;
 }
 
 dabc::SocketClientAddon::~SocketClientAddon()

@@ -478,7 +478,7 @@ dabc::XMLAttrPointer_t dabc::Xml::NewIntAttr(XMLNodePointer_t xmlnode,
 
    char sbuf[30];
    sprintf(sbuf,"%d",value);
-   return NewAttr(xmlnode, 0, name, sbuf);
+   return NewAttr(xmlnode, nullptr, name, sbuf);
 }
 
 //______________________________________________________________________________
@@ -613,7 +613,7 @@ dabc::XMLNsPointer_t dabc::Xml::NewNS(XMLNodePointer_t xmlnode, const char* refe
    SXmlAttr_t* first = node->fAttr;
    node->fAttr = nullptr;
 
-   SXmlAttr_t* nsattr = (SXmlAttr_t*) NewAttr(xmlnode, 0, nsname, reference);
+   SXmlAttr_t* nsattr = (SXmlAttr_t*) NewAttr(xmlnode, nullptr, nsname, reference);
 
    node->fAttr = nsattr;
    nsattr->fNext = first;
@@ -990,10 +990,10 @@ dabc::XMLDocPointer_t dabc::Xml::NewDoc(const char* version)
    // creates new xml document with provided version
 
    SXmlDoc_t* doc = new SXmlDoc_t;
-   doc->fRootNode = (SXmlNode_t*) NewChild(0, 0, "??DummyTopNode??", 0);
+   doc->fRootNode = (SXmlNode_t*) NewChild(nullptr, nullptr, "??DummyTopNode??", nullptr);
 
    if (version) {
-      XMLNodePointer_t vernode = NewChild( (XMLNodePointer_t) doc->fRootNode, 0, "xml");
+      XMLNodePointer_t vernode = NewChild( (XMLNodePointer_t) doc->fRootNode, nullptr, "xml");
       ((SXmlNode_t*) vernode)->fType = kXML_PI_NODE;
       NewAttr(vernode, nullptr, "version", version);
    }
@@ -1185,7 +1185,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadSingleNode(const char* src)
 
    int resvalue;
 
-   XMLNodePointer_t xmlnode = ReadNode(0, &inp, resvalue);
+   XMLNodePointer_t xmlnode = ReadNode(nullptr, &inp, resvalue);
 
    if (resvalue <= 0) {
       DisplayError(resvalue, inp.CurrentLine());

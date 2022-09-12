@@ -782,7 +782,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             fPublishers.back().path = "";
             fPublishers.back().worker = worker;
             fPublishers.back().fulladdr = remoteaddr;
-            fPublishers.back().hier = 0;
+            fPublishers.back().hier = nullptr;
             fPublishers.back().local = false;
             fPublishers.back().rem.Create("remote");
 

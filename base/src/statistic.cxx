@@ -271,13 +271,16 @@ void dabc::Ratemeter::SaveRatesInFile(const char* fname, Ratemeter** rates, int 
    for (int n=0;n<npoints;n++) {
       fprintf(f, "%7.1f", n*interval*1e3); // time in millisec
       double sum = 0.;
-      for (int nr=0;nr<nrates;nr++) {
-         if (rates[nr] == 0) continue;
-         fprintf(f,"\t%5.1f", rates[nr]->fPoints[n]);
-         sum+=rates[nr]->fPoints[n];
+      for (int nr = 0; nr < nrates; nr++) {
+         if (!rates[nr])
+            continue;
+         fprintf(f, "\t%5.1f", rates[nr]->fPoints[n]);
+         sum += rates[nr]->fPoints[n];
       }
-      if (withsum) fprintf(f,"\t%5.1f\n", sum);
-              else fprintf(f,"\n");
+      if (withsum)
+         fprintf(f, "\t%5.1f\n", sum);
+      else
+         fprintf(f, "\n");
    }
 
    fclose(f);
