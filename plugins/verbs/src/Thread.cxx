@@ -41,8 +41,8 @@ namespace verbs {
    class TimeoutWorker : public dabc::Worker {
 
       protected:
-         Thread *fVerbsThrd;
-         double fLastTm;
+         Thread *fVerbsThrd{nullptr};
+         double fLastTm{-1};
 
       public:
          TimeoutWorker(Thread* thrd) :
@@ -52,12 +52,13 @@ namespace verbs {
          {
          }
 
-         void OnThreadAssigned()
+         virtual ~TimeoutWorker() {}
+
+         void OnThreadAssigned() override
          {
             dabc::Worker::OnThreadAssigned();
             ActivateTimeout(fLastTm);
          }
-
 
          void DoTimeout(double tmout)
          {
@@ -66,13 +67,13 @@ namespace verbs {
                ActivateTimeout(tmout);
          }
 
-         virtual double ProcessTimeout(double)
+         double ProcessTimeout(double) override
          {
             if (fVerbsThrd) fVerbsThrd->FireDoNothingEvent();
             return -1;
          }
 
-         virtual const char* ClassName() const { return "verbs::TimeoutWorker"; }
+         const char* ClassName() const override { return "verbs::TimeoutWorker"; }
 
    };
 
