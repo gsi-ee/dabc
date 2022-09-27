@@ -76,6 +76,8 @@ namespace ezca {
       public:
          Monitor(const std::string &name, dabc::Command cmd = nullptr);
 
+         virtual ~Monitor() {}
+
          virtual void ProcessTimerEvent(unsigned timer);
    };
 }

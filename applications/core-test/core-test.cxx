@@ -233,6 +233,8 @@ class CoreTestApplication : public dabc::Application {
          DOUT0("Test application was build bufsize = %d", (int) Par(dabc::xmlBufferSize).Value().AsInt());
       }
 
+      virtual ~CoreTestApplication() {}
+
       bool IsSync()
       {
          return Par("TestKind").Value().AsStr() == "sync";
@@ -409,6 +411,8 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
          if (withrate)
             CreatePar("Rate").SetRatemeter(false).SetDebugOutput(1).SetUnits("call");
       }
+
+      virtual ~TimeoutTestModuleAsync() {}
 
       virtual void ProcessTimerEvent(unsigned timer)
       {

@@ -495,6 +495,8 @@ namespace dabc {
 
       DABC_REFERENCE(Record, Reference, RecordContainer)
 
+      virtual ~Record() {}
+
       bool HasField(const std::string &name) const
         { return null() ? false : GetObject()->HasField(name); }
 
