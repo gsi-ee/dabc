@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -43,19 +43,15 @@
 
 #include <saftlib/Input.h>
 
-
-
 // for CommonFunctions:
-   #include <ctime>
-   #include <sys/time.h>
-   #include <cstdio>
-   #include <cstring>
-   #include <sstream>
-   #include <iostream>
-   #include <iomanip>
-   #include <inttypes.h>
-
-
+#include <ctime>
+#include <sys/time.h>
+#include <cstdio>
+#include <cstring>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <inttypes.h>
 
 
 
@@ -73,24 +69,24 @@ public:
   virtual ~Device ();
 
   /** need to start timeout here*/
-  void OnThreadAssigned();
+  void OnThreadAssigned() override;
 
   /** here we may insert some actions to the device cleanup methods*/
-  virtual bool DestroyByOwnThread();
+  bool DestroyByOwnThread() override;
 
 
-  virtual const char* ClassName () const
+  const char* ClassName () const override
   {
     return "saftdabc::Device";
   }
 
 
-  virtual int ExecuteCommand (dabc::Command cmd);
+  int ExecuteCommand (dabc::Command cmd)  override;
 
-  virtual dabc::Transport* CreateTransport (dabc::Command cmd, const dabc::Reference& port);
+  dabc::Transport* CreateTransport (dabc::Command cmd, const dabc::Reference& port)  override;
 
   /** clean up all existing saftlib conditions*/
-   bool ClearConditions ();
+   bool ClearConditions();
 
    /** Register input of name to snoop on
     * NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
@@ -101,19 +97,19 @@ public:
     * NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
     * acceptflags contain bitmask for accept flags: 0x1=late, 0x2=early, 0x4= conflict, 0x8=delayed
     * first argument is pointer to input channel which shall receive timing event*/
-#ifdef DABC_SAFT_USE_2_0   
+#ifdef DABC_SAFT_USE_2_0
    bool RegisterEventCondition (saftdabc::Input* receiver, uint64_t id, uint64_t mask, int64_t offset, unsigned char acceptflags);
 #else
     bool RegisterEventCondition (saftdabc::Input* receiver, guint64 id, guint64 mask, gint64 offset, unsigned char acceptflags);
-#endif   
+#endif
 
    /** Return text description of input belonging to given event id, e.g. "IO2 rising".
-    * Will be put into event data for unique identification in data stream*/   
-#ifdef DABC_SAFT_USE_2_0      
+    * Will be put into event data for unique identification in data stream*/
+#ifdef DABC_SAFT_USE_2_0
    const std::string GetInputDescription(uint64_t event);
 #else
    const std::string GetInputDescription(guint64 event);
-#endif   
+#endif
 
    /** add numevents to the event  ratemeter. For webgui.*/
    void AddEventStatistics (unsigned numevents);
@@ -128,7 +124,7 @@ protected:
   void RunGlibMainLoop();
 
 
-  virtual void ObjectCleanup ();
+  void ObjectCleanup() override;
 
 
 
@@ -136,8 +132,6 @@ protected:
   {
     fDevInfoName = name;
   }
-
-
 
 protected:
 
@@ -157,12 +151,12 @@ protected:
 
      /** Helper vector  to connect action sinks */
    std::vector<std::shared_ptr<saftlib::SoftwareActionSink_Proxy> > fActionSinks;
-  
+
    /** Translation table IO name <> prefix
       * like in  saft-io-ctl implementation*/
     std::map<std::string, uint64_t> fMap_PrefixName;
-   
-#else  
+
+#else
   /** the glib main loop*/
    Glib::RefPtr<Glib::MainLoop> fGlibMainloop;
 
@@ -174,28 +168,19 @@ protected:
 
      /** Helper vector  to connect action sinks */
    std::vector<Glib::RefPtr<saftlib::SoftwareActionSink_Proxy> > fActionSinks;
-   
+
    /** Translation table IO name <> prefix
       * like in  saft-io-ctl implementation*/
     std::map<Glib::ustring, guint64> fMap_PrefixName;
 #endif
 
-   
-   
    /** Mutex to protect list of condition proxies*/
    dabc::Mutex fConditionMutex;
-
-
-   
-
-
-
 
 };
 
 
-
-   class DeviceRef : public dabc::DeviceRef {
+class DeviceRef : public dabc::DeviceRef {
 
       DABC_REFERENCE(DeviceRef, dabc::DeviceRef, Device)
 
@@ -212,23 +197,23 @@ protected:
     return (null () ? false : GetObject ()->RegisterInputCondition (receiver, ioname));
 
   }
-  
-#ifdef DABC_SAFT_USE_2_0   
+
+#ifdef DABC_SAFT_USE_2_0
    bool RegisterEventCondition (saftdabc::Input* receiver, uint64_t id, uint64_t mask, int64_t offset, unsigned char acceptflags)
 #else
   bool RegisterEventCondition (saftdabc::Input* receiver, guint64 id, guint64 mask, gint64 offset, unsigned char acceptflags)
-#endif  
+#endif
   {
     return (null () ? false : GetObject ()->RegisterEventCondition (receiver, id, mask, offset, acceptflags));
   }
-  
-#ifdef DABC_SAFT_USE_2_0  
+
+#ifdef DABC_SAFT_USE_2_0
     const std::string GetInputDescription(uint64_t event)
 #else
   const std::string GetInputDescription(guint64 event)
-#endif  
-  
-  
+#endif
+
+
   {
     return (null() ? std::string("") : GetObject ()->GetInputDescription(event));
   }
@@ -250,7 +235,7 @@ protected:
 ////////////// here CommonFunction declarations stolen from saftlib examples:
 // JAM TODO: may this be exported in saftlib?
 
-#ifdef DABC_SAFT_USE_2_0   
+#ifdef DABC_SAFT_USE_2_0
  // modes for printing to cout
     const uint32_t PMODE_NONE     = 0x0;
     const uint32_t PMODE_DEC      = 0x1;
@@ -282,12 +267,12 @@ protected:
                                      uint64_t delay,    // used in case action was delayed
                                      uint32_t pmode     // mode for printing
                                      );
-   
-   
-   
+
+
+
 #else
-   
-   
+
+
     // modes for printing to cout
     const guint32 PMODE_NONE     = 0x0;
     const guint32 PMODE_DEC      = 0x1;
