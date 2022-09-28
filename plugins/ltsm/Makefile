@@ -37,14 +37,13 @@ LTSM_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(LTSM_S))
 LTSM_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(LTSM_S))
 
 DABCLTSM_O       = $(LTSM_O)
-DABCLTSM_O       += $(wildcard $(LTSMAPI)/*.a)
+DABCLTSM_O       += $(wildcard $(LTSMAPI)/lib/*.a)
 
 
 
  
-$(LTSM_O) $(LTSM_D) : INCLUDES += $(LTSMAPI) $(LTSMAPI)/../.. $(TSMAPI)
-
-
+$(LTSM_O) $(LTSM_D) : INCLUDES +=  $(LTSMAPI)/include  $(TSMAPI)
+#$(LTSMAPI)/ltsm $(LTSMAPI)/ltsm/src/lib
 DABCLTSM_D       = $(LTSM_D)
 
 
@@ -80,6 +79,8 @@ $(LTSM_O) : CXXFLAGS += -Wno-unused-variable -DHAVE_CONFIG_H
 ifdef DABC_64BIT 
 $(LTSM_CO) $(LTSM_CD): C_DEFINITIONS += SYSTEM64 
 endif
+
+$(LTSM_D) : CXXFLAGS += -Wno-unused-variable -DHAVE_CONFIG_H
 
 include $(DABCSYS)/config/Makefile.rules
 

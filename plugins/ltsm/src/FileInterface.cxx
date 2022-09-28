@@ -272,7 +272,7 @@ void ltsm::FileInterface::fclose(Handle f)
     {
 
       EOUT(
-      "Inconsistent file  handles (0x%x != 0x%x) when closing LTSM file: "
+      "Inconsistent file  handles (0x%p != 0x%p) when closing LTSM file: "
       "File=%s, FSD Servername=%s, Node=%s, Fsname=%s .... try to close most recent file in session",
       theHandleFSD, fSessionFSD, fCurrentFile.c_str(),
       fServernameFSD.c_str(), fNode.c_str(), fFsname.c_str());
@@ -295,7 +295,7 @@ void ltsm::FileInterface::fclose(Handle f)
    {
 
      EOUT(
-          "Inconsistent file  handles (0x%x != 0x%x) when closing LTSM file: "
+          "Inconsistent file  handles (0x%p != 0x%p) when closing LTSM file: "
           "File=%s, Servername=%s, Node=%s, Fsname=%s .... try to close most recent file in session",
           theHandle, fSession->tsm_file, fCurrentFile.c_str(),
           fServername.c_str(), fNode.c_str(), fFsname.c_str());
@@ -340,7 +340,7 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Han
      {
 
        EOUT(
-       "Inconsistent file  handles (0x%x != 0x%x) when writing to LTSM: "
+       "Inconsistent file  handles (0x%p != 0x%p) when writing to LTSM: "
        "File=%s, FSD Servername=%s, Node=%s, Fsname=%s .... something is wrong!",
        theHandleFSD, fSessionFSD, fCurrentFile.c_str(),
        fServernameFSD.c_str(), fNode.c_str(), fFsname.c_str());
@@ -356,7 +356,7 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Han
        {
 
     EOUT(
-         "Inconsistent tsm_file_t handles (0x%x != 0x%x) when writing to LTSM: "
+         "Inconsistent tsm_file_t handles (0x%p != 0x%p) when writing to LTSM: "
          "File=%s, Servername=%s, Node=%s, Fsname=%s .... something is wrong!",
          theHandle, fSession->tsm_file, fCurrentFile.c_str(),
          fServername.c_str(), fNode.c_str(), fFsname.c_str());
@@ -366,13 +366,13 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Han
    }
     if (rc < 0)
    {
-     EOUT("tsm_fwrite failed, handle:0x%x, size:%d, nmemb:%d, rc=%d", f, sz, nmemb,rc);
+     EOUT("tsm_fwrite failed, handle:0x%p, size:%ld, nmemb:%ld, rc=%d", f, sz, nmemb,rc);
    return 0;
    }
 
     if (rc != int(sz * nmemb))
    {
-   EOUT("tsm_fwrite size mismatch, wrote %d bytes from requested %d bytes",
+   EOUT("tsm_fwrite size mismatch, wrote %d bytes from requested %ld bytes",
       rc, sz * nmemb);
    }
 
@@ -522,6 +522,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
     login_init(&tsmlogin, fServername.c_str(), fNode.c_str(),
                fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
                fFsname.c_str(), DEFAULT_FSTYPE);
+
     fSession = (struct session_t*) std::malloc(sizeof(struct session_t));
     if (!fSession) {
        EOUT("Memory allocation error");

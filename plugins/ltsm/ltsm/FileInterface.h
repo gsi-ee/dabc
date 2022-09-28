@@ -29,7 +29,7 @@
 
 extern "C"
     {
-#include "tsmapi.h"
+#include "ltsmapi.h"
     }
 
 #ifdef LTSM_USE_FSD
