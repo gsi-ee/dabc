@@ -1,6 +1,6 @@
 // taken from https://gist.github.com/tomerd/1499279
 
-let d3_select = JSROOT?.d3_select ?? d3?.select; // provided by bundle
+const d3_select = JSROOT?.d3_select ?? d3?.select; // provided by bundle
 
 function Gauge(placeholderName, configuration)
 {

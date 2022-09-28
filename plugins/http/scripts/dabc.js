@@ -5,8 +5,10 @@ const create = JSROOT.create,
       BasePainter = JSROOT.BasePainter,
       TH1Painter = JSROOT.TH1Painter,
       TH2Painter = JSROOT.TH2Painter,
-      getHPainter = JSROOT.getHPainter,
-      d3_select = JSROOT.d3_select;
+      getHPainter = JSROOT.getHPainter;
+
+if (typeof d3_select == 'undefined')
+   globalThis.d3_select = JSROOT?.d3_select ?? d3?.select; // provided by bundle
 
 JSROOT.settings.DragAndDrop = true;
 
