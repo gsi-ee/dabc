@@ -156,12 +156,6 @@ DABC.HadaqDAQControl = function(hpainter, itemname) {
       url+="]";
       //url+="]&compact=3";
 
-      function makehname(prefix, code, name) {
-         let str = code.toString(16).toUpperCase();
-         while (str.length<4) str = "0"+str;
-         return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
-      }
-
       inforeq = true;
       httpRequest(url, "object").then(res => {
          if (!res) return;
