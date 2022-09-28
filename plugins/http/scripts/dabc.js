@@ -1,11 +1,12 @@
 
-let create = JSROOT.create,
-    httpRequest = JSROOT.httpRequest,
-    addDrawFunc = JSROOT.addDrawFunc,
-    BasePainter = JSROOT.BasePainter,
-    TH1Painter = JSROOT.TH1Painter,
-    TH2Painter = JSROOT.TH2Painter,
-    getHPainter = JSROOT.getHPainter;
+const create = JSROOT.create,
+      httpRequest = JSROOT.httpRequest,
+      addDrawFunc = JSROOT.addDrawFunc,
+      BasePainter = JSROOT.BasePainter,
+      TH1Painter = JSROOT.TH1Painter,
+      TH2Painter = JSROOT.TH2Painter,
+      getHPainter = JSROOT.getHPainter,
+      d3_select = JSROOT.d3_select;
 
 JSROOT.settings.DragAndDrop = true;
 
@@ -27,7 +28,6 @@ if (src && (typeof src == "string")) {
       console.log(`Set DABC.source_dir to ${DABC.source_dir}, ${DABC.version}`);
    }
 }
-
 
 DABC.invokeCommand = function(itemname, args) {
    let url = itemname + "/execute";
@@ -100,7 +100,7 @@ DABC.HadaqDAQControl = function(hpainter, itemname) {
       html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
    html+="</fieldset>";
 
-   let dom = d3.select(frame);
+   let dom = d3_select(frame);
 
    dom.html(html);
 
@@ -139,7 +139,7 @@ DABC.HadaqDAQControl = function(hpainter, itemname) {
    }
 
    let handler = setInterval(function() {
-      if (d3.select(frame).select(".hadaq_info").empty()) {
+      if (d3_select(frame).select(".hadaq_info").empty()) {
          // if main element disapper (reset), stop handler
          clearInterval(handler);
          return;
@@ -165,7 +165,7 @@ DABC.HadaqDAQControl = function(hpainter, itemname) {
          if (!res) return;
          UpdateDaqStatus(res[0].result);
          res.shift();
-         DABC.updateTrbStatus(d3.select(frame).select('.hadaq_calibr'), res, hpainter, true);
+         DABC.updateTrbStatus(d3_select(frame).select('.hadaq_calibr'), res, hpainter, true);
       }).finally(() => { inforeq = false; });
    }, 2000);
 }
@@ -204,7 +204,7 @@ DABC.updateTrbStatus = function(holder, res, hpainter, multiget) {
 
    holder.each(function(_data, index) {
       if (!res) return;
-      let dom = d3.select(this),
+      let dom = d3_select(this),
           info = multiget ? res[index] : res;
       // when doing multiget, return object stored as result field
       if (('result' in info) && multiget) info = info.result;
@@ -231,12 +231,12 @@ DABC.updateTrbStatus = function(holder, res, hpainter, multiget) {
          code += "</div>";
          dom.html(code);
          dom.selectAll("button").classed("dabc_btn", true).on("click", function() {
-            let histname = d3.select(this).attr('hist');
-            if (d3.select(this).text() == "Clr")
+            let histname = d3_select(this).attr('hist');
+            if (d3_select(this).text() == "Clr")
                return httpRequest(histname+"/cmd.json?command=ClearHistos", "object");
-            if (d3.select(this).text() == "Ackn")
+            if (d3_select(this).text() == "Ackn")
                return httpRequest(histname+"/cmd.json?command=AcknowledgeQuality", "object");
-            if (d3.select(this).text() == "Log") {
+            if (d3_select(this).text() == "Log") {
                // log item is one level higher then histograms, excluding trb module name
                histname = histname.substr(0, histname.length-8) + "CalibrLog";
             }
@@ -273,7 +273,7 @@ DABC.StreamControl = function(hpainter, itemname) {
    let frame = mdi.findFrame(itemname, true);
    if (!frame) return null;
 
-   let dom = d3.select(frame),
+   let dom = d3_select(frame),
        ffid = dom.attr('id'),
        item = hpainter.findItem(itemname + "/Status"),
        calarr = [];
@@ -319,7 +319,7 @@ DABC.StreamControl = function(hpainter, itemname) {
    }
 
    let handler = setInterval(function() {
-      if (d3.select("#"+ffid+" .stream_info").empty()) {
+      if (d3_select("#"+ffid+" .stream_info").empty()) {
          // if main element disapper (reset), stop handler
          clearInterval(handler);
          return;
@@ -331,7 +331,7 @@ DABC.StreamControl = function(hpainter, itemname) {
       httpRequest(itemname + "/Status/get.json", "object").then(res => {
          if (!res) return;
          UpdateStreamStatus(res);
-         DABC.updateTrbStatus(d3.select(frame).select('.stream_tdc_calibr'), res._childs, hpainter, false);
+         DABC.updateTrbStatus(d3_select(frame).select('.stream_tdc_calibr'), res._childs, hpainter, false);
       }).finally(() => { inforeq = false; });
 
    }, 2000);
@@ -501,7 +501,7 @@ constructor(hpainter, itemname) {
 
       html += "</div>";
 
-      let painter = this, main = d3.select(this.frame).html(html),
+      let painter = this, main = d3_select(this.frame).html(html),
           ctrl_visible = JSROOT.decodeUrl().has("browser") ? "" : "none";
 
       DABC.addDabcStyle(main);
@@ -518,7 +518,7 @@ constructor(hpainter, itemname) {
       });
 
       main.selectAll(".bnet_item_label").on("click", function() {
-         painter.displayItem(d3.select(this).attr("itemname"));
+         painter.displayItem(d3_select(this).attr("itemname"));
       });
 
       let itemname = this.itemname;
@@ -603,11 +603,11 @@ constructor(hpainter, itemname) {
       this.CalibrHub = hubid;
       this.CalibrItem = itemname;
 
-      d3.select(this.frame).select('.bnet_trb_info')
+      d3_select(this.frame).select('.bnet_trb_info')
                            .style("display", (itemname || hubid) ? null : "none")
                            .select("legend").html("HUB: 0x" + hubid.toString(16));
 
-      d3.select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
+      d3_select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
    }
 
    clearAllHistograms() {
@@ -638,7 +638,7 @@ constructor(hpainter, itemname) {
    processReq(isbuild, indx, res) {
       if (!res) return;
 
-      let frame = d3.select(this.frame), elem,
+      let frame = d3_select(this.frame), elem,
           html = "", itemname = "", hadaqinfo = null, hadaqdata = null, hadaqevents = null, hadaqstate = null;
 
       for (let n=0;n<res._childs.length;++n) {
@@ -728,10 +728,10 @@ constructor(hpainter, itemname) {
           main = elem.html(html);
 
       main.selectAll(".bnet_item_label").on("click", function() {
-         painter.displayItem(d3.select(this).attr("itemname"));
+         painter.displayItem(d3_select(this).attr("itemname"));
       });
       main.selectAll(".bnet_trb_label").on("click", function() {
-         painter.displayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
+         painter.displayCalItem(parseInt(d3_select(this).attr("hubid")), d3_select(this).attr("itemname"));
       });
    }
 
@@ -740,7 +740,7 @@ constructor(hpainter, itemname) {
 
       this.CalibrInfo = res;
 
-      DABC.updateTrbStatus(d3.select(this.frame).select('.bnet_tdc_calibr'), res, this.hpainter, false);
+      DABC.updateTrbStatus(d3_select(this.frame).select('.bnet_tdc_calibr'), res, this.hpainter, false);
    }
 
    sendInfoRequests() {
@@ -754,7 +754,7 @@ constructor(hpainter, itemname) {
 
    processMainRequest(res) {
 
-      let dom = d3.select(this.frame);
+      let dom = d3_select(this.frame);
 
       dom.style('background-color', res ? null : "grey");
 
