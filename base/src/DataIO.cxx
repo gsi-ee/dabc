@@ -134,7 +134,7 @@ bool dabc::FileInput::InitFilesList()
 
    if (fFileName.find_first_of("*?") != std::string::npos) {
       fFilesList = fIO->fmatch(fFileName.c_str());
-   } if (!ext.empty() && (ext.length() < fFileName.length()) && (fFileName.rfind(ext) == fFileName.length() - ext.length())) {
+   } else if (!ext.empty() && (ext.length() < fFileName.length()) && (fFileName.rfind(ext) == fFileName.length() - ext.length())) {
       fFilesList = new dabc::Object(nullptr, "FilesList");
       std::ifstream filein(fFileName);
       std::string line;
