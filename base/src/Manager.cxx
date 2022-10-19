@@ -132,6 +132,7 @@ namespace dabc {
                tm.GetNow();
                int cnt = 0;
                while (!tm.Expired(fBlockTm)) cnt++;
+               (void) cnt;
             }
             return do_Ok;
          }

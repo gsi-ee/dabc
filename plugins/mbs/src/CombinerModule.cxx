@@ -474,6 +474,7 @@ bool mbs::CombinerModule::BuildEvent()
 // JAM2016: better supress this output:
 //         SetInfo( dabc::format("Build event %u with %u inputs %s", buildevid, num_selected_all, sel_str.c_str()) );
 //         DOUT0("Build event %u with %u inputs selected %s", buildevid, num_selected_all, sel_str.c_str());
+         (void) num_selected_all;
       }
 
       // if there is no place for the event, flush current buffer
