@@ -809,7 +809,10 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
       cfg.fLastTrigNr = cfg.fTrigNr;
 
-      if (diff>1) cfg.fLostTrig += (diff-1);
+      if (diff > 1)
+         cfg.fLostTrig += (diff-1);
+
+      // printf("Input%u Trig:%6x Tag:%2x diff:%d %s\n", ninp, cfg.fTrigNr, cfg.fTrigTag, diff, diff != 1 ? "ERROR" : "");
    }
 
    return true;
