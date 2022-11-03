@@ -1,6 +1,6 @@
 ifndef noncurses
-ifneq ($(wildcard /usr/include/ncurses.h),)
-ifneq ($(wildcard /usr/include/menu.h),)
+ifneq ($(wildcard /usr/include/ncurses/ncurses.h),)
+ifneq ($(wildcard /usr/include/ncurses/menu.h),)
 
 
 include $(DABCSYS)/config/Makefile.config
@@ -9,7 +9,7 @@ ifdef DABCMAINMAKE
 NCURSESDIR        = applications/ncurses/
 DABC_SHELLEXE     = $(DABCBINPATH)/dabc_shell
 else
-NCURSESDIR        = 
+NCURSESDIR        =
 DABC_SHELLEXE     = dabc_shell
 endif
 
@@ -25,9 +25,10 @@ exes::  $(DABC_SHELLEXE)
 clean::
 	$(RM) $(DABC_SHELLEXE)
 
-$(DABC_SHELLEXE) : $(DABC_SHELLEXEO) $(DABCBASE_LIB) 
+$(DABC_SHELLEXE) : $(DABC_SHELLEXEO) $(DABCBASE_LIB)
 	$(LD) $(LDFLAGSPRE) -O $(DABC_SHELLEXEO) $(LIBS_CORESET) -lmenu -lncurses -o $(DABC_SHELLEXE)
 
+$(DABC_SHELLEXEO): INCLUDES += /usr/include/ncurses
 
 include $(DABCSYS)/config/Makefile.rules
 
