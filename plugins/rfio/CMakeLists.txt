@@ -15,4 +15,6 @@ DABC_LINK_LIBRARY(DabcRfio
                     Linux SYSTEM64
                  NOWARN)
 
-target_compile_options(DabcRfio PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wstringop-overflow=0>)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER_EQUAL 10)
+   target_compile_options(DabcRfio PRIVATE -Wstringop-overflow=0)
+endif()
