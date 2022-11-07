@@ -379,41 +379,35 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Han
     return nmemb; // return value is count of written elements (buffers) - fwrite convention
     }
 
-size_t ltsm::FileInterface::fread(void* ptr, size_t sz, size_t nmemb, Handle f)
+size_t ltsm::FileInterface::fread(void* , size_t , size_t , Handle )
     {
     EOUT("ltsm::FileInterface::fread is not yet supported!");
     return 0;
 
     }
 
-bool ltsm::FileInterface::fseek(Handle f, long int offset, bool relative)
+bool ltsm::FileInterface::fseek(Handle , long int , bool )
 {
-   if (!f)
-      return false;
    // TODO: do we have such thing?
    return false;
 }
 
-bool ltsm::FileInterface::feof(Handle f)
+bool ltsm::FileInterface::feof(Handle )
 {
-   if (!f)
-      return false;
    return false;
 
    //  return f == 0 ? false : (ltsm_fendfile((RFILE*)f) > 0);
 }
 
-bool ltsm::FileInterface::fflush(Handle f)
+bool ltsm::FileInterface::fflush(Handle )
 {
-   if (!f)
-      return false;
 
    return true;
 
    // return f == 0 ? false : ::fflush((FILE*)f) == 0;
 }
 
-dabc::Object* ltsm::FileInterface::fmatch(const char* fmask, bool select_files)
+dabc::Object* ltsm::FileInterface::fmatch(const char* , bool )
 {
    return nullptr;
 }

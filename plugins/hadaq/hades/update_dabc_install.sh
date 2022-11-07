@@ -1,14 +1,21 @@
 #!/bin/sh
-
-############## update stream and dabc installations on hada EB servers#################
-export DABCSYS=/home/hadaq/soft/dabc/head
-export STREAMSYS=/home/hadaq/soft/stream
+### november 2022: adjusted for git JAM
+############## update stream and dabc installations on hadaq EB servers#################
+export DABCGIT=/home/hadaq/soft/dabc/git
+export DABCSYS=/home/hadaq/soft/dabc/install/master
+export STREAMGIT=/home/hadaq/soft/streamframe/git
+export STREAMSYS=/home/hadaq/soft/streamframe/install/master
+MYHOST=`/bin/hostname` 
+cd $STREAMGIT
+/usr/bin/git pull origin
 cd $STREAMSYS
-/usr/bin/svn update
+/home/hadaq/bin/cmake $STREAMGIT
 /usr/bin/make clean
 /usr/bin/make -j20
+cd $DABCGIT
+/usr/bin/git pull origin
 cd $DABCSYS
-/usr/bin/svn update
+/home/hadaq/bin/cmake $DABCGIT -Dltsm=ON
 /usr/bin/make clean
 /usr/bin/make -j20
-echo updated installtions of DABC and STREAM
+echo updated git installations of DABC and STREAM on $MYHOST

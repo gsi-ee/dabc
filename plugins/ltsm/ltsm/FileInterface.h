@@ -127,28 +127,28 @@ namespace ltsm {
 
 	virtual ~FileInterface();
 
-	virtual Handle fopen(const char* fname, const char* mode, const char *opt = nullptr);
+	virtual Handle fopen(const char* fname, const char* mode, const char *opt = nullptr) override;
 
-	virtual void fclose(Handle f);
+	virtual void fclose(Handle f) override;
 
 	virtual size_t fwrite(const void* ptr, size_t sz, size_t nmemb,
-		Handle f);
+		Handle f) override;
 
-	virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f);
+	virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f) override;
 
-	virtual bool feof(Handle f);
+	virtual bool feof(Handle f) override;
 
-	virtual bool fflush(Handle f);
+	virtual bool fflush(Handle f) override;
 
-	virtual bool fseek(Handle f, long int offset, bool realtive = true);
+	virtual bool fseek(Handle f, long int offset, bool realtive = true) override;
 
 	virtual dabc::Object* fmatch(const char* fmask,
-		bool select_files = true);
+		bool select_files = true) override;
 
-	virtual int GetFileIntPar(Handle h, const char* parname);
+	virtual int GetFileIntPar(Handle h, const char* parname) override;
 
 	virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf,
-		int sbuflen);
+		int sbuflen) override;
 
 	};
 
