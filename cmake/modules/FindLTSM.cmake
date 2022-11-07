@@ -4,7 +4,7 @@ set(LTSM_FOUND 0)
 
 find_library(LTSM_LIBRARY NAMES ApiTSM64 DOC "Searching LTSM library")
 
-find_path(LTSM_INCLUDE_DIR tsmapi.h /usr/include /home/hadaq/ltsm/ltsm_ts/src/lib)
+find_path(LTSM_INCLUDE_DIR tsmapi.h /usr/include /home/hadaq/ltsm/install/include)
 
 if (LTSM_LIBRARY AND LTSM_INCLUDE_DIR)
   set(LTSM_FOUND 1)
