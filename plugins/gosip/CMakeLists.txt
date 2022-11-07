@@ -1,9 +1,13 @@
 find_package(GOSIP QUIET)
 
 if(GOSIP_FOUND)
-   DABC_LINK_LIBRARY(DabcGosip
-                     LIBRARIES DabcBase DabcMbs ${GOSIP_LIBRARY}
-                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${GOSIP_INCLUDE_DIR})
+  dabc_link_library(
+    DabcGosip
+    SOURCES src/Factory.cxx src/Player.cxx
+    HEADERS gosip/Factory.h gosip/Player.h
+    INCLUDE_SUBDIR gosip
+    LIBRARIES dabc::DabcBase dabc::DabcMbs ${GOSIP_LIBRARY}
+    INCLUDES ${GOSIP_INCLUDE_DIR})
 
-   file(COPY htm DESTINATION ${CMAKE_BINARY_DIR}/plugins/gosip)
+  file(COPY htm DESTINATION ${CMAKE_BINARY_DIR}/plugins/gosip)
 endif()

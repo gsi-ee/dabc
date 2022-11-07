@@ -1,1 +1,6 @@
-DABC_LINK_LIBRARY(DabcUser LIBRARIES DabcBase DabcMbs INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
+dabc_link_library(
+  DabcUser
+  SOURCES src/Input.cxx src/Factory.cxx
+  HEADERS user/Factory.h user/Input.h
+  INCLUDE_SUBDIR user
+  LIBRARIES dabc::DabcBase dabc::DabcMbs)

@@ -1,10 +1,12 @@
 find_package(LTSM QUIET)
 
 if(LTSM_FOUND)
-   DABC_LINK_LIBRARY(DabcLtsm
-	   LIBRARIES DabcBase ${LTSM_LIBRARY} ${FSQ_LIBRARY}
-		     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${LTSM_INCLUDE_DIR} ${TSM_INCLUDE_DIR}
-	     	     DEFINITIONS SYSTEM64 HAVE_CONFIG_H)
-	    
-   file(COPY app DESTINATION ${PROJECT_BINARY_DIR}/plugins/ltsm)
- endif()
+  dabc_link_library(
+    DabcLtsm
+    SOURCES src/Factory.cxx src/FileInterface.cxx
+    HEADERS ltsm/Factory.h ltsm/FileInterface.h
+    INCLUDE_SUBDIR ltsm
+    LIBRARIES dabc::DabcBase ${LTSM_LIBRARY} ${FSQ_LIBRARY}
+    INCLUDES ${LTSM_INCLUDE_DIR} ${LTSM_INCLUDE_DIR} ${TSM_INCLUDE_DIR}
+    DEFINITIONS SYSTEM64 HAVE_CONFIG_H)
+endif()

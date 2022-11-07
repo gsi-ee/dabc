@@ -1,7 +1,11 @@
 find_package(EPICS QUIET)
 
 if(EPICS_FOUND)
-   DABC_LINK_LIBRARY(DabcEzca
-                     LIBRARIES DabcBase DabcMbs ${EPICS_LIBRARY}
-                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${EPICS_INCLUDE_DIR})
+  dabc_link_library(
+    DabcEzca
+    SOURCES src/EpicsInput.cxx src/Factory.cxx src/Monitor.cxx
+    HEADERS ezca/Definitions.h ezca/EpicsInput.h ezca/Factory.h ezca/Monitor.h
+    INCLUDE_SUBDIR ezca
+    LIBRARIES dabc::DabcBase dabc::DabcMbs ${EPICS_LIBRARY}
+    INCLUDES ${EPICS_INCLUDE_DIR})
 endif()

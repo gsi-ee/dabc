@@ -3,4 +3,7 @@ project(dabc-net-test)
 find_package(DABC)
 include(${DABC_USE_FILE})
 
-DABC_LINK_LIBRARY(DabcNetTest SOURCES net-test.cxx LIBRARIES ${DabcBase_LIBRARY})
+dabc_link_library(
+  DabcNetTest
+  SOURCES net-test.cxx
+  LIBRARIES dabc::DabcBase)

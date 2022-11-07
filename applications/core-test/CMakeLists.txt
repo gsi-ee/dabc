@@ -3,4 +3,7 @@ project(dabc-core-test)
 find_package(DABC)
 include(${DABC_USE_FILE})
 
-DABC_LINK_LIBRARY(DabcCoreTest SOURCES core-test.cxx LIBRARIES ${DabcBase_LIBRARY})
+dabc_link_library(
+  DabcCoreTest
+  SOURCES core-test.cxx
+  LIBRARIES dabc::DabcBase)

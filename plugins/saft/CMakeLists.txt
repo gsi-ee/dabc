@@ -1,7 +1,12 @@
 find_package(SAFT QUIET)
 
 if(SAFT_FOUND)
-   DABC_LINK_LIBRARY(DabcSaft
-                     LIBRARIES DabcBase DabcMbs ${SAFT_LIBRARY}
-                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${SAFT_INCLUDE_DIR})
+  dabc_link_library(
+    DabcSaft
+    SOURCES src/Device.cxx src/Factory.cxx src/Input.cxx
+    HEADERS saftdabc/Definitions.h saftdabc/Device.h saftdabc/Factory.h
+            saftdabc/Input.h
+    INCLUDE_SUBDIR saftdabc
+    LIBRARIES dabc::DabcBase dabc::DabcMbs ${SAFT_LIBRARY}
+    INCLUDES ${SAFT_INCLUDE_DIR})
 endif()

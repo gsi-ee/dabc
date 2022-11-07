@@ -1,16 +1,6 @@
-set(DABC_VERSION "2.11.0" CACHE STRING "DABC version" FORCE)
-
-set(DABC_INCLUDE_DIR "${PROJECT_BINARY_DIR}/include" CACHE STRING "DABC include dir" FORCE)
-
-set(DABC_LIBRARY_DIR "${PROJECT_BINARY_DIR}/lib" CACHE STRING "DABC include dir" FORCE)
-
-set(DABC_LIBRARY "libDabcBase" CACHE STRING "DABC main library" FORCE)
-
-set(DABC_DEFINES "" CACHE STRING "DABC definitions" FORCE)
-
 # ====== check ROOT and its c++ standard ==========
 if(root)
-   find_package(ROOT QUIET)
+   find_package(ROOT QUIET COMPONENTS RHTTP XMLIO Tree)
 endif()
 
 if(ROOT_FOUND AND NOT CMAKE_CXX_STANDARD)
@@ -56,9 +46,6 @@ else()
   set(DABC_DEBUGLEVEL 2)
 endif()
 
-configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/DABCConfig.cmake.in
-               ${PROJECT_BINARY_DIR}/DABCConfig.cmake @ONLY NEWLINE_STYLE UNIX)
-
 if(extrachecks)
   set(DABC_EXTRA_CHECKS "#define DABC_EXTRA_CHECKS")
 endif()
@@ -91,4 +78,3 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/modules/DabcMacros.cmake
 
 configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/DABCUseFile.cmake.in
                ${PROJECT_BINARY_DIR}/DABCUseFile.cmake @ONLY NEWLINE_STYLE UNIX)
-
