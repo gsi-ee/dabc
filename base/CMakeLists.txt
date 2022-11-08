@@ -124,7 +124,7 @@ dabc_link_library(
           ${CMAKE_BINARY_DIR}/include/dabc/defines.h
   INCLUDE_SUBDIR dabc
   LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_dl_LIBRARY}
-            ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY} ROOT::Core
+            ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY}
   DABC_INSTALL)
 
 dabc_executable(
