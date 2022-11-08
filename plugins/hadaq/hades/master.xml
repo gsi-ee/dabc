@@ -3,7 +3,7 @@
 
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="Master" host="lxhadeb07" port="23456">
+  <Context name="Master" host="lxhadeb12" port="23456">
     <Run>
       <lib value="libDabcHttp.so"/>
       <lib value="libDabcMbs.so"/>
@@ -41,7 +41,7 @@
        <Controller value="true"/>
        <period value="1"/>
        <RunPrefix value=""/>
-       <MaxRunSize value="1500"/>
+       <MaxRunSize value="4000"/>
     </Module>
   </Context>
 </dabc>

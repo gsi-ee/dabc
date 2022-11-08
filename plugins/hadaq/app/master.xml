@@ -3,7 +3,7 @@
 
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="Master" host="lxhadeb03" port="23456">
+  <Context name="Master" host="lxhadeb12" port="23456">
     <Run>
       <lib value="libDabcHttp.so"/>
       <lib value="libDabcMbs.so"/>
@@ -15,7 +15,7 @@
     </Run>
 
     <HttpServer name="http">
-       <port value="8090"/>
+       <port value="8099"/>
        <!--ports value="8091"/-->
        <!--ssl_certif value="${DABCSYS}/ssl_cert.pem"/-->
        <!--auth_file value="${DABCSYS}/.htdigest"/-->
@@ -24,6 +24,7 @@
        <Browser value="off"/>
        <DrawItem value="Master/BNET"/>
        <DrawOpt value=""/>
+       <Monitoring value="1000"/>
     </HttpServer>
 
     <Publisher name="publ">
@@ -40,7 +41,7 @@
        <Controller value="true"/>
        <period value="1"/>
        <RunPrefix value=""/>
-       <MaxRunSize value="1500"/>
+       <MaxRunSize value="4000"/>
     </Module>
   </Context>
 </dabc>
