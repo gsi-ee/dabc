@@ -9,12 +9,14 @@ MYHOST=`/bin/hostname`
 cd $STREAMGIT
 /usr/bin/git pull origin
 cd $STREAMSYS
+/bin/rm CMakeCache.txt
 /home/hadaq/bin/cmake $STREAMGIT
 /usr/bin/make clean
 /usr/bin/make -j20
 cd $DABCGIT
 /usr/bin/git pull origin
 cd $DABCSYS
+//bin/rm CMakeCache.txt
 /home/hadaq/bin/cmake $DABCGIT -Dltsm=ON
 /usr/bin/make clean
 /usr/bin/make -j20
