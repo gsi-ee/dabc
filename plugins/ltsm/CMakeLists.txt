@@ -5,4 +5,6 @@ if(LTSM_FOUND)
                      LIBRARIES DabcBase ${LTSM_LIBRARY}
 		     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${LTSM_INCLUDE_DIR} ${TSM_INCLUDE_DIR}
 	     	     DEFINITIONS SYSTEM64 HAVE_CONFIG_H)
-endif()
+	    
+   file(COPY app DESTINATION ${PROJECT_BINARY_DIR}/plugins/ltsm)
+ endif()
