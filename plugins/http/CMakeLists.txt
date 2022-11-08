@@ -58,5 +58,8 @@ dabc_link_library(
   INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/civetweb ${extra_incl}
   DEFINITIONS ${extra_defs})
 
-file(COPY scripts jq img example.xml master.xml
-     DESTINATION ${CMAKE_BINARY_DIR}/plugins/http)
+install(FILES example.xml master.xml
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/http)
+
+install(DIRECTORY scripts jq img
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/http)

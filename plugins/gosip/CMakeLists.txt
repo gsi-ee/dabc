@@ -9,5 +9,6 @@ if(GOSIP_FOUND)
     LIBRARIES dabc::DabcBase dabc::DabcMbs ${GOSIP_LIBRARY}
     INCLUDES ${GOSIP_INCLUDE_DIR})
 
-  file(COPY htm DESTINATION ${CMAKE_BINARY_DIR}/plugins/gosip)
+  install(FILES htm DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/gosip)
+
 endif()

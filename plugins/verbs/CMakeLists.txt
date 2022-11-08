@@ -1,9 +1,7 @@
-find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)
-find_library(VERBS_LIBRARIES ibverbs)
+find_path(VERBS_INCLUDE_DIR infiniband/verbs.h ${VERBS_DIR}/include)
+find_library(VERBS_LIBRARIES ibverbs ${VERBS_DIR})
 
 if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
-  dabc_install_headers(verbs)
-
   dabc_link_library(
     DabcVerbs
     SOURCES src/ComplQueue.cxx
@@ -26,7 +24,7 @@ if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
             verbs/Transport.h
             verbs/Worker.h
     INCLUDE_SUBDIR verbs
-    LIBRARIES DabcBase ${VERBS_LIBRARIES}
+    LIBRARIES dabc::DabcBase ${VERBS_LIBRARIES}
     DEFINITIONS __NO_MULTICAST__
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${VERBS_INCLUDE_DIR})
 

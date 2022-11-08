@@ -5,7 +5,7 @@ if(ROOT_FOUND)
             src/TreeStore.cxx
     HEADERS root/Factory.h root/Monitor.h root/TDabcEngine.h root/TreeStore.h
     INCLUDE_SUBDIR root
-    LIBRARIES dabc::DabcBase dabc::DabcHttp ROOT::RHTTP ROOT::XMLIO
+    LIBRARIES dabc::DabcBase dabc::DabcHttp ROOT::RHTTP ROOT::XMLIO ROOT::Tree
     NOWARN)
 
   root_generate_dictionary(
@@ -18,8 +18,8 @@ if(ROOT_FOUND)
   dabc_executable(
     dabc_root
     SOURCES utils/dabc_root.cxx
-    LIBRARIES dabc::DabcRoot ROOT::Tree)
+    LIBRARIES dabc::DabcRoot)
 
 endif()
 
-file(COPY js DESTINATION ${CMAKE_BINARY_DIR}/plugins/root)
+install(DIRECTORY js DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/root)
