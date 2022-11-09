@@ -20,7 +20,7 @@ endfunction()
 #---------------------------------------------------------------------------------------------------
 function(DABC_APPLY_OPTIONS)
   foreach(opt ${dabc_build_options})
-     option(${opt} "${${opt}_description}" ${${opt}_defvalue})
+    option(${opt} "${${opt}_description}" ${${opt}_defvalue})
   endforeach()
 endfunction()
 
@@ -28,7 +28,7 @@ endfunction()
 #---DABC_GET_OPTIONS(result ENABLED)
 #---------------------------------------------------------------------------------------------------
 function(DABC_GET_OPTIONS result)
-  CMAKE_PARSE_ARGUMENTS(ARG "ENABLED" "" "" ${ARGN})
+  cmake_parse_arguments(ARG "ENABLED" "" "" ${ARGN})
   set(enabled)
   foreach(opt ${dabc_build_options})
     if(ARG_ENABLED)
@@ -47,7 +47,7 @@ endfunction()
 #---------------------------------------------------------------------------------------------------
 function(DABC_SHOW_ENABLED_OPTIONS)
   set(enabled_opts)
-  DABC_GET_OPTIONS(enabled_opts ENABLED)
+  dabc_get_options(enabled_opts ENABLED)
   foreach(opt ${enabled_opts})
     message(STATUS "Enabled support for: ${opt}")
   endforeach()
@@ -58,23 +58,23 @@ endfunction()
 #   The default value can be changed as many times as we wish before calling DABC_APPLY_OPTIONS()
 #--------------------------------------------------------------------------------------------------
 
-DABC_BUILD_OPTION(aqua ON "Enable AQUA plugin")
-DABC_BUILD_OPTION(bnet ON "Enable BNET plugin")
-DABC_BUILD_OPTION(dim OFF "Enable DIM plugin")
-DABC_BUILD_OPTION(ezca OFF "Enable EZCA (EPICS) plugin")
-DABC_BUILD_OPTION(fesa ON "Enable FESA plugin")
-DABC_BUILD_OPTION(gosip OFF "Enable GOSIP plugin")
-DABC_BUILD_OPTION(hadaq ON "Enable HADAQ plugin")
-DABC_BUILD_OPTION(http ON "Enable HTTP plugin")
-DABC_BUILD_OPTION(ltsm OFF "Enable LTSM plugin")
-DABC_BUILD_OPTION(mbs ON "Enable MBS plugin")
-DABC_BUILD_OPTION(rfio ON "Enable RFIO plugin")
-DABC_BUILD_OPTION(saft OFF "Enable SAFT plugin")
-DABC_BUILD_OPTION(stream ON "Enable Stream plugin")
-DABC_BUILD_OPTION(user ON "Enable USER plugin")
-DABC_BUILD_OPTION(verbs ON "Enable VERBS plugin")
-DABC_BUILD_OPTION(root ON "Enable ROOT plugin")
-DABC_BUILD_OPTION(mbsroot ON "Enable MBS-ROOT plugin")
+dabc_build_option(aqua ON "Enable AQUA plugin")
+dabc_build_option(bnet ON "Enable BNET plugin")
+dabc_build_option(dim OFF "Enable DIM plugin")
+dabc_build_option(ezca OFF "Enable EZCA (EPICS) plugin")
+dabc_build_option(fesa ON "Enable FESA plugin")
+dabc_build_option(gosip OFF "Enable GOSIP plugin")
+dabc_build_option(hadaq ON "Enable HADAQ plugin")
+dabc_build_option(http ON "Enable HTTP plugin")
+dabc_build_option(ltsm OFF "Enable LTSM plugin")
+dabc_build_option(mbs ON "Enable MBS plugin")
+dabc_build_option(rfio ON "Enable RFIO plugin")
+dabc_build_option(saft OFF "Enable SAFT plugin")
+dabc_build_option(stream ON "Enable Stream plugin")
+dabc_build_option(user ON "Enable USER plugin")
+dabc_build_option(verbs ON "Enable VERBS plugin")
+dabc_build_option(root ON "Enable ROOT plugin")
+dabc_build_option(mbsroot ON "Enable MBS-ROOT plugin")
 
 #--- The 'all' option switches ON major options---------------------------------------------------
 if(all)
@@ -118,12 +118,12 @@ if(minimal)
   set(mbsroot_defvalue OFF)
 endif()
 
-
 #---Define at moment the options with the selected default values-----------------------------
-DABC_APPLY_OPTIONS()
+dabc_apply_options()
 
 #---RPATH options-------------------------------------------------------------------------------
 #  When building, don't use the install RPATH already (but later on when installing)
+list(APPEND CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_FULL_LIBDIR})
 set(CMAKE_SKIP_BUILD_RPATH FALSE)         # don't skip the full RPATH for the build tree
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) # use always the build RPATH for the build tree
 set(CMAKE_MACOSX_RPATH TRUE)              # use RPATH for MacOSX

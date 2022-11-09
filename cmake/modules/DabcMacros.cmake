@@ -25,44 +25,50 @@ set(DABC_LIBRARY_PROPERTIES
 #                     DABC_INSTALL               : install if part of DABC project
 #)
 function(DABC_LINK_LIBRARY libname)
-   cmake_parse_arguments(ARG "NOWARN;DABC_INSTALL" "" "SOURCES;HEADERS;PRIVATE_HEADERS;INCLUDE_SUBDIR;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
+  cmake_parse_arguments(
+    ARG
+    "NOWARN;DABC_INSTALL"
+    ""
+    "SOURCES;HEADERS;PRIVATE_HEADERS;INCLUDE_SUBDIR;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES"
+    ${ARGN})
 
-   add_library(${libname} SHARED ${ARG_SOURCES})
-   add_library(dabc::${libname} ALIAS ${libname})
+  add_library(${libname} SHARED ${ARG_SOURCES})
+  add_library(dabc::${libname} ALIAS ${libname})
 
-   set_target_properties(${libname} PROPERTIES ${DABC_LIBRARY_PROPERTIES}
-   PUBLIC_HEADER
-            "${ARG_HEADERS}")
+  set_target_properties(${libname} PROPERTIES ${DABC_LIBRARY_PROPERTIES}
+                                              PUBLIC_HEADER "${ARG_HEADERS}")
 
-   target_compile_definitions(${libname} PRIVATE ${ARG_DEFINITIONS} ${DABC_DEFINES})
+  target_compile_definitions(${libname} PRIVATE ${ARG_DEFINITIONS}
+                                                ${DABC_DEFINES})
 
-   target_link_libraries(${libname} ${ARG_LIBRARIES})
+  target_link_libraries(${libname} ${ARG_LIBRARIES})
 
-   if(CMAKE_PROJECT_NAME STREQUAL DABC)
-     set_property(GLOBAL APPEND PROPERTY DABC_LIBRARY_TARGETS ${libname})
-     if(NOT ARG_NOWARN)
-        target_compile_options(${libname} PRIVATE -Wall $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override>)
-     endif()
-   endif()
+  if(CMAKE_PROJECT_NAME STREQUAL DABC)
+    set_property(GLOBAL APPEND PROPERTY DABC_LIBRARY_TARGETS ${libname})
+    if(NOT ARG_NOWARN)
+      target_compile_options(
+        ${libname} PRIVATE -Wall $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override>)
+    endif()
+  endif()
 
-   if (ARG_DABC_INSTALL AND CMAKE_PROJECT_NAME STREQUAL DABC)
-     set_property(GLOBAL APPEND PROPERTY DABC_INSTALL_LIBRARY_TARGETS ${libname})
-     install(TARGETS ${libname}
-        EXPORT ${CMAKE_PROJECT_NAME}Targets
-        LIBRARY
-           DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER
-           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${ARG_INCLUDE_SUBDIR})
-   endif()
+  if(ARG_DABC_INSTALL AND CMAKE_PROJECT_NAME STREQUAL DABC)
+    set_property(GLOBAL APPEND PROPERTY DABC_INSTALL_LIBRARY_TARGETS ${libname})
+    install(
+      TARGETS ${libname}
+      EXPORT ${CMAKE_PROJECT_NAME}Targets
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      PUBLIC_HEADER
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${ARG_INCLUDE_SUBDIR})
+  endif()
 
-   target_include_directories(${libname}
-      PUBLIC
-         $<INSTALL_INTERFACE:include>
-         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
-         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-      PRIVATE
-         ${ARG_INCLUDES}
-   )
+  target_include_directories(
+    ${libname}
+    PUBLIC $<INSTALL_INTERFACE:include>
+           $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    PRIVATE ${ARG_INCLUDES})
+
+  install(TARGETS ${libname} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endfunction()
 
 
@@ -76,27 +82,33 @@ endfunction()
 #
 #)
 function(DABC_EXECUTABLE exename)
-   cmake_parse_arguments(ARG "CHECKSTD" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
+  cmake_parse_arguments(
+    ARG "CHECKSTD" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES"
+    ${ARGN})
 
-   add_executable(${exename} ${ARG_SOURCES})
+  add_executable(${exename} ${ARG_SOURCES})
 
-   target_compile_definitions(${exename} PRIVATE ${ARG_DEFINITIONS} ${DABC_DEFINES})
+  target_compile_definitions(${exename} PRIVATE ${ARG_DEFINITIONS}
+                                                ${DABC_DEFINES})
 
-   if(NOT APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL Clang AND ARG_CHECKSTD)
-      find_library(cpp_LIBRARY "c++")
-   endif()
-
-   target_link_libraries(${exename} ${ARG_LIBRARIES} ${cpp_LIBRARY})
-
-   if(CMAKE_PROJECT_NAME STREQUAL DABC)
-     target_compile_options(${exename} PRIVATE -Wall)
+  if(NOT APPLE
+     AND CMAKE_CXX_COMPILER_ID STREQUAL Clang
+     AND ARG_CHECKSTD)
+    find_library(cpp_LIBRARY "c++")
   endif()
 
-   target_include_directories(${exename} PRIVATE ${ARG_INCLUDES})
+  target_link_libraries(${exename} ${ARG_LIBRARIES} ${cpp_LIBRARY})
+
+  if(CMAKE_PROJECT_NAME STREQUAL DABC)
+    target_compile_options(${exename} PRIVATE -Wall)
+  endif()
+
+  target_include_directories(${exename} PRIVATE ${ARG_INCLUDES})
 
   if(ARG_DEPENDENCIES)
-     add_dependencies(${exename} ${ARG_DEPENDENCIES})
+    add_dependencies(${exename} ${ARG_DEPENDENCIES})
   endif()
 
-endfunction()
+  install(TARGETS ${exename} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+endfunction()

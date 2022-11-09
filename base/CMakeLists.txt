@@ -1,10 +1,3 @@
-set(DABC_BASESUB_S src/threads.cxx src/timing.cxx src/logging.cxx
-                   src/string.cxx src/XmlEngine.cxx src/ConfigBase.cxx)
-dabc_executable(
-  dabc_xml
-  SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S}
-  INCLUDES ${CMAKE_SOURCE_DIR}/base ${CMAKE_BINARY_DIR}/include)
-
 dabc_link_library(
   DabcBase
   SOURCES src/api.cxx
@@ -123,13 +116,24 @@ dabc_link_library(
           dabc/XmlEngine.h
           ${CMAKE_BINARY_DIR}/include/dabc/defines.h
   INCLUDE_SUBDIR dabc
-  LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_dl_LIBRARY}
-            ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY}
+  LIBRARIES ${DABC_cpp_LIBRARY}
   DABC_INSTALL)
+
+dabc_executable(
+  dabc_xml
+  SOURCES run/dabc_xml.cxx
+          src/threads.cxx
+          src/timing.cxx
+          src/logging.cxx
+          src/string.cxx
+          src/XmlEngine.cxx
+          src/ConfigBase.cxx
+  INCLUDES ${CMAKE_SOURCE_DIR}/base ${CMAKE_BINARY_DIR}/include)
 
 dabc_executable(
   dabc_exe
   SOURCES run/dabc_exe.cxx
-  LIBRARIES DabcBase)
+  LIBRARIES dabc::DabcBase)
 
-configure_file(run/dabc_run ${PROJECT_BINARY_DIR}/bin/dabc_run COPYONLY)
+install(TARGETS dabc_exe dabc_xml DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(PROGRAMS run/dabc_run DESTINATION ${CMAKE_INSTALL_BINDIR})

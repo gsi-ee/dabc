@@ -20,6 +20,6 @@ if(ROOT_FOUND)
     SOURCES utils/dabc_root.cxx
     LIBRARIES dabc::DabcRoot)
 
+  install(DIRECTORY js
+          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/root)
 endif()
-
-install(DIRECTORY js DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/root)
