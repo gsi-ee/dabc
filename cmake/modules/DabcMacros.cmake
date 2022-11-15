@@ -11,10 +11,11 @@ set(DABC_LIBRARY_PROPERTIES
     PREFIX ${libprefix}
     IMPORT_PREFIX ${libprefix})
 
+# cmake-format: off
 #---------------------------------------------------------------------------------------------------
 #---DABC_LINK_LIBRARY(libname
 #                     SOURCES src1 src2          : if not specified, taken "src/*.cxx"
-#                     HEADERS hdr1 hdr2          : public headers 9to be installed)
+#                     HEADERS hdr1 hdr2          : public headers (to be installed)
 #                     PRIVATE_HEADERS hdr1 hdr2  : private headers (not to be installed)
 #                     INCLUDE_SUBDIR dir         : subdir for includes
 #                     LIBRARIES lib1 lib2        : direct linked libraries
@@ -22,12 +23,12 @@ set(DABC_LIBRARY_PROPERTIES
 #                     DEPENDENCIES dep1 dep2     : dependencies
 #                     INCLUDES dir1 dir2         : include directories
 #                     NOWARN                     : disable warnings for DABC libs
-#                     DABC_INSTALL               : install if part of DABC project
 #)
+# cmake-format: on
 function(DABC_LINK_LIBRARY libname)
   cmake_parse_arguments(
     ARG
-    "NOWARN;DABC_INSTALL"
+    "NOWARN"
     ""
     "SOURCES;HEADERS;PRIVATE_HEADERS;INCLUDE_SUBDIR;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES"
     ${ARGN})
@@ -49,9 +50,7 @@ function(DABC_LINK_LIBRARY libname)
       target_compile_options(
         ${libname} PRIVATE -Wall $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override>)
     endif()
-  endif()
 
-  if(ARG_DABC_INSTALL AND CMAKE_PROJECT_NAME STREQUAL DABC)
     set_property(GLOBAL APPEND PROPERTY DABC_INSTALL_LIBRARY_TARGETS ${libname})
     install(
       TARGETS ${libname}
@@ -67,11 +66,9 @@ function(DABC_LINK_LIBRARY libname)
            $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     PRIVATE ${ARG_INCLUDES})
-
-  install(TARGETS ${libname} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endfunction()
 
-
+# cmake-format: off
 #---------------------------------------------------------------------------------------------------
 #---DABC_EXECUTABLE(exename
 #                   SOURCES src1 src2          :
@@ -79,8 +76,8 @@ endfunction()
 #                   DEFINITIONS def1 def2      : library definitions
 #                   DEPENDENCIES dep1 dep2     : dependencies
 #                   CHECKSTD                   : check if libc++ should be linked for clang
-#
 #)
+# cmake-format: on
 function(DABC_EXECUTABLE exename)
   cmake_parse_arguments(
     ARG "CHECKSTD" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES"

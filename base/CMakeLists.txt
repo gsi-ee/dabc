@@ -116,8 +116,7 @@ dabc_link_library(
           dabc/XmlEngine.h
           ${CMAKE_BINARY_DIR}/include/dabc/defines.h
   INCLUDE_SUBDIR dabc
-  LIBRARIES ${DABC_cpp_LIBRARY}
-  DABC_INSTALL)
+  LIBRARIES ${DABC_cpp_LIBRARY})
 
 dabc_executable(
   dabc_xml
@@ -135,5 +134,4 @@ dabc_executable(
   SOURCES run/dabc_exe.cxx
   LIBRARIES dabc::DabcBase)
 
-install(TARGETS dabc_exe dabc_xml DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(PROGRAMS run/dabc_run DESTINATION ${CMAKE_INSTALL_BINDIR})

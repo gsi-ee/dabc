@@ -30,8 +30,7 @@ dabc_link_library(
           mbs/SlowControlData.h
           mbs/TextInput.h
   INCLUDE_SUBDIR mbs
-  LIBRARIES dabc::DabcBase
-  DABC_INSTALL)
+  LIBRARIES dabc::DabcBase)
 
 dabc_executable(
   mbsprint
