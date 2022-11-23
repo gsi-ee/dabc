@@ -13,5 +13,8 @@ dabc_link_library(
   LIBRARIES dabc::DabcBase dabc::DabcMbs ${FESA_ALL_LIBS}
   INCLUDES ${FESA_INCLUDE_DIR})
 
-install(FILES example.xml fesa.js
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/fesa)
+dabc_install_plugin_data(
+  DabcFesa
+  FILES example.xml fesa.js
+  DESTINATION ${DABC_INSTALL_PLUGINDIR}/fesa
+  LEGACY_MODE ${DABC_LEGACY_BUILD})

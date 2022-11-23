@@ -17,10 +17,11 @@ if(Stream_FOUND)
     src/stream_engine.cpp
     ${CMAKE_BINARY_DIR}/plugins/stream/src/stream_engine.cpp COPYONLY)
 
-  install(FILES ${CMAKE_BINARY_DIR}/plugins/stream/src/stream_engine.cpp
-          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/stream)
-
-  install(DIRECTORY icons app
-          DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/stream)
+  dabc_install_plugin_data(
+    DabcStream
+    FILES ${CMAKE_BINARY_DIR}/plugins/stream/src/stream_engine.cpp
+    DIRECTORIES icons app
+    DESTINATION ${DABC_INSTALL_PLUGINDIR}/stream
+    LEGACY_MODE ${DABC_LEGACY_BUILD})
 
 endif()

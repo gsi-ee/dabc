@@ -44,5 +44,8 @@ dabc_executable(
   SOURCES hldprint.cxx
   LIBRARIES dabc::DabcHadaq)
 
-install(DIRECTORY app hades spill start tdcmon test
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins/hadaq)
+dabc_install_plugin_data(
+  DabcHadaq
+  DIRECTORIES app hades spill start tdcmon test
+  DESTINATION ${DABC_INSTALL_PLUGINDIR}/hadaq
+  LEGACY_MODE ${DABC_LEGACY_BUILD})

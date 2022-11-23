@@ -26,7 +26,7 @@ endif()
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/scripts/defines.h.in
-  ${PROJECT_BINARY_DIR}/include/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
+  ${PROJECT_BINARY_DIR}/inc/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
 
 if(APPLE)
   configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in

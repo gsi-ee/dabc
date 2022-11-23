@@ -14,6 +14,16 @@ additional_commands = {
       "INCLUDES": '*',
     }
   },
+  "dabc_install_plugin_data": {
+    "pargs": 1,
+    "flags": [],
+    "kwargs": {
+      "FILES": '*',
+      "DIRECTORIES": '*',
+      "DESTINATION": '*',
+      "LEGACY_MODE": '*',
+    }
+  },
   "dabc_executable": {
     "pargs": 1,
     "flags": ["CHECKSTD"],

@@ -53,6 +53,10 @@ INSTALLATION:
 
 One could switch on/off different plugins calling cmake -Dverbs=OFF
 
+There are two build modes, the LEGACY mode where all fiels will be coppied to build dir,
+and the normal mode, where the files will be installed into install location only.
+One can enable the LEGACY mode using -DDABC_LEGACY_BUILD=On switch.
+
 3. Compile with make
 
     Just in source directory call:

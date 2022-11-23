@@ -114,7 +114,8 @@ dabc_link_library(
           dabc/version.h
           dabc/Worker.h
           dabc/XmlEngine.h
-          ${CMAKE_BINARY_DIR}/include/dabc/defines.h
+          ${CMAKE_BINARY_DIR}/inc/dabc/defines.h
+  INCLUDES ${CMAKE_BINARY_DIR}/inc
   INCLUDE_SUBDIR dabc
   LIBRARIES ${DABC_cpp_LIBRARY})
 

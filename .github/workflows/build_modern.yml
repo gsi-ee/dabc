@@ -1,0 +1,77 @@
+# This is a basic workflow to help you get started with Actions
+name: Modern cmake build and installation
+
+# Controls when the action will run. Triggers the workflow on push
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    name: "CC: ${{ matrix.compiler }}  CMake ${{ matrix.cmake }}"
+    runs-on: ubuntu-22.04
+    container: rootproject/root:latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Release ]
+        cmake: [ 3.9, latest ]
+        compiler: [ gcc-9, gcc-10, gcc-11, gcc-12, clang-9, clang-10, clang-11, clang-12, clang-13, clang-14, clang-15 ]
+
+    steps:
+      - name: Print env
+        run: |
+          echo github.event.action: ${{ github.event.action }}
+          echo github.event_name: ${{ github.event_name }}
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          submodules: recursive
+
+      - name: Get specific version CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: ${{ matrix.cmake }}
+
+      - name: Install compiler
+        id: install_cc
+        uses: rlalik/setup-cpp-compiler@master
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Use compiler
+        shell: bash
+        env:
+            CC: ${{ steps.install_cc.outputs.cc }}
+            CXX: ${{ steps.install_cc.outputs.cxx }}
+        run: |
+          $CC --version
+          $CXX --version
+
+      - name: Configure
+        shell: bash
+        run: |
+          . /etc/profile
+          root-config --version
+          root-config --cflags
+          root-config --features
+          cmake --version
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ matrix.build_type }}

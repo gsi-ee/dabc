@@ -14,6 +14,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 # --- where to search for cmake modules ----
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
+include(CMakeDependentOption)
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
@@ -22,24 +23,23 @@ include(DabcBuildOptions)
 include(DabcConfiguration)
 include(DabcMacros)
 
+option(DABC_LEGACY_BUILD "Copy files files in build dir" OFF)
+option(DABC_LEGACY_INSTALL "Install plugins out of tree" OFF)
+cmake_dependent_option(DABC_BUILD_APPLICATIONS "Build example applications" ON "DABC_LEGACY_BUILD" OFF)
+cmake_dependent_option(DABC_INSTALL_APPLICATIONS "Install example applications" ON "DABC_BUILD_APPLICATIONS" OFF)
+
+if (DABC_LEGACY_INSTALL)
+set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_PREFIX}/plugins)
+else()
+set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins)
+endif()
+
 add_subdirectory(base)
-
 add_subdirectory(plugins)
-
-dabc_build_option(BUILD_APPLICATIONS ON "Build example applications")
-dabc_build_option(INSTALL_APPLICATIONS ON "Install example applications")
-
-option(DABC_BUILD_APPLICATIONS "Build example applications" ON)
-option(DABC_INSTALL_APPLICATIONS "Install example applications" ON)
 
 if(DABC_BUILD_APPLICATIONS)
   add_subdirectory(applications)
 endif()
-
-# ================== Produce DABC headers ==========
-
-get_property(__allHeaders GLOBAL PROPERTY DABC_HEADER_TARGETS)
-add_custom_target(move_headers ALL DEPENDS ${__allHeaders})
 
 dabc_show_enabled_options()
 
