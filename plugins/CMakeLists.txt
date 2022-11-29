@@ -8,6 +8,11 @@ if(hadaq)
    add_subdirectory(hadaq)
 endif()
 
+if(dogma)
+   add_subdirectory(dogma)
+endif()
+
+
 if(verbs)
    add_subdirectory(verbs)
 endif()

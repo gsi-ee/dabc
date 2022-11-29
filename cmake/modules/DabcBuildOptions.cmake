@@ -74,6 +74,7 @@ DABC_BUILD_OPTION(stream ON "Enable Stream plugin")
 DABC_BUILD_OPTION(user ON "Enable USER plugin")
 DABC_BUILD_OPTION(verbs ON "Enable VERBS plugin")
 DABC_BUILD_OPTION(root ON "Enable ROOT plugin")
+DABC_BUILD_OPTION(dogma ON "Enable DOGMA plugin")
 DABC_BUILD_OPTION(mbsroot ON "Enable MBS-ROOT plugin")
 
 #--- The 'all' option switches ON major options---------------------------------------------------
