@@ -124,9 +124,10 @@ bool dabc::DestroyManager()
 std::string dabc::MakeNodeName(const std::string &arg)
 {
    size_t pos = arg.find("dabc://");
-   if (pos==std::string::npos)
+   if (pos == std::string::npos)
       return std::string("dabc://") + arg;
-   if (pos == 0) return arg;
+   if (pos == 0)
+      return arg;
 
    return std::string();
 }
