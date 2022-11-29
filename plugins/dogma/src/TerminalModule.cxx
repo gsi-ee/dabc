@@ -25,6 +25,8 @@ dogma::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
 int dogma::TerminalModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GenericRead")) {
+      DOUT1("Read at %x", cmd.GetInt("Addr"));
+      cmd.SetInt("Value", 5678);
       return dabc::cmd_true;
    }
 
