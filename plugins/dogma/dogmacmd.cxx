@@ -23,6 +23,7 @@
 #include "dabc/api.h"
 
 
+
 int usage(const char* errstr = nullptr)
 {
    if (errstr)
@@ -43,6 +44,8 @@ int main(int argc, char* argv[])
       return 1;
    }
 
+   auto stamp = dabc::TimeStamp::Now();
+
    printf("Did create manager\n");
 
    std::string nodename = dabc::MakeNodeName(argv[1]);
@@ -54,7 +57,9 @@ int main(int argc, char* argv[])
       return 1;
    }
 
-   printf("Did connect to node %s\n", nodename.c_str());
+   auto tm1 = stamp.SpentTillNow(true);
+
+   printf("Did connect to node %s takes %5.3f ms\n", nodename.c_str(), tm1*1e3);
 
    std::string module_name = nodename + "/dogma";
 
@@ -65,7 +70,9 @@ int main(int argc, char* argv[])
 
    int res = dabc::mgr.Execute(cmd);
 
-   printf("Command execution %d value %d\n", res, cmd.GetInt("Value"));
+   auto tm2 = stamp.SpentTillNow(true);
+
+   printf("Command execution res = %s Value = %d takes %5.3f ms\n", res == dabc::cmd_true ? "Ok" : "Fail", cmd.GetInt("Value"), tm2*1e3);
 
    return 0;
 }
