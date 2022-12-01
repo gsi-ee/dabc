@@ -13,19 +13,34 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "gosip/Factory.h"
+#ifndef GOSIP_TerminalModule
+#define GOSIP_TerminalModule
 
-#include "gosip/Player.h"
-#include "gosip/TerminalModule.h"
+#ifndef DABC_ModuleAsync
+#include "dabc/ModuleAsync.h"
+#endif
 
-dabc::FactoryPlugin gosipfactory(new gosip::Factory("gosip"));
+namespace gosip {
 
-dabc::Module* gosip::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
-{
-   if (classname == "gosip::Player")
-      return new gosip::Player(modulename, cmd);
-   if (classname == "gosip::TerminalModule")
-      return new gosip::TerminalModule(modulename, cmd);
-   return dabc::Factory::CreateModule(classname, modulename, cmd);
+   /** \brief Abstract GOSIP terminal module
+    *
+    * Just executes commands
+    */
+
+   class TerminalModule : public dabc::ModuleAsync {
+      protected:
+
+         int ExecuteCommand(dabc::Command cmd) override;
+
+      public:
+
+         TerminalModule(const std::string &name, dabc::Command cmd = nullptr);
+
+         void BeforeModuleStart() override;
+
+         void ProcessTimerEvent(unsigned timer) override;
+   };
 }
 
+
+#endif

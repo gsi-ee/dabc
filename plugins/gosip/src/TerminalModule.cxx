@@ -13,19 +13,35 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "gosip/Factory.h"
-
-#include "gosip/Player.h"
 #include "gosip/TerminalModule.h"
 
-dabc::FactoryPlugin gosipfactory(new gosip::Factory("gosip"));
+#include "dabc/Manager.h"
 
-dabc::Module* gosip::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
+gosip::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd) :
+   dabc::ModuleAsync(name, cmd)
 {
-   if (classname == "gosip::Player")
-      return new gosip::Player(modulename, cmd);
-   if (classname == "gosip::TerminalModule")
-      return new gosip::TerminalModule(modulename, cmd);
-   return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
 
+int gosip::TerminalModule::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("GenericRead")) {
+      DOUT5("Read at %x", cmd.GetInt("Addr"));
+      cmd.SetInt("Value", 5678);
+      return dabc::cmd_true;
+   }
+
+   if (cmd.IsName("GenericWrite")) {
+      return dabc::cmd_true;
+   }
+
+   return dabc::cmd_false;
+}
+
+void gosip::TerminalModule::BeforeModuleStart()
+{
+   DOUT0("Starting GOSIP command server module");
+}
+
+void gosip::TerminalModule::ProcessTimerEvent(unsigned)
+{
+}

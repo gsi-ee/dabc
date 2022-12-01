@@ -1,7 +1,8 @@
 # Find GOSIP library and includes
 
-set(GOSIP_FOUND 0)
+set(GOSIP_FOUND 1)
 
+# JAM22 todo: here look for mbspex libs when on x86l node
 if(NOT "$ENV{GOSIPDIR}" STREQUAL "")
    find_library(GOSIP_LIBRARY NAMES gosip PATHS
       $ENV{GOSIPDIR}/linux

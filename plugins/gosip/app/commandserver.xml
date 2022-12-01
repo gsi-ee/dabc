@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Main" port="12345">
+    <Run>
+      <lib value="libDabcGosip.so"/>
+      <logfile value="master.log"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+      <!--runtime value="100"/-->
+    </Run>
+
+    <Module name="gosip" class="gosip::TerminalModule">
+    </Module>
+
+  </Context>
+</dabc>
