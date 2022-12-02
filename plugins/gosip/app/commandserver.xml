@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="Main" port="12345">
+  <Context name="GosipCommandServer" port="12345">
     <Run>
       <lib value="libDabcGosip.so"/>
       <logfile value="master.log"/>

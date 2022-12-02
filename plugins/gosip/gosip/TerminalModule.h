@@ -20,6 +20,14 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+
+
+
+
+/****************************************************************/
+
+
+
 namespace gosip {
 
    /** \brief Abstract GOSIP terminal module
@@ -32,6 +40,8 @@ namespace gosip {
 
          int ExecuteCommand(dabc::Command cmd) override;
 
+
+
       public:
 
          TerminalModule(const std::string &name, dabc::Command cmd = nullptr);
@@ -39,6 +49,8 @@ namespace gosip {
          void BeforeModuleStart() override;
 
          void ProcessTimerEvent(unsigned timer) override;
+
+
    };
 }
 

@@ -34,20 +34,20 @@ namespace gosip {
 
    class Player : public dabc::ModuleAsync {
       protected:
-         virtual void BeforeModuleStart() {}
+         virtual void BeforeModuleStart() override {}
 
-         virtual void AfterModuleStop() {}
+         virtual void AfterModuleStop() override {}
 
       public:
 
          Player(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Player();
 
-         virtual void ModuleCleanup() {}
+         virtual void ModuleCleanup() override {}
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         virtual void ProcessTimerEvent(unsigned timer) override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         virtual int ExecuteCommand(dabc::Command cmd) override;;
    };
 }
 

@@ -14,6 +14,7 @@
  ************************************************************/
 
 #include "gosip/TerminalModule.h"
+#include "gosip/Command.h"
 
 #include "dabc/Manager.h"
 
@@ -24,6 +25,7 @@ gosip::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
 
 int gosip::TerminalModule::ExecuteCommand(dabc::Command cmd)
 {
+#ifdef   RGOC_SIMPLETEST
    if (cmd.IsName("GenericRead")) {
       DOUT5("Read at %x", cmd.GetInt("Addr"));
       cmd.SetInt("Value", 5678);
@@ -33,6 +35,30 @@ int gosip::TerminalModule::ExecuteCommand(dabc::Command cmd)
    if (cmd.IsName("GenericWrite")) {
       return dabc::cmd_true;
    }
+#else
+   // todo: here decode dabc command into gosip command structure
+   struct gosip_cmd theCommand;
+   goscmd_defaults (&theCommand);
+   ExtractDabcCommand( theCommand, cmd);
+   if (cmd.IsName("GosipCommand")) {
+   DOUT0("Received the following commmand:\n\t");
+   goscmd_dump_command (&theCommand);
+
+
+
+   // todo: execute section from mbspex local gosipcmd
+   //    goscmd_open_device (&theCommand);
+   //    goscmd_assert_command (&theCommand);
+   //    l_status = goscmd_execute_command (&theCommand);
+   //    goscmd_close_device (&theCommand);
+
+   // put here all relevant return values:
+       cmd.SetInt("VALUE", 42);
+      return dabc::cmd_true;
+
+   }
+
+#endif
 
    return dabc::cmd_false;
 }

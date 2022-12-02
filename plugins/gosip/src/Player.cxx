@@ -42,7 +42,7 @@ gosip::Player::~Player()
 {
 }
 
-void gosip::Player::ProcessTimerEvent(unsigned timer)
+void gosip::Player::ProcessTimerEvent(unsigned )
 {
    //dabc::Hierarchy ui = fWorkerHierarchy.FindChild("UserInterface");
    //DOUT0("Process timer '%s'", ui.GetField("FilePath").AsStr().c_str());
