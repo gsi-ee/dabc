@@ -26,7 +26,7 @@ extern "C"
 #include "dabc/Manager.h"
 
 #include <unistd.h>
-
+#include <vector>
 
 
 
@@ -314,12 +314,15 @@ int goscmd_busio (struct gosip_cmd* com)
   if (com->verboselevel > 1)
     goscmd_dump_command (com);
   savedaddress = com->address;
+  gosip::TerminalModule::fCommandAddress.clear();
+  gosip::TerminalModule::fCommandResults.clear();
   while (cursor < com->repeat)
   {
     switch (com->command)
     {
       case GOSIP_READ:
         rev = goscmd_read (com);
+        // TODO: store last repeat results for sending back to client.
         break;
       case GOSIP_WRITE:
         rev = goscmd_write (com);
@@ -332,9 +335,11 @@ int goscmd_busio (struct gosip_cmd* com)
         printm ("NEVER COME HERE: goscmd_busio called with wrong command %s", goscmd_get_description (com));
         return -1;
     }
-
+    gosip::TerminalModule::fCommandAddress.push_back(com->address);
+    gosip::TerminalModule::fCommandResults.push_back(com->value);
     cursor++;
     com->address += 4;
+
   }    // while
   com->address = savedaddress;    // restore initial base address for slave broadcast option
   return rev;
@@ -646,6 +651,9 @@ int goscmd_execute_command (struct gosip_cmd* com)
 
 ///////////////////////
 
+std::vector<long> gosip::TerminalModule::fCommandAddress;
+std::vector<long> gosip::TerminalModule::fCommandResults;
+
 
 gosip::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
@@ -671,19 +679,30 @@ int gosip::TerminalModule::ExecuteCommand(dabc::Command cmd)
    goscmd_defaults (&theCommand);
    ExtractDabcCommand( theCommand, cmd);
    if (cmd.IsName("GosipCommand")) {
-   DOUT0("Received the following commmand:\n\t");
-   goscmd_dump_command (&theCommand);
-
+     if (theCommand.verboselevel > 1)
+     {
+       DOUT0("Received the following commmand:");
+       goscmd_dump_command (&theCommand);
+     }
 
 
    // todo: execute section from mbspex local gosipcmd
-       goscmd_open_device (&theCommand);
+       goscmd_open_device (&theCommand); // TODO: open device once on startup of terminal module
        goscmd_assert_command (&theCommand);
        l_status = goscmd_execute_command (&theCommand);
-       goscmd_close_device (&theCommand);
+       goscmd_close_device (&theCommand); // TODO: close on termination only
 
    // put here all relevant return values:
-    //   cmd.SetInt("VALUE", 42);
+    // for repeat read, we set all single read information for client:
+     for(int r=0; r<theCommand.repeat && r<fCommandResults.size(); ++r)
+         {
+               std::string name="VALUE_"+std::to_string(r);
+               cmd.SetInt(name.c_str(), fCommandResults[r]);
+               std::string address="ADDRESS_"+std::to_string(r);
+               cmd.SetInt(address.c_str(), fCommandAddress[r]);
+         }
+
+
       return l_status ? dabc::cmd_false : dabc::cmd_true;
 
    }

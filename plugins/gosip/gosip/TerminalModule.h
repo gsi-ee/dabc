@@ -20,6 +20,7 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#include <vector>
 
 
 
@@ -42,6 +43,7 @@ namespace gosip {
 
 
 
+
       public:
 
          TerminalModule(const std::string &name, dabc::Command cmd = nullptr);
@@ -50,6 +52,13 @@ namespace gosip {
 
          void ProcessTimerEvent(unsigned timer) override;
 
+
+         /*** keep result of most recent command call here
+          * TODO: later move to Command class*/
+         static std::vector<long> fCommandResults;
+
+         /*** keep address of most recent command call here*/
+         static std::vector<long> fCommandAddress;
 
    };
 }

@@ -2,6 +2,7 @@
 #define GOSIP_Command
 
 #include"dabc/Command.h"
+#include "dabc/logging.h"
 #include <stdarg.h>
 
 // switch back to simple commmunicationtest
@@ -10,8 +11,6 @@
 // non mbs mode here:
 //#define printm printf
 
-extern "C"
-{
 /* we need to implement this here to also catch output of libmbspex*/
 void printm (char *fmt, ...)
 {
@@ -19,9 +18,8 @@ void printm (char *fmt, ...)
   va_list args;
   va_start(args, fmt);
   vsprintf (c_str, fmt, args);
-  printf ("%s", c_str);
+  DOUT0("%s", c_str);
   va_end(args);
-}
 }
 
 #define RGOC_DEFAULTPORT 12345

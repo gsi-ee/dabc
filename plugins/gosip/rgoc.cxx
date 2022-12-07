@@ -63,7 +63,7 @@ void goscmd_usage (const char *progname)
   printf ("***************************************************************************\n");
 
   printf (" %s (remote gosipcmd) for dabc and mbspex library  \n", progname);
-  printf (" v0.2 02-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
+  printf (" v0.3 07-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
   printf ("***************************************************************************\n");
   printf (
       "  usage: %s [-h|-z] [[-i|-r|-w|-s|-u] [-b] | [-c|-v FILE] [-n DEVICE |-d|-x] node[:port] sfp slave [address [value [words]|[words]]]] \n",
@@ -284,9 +284,11 @@ int main(int argc, char* argv[])
 
     }
     goscmd_assert_command (&theCommand);
-    printm("parsed the following commmand:\n\t");
+  if (theCommand.verboselevel > 0)
+  {
+    printm ("parsed the following commmand:\n\t");
     goscmd_dump_command (&theCommand);
-
+  }
 // here connect to command server
     if (!dabc::CreateManager("shell", 0)) {
           printf("Fail to create manager\n");
@@ -313,18 +315,34 @@ int main(int argc, char* argv[])
 
        int res = dabc::mgr.Execute(dcmd);
        auto tm2 = stamp.SpentTillNow(true);
-       printf("Connect to node %s takes %5.3f ms\n", nodename.c_str(), tm1*1e3);
-       printf("Command execution: res = %s Value = %d takes %5.3f ms\n",  (res == dabc::cmd_true ? "Ok" : "Fail"), dcmd.GetInt("VALUE"), tm2*1e3);
-
-       // todo: evaluate result and print
+       if (theCommand.verboselevel > 0)
+       {
+         printm("Connect to node %s takes %5.3f ms\n", nodename.c_str(), tm1*1e3);
+         printm("Command execution: res = %s Value = %d takes %5.3f ms\n",  (res == dabc::cmd_true ? "Ok" : "Fail"), dcmd.GetInt("VALUE"), tm2*1e3);
+       }
+       //evaluate result and print
        if(res==dabc::cmd_true)
        {
-         theCommand.value=dcmd.GetInt("VALUE");
-         goscmd_output(&theCommand); // use same format as in local gosipcmd
+//         theCommand.value=dcmd.GetInt("VALUE");
+//         goscmd_output(&theCommand); // use same format as in local gosipcmd
+
+         // here treat result of repeated read if any:
+         for(int r=0; r<theCommand.repeat; ++r)
+         {
+           std::string name="VALUE_"+std::to_string(r);
+           theCommand.value=dcmd.GetInt(name.c_str(),-1);
+           std::string address="ADDRESS_"+std::to_string(r);
+           theCommand.address=dcmd.GetInt(address.c_str(),-1);
+           if(theCommand.value != -1)  goscmd_output(&theCommand);
+         }
+         //////
+
+
+
        }
        else
        {
-         printf("!!!!!!! Remote command execution failed with returncode %d\n",res);
+         printm("!!!!!!! Remote command execution failed with returncode %d\n",res);
          goscmd_dump_command(&theCommand);
        }
 
