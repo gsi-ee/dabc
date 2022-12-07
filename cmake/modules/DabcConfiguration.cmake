@@ -8,6 +8,10 @@ set(DABC_LIBRARY "libDabcBase" CACHE STRING "DABC main library" FORCE)
 
 set(DABC_DEFINES "" CACHE STRING "DABC definitions" FORCE)
 
+#--- JAM22  try  for mbspex lib
+cmake_policy(SET CMP0060 NEW) 
+
+
 # ====== check ROOT and its c++ standard ==========
 if(root)
    find_package(ROOT QUIET)

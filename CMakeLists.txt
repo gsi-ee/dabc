@@ -2,10 +2,18 @@ cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 
 project(DABC)
 
+#cmake_policy(SET CMP0060 NEW) 
+
 #---Set paths where to put the libraries, executables and headers------------------------------
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+#--- JAM 6-12-22: try for rpath problems with libmbspex:
+#set(CMAKE_SKIP_BUILD_RPATH FALSE)
+#set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+#set(CMAKE_INSTALL_RPATH "${ORIGIN}")
+#--------------- end JAM
 
 #--- where to search for cmake modules ----
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)

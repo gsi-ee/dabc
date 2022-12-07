@@ -1,4 +1,4 @@
-find_package(LTSM QUIET)
+find_package(LTSM)
 
 if(LTSM_FOUND)
    DABC_LINK_LIBRARY(DabcLtsm

@@ -117,6 +117,7 @@ void goscmd_usage (const char *progname)
 }
 
 
+
 int main(int argc, char* argv[])
 {
 
@@ -269,14 +270,14 @@ int main(int argc, char* argv[])
 
       // if ((theCommand.command == GOSIP_READ) || (theCommand.command == GOSIP_WRITE))
       theCommand.address = strtoul (cmd[3], NULL, theCommand.hexformat == 1 ? 16 : 0);
-      if (cmdLen > 3)
+      if (cmdLen > 4)
       {
         if (theCommand.command == GOSIP_READ)
           theCommand.repeat = strtoul (cmd[4], NULL, theCommand.hexformat == 1 ? 16 : 0);
         else
           theCommand.value = strtoul (cmd[4], NULL, theCommand.hexformat == 1 ? 16 : 0);
       }
-      if (cmdLen > 4)
+      if (cmdLen > 5)
       {
         theCommand.repeat = strtoul (cmd[5], NULL, theCommand.hexformat == 1 ? 16 : 0);
       }
@@ -316,8 +317,16 @@ int main(int argc, char* argv[])
        printf("Command execution: res = %s Value = %d takes %5.3f ms\n",  (res == dabc::cmd_true ? "Ok" : "Fail"), dcmd.GetInt("VALUE"), tm2*1e3);
 
        // todo: evaluate result and print
-
-
+       if(res==dabc::cmd_true)
+       {
+         theCommand.value=dcmd.GetInt("VALUE");
+         goscmd_output(&theCommand); // use same format as in local gosipcmd
+       }
+       else
+       {
+         printf("!!!!!!! Remote command execution failed with returncode %d\n",res);
+         goscmd_dump_command(&theCommand);
+       }
 
 
     return l_status;
