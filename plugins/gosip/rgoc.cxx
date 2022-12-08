@@ -28,42 +28,12 @@
 #include "gosip/Command.h"
 
 
-
-void goscmd_usage(const char *progname);
-
-
-
-// enable explicit debugprint
-//#define DOGMA_DEBUG 1
-#ifdef DOGMA_DEBUG
-#define printdeb( args... )  printf( args );
-#else
-#define printdeb( args...) ;
-#endif
-
-
-#ifdef   RGOC_SIMPLETEST
-int usage(const char* errstr = nullptr)
-{
-   if (errstr)
-      printf("Error: %s\n\n", errstr);
-
-   // JAM:1-12-22: just like dogma example TODO: same command argument handling here as in local gosipcmd
-   printf("Remote gosipcommand (rgoc)\n");
-   printf("\tUsage: rgoc <nodename>:12345 [nloops]\n");
-
-   return errstr ? 1 : 0;
-}
-#endif
-
-
-
 void goscmd_usage (const char *progname)
 {
   printf ("***************************************************************************\n");
 
   printf (" %s (remote gosipcmd) for dabc and mbspex library  \n", progname);
-  printf (" v0.3 07-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
+  printf (" v0.4 08-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
   printf ("***************************************************************************\n");
   printf (
       "  usage: %s [-h|-z] [[-i|-r|-w|-s|-u] [-b] | [-c|-v FILE] [-n DEVICE |-d|-x] node[:port] sfp slave [address [value [words]|[words]]]] \n",
@@ -121,59 +91,7 @@ void goscmd_usage (const char *progname)
 int main(int argc, char* argv[])
 {
 
-#ifdef   RGOC_SIMPLETEST
-  int nloop=1;
-   if ((argc < 2) || !strcmp(argv[1], "-help") || !strcmp(argv[1], "?"))
-      return usage();
-   if(argc == 3)
-      {
-         nloop=atoi(argv[2]);
-         printdeb("Will execute command %d times.\n",nloop);
-      }
-   if (!dabc::CreateManager("shell", 0)) {
-      printf("Fail to create manager\n");
-      return 1;
-   }
 
-   auto stamp = dabc::TimeStamp::Now();
-
-   printdeb("Did create manager\n");
-
-   std::string nodename = dabc::MakeNodeName(argv[1]);
-
-   printdeb("Build node name %s\n", nodename.c_str());
-
-   if (!dabc::ConnectDabcNode(nodename)) {
-      printf("Fail to connect to node %s\n", nodename.c_str());
-      return 1;
-   }
-
-   auto tm1 = stamp.SpentTillNow(true);
-
-
-
-   std::string module_name = nodename + "/gosip";
-
-   dabc::Command cmd("GenericRead");
-   cmd.SetReceiver(module_name);
-   cmd.SetInt("Addr", 0x1000);
-   cmd.SetTimeout(10);
-   int res=0;
-   for(int t=0; t<nloop; ++t)
-   {
-      res = dabc::mgr.Execute(cmd);
-   }
-   auto tm2 = stamp.SpentTillNow(true);
-   printf("Connect to node %s takes %5.3f ms\n", nodename.c_str(), tm1*1e3);
-   printf("Command execution for %d times: last res = %s Value = %d takes %5.3f ms (%5.3f ms each)\n", nloop, (res == dabc::cmd_true ? "Ok" : "Fail"), cmd.GetInt("Value"), tm2*1e3, tm2*1e3/nloop);
-
-
-   // clean up socket correctly by this?
-   //::mgr()->HaltManager();
-   //dabc::mgr.Destroy();
-   //
-
-#else
    // here put gosipcmd functionalities:
    int l_status=0;
     int opt;
@@ -290,21 +208,20 @@ int main(int argc, char* argv[])
     goscmd_dump_command (&theCommand);
   }
 // here connect to command server
-    if (!dabc::CreateManager("shell", 0)) {
+    if (!dabc::CreateManager("rgoc", 0)) {
           printf("Fail to create manager\n");
           return 1;
        }
-
+    dabc::lgr()->SetDebugMask(dabc::Logger::lMessage); // suppress output of name and time
        auto stamp = dabc::TimeStamp::Now();
 
-       printdeb("Did create manager\n");
-       printdeb("Using node name %s\n", nodename.c_str());
+       DOUT1("Did create manager\n");
+       DOUT1("Using node name %s\n", nodename.c_str());
 
        if (!dabc::ConnectDabcNode(nodename)) {
           printf("Fail to connect to node %s\n", nodename.c_str());
           return 1;
        }
-
        auto tm1 = stamp.SpentTillNow(true);
        std::string module_name = nodename + "/gosip";
 
@@ -323,9 +240,6 @@ int main(int argc, char* argv[])
        //evaluate result and print
        if(res==dabc::cmd_true)
        {
-//         theCommand.value=dcmd.GetInt("VALUE");
-//         goscmd_output(&theCommand); // use same format as in local gosipcmd
-
          // here treat result of repeated read if any:
          for(int r=0; r<theCommand.repeat; ++r)
          {
@@ -335,21 +249,11 @@ int main(int argc, char* argv[])
            theCommand.address=dcmd.GetInt(address.c_str(),-1);
            if(theCommand.value != -1)  goscmd_output(&theCommand);
          }
-         //////
-
-
-
        }
        else
        {
          printm("!!!!!!! Remote command execution failed with returncode %d\n",res);
          goscmd_dump_command(&theCommand);
        }
-
-
     return l_status;
-
-
-#endif
-   return 0;
 }

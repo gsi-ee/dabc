@@ -5,14 +5,14 @@
 #include "dabc/logging.h"
 #include <stdarg.h>
 
-// switch back to simple commmunicationtest
-//#define RGOC_SIMPLETEST 1
 
-// non mbs mode here:
-//#define printm printf
 
-/* we need to implement this here to also catch output of libmbspex*/
-void printm (char *fmt, ...)
+/* we need to implement printm here to also catch output of libmbspex*/
+
+
+// this is for printm calls in current lib:
+// argument is const because of compiler warnings...
+void printm (const char *fmt, ...)
 {
   char c_str[256];
   va_list args;
@@ -21,6 +21,21 @@ void printm (char *fmt, ...)
   DOUT0("%s", c_str);
   va_end(args);
 }
+// later we replace this by DOUT anyway...
+
+
+/* this is to link printm from mbspex lib:*/
+void printm(char* fmt, ...)
+{
+  char c_str[256];
+  va_list args;
+    va_start(args, fmt);
+    vsprintf (c_str, fmt, args);
+  printm((const char*)c_str);
+  va_end(args);
+}
+//// fortunately linker makes difference here JAM 8-12-22
+
 
 #define RGOC_DEFAULTPORT 12345
 
@@ -292,12 +307,12 @@ int goscmd_output (struct gosip_cmd* com)
   if (com->verboselevel)
   {
     com->hexformat ?
-        printm ("SFP: 0x%lx Module: 0x%lx Address: 0x%lx  Data: 0x%lx \n", com->sfp, com->slave, com->address, com->value) :
-        printm ("SFP: %ld Module: %ld Address: %ld  Data: %ld \n", com->sfp, com->slave, com->address, com->value);
+        printm ("SFP: 0x%lx Module: 0x%lx Address: 0x%lx  Data: 0x%lx", com->sfp, com->slave, com->address, com->value) :
+        printm ("SFP: %ld Module: %ld Address: %ld  Data: %ld ", com->sfp, com->slave, com->address, com->value); //JAM22: not \n for DOUT mode
   }
   else
   {
-    com->hexformat ? printm ("0x%lx \n", com->value) : printm ("%ld \n", com->value);
+    com->hexformat ? printm ("0x%lx", com->value) : printm ("%ld", com->value); //JAM22: not \n for DOUT mode
   }
   return 0;
 }

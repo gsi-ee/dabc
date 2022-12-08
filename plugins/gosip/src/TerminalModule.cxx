@@ -129,6 +129,7 @@ int goscmd_open_configuration (struct gosip_cmd* com)
 int goscmd_close_configuration (struct gosip_cmd* com)
 {
   fclose (com->configfile);
+  return 0;
 }
 
 int goscmd_next_config_values (struct gosip_cmd* com)
@@ -660,56 +661,39 @@ gosip::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
 {
 }
 
-int gosip::TerminalModule::ExecuteCommand(dabc::Command cmd)
+int gosip::TerminalModule::ExecuteCommand (dabc::Command cmd)
 {
-  int l_status=0;
-#ifdef   RGOC_SIMPLETEST
-   if (cmd.IsName("GenericRead")) {
-      DOUT5("Read at %x", cmd.GetInt("Addr"));
-      cmd.SetInt("Value", 5678);
-      return dabc::cmd_true;
-   }
+  int l_status = 0;
+  // todo: here decode dabc command into gosip command structure
+  struct gosip_cmd theCommand;
+  goscmd_defaults (&theCommand);
+  ExtractDabcCommand (theCommand, cmd);
+  if (cmd.IsName ("GosipCommand"))
+  {
+    if (theCommand.verboselevel > 1)
+    {
+      DOUT0("Received the following commmand:");
+      goscmd_dump_command (&theCommand);
+    }
 
-   if (cmd.IsName("GenericWrite")) {
-      return dabc::cmd_true;
-   }
-#else
-   // todo: here decode dabc command into gosip command structure
-   struct gosip_cmd theCommand;
-   goscmd_defaults (&theCommand);
-   ExtractDabcCommand( theCommand, cmd);
-   if (cmd.IsName("GosipCommand")) {
-     if (theCommand.verboselevel > 1)
-     {
-       DOUT0("Received the following commmand:");
-       goscmd_dump_command (&theCommand);
-     }
+    // todo: execute section from mbspex local gosipcmd
+    goscmd_open_device (&theCommand);    // TODO: open device once on startup of terminal module
+    goscmd_assert_command (&theCommand);
+    l_status = goscmd_execute_command (&theCommand);
+    goscmd_close_device (&theCommand);    // TODO: close on termination only
 
-
-   // todo: execute section from mbspex local gosipcmd
-       goscmd_open_device (&theCommand); // TODO: open device once on startup of terminal module
-       goscmd_assert_command (&theCommand);
-       l_status = goscmd_execute_command (&theCommand);
-       goscmd_close_device (&theCommand); // TODO: close on termination only
-
-   // put here all relevant return values:
+    // put here all relevant return values:
     // for repeat read, we set all single read information for client:
-     for(int r=0; r<theCommand.repeat && r<fCommandResults.size(); ++r)
-         {
-               std::string name="VALUE_"+std::to_string(r);
-               cmd.SetInt(name.c_str(), fCommandResults[r]);
-               std::string address="ADDRESS_"+std::to_string(r);
-               cmd.SetInt(address.c_str(), fCommandAddress[r]);
-         }
-
-
-      return l_status ? dabc::cmd_false : dabc::cmd_true;
-
-   }
-
-#endif
-
-   return dabc::cmd_false;
+    for (unsigned int r = 0; r < theCommand.repeat && r < fCommandResults.size (); ++r)
+    {
+      std::string name = "VALUE_" + std::to_string (r);
+      cmd.SetInt (name.c_str (), fCommandResults[r]);
+      std::string address = "ADDRESS_" + std::to_string (r);
+      cmd.SetInt (address.c_str (), fCommandAddress[r]);
+    }
+    return l_status ? dabc::cmd_false : dabc::cmd_true;
+  }
+  return dabc::cmd_false;
 }
 
 void gosip::TerminalModule::BeforeModuleStart()
