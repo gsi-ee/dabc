@@ -13,13 +13,10 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-
-
 extern "C"
 {
-#include "mbspex/libmbspex.h"
+  #include "mbspex/libmbspex.h"
 }
-
 
 #include "gosip/TerminalModule.h"
 #include "gosip/Command.h"
@@ -28,70 +25,58 @@ extern "C"
 #include <unistd.h>
 #include <vector>
 
-
-
 /// terminal command server functions only appear here:
 // later into Command class
-
 
 /** toggle configuration mode: send config from file as data block to driver (1), or write with single bus commands (0)*/
 #define GOSIPCMD_BLOCKCONFIG 1
 
 /** printout current command structure*/
-int goscmd_execute_command(struct gosip_cmd* com);
-
+int goscmd_execute_command (struct gosip_cmd *com);
 
 /** open the pex device, return file descriptor in com*/
-int goscmd_open_device(struct gosip_cmd* com);
+int goscmd_open_device (struct gosip_cmd *com);
 
 /** open configuration file*/
-int goscmd_open_configuration (struct gosip_cmd* com);
+int goscmd_open_configuration (struct gosip_cmd *com);
 
 /** close configuration file*/
-int goscmd_close_configuration (struct gosip_cmd* com);
+int goscmd_close_configuration (struct gosip_cmd *com);
 
 /** fill next values from configuration file into com structure.
  * returns -1 if end of config is reached*/
-int goscmd_next_config_values (struct gosip_cmd* com);
-
+int goscmd_next_config_values (struct gosip_cmd *com);
 
 /** write to slave address specified in command*/
-int goscmd_write(struct gosip_cmd* com);
+int goscmd_write (struct gosip_cmd *com);
 
 /** read from slave address specified in command*/
-int goscmd_read(struct gosip_cmd* com);
+int goscmd_read (struct gosip_cmd *com);
 
 /** set or clear bits of given mask in slave address register*/
-int goscmd_changebits(struct gosip_cmd* com);
-
+int goscmd_changebits (struct gosip_cmd *com);
 
 /** wrapper for all slave operations with incremental address io capabilities*/
-int goscmd_busio(struct gosip_cmd* com);
+int goscmd_busio (struct gosip_cmd *com);
 
 /** initialize sfp chain*/
-int goscmd_init(struct gosip_cmd* com);
+int goscmd_init (struct gosip_cmd *com);
 
 /** load register values from configuration file*/
-int goscmd_configure(struct gosip_cmd* com);
+int goscmd_configure (struct gosip_cmd *com);
 
 /** compare register values with configuration file*/
-int goscmd_verify(struct gosip_cmd* com);
+int goscmd_verify (struct gosip_cmd *com);
 
 /** compare register values with configuration file, primitive function*/
-int goscmd_verify_single (struct gosip_cmd* com);
+int goscmd_verify_single (struct gosip_cmd *com);
 
 /** broadcast: loop command operation over several slaves*/
-int goscmd_broadcast(struct gosip_cmd* com);
-
+int goscmd_broadcast (struct gosip_cmd *com);
 
 ///////////////////////// implementation folllows:
 
-
-
-
-
-
-int goscmd_open_device (struct gosip_cmd* com)
+int goscmd_open_device (struct gosip_cmd *com)
 {
   com->fd_pex = mbspex_open (com->devnum);
   if (com->fd_pex < 0)
@@ -102,12 +87,12 @@ int goscmd_open_device (struct gosip_cmd* com)
   return 0;
 }
 
-void goscmd_close_device (struct gosip_cmd* com)
+void goscmd_close_device (struct gosip_cmd *com)
 {
   close (com->fd_pex);
 }
 
-int goscmd_open_configuration (struct gosip_cmd* com)
+int goscmd_open_configuration (struct gosip_cmd *com)
 {
   if (strncmp (com->filename, "-", 256) == 0)
   {
@@ -116,7 +101,7 @@ int goscmd_open_configuration (struct gosip_cmd* com)
   else
   {
     com->configfile = fopen (com->filename, "r");
-    if (com->configfile == NULL )
+    if (com->configfile == NULL)
     {
       printm (" Error opening Configuration File '%s': %s\n", com->filename, strerror (errno));
       return -1;
@@ -126,18 +111,18 @@ int goscmd_open_configuration (struct gosip_cmd* com)
   return 0;
 }
 
-int goscmd_close_configuration (struct gosip_cmd* com)
+int goscmd_close_configuration (struct gosip_cmd *com)
 {
   fclose (com->configfile);
   return 0;
 }
 
-int goscmd_next_config_values (struct gosip_cmd* com)
+int goscmd_next_config_values (struct gosip_cmd *com)
 {
   /* file parsing code was partially stolen from trbcmd.c Thanks Ludwig Maier et al. for this!*/
   int status = 0;
   size_t linelen = 0;
-  char* cmdline;
+  char *cmdline;
   char cmd[GOSIP_CMD_MAX_ARGS][GOSIP_CMD_SIZE];
   int i, cmdlen;
 
@@ -166,11 +151,11 @@ int goscmd_next_config_values (struct gosip_cmd* com)
   }
 
   /* Remove newline and comments */
-  if ((c = strchr (cmdline, '\n')) != NULL )
+  if ((c = strchr (cmdline, '\n')) != NULL)
   {
     *c = '\0';
   }
-  if ((c = strchr (cmdline, '#')) != NULL )
+  if ((c = strchr (cmdline, '#')) != NULL)
   {
     *c = '\0';
   }
@@ -213,12 +198,12 @@ int goscmd_next_config_values (struct gosip_cmd* com)
     // parse optional command identifier
     //if (strcasestr (cmd[4], "setbit") != 0)
     //JAM2017 -  this was not posix standard, gcc 6.3 doesnt like it. we do workaround:
-    if ((strstr (cmd[4], "setbit") != 0) ||  (strstr (cmd[4], "SETBIT") != 0))
+    if ((strstr (cmd[4], "setbit") != 0) || (strstr (cmd[4], "SETBIT") != 0))
     {
       com->command = GOSIP_SETBIT;
     }
     //else if (strcasestr (cmd[4], "clearbit") != 0)
-    if ((strstr (cmd[4], "clearbit") != 0) ||  (strstr (cmd[4], "CLEARBIT") != 0))
+    if ((strstr (cmd[4], "clearbit") != 0) || (strstr (cmd[4], "CLEARBIT") != 0))
     {
       com->command = GOSIP_CLEARBIT;
     }
@@ -231,12 +216,7 @@ int goscmd_next_config_values (struct gosip_cmd* com)
   return status;
 }
 
-
-
-
-
-
-int goscmd_write (struct gosip_cmd* com)
+int goscmd_write (struct gosip_cmd *com)
 {
   int rev = 0;
   goscmd_assert_command (com);
@@ -252,7 +232,7 @@ int goscmd_write (struct gosip_cmd* com)
   return rev;
 }
 
-int goscmd_read (struct gosip_cmd* com)
+int goscmd_read (struct gosip_cmd *com)
 {
   int rev = 0;
   goscmd_assert_command (com);
@@ -273,7 +253,7 @@ int goscmd_read (struct gosip_cmd* com)
   return rev;
 }
 
-int goscmd_changebits (struct gosip_cmd* com)
+int goscmd_changebits (struct gosip_cmd *com)
 {
   int rev = 0;
   long bitmask = 0;
@@ -302,11 +282,11 @@ int goscmd_changebits (struct gosip_cmd* com)
   {
     printm ("ERROR on writing in change bit at address 0x%lx!\n", com->address);
   }
-  com->value= bitmask; // restore in case of broadcast command
+  com->value = bitmask;    // restore in case of broadcast command
   return rev;
 }
 
-int goscmd_busio (struct gosip_cmd* com)
+int goscmd_busio (struct gosip_cmd *com)
 {
   int rev = 0;
   int cursor = 0;
@@ -315,8 +295,8 @@ int goscmd_busio (struct gosip_cmd* com)
   if (com->verboselevel > 1)
     goscmd_dump_command (com);
   savedaddress = com->address;
-  gosip::TerminalModule::fCommandAddress.clear();
-  gosip::TerminalModule::fCommandResults.clear();
+  gosip::TerminalModule::fCommandAddress.clear ();
+  gosip::TerminalModule::fCommandResults.clear ();
   while (cursor < com->repeat)
   {
     switch (com->command)
@@ -336,8 +316,8 @@ int goscmd_busio (struct gosip_cmd* com)
         printm ("NEVER COME HERE: goscmd_busio called with wrong command %s", goscmd_get_description (com));
         return -1;
     }
-    gosip::TerminalModule::fCommandAddress.push_back(com->address);
-    gosip::TerminalModule::fCommandResults.push_back(com->value);
+    gosip::TerminalModule::fCommandAddress.push_back (com->address);
+    gosip::TerminalModule::fCommandResults.push_back (com->value);
     cursor++;
     com->address += 4;
 
@@ -346,7 +326,7 @@ int goscmd_busio (struct gosip_cmd* com)
   return rev;
 }
 
-int goscmd_reset (struct gosip_cmd* com)
+int goscmd_reset (struct gosip_cmd *com)
 {
   goscmd_assert_command (com);
   if (com->verboselevel)
@@ -354,7 +334,7 @@ int goscmd_reset (struct gosip_cmd* com)
   return (mbspex_reset (com->fd_pex));
 }
 
-int goscmd_init (struct gosip_cmd* com)
+int goscmd_init (struct gosip_cmd *com)
 {
   goscmd_assert_command (com);
   if (com->verboselevel)
@@ -362,7 +342,7 @@ int goscmd_init (struct gosip_cmd* com)
   return (mbspex_slave_init (com->fd_pex, com->sfp, com->slave));
 }
 
-int goscmd_configure (struct gosip_cmd* com)
+int goscmd_configure (struct gosip_cmd *com)
 {
   int rev = 0;
 #ifdef GOSIPCMD_BLOCKCONFIG
@@ -400,11 +380,12 @@ int goscmd_configure (struct gosip_cmd* com)
     theConfig.numpars = ++numconfs;
     if (numconfs >= PEX_MAXCONFIG_VALS)
     {
-        // JAM 2016: workaround for configurations above 60 entries:
-        // need to send it in separate chunks
-        rev = mbspex_slave_config (com->fd_pex, &theConfig);
-        if(rev) break;
-        numconfs = 0; // fill next config bundle
+      // JAM 2016: workaround for configurations above 60 entries:
+      // need to send it in separate chunks
+      rev = mbspex_slave_config (com->fd_pex, &theConfig);
+      if (rev)
+        break;
+      numconfs = 0;    // fill next config bundle
       // break;
     }
 #else
@@ -436,7 +417,7 @@ int goscmd_configure (struct gosip_cmd* com)
 
 }
 
-int goscmd_verify (struct gosip_cmd* com)
+int goscmd_verify (struct gosip_cmd *com)
 {
   //long checkvalue = 0;
   //int errcount = 0;
@@ -471,7 +452,7 @@ int goscmd_verify (struct gosip_cmd* com)
     }
     com->command = mastercommand;    // reset command descriptor
 
-  } // while file
+  }    // while file
 
   printm ("Verify found %d errors\n", com->errcount);
   goscmd_close_configuration (com);
@@ -479,7 +460,7 @@ int goscmd_verify (struct gosip_cmd* com)
 
 }
 
-int goscmd_verify_single (struct gosip_cmd* com)
+int goscmd_verify_single (struct gosip_cmd *com)
 {
   int haserror = 0;
   long checkvalue = com->value;    // this is reference value from file
@@ -509,8 +490,8 @@ int goscmd_verify_single (struct gosip_cmd* com)
     com->errcount++;
     if (com->verboselevel)
     {
-      printm (" Verify ERROR %d at sfp %ld slave %ld address 0x%lx : readback=0x%lx, config=0x%lx", com->errcount, com->sfp,
-          com->slave, com->address, com->value, checkvalue);
+      printm (" Verify ERROR %d at sfp %ld slave %ld address 0x%lx : readback=0x%lx, config=0x%lx", com->errcount,
+          com->sfp, com->slave, com->address, com->value, checkvalue);
       if (com->command != GOSIP_VERIFY)
         printm (" (%s)\n", goscmd_get_description (com));
       else
@@ -522,7 +503,7 @@ int goscmd_verify_single (struct gosip_cmd* com)
 
 }
 
-int goscmd_broadcast (struct gosip_cmd* com)
+int goscmd_broadcast (struct gosip_cmd *com)
 {
   int rev = 0;
   int slavebroadcast, sfpbroadcast = 0;
@@ -597,7 +578,8 @@ int goscmd_broadcast (struct gosip_cmd* com)
           rev = goscmd_execute_command (com);
           if (rev != 0)
           {
-            printm ("Error in broadcast (0..%ld) (0..%ld) at sfp:%ld slave:%ld\n", sfpmax, slavemax, com->sfp, com->slave);
+            printm ("Error in broadcast (0..%ld) (0..%ld) at sfp:%ld slave:%ld\n", sfpmax, slavemax, com->sfp,
+                com->slave);
           }
         }    // for slave
       }    // for sfp
@@ -606,12 +588,7 @@ int goscmd_broadcast (struct gosip_cmd* com)
   return rev;
 }
 
-
-
-
-
-
-int goscmd_execute_command (struct gosip_cmd* com)
+int goscmd_execute_command (struct gosip_cmd *com)
 {
   int rev = 0;
 
@@ -647,17 +624,13 @@ int goscmd_execute_command (struct gosip_cmd* com)
   return rev;
 }
 
-
-
-
 ///////////////////////
 
 std::vector<long> gosip::TerminalModule::fCommandAddress;
 std::vector<long> gosip::TerminalModule::fCommandResults;
 
-
-gosip::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd)
+gosip::TerminalModule::TerminalModule (const std::string &name, dabc::Command cmd) :
+    dabc::ModuleAsync (name, cmd)
 {
 }
 
@@ -696,11 +669,13 @@ int gosip::TerminalModule::ExecuteCommand (dabc::Command cmd)
   return dabc::cmd_false;
 }
 
-void gosip::TerminalModule::BeforeModuleStart()
+void gosip::TerminalModule::BeforeModuleStart ()
 {
-   DOUT0("Starting GOSIP command server module");
+  DOUT0("Starting GOSIP command server module");
 }
 
-void gosip::TerminalModule::ProcessTimerEvent(unsigned)
+void gosip::TerminalModule::ProcessTimerEvent (unsigned)
 {
 }
+
+

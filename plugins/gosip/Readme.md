@@ -18,6 +18,22 @@ with an (very early) version of the POLAND hardware gui.
 server can receive gosip commands via dabc socket from a remote command application *rgoc*. Syntax and usage of *rgoc* is identical with the
 established local *gosipcommand* (alias *goc*) cli interface, except for the remote nodename of the commandserver required as first argument. 
 
+# Starting the commmand server
+The command server can be started on a node t
+hat hosts the kinpex optical receiver board which connects to the front-end slaves.
+An example configuraton file is given in `plugins/gosip/app/commandserver.xml`:
+
+```
+adamczew@X86L-59:~/workspace/DABC.git/plugins/gosip/app$ dabc_exe commandserver.xml 
+GosipCommandServer   0.127366 Library loaded libDabcGosip.so
+GosipCommandServer   0.135939 Start DABC server on localhost:12345
+GosipCommandServer   0.138081 Application mainloop is now running
+GosipCommandServer   0.138141        Press Ctrl-C for stop
+GosipCommandServer   0.139443 Starting GOSIP command server module
+```
+
+
+
 # Usage of rgoc
 
 
