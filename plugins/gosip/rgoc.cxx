@@ -32,7 +32,7 @@ void goscmd_usage (const char *progname)
   printf ("***************************************************************************\n");
 
   printf (" %s (remote gosipcmd) for dabc and mbspex library  \n", progname);
-  printf (" v0.4 08-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
+  printf (" v0.5 09-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
   printf ("***************************************************************************\n");
   printf (
       "  usage: %s [-h|-z] [[-i|-r|-w|-s|-u] [-b] | [-c|-v FILE] [-n DEVICE |-d|-x] node[:port] sfp slave [address [value [words]|[words]]]] \n",
@@ -101,6 +101,9 @@ int main (int argc, char *argv[])
   char cmd[GOSIP_CMD_MAX_ARGS][GOSIP_CMD_SIZE];
   unsigned int cmdLen = 0;
   unsigned int i;
+
+#ifdef GOSIP_COMMAND_PLAINC
+  // JAM22 first implementation, just a split-up copy of existing gosipcmd C code:
   struct gosip_cmd theCommand;
   goscmd_defaults (&theCommand);
 
@@ -219,8 +222,8 @@ int main (int argc, char *argv[])
   dabc::lgr ()->SetDebugMask (dabc::Logger::lMessage);    // suppress output of name and time
   auto stamp = dabc::TimeStamp::Now ();
 
-  DOUT1("Did create manager\n");
-  DOUT1("Using node name %s\n", nodename.c_str ());
+  DOUT2("Did create manager\n");
+  DOUT2("Using node name %s\n", nodename.c_str ());
 
   if (!dabc::ConnectDabcNode (nodename))
   {
@@ -247,12 +250,19 @@ int main (int argc, char *argv[])
   if (res == dabc::cmd_true)
   {
     // here treat result of repeated read if any:
-    for (int r = 0; r < theCommand.repeat; ++r)
+    int numresults=dcmd.GetInt ("NUMRESULTS", 0);// dynamic number of return addresses in case of broadcast read!
+    for (int r = 0; r < numresults; ++r)
     {
       std::string name = "VALUE_" + std::to_string (r);
       theCommand.value = dcmd.GetInt (name.c_str (), -1);
       std::string address = "ADDRESS_" + std::to_string (r);
       theCommand.address = dcmd.GetInt (address.c_str (), -1);
+
+      std::string sfp = "SFP_" + std::to_string (r);
+      theCommand.sfp = dcmd.GetInt (sfp.c_str (), -1);
+      std::string slave = "SLAVE_" + std::to_string (r);
+      theCommand.slave = dcmd.GetInt (slave.c_str (), -1);
+
       if (theCommand.value != -1)
         goscmd_output (&theCommand);
     }
@@ -262,5 +272,14 @@ int main (int argc, char *argv[])
     printm ("!!!!!!! Remote command execution failed with returncode %d\n", res);
     goscmd_dump_command (&theCommand);
   }
+#else
+  // JAM new implementation with C++ command class here:
+
+#endif
+
+
+
+
+
   return l_status;
 }

@@ -4,7 +4,15 @@
 #include"dabc/Command.h"
 #include "dabc/logging.h"
 #include <stdarg.h>
+#include <string.h>
 
+
+/* this switches between first implementation (copy of gosipcmd C code)
+ * and real C++*/
+#define GOSIP_COMMAND_PLAINC 1
+
+
+#ifdef GOSIP_COMMAND_PLAINC
 /* we need to implement printm here to also catch output of libmbspex*/
 
 // this is for printm calls in current lib:
@@ -300,4 +308,17 @@ int goscmd_output (struct gosip_cmd *com)
   }
   return 0;
 }
-#endif
+
+
+#else //GOSIP_COMMAND_PLAINC
+// here improved C++ style implementtation JAM 08-12-22:
+
+
+
+
+#endif //GOSIP_COMMAND_PLAINC
+
+
+
+
+#endif //GOSIP_Command

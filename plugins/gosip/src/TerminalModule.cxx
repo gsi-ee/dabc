@@ -18,8 +18,10 @@ extern "C"
   #include "mbspex/libmbspex.h"
 }
 
-#include "gosip/TerminalModule.h"
 #include "gosip/Command.h"
+#include "gosip/TerminalModule.h"
+
+
 #include "dabc/Manager.h"
 
 #include <unistd.h>
@@ -27,6 +29,9 @@ extern "C"
 
 /// terminal command server functions only appear here:
 // later into Command class
+
+#ifdef GOSIP_COMMAND_PLAINC
+
 
 /** toggle configuration mode: send config from file as data block to driver (1), or write with single bus commands (0)*/
 #define GOSIPCMD_BLOCKCONFIG 1
@@ -295,8 +300,9 @@ int goscmd_busio (struct gosip_cmd *com)
   if (com->verboselevel > 1)
     goscmd_dump_command (com);
   savedaddress = com->address;
-  gosip::TerminalModule::fCommandAddress.clear ();
-  gosip::TerminalModule::fCommandResults.clear ();
+  // if we clear it here, we will lose the broadcastcase!
+//  gosip::TerminalModule::fCommandAddress.clear ();
+//  gosip::TerminalModule::fCommandResults.clear ();
   while (cursor < com->repeat)
   {
     switch (com->command)
@@ -316,8 +322,13 @@ int goscmd_busio (struct gosip_cmd *com)
         printm ("NEVER COME HERE: goscmd_busio called with wrong command %s", goscmd_get_description (com));
         return -1;
     }
-    gosip::TerminalModule::fCommandAddress.push_back (com->address);
+
+    gosip::TerminalModule::fCommandSfp.push_back (com->sfp);
+    gosip::TerminalModule::fCommandSlave.push_back (com->slave); // mind broadcast mode
+    gosip::TerminalModule::fCommandAddress.push_back (com->address); // mind repeat mode
     gosip::TerminalModule::fCommandResults.push_back (com->value);
+
+
     cursor++;
     com->address += 4;
 
@@ -506,7 +517,7 @@ int goscmd_verify_single (struct gosip_cmd *com)
 int goscmd_broadcast (struct gosip_cmd *com)
 {
   int rev = 0;
-  int slavebroadcast, sfpbroadcast = 0;
+  int slavebroadcast=0, sfpbroadcast = 0;
   long sfpmax;
   long slavemax;
   if (com->verboselevel)
@@ -520,6 +531,7 @@ int goscmd_broadcast (struct gosip_cmd *com)
   struct pex_sfp_links slavesetup;
   if (mbspex_get_configured_slaves (com->fd_pex, &slavesetup) < 0)
     return -1;
+  DOUT3 ("goscmd_broadcast with sfpbroadcast:%d slavebroadcast:%d", sfpbroadcast,slavebroadcast);
   if (sfpbroadcast) /* broadcast over sfps*/
   {
     for (com->sfp = 0; com->sfp < PEX_SFP_NUMBER; ++com->sfp)
@@ -573,8 +585,11 @@ int goscmd_broadcast (struct gosip_cmd *com)
       slavemax = com->slave;
       for (com->sfp = 0; com->sfp <= sfpmax; ++com->sfp)
       {
+
+
         for (com->slave = 0; com->slave <= slavemax; ++com->slave)
         {
+          DOUT3 ("Explicit broadcast (0..%ld) (0..%ld) at sfp:%ld slave:%ld", sfpmax,slavemax, com->sfp, com->slave);
           rev = goscmd_execute_command (com);
           if (rev != 0)
           {
@@ -626,8 +641,14 @@ int goscmd_execute_command (struct gosip_cmd *com)
 
 ///////////////////////
 
+
+
+
+
 std::vector<long> gosip::TerminalModule::fCommandAddress;
 std::vector<long> gosip::TerminalModule::fCommandResults;
+std::vector<long> gosip::TerminalModule::fCommandSfp;
+std::vector<long> gosip::TerminalModule::fCommandSlave;
 
 gosip::TerminalModule::TerminalModule (const std::string &name, dabc::Command cmd) :
     dabc::ModuleAsync (name, cmd)
@@ -652,18 +673,31 @@ int gosip::TerminalModule::ExecuteCommand (dabc::Command cmd)
     // todo: execute section from mbspex local gosipcmd
     goscmd_open_device (&theCommand);    // TODO: open device once on startup of terminal module
     goscmd_assert_command (&theCommand);
+    gosip::TerminalModule::fCommandAddress.clear (); // for broadcast case: do not clear resultsin inner functions!
+    gosip::TerminalModule::fCommandResults.clear ();
+    gosip::TerminalModule::fCommandSfp.clear ();
+    gosip::TerminalModule::fCommandSlave.clear ();
+
     l_status = goscmd_execute_command (&theCommand);
     goscmd_close_device (&theCommand);    // TODO: close on termination only
 
     // put here all relevant return values:
     // for repeat read, we set all single read information for client:
-    for (unsigned int r = 0; r < theCommand.repeat && r < fCommandResults.size (); ++r)
+    for (unsigned int r = 0; r < fCommandResults.size (); ++r)
     {
       std::string name = "VALUE_" + std::to_string (r);
       cmd.SetInt (name.c_str (), fCommandResults[r]);
       std::string address = "ADDRESS_" + std::to_string (r);
       cmd.SetInt (address.c_str (), fCommandAddress[r]);
+      // for broadcasting, also remember sfp and slave ids!
+      std::string sfp = "SFP_" + std::to_string (r);
+      cmd.SetInt (sfp.c_str (), fCommandSfp[r]);
+      std::string slave = "SLAVE_" + std::to_string (r);
+      cmd.SetInt (slave.c_str (), fCommandSlave[r]);
+
+
     }
+    cmd.SetInt ("NUMRESULTS", fCommandResults.size());
     return l_status ? dabc::cmd_false : dabc::cmd_true;
   }
   return dabc::cmd_false;
@@ -678,4 +712,7 @@ void gosip::TerminalModule::ProcessTimerEvent (unsigned)
 {
 }
 
+#else //GOSIP_COMMAND_PLAINC
+// here new implementation with C++ command class etc. JAM
 
+#endif //GOSIP_COMMAND_PLAINC

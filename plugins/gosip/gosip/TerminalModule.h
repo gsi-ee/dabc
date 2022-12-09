@@ -20,6 +20,8 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+
+
 #include <vector>
 
 
@@ -39,10 +41,17 @@ namespace gosip {
    class TerminalModule : public dabc::ModuleAsync {
       protected:
 
+
+
          int ExecuteCommand(dabc::Command cmd) override;
 
+#ifndef GOSIP_COMMAND_PLAINC
+// JAM command execution functions are put here for C++ implementation:
 
 
+
+
+#endif
 
       public:
 
@@ -60,6 +69,11 @@ namespace gosip {
          /*** keep address of most recent command call here*/
          static std::vector<long> fCommandAddress;
 
+         /*** keep Sfp of most recent command call here, for broadcast*/
+          static std::vector<long> fCommandSfp;
+
+          /*** keep Slave of most recent command call here, for broadcast*/
+          static std::vector<long> fCommandSlave;
    };
 }
 
