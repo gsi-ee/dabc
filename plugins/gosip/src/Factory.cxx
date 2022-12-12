@@ -17,7 +17,9 @@
 #include "gosip/Player.h"
 #include "gosip/TerminalModule.h"
 
+#ifndef GOSIP_COMMAND_PLAINC
 char gosip::Command::CommandDescription[GOSIP_MAXTEXT];
+#endif
 
 dabc::FactoryPlugin gosipfactory(new gosip::Factory("gosip"));
 

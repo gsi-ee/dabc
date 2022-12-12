@@ -8,7 +8,8 @@
 
 
 /* this switches between first implementation (copy of gosipcmd C code)
- * and real C++*/
+ * and real C++
+ * Note that this should be set in CMakeLists.txt (default=off)*/
 //#define GOSIP_COMMAND_PLAINC 1
 
 

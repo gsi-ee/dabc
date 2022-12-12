@@ -20,6 +20,7 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+
 #ifndef GOSIP_COMMAND_PLAINC
 #include "gosip/Command.h"
 #endif

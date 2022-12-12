@@ -1,16 +1,15 @@
 find_package(GOSIP)
 # QUIET)
 
+# JAM: remove commments of DEFINITIONS to test old plain C mode
+# (direct copy of gosipcmd code)
+
 if(GOSIP_FOUND)
    DABC_LINK_LIBRARY(DabcGosip
 	LIBRARIES DabcBase ${GOSIP_LIBRARY}
-	     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${GOSIP_INCLUDE_DIR})
-   #set_property(TARGET DabcGosip APPEND PROPERTY BUILD_RPATH "/mbs/driv/mbspex_5.10-64_DEB/lib/")  
-   
-#    DABC_LINK_LIBRARY(DabcGosip
-#                     LIBRARIES DabcBase
-#                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${GOSIP_INCLUDE_DIR})           
-   
+	     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${GOSIP_INCLUDE_DIR}
+              #DEFINITIONS GOSIP_COMMAND_PLAINC
+              )
    file(COPY app DESTINATION ${PROJECT_BINARY_DIR}/plugins/gosip)          
                      
 
@@ -18,5 +17,6 @@ if(GOSIP_FOUND)
 endif()
 
 DABC_EXECUTABLE(rgoc
-                SOURCES rgoc.cxx
+#			 DEFINITIONS GOSIP_COMMAND_PLAINC
+                SOURCES rgoc.cxx               
                 LIBRARIES DabcBase)

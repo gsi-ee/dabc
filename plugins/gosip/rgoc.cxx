@@ -27,15 +27,18 @@
 // take command definitions from here:
 #include "gosip/Command.h"
 
+#ifndef GOSIP_COMMAND_PLAINC
 /** need to define this here again, since we run independent of libDabcGosip:*/
 char gosip::Command::CommandDescription[GOSIP_MAXTEXT];
+#endif
+
 
 void goscmd_usage (const char *progname)
 {
   printf ("***************************************************************************\n");
 
   printf (" %s (remote gosipcmd) for dabc and mbspex library  \n", progname);
-  printf (" v0.5 09-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
+  printf (" v0.6 12-Dec-2022 by JAM (j.adamczewski@gsi.de)\n");
   printf ("***************************************************************************\n");
   printf (
       "  usage: %s [-h|-z] [[-i|-r|-w|-s|-u] [-b] | [-c|-v FILE] [-n DEVICE |-d|-x] node[:port] sfp slave [address [value [words]|[words]]]] \n",

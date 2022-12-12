@@ -18,6 +18,7 @@ extern "C"
   #include "mbspex/libmbspex.h"
 }
 
+
 #ifdef GOSIP_COMMAND_PLAINC
 #include "gosip/Command.h"
 #endif
@@ -659,6 +660,8 @@ gosip::TerminalModule::TerminalModule (const std::string &name, dabc::Command cm
     dabc::ModuleAsync (name, cmd)
 {
 }
+
+gosip::TerminalModule::~TerminalModule(){;}
 
 int gosip::TerminalModule::ExecuteCommand (dabc::Command cmd)
 {
