@@ -27,6 +27,9 @@
 // take command definitions from here:
 #include "gosip/Command.h"
 
+/** need to define this here again, since we run independent of libDabcGosip:*/
+char gosip::Command::CommandDescription[GOSIP_MAXTEXT];
+
 void goscmd_usage (const char *progname)
 {
   printf ("***************************************************************************\n");
@@ -274,6 +277,176 @@ int main (int argc, char *argv[])
   }
 #else
   // JAM new implementation with C++ command class here:
+
+
+   gosip::Command theCommand;
+
+   /* get arguments*/
+   optind = 1;
+   while ((opt = getopt (argc, argv, "hzwrsuin:c:v:dxb")) != -1)
+   {
+     switch (opt)
+     {
+       case '?':
+         goscmd_usage (basename (argv[0]));
+         exit (EXIT_FAILURE);
+       case 'h':
+         goscmd_usage (basename (argv[0]));
+         exit (EXIT_SUCCESS);
+       case 'n':
+         theCommand.devnum = strtol (optarg, NULL, 0);
+         break;
+       case 'w':
+         theCommand.set_command(gosip::GOSIP_WRITE);
+         break;
+       case 'r':
+         theCommand.set_command(gosip::GOSIP_READ);
+         break;
+       case 's':
+         theCommand.set_command(gosip::GOSIP_SETBIT);
+         break;
+       case 'u':
+         theCommand.set_command(gosip::GOSIP_CLEARBIT);
+         break;
+       case 'z':
+         theCommand.set_command(gosip::GOSIP_RESET);
+         break;
+       case 'i':
+         theCommand.set_command(gosip::GOSIP_INIT);
+         break;
+       case 'c':
+         theCommand.set_command(gosip::GOSIP_CONFIGURE);
+         strncpy (theCommand.filename, optarg, GOSIP_MAXTEXT);
+         break;
+       case 'v':
+         theCommand.set_command(gosip::GOSIP_VERIFY);
+         strncpy (theCommand.filename, optarg, GOSIP_MAXTEXT);
+         break;
+       case 'd':
+         theCommand.verboselevel = 1; /*strtol(optarg, NULL, 0); later maybe different verbose level*/
+         break;
+       case 'x':
+         theCommand.hexformat = 1;
+         break;
+       case 'b':
+         theCommand.broadcast = 1;
+         break;
+       default:
+         break;
+     }
+   }
+
+   /* get parameters:*/
+   cmdLen = argc - optind;
+   /*printf("- argc:%d optind:%d cmdlen:%d \n",argc, optind, cmdLen);*/
+   if(!theCommand.assert_arguments(cmdLen)) return -1;
+   for (i = 0; (i < cmdLen) && (i < GOSIP_CMD_MAX_ARGS); i++)
+   {
+     if (argv[optind + i])
+       strncpy (cmd[i], argv[optind + i], GOSIP_CMD_SIZE);
+     else
+       DOUT1 ("warning: argument at position %d is empty!", optind + i);
+   }
+
+   std::string nodename = cmd[0];
+   std::size_t found = nodename.find (":");
+   if (found == std::string::npos)
+   {
+     nodename = nodename + ":" + std::to_string ((int) RGOC_DEFAULTPORT);    // use default port if not given in nodename
+   }
+   nodename = dabc::MakeNodeName (nodename);
+
+   if ((theCommand.command == gosip::GOSIP_CONFIGURE) || (theCommand.command == gosip::GOSIP_VERIFY))
+   {
+
+     // get list of addresses and values from file later
+   }
+   else
+   {
+     theCommand.sfp = strtol (cmd[1], NULL, theCommand.hexformat == 1 ? 16 : 0);
+     theCommand.slave = strtol (cmd[2], NULL, theCommand.hexformat == 1 ? 16 : 0); /* note: we might have negative values for broadcast here*/
+
+     // if ((theCommand.command == GOSIP_READ) || (theCommand.command == GOSIP_WRITE))
+     theCommand.address = strtoul (cmd[3], NULL, theCommand.hexformat == 1 ? 16 : 0);
+     if (cmdLen > 4)
+     {
+       if (theCommand.command == gosip::GOSIP_READ)
+         theCommand.repeat = strtoul (cmd[4], NULL, theCommand.hexformat == 1 ? 16 : 0);
+       else
+         theCommand.value = strtoul (cmd[4], NULL, theCommand.hexformat == 1 ? 16 : 0);
+     }
+     if (cmdLen > 5)
+     {
+       theCommand.repeat = strtoul (cmd[5], NULL, theCommand.hexformat == 1 ? 16 : 0);
+     }
+
+   }
+   if(!theCommand.assert_command()) return -2;
+   if (theCommand.verboselevel > 0)
+   {
+     DOUT1 ("parsed the following commmand:\n\t");
+     theCommand.dump_command ();
+   }
+ // here connect to command server
+   if (!dabc::CreateManager ("rgoc", 0))
+   {
+     printf ("Fail to create manager\n");
+     return 1;
+   }
+   dabc::lgr ()->SetDebugMask (dabc::Logger::lMessage);    // suppress output of name and time
+   auto stamp = dabc::TimeStamp::Now ();
+
+   DOUT2("Did create manager\n");
+   DOUT2("Using node name %s\n", nodename.c_str ());
+
+   if (!dabc::ConnectDabcNode (nodename))
+   {
+     printf ("Fail to connect to node %s\n", nodename.c_str ());
+     return 1;
+   }
+   auto tm1 = stamp.SpentTillNow (true);
+   std::string module_name = nodename + "/gosip";
+
+   dabc::Command dcmd ("GosipCommand");
+   theCommand.BuildDabCommand(dcmd);
+   dcmd.SetReceiver (module_name);
+   dcmd.SetTimeout (10);
+
+   int res = dabc::mgr.Execute (dcmd);
+   auto tm2 = stamp.SpentTillNow (true);
+   if (theCommand.verboselevel > 0)
+   {
+     DOUT0 ("Connect to node %s takes %5.3f ms\n", nodename.c_str (), tm1 * 1e3);
+     DOUT0 ("Command execution: res = %s Value = %d takes %5.3f ms\n", (res == dabc::cmd_true ? "Ok" : "Fail"),
+         dcmd.GetInt ("VALUE"), tm2 * 1e3);
+   }
+   //evaluate result and print
+   if (res == dabc::cmd_true)
+   {
+     // here treat result of repeated read if any:
+     int numresults=dcmd.GetInt ("NUMRESULTS", 0);// dynamic number of return addresses in case of broadcast read!
+     for (int r = 0; r < numresults; ++r)
+     {
+       std::string name = "VALUE_" + std::to_string (r);
+       theCommand.value = dcmd.GetInt (name.c_str (), -1);
+       std::string address = "ADDRESS_" + std::to_string (r);
+       theCommand.address = dcmd.GetInt (address.c_str (), -1);
+       std::string sfp = "SFP_" + std::to_string (r);
+       theCommand.sfp = dcmd.GetInt (sfp.c_str (), -1);
+       std::string slave = "SLAVE_" + std::to_string (r);
+       theCommand.slave = dcmd.GetInt (slave.c_str (), -1);
+       if (theCommand.value != -1)
+         theCommand.output();
+     }
+   }
+   else
+   {
+     EOUT ("!!!!!!! Remote command execution failed with returncode %d\n",  dcmd.GetInt ("VALUE"));
+     theCommand.dump_command();
+   }
+
+
+
 
 #endif
 

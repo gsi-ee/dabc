@@ -17,6 +17,8 @@
 #include "gosip/Player.h"
 #include "gosip/TerminalModule.h"
 
+char gosip::Command::CommandDescription[GOSIP_MAXTEXT];
+
 dabc::FactoryPlugin gosipfactory(new gosip::Factory("gosip"));
 
 dabc::Module* gosip::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
