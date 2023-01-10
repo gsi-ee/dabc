@@ -4,10 +4,15 @@ if(ROOT_FOUND)
    find_library(ROOT_RHTTP_LIBRARY RHTTP HINTS ${ROOT_LIBRARY_DIR})
    find_library(ROOT_XMLIO_LIBRARY XMLIO HINTS ${ROOT_LIBRARY_DIR})
 
-   DABC_LINK_LIBRARY(DabcRoot
-                     LIBRARIES DabcBase DabcHttp ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY} ${ROOT_XMLIO_LIBRARY}
-                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
-                     NOWARN)
+  dabc_link_library(
+    DabcRoot
+    SOURCES src/Factory.cxx src/Monitor.cxx src/TDabcEngine.cxx
+            src/TreeStore.cxx
+    HEADERS root/Factory.h root/Monitor.h root/TDabcEngine.h root/TreeStore.h
+    INCDIR root
+    LIBRARIES dabc::DabcBase dabc::DabcHttp ROOT::RHTTP ROOT::XMLIO
+    INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+    NOWARN)
 
    ROOT_GENERATE_DICTIONARY(G__DabcRoot root/TDabcEngine.h
                             MODULE DabcRoot
@@ -20,4 +25,7 @@ if(ROOT_FOUND)
 
 endif()
 
-file(COPY js DESTINATION ${CMAKE_BINARY_DIR}/plugins/root)
+dabc_install_plugin_data(
+    DabcRoot
+    DIRECTORIES js
+    DESTINATION ${DABC_INSTALL_PLUGINDIR}/root)

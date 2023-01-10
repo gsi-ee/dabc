@@ -5,15 +5,18 @@ find_package(GOSIP)
 # (direct copy of gosipcmd code)
 
 if(GOSIP_FOUND)
-   DABC_LINK_LIBRARY(DabcGosip
-	LIBRARIES DabcBase ${GOSIP_LIBRARY}
-	     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${GOSIP_INCLUDE_DIR}
-              #DEFINITIONS GOSIP_COMMAND_PLAINC
-              )
-   file(COPY app DESTINATION ${PROJECT_BINARY_DIR}/plugins/gosip)          
-                     
+  dabc_link_library(
+    DabcGosip
+    SOURCES src/Factory.cxx src/Player.cxx
+    HEADERS gosip/Factory.h gosip/Player.h
+    INCDIR gosip
+    LIBRARIES dabc::DabcBase dabc::DabcMbs ${GOSIP_LIBRARY}
+    INCLUDES ${GOSIP_INCLUDE_DIR})
 
-   file(COPY htm DESTINATION ${CMAKE_BINARY_DIR}/plugins/gosip)
+dabc_install_plugin_data(
+    DabcGosip
+    FILES htm
+    DESTINATION ${DABC_INSTALL_PLUGINDIR}/gosip)
 endif()
 
 DABC_EXECUTABLE(rgoc

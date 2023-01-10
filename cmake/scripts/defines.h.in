@@ -7,6 +7,6 @@
 #define DEBUGLEVEL @DABC_DEBUGLEVEL@
 #endif
 
-@DABC_EXTRA_CHECKS@
+#cmakedefine DABC_EXTRA_CHECKS
 
 #endif

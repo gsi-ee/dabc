@@ -50,20 +50,18 @@ else()
    list(APPEND extra_defs NO_SSL)
 endif()
 
-DABC_LINK_LIBRARY(DabcHttp
-                  SOURCES
-                    civetweb/civetweb.c
-                    src/Civetweb.cxx
-                    src/Factory.cxx
-                    src/FastCgi.cxx
-                    src/Server.cxx
-                 LIBRARIES
-                    DabcBase
-                    ${extra_libs}
-                 INCLUDES
-                    ${CMAKE_CURRENT_SOURCE_DIR}/civetweb
-                    ${extra_incl}
-                 DEFINITIONS
-                    ${extra_defs})
+dabc_link_library(
+  DabcHttp
+  SOURCES civetweb/civetweb.c src/Civetweb.cxx src/Factory.cxx src/FastCgi.cxx
+          src/Server.cxx
+  HEADERS http/Civetweb.h http/Factory.h http/FastCgi.h http/Server.h
+  INCDIR http
+  LIBRARIES dabc::DabcBase ${extra_libs}
+  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/civetweb ${extra_incl}
+  DEFINITIONS ${extra_defs})
 
-file(COPY scripts jq img example.xml master.xml DESTINATION ${CMAKE_BINARY_DIR}/plugins/http)
+dabc_install_plugin_data(
+  DabcHttp
+  FILES example.xml master.xml
+  DIRECTORIES scripts jq img
+  DESTINATION ${DABC_INSTALL_PLUGINDIR}/http)

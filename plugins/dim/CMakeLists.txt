@@ -1,7 +1,11 @@
 find_package(DIM QUIET)
 
 if(DIM_FOUND)
-   DABC_LINK_LIBRARY(DabcDim 
-                     LIBRARIES DabcBase ${DIM_LIBRARY}
-                     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} ${DIM_INCLUDE_DIR})
+   dabc_link_library(
+    DabcDim
+    SOURCES src/Factory.cxx src/Monitor.cxx
+    HEADERS dim/Factory.h dim/Monitor.h
+    INCDIR dim
+    LIBRARIES dabc::DabcBase ${DIM_LIBRARY}
+    INCLUDES ${DIM_INCLUDE_DIR})
 endif()
