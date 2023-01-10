@@ -42,12 +42,9 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow -W -Woverloaded-virtual -fsigned-char")
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W")
+  add_compile_options(-Wshadow -W -Woverloaded-virtual -fsigned-char)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -W -Woverloaded-virtual -fsigned-char")
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W")
-  set(DABC_CXX_FLAGS "-stdlib=libc++" CACHE STRING "DABC cxx flags" FORCE)
+  add_compile_options(-stdlib=libc++ -W -Woverloaded-virtual -fsigned-char)
 endif()
 
 
@@ -60,15 +57,13 @@ else()
   set(DABC_DEBUGLEVEL 2)
 endif()
 
-configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/DABCConfig.cmake.in
-               ${PROJECT_BINARY_DIR}/DABCConfig.cmake @ONLY NEWLINE_STYLE UNIX)
-
 if(extrachecks)
-  set(DABC_EXTRA_CHECKS "#define DABC_EXTRA_CHECKS")
+    set(DABC_EXTRA_CHECKS TRUE)
 endif()
 
-configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/defines.h.in
-               ${PROJECT_BINARY_DIR}/include/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cmake/scripts/defines.h.in
+  ${PROJECT_BINARY_DIR}/inc/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
 
 if(APPLE)
    configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in
@@ -78,14 +73,8 @@ else()
                   ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
 endif()
 
-foreach(lib pthread dl)
-   find_library(DABC_${lib}_LIBRARY ${lib})
-endforeach()
-
 if(NOT APPLE)
-   find_library(DABC_rt_LIBRARY rt)
    if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-      find_library(DABC_m_LIBRARY m)
       find_library(DABC_cpp_LIBRARY "c++")
    endif()
 endif()

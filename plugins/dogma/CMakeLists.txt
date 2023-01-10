@@ -1,9 +1,18 @@
-DABC_LINK_LIBRARY(DabcDogma
-                  LIBRARIES DabcBase
-                  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
+dabc_link_library(
+    DabcDogma
+    SOURCES src/TerminalModule.cxx
+            src/Factory.cxx
+    HEADERS dogma/TerminalModule.h
+            dogma/Factory.h
+    INCDIR dogma
+    LIBRARIES DabcBase
+    INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
 
 DABC_EXECUTABLE(dogmacmd
                 SOURCES dogmacmd.cxx
                 LIBRARIES DabcBase)
 
-file(COPY app DESTINATION ${PROJECT_BINARY_DIR}/plugins/dogma)
+dabc_install_plugin_data(
+    DabcDogma
+    DIRECTORIES app
+    DESTINATION ${DABC_INSTALL_PLUGINDIR}/dogma)
