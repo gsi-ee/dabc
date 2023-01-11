@@ -76,7 +76,7 @@ function(DABC_LINK_LIBRARY libname)
 
   target_link_libraries(${libname} ${ARG_LIBRARIES})
 
-  if(CMAKE_PROJECT_NAME STREQUAL DABC)
+  if(PROJECT_NAME STREQUAL DABC)
     list(APPEND ARG_DEPENDENCIES copy_headers)
     set(_main_incl ${PROJECT_BINARY_DIR}/include)
     set_property(GLOBAL APPEND PROPERTY DABC_LIBRARY_TARGETS ${libname})
@@ -102,9 +102,9 @@ function(DABC_LINK_LIBRARY libname)
   set_property(GLOBAL APPEND PROPERTY DABC_INSTALL_LIBRARY_TARGETS ${libname})
   install(
     TARGETS ${libname}
-    EXPORT ${CMAKE_PROJECT_NAME}Targets
+    EXPORT ${PROJECT_NAME}Targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dabc/${ARG_INCDIR})
+    PUBLIC_HEADER DESTINATION ${DABC_INSTALL_INCLUDEDIR}/${ARG_INCDIR})
 
 endfunction()
 
@@ -137,9 +137,9 @@ function(DABC_EXECUTABLE exename)
 
   target_link_libraries(${exename} ${ARG_LIBRARIES} ${cpp_LIBRARY})
 
-  if(CMAKE_PROJECT_NAME STREQUAL DABC)
+  if(PROJECT_NAME STREQUAL DABC)
     list(APPEND ARG_DEPENDENCIES copy_headers)
-    set(_main_incl ${CMAKE_BINARY_DIR}/include)
+    set(_main_incl ${PROJECT_BINARY_DIR}/include)
     target_compile_options(${exename} PRIVATE -Wall)
   else()
     set(_main_incl ${DABC_INCLUDE_DIR})
@@ -157,12 +157,12 @@ endfunction()
 # cmake-format: off
 #---------------------------------------------------------------------------------------------------
 #---DABC_INSTALL_PLUGIN_DATA(target
-#                            LEGACY_MODE yes/no          : if YES, place file also in CMAKE_BINARY_DIR/plugins
+#                            LEGACY_MODE yes/no          : if YES, place file also in PROJECT_BINARY_DIR/plugins
 #                            DESTINATION                 : installation location
 #                            FILES file1 [file2...]      : files to install
 #                            DIRECTORIES dir1 [dir2...]  : directories to install
 #)
-# This function install extra fiels and eventualy copies the mto CMAKE_BINARY_DIR for LEGACY_MODE.
+# This function install extra fiels and eventualy copies the mto PROJECT_BINARY_DIR for LEGACY_MODE.
 #---------------------------------------------------------------------------------------------------
 # cmake-format: on
 function(DABC_INSTALL_PLUGIN_DATA target)
@@ -177,7 +177,7 @@ function(DABC_INSTALL_PLUGIN_DATA target)
     install(FILES ${ARG_FILES} DESTINATION ${ARG_DESTINATION})
     if(${ARG_LEGACY_MODE})
       dabc_install_plugin_data_source(${target} ${ARG_FILES} DESTINATION
-                                      ${CMAKE_BINARY_DIR}/plugins/${BASENAME})
+                                      ${PROJECT_BINARY_DIR}/plugins/${BASENAME})
     endif()
   endif()
 
@@ -185,7 +185,7 @@ function(DABC_INSTALL_PLUGIN_DATA target)
     install(DIRECTORY ${ARG_DIRECTORIES} DESTINATION ${ARG_DESTINATION})
     if(${ARG_LEGACY_MODE})
       dabc_install_plugin_data_source(${target} ${ARG_DIRECTORIES} DESTINATION
-                                      ${CMAKE_BINARY_DIR}/plugins/${BASENAME})
+                                      ${PROJECT_BINARY_DIR}/plugins/${BASENAME})
     endif()
   endif()
 
@@ -196,7 +196,7 @@ endfunction()
 #---DABC_INSTALL_PLUGIN_DATA_SOURCE(src1 [src2...]  : files or directories to copy
 #                                   DESTINATION     : installation location
 #)
-# This function creates targets to copy files into CMAKE_BINARY_DIR for legacy mode
+# This function creates targets to copy files into PROJECT_BINARY_DIR for legacy mode
 #---------------------------------------------------------------------------------------------------
 # cmake-format: on
 function(DABC_INSTALL_PLUGIN_DATA_SOURCE target)
