@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project(dabc-ib-test)
 find_package(DABC)
-include(${DABC_USE_FILE})
 
 if(DabcVerbs_LIBRARY)
   find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)
@@ -10,16 +9,14 @@ endif()
 
 if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
   set(VERBS_DEFS WITH_VERBS)
-  set(_lib ${DabcVerbs_LIBRARY})
+  set(_lib dabc::DabcVerbs)
 else()
   set(VERBS_LIBRARIES)
   set(VERBS_INCLUDE_DIR)
 endif()
 
-dabc_link_library(
-  DabcIbTest
-  SOURCES IbTestApplication.cxx IbTestDefines.cxx IbTestGPU.cxx
-          IbTestSchedule.cxx IbTestWorkerModule.cxx
-  LIBRARIES ${DabcBase_LIBRARY} ${_lib} ${VERBS_LIBRARIES}
-  INCLUDES ${VERBS_INCLUDE_DIR}
-  DEFINITIONS ${VERBS_DEFS})
+add_library(DabcIbTest IbTestApplication.cxx IbTestDefines.cxx IbTestGPU.cxx
+                       IbTestSchedule.cxx IbTestWorkerModule.cxx)
+target_link_libraries(DabcIbTest dabc::DabcBase ${_lib} ${VERBS_LIBRARIES})
+
+# DEFINITIONS ${VERBS_DEFS} #TODO
