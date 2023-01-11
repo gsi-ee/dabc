@@ -6,7 +6,6 @@ dabc_executable(dabc_xml SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S})
 
 dabc_link_library(
   DabcBase
-  INCDIR dabc
   SOURCES src/api.cxx
           src/Application.cxx
           src/BinaryFile.cxx
@@ -122,8 +121,8 @@ dabc_link_library(
           dabc/Worker.h
           dabc/XmlEngine.h
           ${CMAKE_BINARY_DIR}/include/dabc/defines.h
-  LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_dl_LIBRARY}
-            ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY} ROOT::Core)
+  INCDIR dabc
+  LIBRARIES ${DABC_cpp_LIBRARY})
 
 dabc_executable(
   dabc_exe
