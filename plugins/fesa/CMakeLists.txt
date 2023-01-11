@@ -1,7 +1,7 @@
 find_package(FESA QUIET)
 
 if(FESA_FOUND)
-   set(fesa_def "WITH_FESA")
+  set(fesa_def "WITH_FESA")
 endif()
 
 dabc_link_library(
@@ -17,4 +17,3 @@ dabc_install_plugin_data(
   DabcFesa
   FILES example.xml fesa.js
   DESTINATION ${DABC_INSTALL_PLUGINDIR}/fesa)
-

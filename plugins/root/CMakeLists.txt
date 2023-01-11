@@ -1,8 +1,8 @@
 if(ROOT_FOUND)
-   include(${ROOT_USE_FILE})
+  include(${ROOT_USE_FILE})
 
-   find_library(ROOT_RHTTP_LIBRARY RHTTP HINTS ${ROOT_LIBRARY_DIR})
-   find_library(ROOT_XMLIO_LIBRARY XMLIO HINTS ${ROOT_LIBRARY_DIR})
+  find_library(ROOT_RHTTP_LIBRARY RHTTP HINTS ${ROOT_LIBRARY_DIR})
+  find_library(ROOT_XMLIO_LIBRARY XMLIO HINTS ${ROOT_LIBRARY_DIR})
 
   dabc_link_library(
     DabcRoot
@@ -14,18 +14,22 @@ if(ROOT_FOUND)
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
     NOWARN)
 
-   ROOT_GENERATE_DICTIONARY(G__DabcRoot root/TDabcEngine.h
-                            MODULE DabcRoot
-                            LINKDEF LinkDef.h
-                            NOINSTALL)
+  root_generate_dictionary(
+    G__DabcRoot
+    root/TDabcEngine.h
+    MODULE DabcRoot
+    LINKDEF LinkDef.h
+    NOINSTALL)
 
-   DABC_EXECUTABLE(dabc_root
-                   SOURCES utils/dabc_root.cxx
-                   LIBRARIES DabcBase DabcRoot ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY} ${ROOT_XMLIO_LIBRARY})
+  dabc_executable(
+    dabc_root
+    SOURCES utils/dabc_root.cxx
+    LIBRARIES DabcBase DabcRoot ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY}
+              ${ROOT_XMLIO_LIBRARY})
 
 endif()
 
 dabc_install_plugin_data(
-    DabcRoot
-    DIRECTORIES js
-    DESTINATION ${DABC_INSTALL_PLUGINDIR}/root)
+  DabcRoot
+  DIRECTORIES js
+  DESTINATION ${DABC_INSTALL_PLUGINDIR}/root)
