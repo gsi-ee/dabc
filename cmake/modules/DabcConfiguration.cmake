@@ -1,19 +1,3 @@
-set(DABC_VERSION
-    "2.11.0"
-    CACHE STRING "DABC version" FORCE)
-
-set(DABC_INCLUDE_DIR
-    "${PROJECT_BINARY_DIR}/include"
-    CACHE STRING "DABC include dir" FORCE)
-
-set(DABC_LIBRARY_DIR
-    "${PROJECT_BINARY_DIR}/lib"
-    CACHE STRING "DABC include dir" FORCE)
-
-set(DABC_LIBRARY
-    "libDabcBase"
-    CACHE STRING "DABC main library" FORCE)
-
 set(DABC_DEFINES
     ""
     CACHE STRING "DABC definitions" FORCE)
@@ -77,6 +61,9 @@ configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/scripts/defines.h.in
   ${PROJECT_BINARY_DIR}/include/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
 
+# --- for in-build use case ---
+set(DABCSYS ${PROJECT_BINARY_DIR})
+set(DABCLIBDIR lib)
 if(APPLE)
   configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in
                  ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
@@ -84,6 +71,21 @@ else()
   configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.linux.in
                  ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
 endif()
+# -----------------------------
+
+# --- for install use case ----
+set(DABCSYS ${CMAKE_INSTALL_PREFIX})
+set(DABCLIBDIR ${CMAKE_INSTALL_LIBDIR})
+if(APPLE)
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in
+    ${PROJECT_BINARY_DIR}/macros/dabclogin @ONLY NEWLINE_STYLE UNIX)
+else()
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.linux.in
+    ${PROJECT_BINARY_DIR}/macros/dabclogin @ONLY NEWLINE_STYLE UNIX)
+endif()
+# -----------------------------
 
 if(NOT APPLE)
   if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)

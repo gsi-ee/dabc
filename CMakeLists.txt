@@ -30,8 +30,6 @@ include(DabcBuildOptions)
 include(DabcConfiguration)
 include(DabcMacros)
 
-add_subdirectory(base)
-
 # Make applications an optional build.
 # Allow to install apps only if they are build.
 include(CMakeDependentOption)
@@ -42,10 +40,13 @@ cmake_dependent_option(DABC_INSTALL_APPLICATIONS "Install example applications" 
 
 if (DABC_LEGACY_INSTALL)
   set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_PREFIX}/plugins)
+  set(DABC_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 else()
   set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins)
+  set(DABC_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/dabc)
 endif()
-message(STATUS "DABC_INSTALL_PLUGINDIR=${DABC_INSTALL_PLUGINDIR}")
+
+add_subdirectory(base)
 
 add_subdirectory(plugins)
 
@@ -83,8 +84,7 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(
   ${PROJECT_SOURCE_DIR}/cmake/scripts/DABCConfig.cmake.in
   ${PROJECT_BINARY_DIR}/DABCConfig.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
-  PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_BINDIR)
+  INSTALL_DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
 
 write_basic_package_version_file(
   ${PROJECT_NAME}ConfigVersion.cmake
@@ -92,8 +92,18 @@ write_basic_package_version_file(
   COMPATIBILITY SameMajorVersion)
 
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}UseFile.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/DabcMacros.cmake
+    FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        ${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+        ${PROJECT_BINARY_DIR}/${PROJECT_NAME}UseFile.cmake
+        ${PROJECT_BINARY_DIR}/DabcMacros.cmake
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
+
+if (${DABC_LEGACY_INSTALL})
+  install(
+    PROGRAMS ${PROJECT_BINARY_DIR}/macros/dabclogin
+    DESTINATION ${CMAKE_INSTALL_PREFIX})
+else()
+  install(
+    PROGRAMS ${PROJECT_BINARY_DIR}/macros/dabclogin
+    DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
