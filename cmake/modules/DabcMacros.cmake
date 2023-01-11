@@ -61,9 +61,6 @@ function(DABC_LINK_LIBRARY libname)
   set_target_properties(${libname} PROPERTIES ${DABC_LIBRARY_PROPERTIES}
                                               PUBLIC_HEADER "${ARG_HEADERS}")
 
-  # if(NOT CMAKE_CXX_STANDARD) set_property(TARGET ${libname} PROPERTY
-  # CXX_STANDARD 11) endif()
-
   target_compile_definitions(${libname} PRIVATE ${ARG_DEFINITIONS}
                                                 ${DABC_DEFINES})
 
@@ -81,7 +78,12 @@ function(DABC_LINK_LIBRARY libname)
     set(_main_incl ${DABC_INCLUDE_DIR})
   endif()
 
-  target_include_directories(${libname} PRIVATE ${_main_incl} ${ARG_INCLUDES})
+  target_include_directories(
+    ${libname}
+    PUBLIC $<INSTALL_INTERFACE:include>
+           $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    PRIVATE ${_main_incl} ${ARG_INCLUDES})
 
   if(ARG_DEPENDENCIES)
     add_dependencies(${libname} ${ARG_DEPENDENCIES})
