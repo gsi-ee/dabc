@@ -1,5 +1,3 @@
-dabc_install_headers(hadaq)
-
 if(hadaq-debug)
   set(_def HADAQ_DEBUG)
 endif()
@@ -39,7 +37,7 @@ dabc_link_library(
   INCDIR hadaq
   LIBRARIES dabc::DabcBase dabc::DabcMbs
   DEFINITIONS ${_def}
-  DABC_INSTALL)
+  COPY_HEADERS)
 
 dabc_executable(
   hldprint

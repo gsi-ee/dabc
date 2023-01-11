@@ -2,11 +2,12 @@
 additional_commands = {
   "dabc_link_library": {
     "pargs": 1,
-    "flags": ["NOWARN", "DABC_INSTALL"],
+    "flags": ["NOWARN", "COPY_HEADERS"],
     "kwargs": {
       "SOURCES": '*',
       "HEADERS": '*',
       "PUBLIC_HEADERS": '*',
+      "EXTRA_HEADERS": '*',
       "INCDIR": '*',
       "LIBRARIES": '*',
       "DEFINITIONS": '*',

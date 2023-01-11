@@ -1,5 +1,3 @@
-dabc_install_headers(mbs)
-
 dabc_link_library(
   DabcMbs
   SOURCES src/api.cxx
@@ -33,7 +31,7 @@ dabc_link_library(
           mbs/TextInput.h
   INCDIR mbs
   LIBRARIES dabc::DabcBase
-  DABC_INSTALL)
+  COPY_HEADERS)
 
 dabc_executable(
   mbsprint
