@@ -14,23 +14,26 @@ set(DABC_LIBRARY_PROPERTIES SUFFIX ${libsuffix} PREFIX ${libprefix}
 #---DABC_INSTALL_HEADERS([hdr1 hdr2 ...])
 #---------------------------------------------------------------------------------------------------
 # cmake-format: on
-function(DABC_INSTALL_HEADERS dir)
-  file(GLOB headers "${dir}/*.h")
-  string(REPLACE ${CMAKE_SOURCE_DIR} "" tgt ${CMAKE_CURRENT_SOURCE_DIR})
-  string(MAKE_C_IDENTIFIER move_header${tgt} tgt)
-  foreach(include_file ${headers})
-    string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "" fname ${include_file})
-    set(src ${CMAKE_CURRENT_SOURCE_DIR}/${fname})
-    set(dst ${PROJECT_BINARY_DIR}/include/${fname})
+function(DABC_INSTALL_HEADERS target)
+  cmake_parse_arguments(ARG "" "INCDIR" "HEADERS;" ${ARGN})
+
+  set(dst_list)
+
+  string(MAKE_C_IDENTIFIER copy_header_${ARG_INCDIR} tgt)
+  foreach(include_file ${ARG_HEADERS})
+    get_filename_component(src ${include_file} ABSOLUTE BASE_DIR
+                           "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(dst ${PROJECT_BINARY_DIR}/include/${include_file})
     add_custom_command(
       OUTPUT ${dst}
       COMMAND ${CMAKE_COMMAND} -E copy ${src} ${dst}
-      COMMENT "Copying header ${fname} to ${PROJECT_BINARY_DIR}/include"
-      DEPENDS ${src})
+      COMMENT "Copying header ${include_file} to ${dst}"
+      MAIN_DEPENDENCY ${src})
     list(APPEND dst_list ${dst})
   endforeach()
   add_custom_target(${tgt} DEPENDS ${dst_list})
   set_property(GLOBAL APPEND PROPERTY DABC_HEADER_TARGETS ${tgt})
+  add_dependencies(${target} ${tgt})
 endfunction()
 
 # cmake-format: off
@@ -40,26 +43,33 @@ endfunction()
 #                     SOURCES src1 src2          : if not specified, taken "src/*.cxx"
 #                     HEADERS hdr1 hdr2          : public headers 9to be installed)
 #                     PRIVATE_HEADERS hdr1 hdr2  : private headers (not to be installed)
+#                     EXTRA_HEADERS hdr1 hdr2    : extra headers (not source, e.g. generated, to be installed)
 #                     LIBRARIES lib1 lib2        : direct linked libraries
 #                     DEFINITIONS def1 def2      : library definitions
 #                     DEPENDENCIES dep1 dep2     : dependencies
 #                     INCLUDES dir1 dir2         : include directories
 #                     NOWARN                     : disable warnings for DABC libs
+#                     COPY_HEADERS               : copy headers to build tree
 #)
 # cmake-format: on
 function(DABC_LINK_LIBRARY libname)
   cmake_parse_arguments(
     ARG
-    "NOWARN;DABC_INSTALL"
+    "NOWARN;COPY_HEADERS"
     "INCDIR"
-    "SOURCES;HEADERS;PRIVATE_HEADERS;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES"
+    "SOURCES;HEADERS;PRIVATE_HEADERS;EXTRA_HEADERS;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES"
     ${ARGN})
 
   add_library(${libname} SHARED ${ARG_SOURCES})
   add_library(dabc::${libname} ALIAS ${libname})
 
-  set_target_properties(${libname} PROPERTIES ${DABC_LIBRARY_PROPERTIES}
-                                              PUBLIC_HEADER "${ARG_HEADERS}")
+  if(${ARG_COPY_HEADERS})
+    dabc_install_headers(${libname} HEADERS ${ARG_HEADERS} INCDIR ${ARG_INCDIR})
+  endif()
+
+  set_target_properties(
+    ${libname} PROPERTIES ${DABC_LIBRARY_PROPERTIES} PUBLIC_HEADER
+                          "${ARG_HEADERS};${ARG_EXTRA_HEADERS}")
 
   target_compile_definitions(${libname} PRIVATE ${ARG_DEFINITIONS}
                                                 ${DABC_DEFINES})
@@ -67,8 +77,8 @@ function(DABC_LINK_LIBRARY libname)
   target_link_libraries(${libname} ${ARG_LIBRARIES})
 
   if(CMAKE_PROJECT_NAME STREQUAL DABC)
-    list(APPEND ARG_DEPENDENCIES move_headers)
-    set(_main_incl ${CMAKE_BINARY_DIR}/include)
+    list(APPEND ARG_DEPENDENCIES copy_headers)
+    set(_main_incl ${PROJECT_BINARY_DIR}/include)
     set_property(GLOBAL APPEND PROPERTY DABC_LIBRARY_TARGETS ${libname})
     if(NOT ARG_NOWARN)
       target_compile_options(
@@ -128,7 +138,7 @@ function(DABC_EXECUTABLE exename)
   target_link_libraries(${exename} ${ARG_LIBRARIES} ${cpp_LIBRARY})
 
   if(CMAKE_PROJECT_NAME STREQUAL DABC)
-    list(APPEND ARG_DEPENDENCIES move_headers)
+    list(APPEND ARG_DEPENDENCIES copy_headers)
     set(_main_incl ${CMAKE_BINARY_DIR}/include)
     target_compile_options(${exename} PRIVATE -Wall)
   else()
@@ -205,13 +215,12 @@ function(DABC_INSTALL_PLUGIN_DATA_SOURCE target)
       endif()
       set(dst ${ARG_DESTINATION}/${plugin_file})
       add_custom_command(
-        OUTPUT ${dst}
+        TARGET ${target}
+        POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E ${COPY_ACTION} ${src} ${dst}
-        COMMENT "Copying plugin ${plugin_file} to ${dst}"
-        MAIN_DEPENDENCY ${src})
-      list(APPEND dst_list ${dst})
-      add_custom_target(${tgt}_${plugin_file} DEPENDS ${dst_list})
-      add_dependencies(${target} ${tgt}_${plugin_file})
+        COMMENT "Copying plugin ${plugin_file} to ${dst}" MAIN_DEPENDENCY
+                ${src})
+
     endforeach()
   endif()
 endfunction()

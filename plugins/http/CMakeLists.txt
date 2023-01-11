@@ -1,5 +1,3 @@
-dabc_install_headers(http)
-
 find_package(ZLIB QUIET)
 
 if(ZLIB_FOUND)
@@ -58,7 +56,8 @@ dabc_link_library(
   INCDIR http
   LIBRARIES dabc::DabcBase ${extra_libs}
   INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/civetweb ${extra_incl}
-  DEFINITIONS ${extra_defs})
+  DEFINITIONS ${extra_defs}
+  COPY_HEADERS)
 
 dabc_install_plugin_data(
   DabcHttp

@@ -1,9 +1,3 @@
-dabc_install_headers(dabc)
-
-set(DABC_BASESUB_S src/threads.cxx src/timing.cxx src/logging.cxx
-                   src/string.cxx src/XmlEngine.cxx src/ConfigBase.cxx)
-dabc_executable(dabc_xml SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S})
-
 dabc_link_library(
   DabcBase
   SOURCES src/api.cxx
@@ -120,9 +114,15 @@ dabc_link_library(
           dabc/version.h
           dabc/Worker.h
           dabc/XmlEngine.h
-          ${CMAKE_BINARY_DIR}/include/dabc/defines.h
+  EXTRA_HEADERS ${PROJECT_BINARY_DIR}/include/dabc/defines.h
   INCDIR dabc
-  LIBRARIES ${DABC_cpp_LIBRARY})
+  LIBRARIES ${DABC_cpp_LIBRARY}
+  COPY_HEADERS)
+
+set(DABC_BASESUB_S src/threads.cxx src/timing.cxx src/logging.cxx
+                   src/string.cxx src/XmlEngine.cxx src/ConfigBase.cxx)
+dabc_executable(dabc_xml SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S}
+                                 DEPENDENCIES DabcBase)
 
 dabc_executable(
   dabc_exe

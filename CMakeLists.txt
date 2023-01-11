@@ -56,7 +56,7 @@ endif()
 # ================== Produce DABC headers ==========
 
 get_property(__allHeaders GLOBAL PROPERTY DABC_HEADER_TARGETS)
-add_custom_target(move_headers ALL DEPENDS ${__allHeaders})
+add_custom_target(copy_headers ALL DEPENDS ${__allHeaders})
 
 DABC_SHOW_ENABLED_OPTIONS()
 
