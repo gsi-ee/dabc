@@ -14,4 +14,4 @@ if(LTSM_FOUND)
     DabcLtsm
     DIRECTORIES app
     DESTINATION ${DABC_INSTALL_PLUGINDIR}/ltsm)
- endif()
+endif()

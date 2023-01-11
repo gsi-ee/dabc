@@ -1,5 +1,5 @@
 if(ROOT_FOUND)
-   include(${ROOT_USE_FILE})
+  include(${ROOT_USE_FILE})
 
   dabc_link_library(
     DabcMbsRoot
@@ -12,8 +12,10 @@ if(ROOT_FOUND)
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
     NOWARN)
 
-   ROOT_GENERATE_DICTIONARY(G__DabcMbsRoot mbs_root/DabcEvent.h mbs_root/DabcSubEvent.h
-                            MODULE DabcMbsRoot
-                            LINKDEF mbs_root/mbs_rootLinkDef.h
-                            NOINSTALL)
+  root_generate_dictionary(
+    G__DabcMbsRoot
+    mbs_root/DabcEvent.h mbs_root/DabcSubEvent.h
+    MODULE DabcMbsRoot
+    LINKDEF mbs_root/mbs_rootLinkDef.h
+    NOINSTALL)
 endif()

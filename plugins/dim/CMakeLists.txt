@@ -1,7 +1,7 @@
 find_package(DIM QUIET)
 
 if(DIM_FOUND)
-   dabc_link_library(
+  dabc_link_library(
     DabcDim
     SOURCES src/Factory.cxx src/Monitor.cxx
     HEADERS dim/Factory.h dim/Monitor.h

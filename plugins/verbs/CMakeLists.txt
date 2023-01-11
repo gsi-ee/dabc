@@ -2,7 +2,7 @@ find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)
 find_library(VERBS_LIBRARIES ibverbs)
 
 if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
-   DABC_INSTALL_HEADERS(verbs)
+  dabc_install_headers(verbs)
 
   dabc_link_library(
     DabcVerbs

@@ -1,15 +1,8 @@
-DABC_INSTALL_HEADERS(dabc)
+dabc_install_headers(dabc)
 
-set(DABC_BASESUB_S
-       src/threads.cxx
-       src/timing.cxx
-       src/logging.cxx
-       src/string.cxx
-       src/XmlEngine.cxx
-       src/ConfigBase.cxx
-)
-DABC_EXECUTABLE(dabc_xml
-                SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S})
+set(DABC_BASESUB_S src/threads.cxx src/timing.cxx src/logging.cxx
+                   src/string.cxx src/XmlEngine.cxx src/ConfigBase.cxx)
+dabc_executable(dabc_xml SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S})
 
 dabc_link_library(
   DabcBase
@@ -132,8 +125,9 @@ dabc_link_library(
   LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_dl_LIBRARY}
             ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY} ROOT::Core)
 
-DABC_EXECUTABLE(dabc_exe
-                SOURCES run/dabc_exe.cxx
-                LIBRARIES DabcBase)
+dabc_executable(
+  dabc_exe
+  SOURCES run/dabc_exe.cxx
+  LIBRARIES DabcBase)
 
 configure_file(run/dabc_run ${PROJECT_BINARY_DIR}/bin/dabc_run COPYONLY)

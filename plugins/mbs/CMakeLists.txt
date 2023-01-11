@@ -1,4 +1,4 @@
-DABC_INSTALL_HEADERS(mbs)
+dabc_install_headers(mbs)
 
 dabc_link_library(
   DabcMbs
@@ -35,16 +35,17 @@ dabc_link_library(
   LIBRARIES dabc::DabcBase
   DABC_INSTALL)
 
+dabc_executable(
+  mbsprint
+  SOURCES utils/mbsprint.cxx
+  LIBRARIES DabcBase DabcMbs)
 
-DABC_EXECUTABLE(mbsprint
-                SOURCES utils/mbsprint.cxx
-                LIBRARIES DabcBase DabcMbs)
-
-DABC_EXECUTABLE(mbscmd
-                SOURCES utils/mbscmd.cxx
-                LIBRARIES DabcBase DabcMbs)
+dabc_executable(
+  mbscmd
+  SOURCES utils/mbscmd.cxx
+  LIBRARIES DabcBase DabcMbs)
 
 dabc_install_plugin_data(
-    DabcMbs
-    DIRECTORIES app htm
-    DESTINATION ${DABC_INSTALL_PLUGINDIR}/mbs)
+  DabcMbs
+  DIRECTORIES app htm
+  DESTINATION ${DABC_INSTALL_PLUGINDIR}/mbs)

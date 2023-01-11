@@ -1,4 +1,4 @@
-DABC_INSTALL_HEADERS(hadaq)
+dabc_install_headers(hadaq)
 
 if(hadaq-debug)
   set(_def HADAQ_DEBUG)
@@ -41,9 +41,10 @@ dabc_link_library(
   DEFINITIONS ${_def}
   DABC_INSTALL)
 
-DABC_EXECUTABLE(hldprint
-                SOURCES hldprint.cxx
-                LIBRARIES DabcBase DabcMbs DabcHadaq)
+dabc_executable(
+  hldprint
+  SOURCES hldprint.cxx
+  LIBRARIES DabcBase DabcMbs DabcHadaq)
 
 dabc_install_plugin_data(
   DabcHadaq

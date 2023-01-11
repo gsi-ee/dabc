@@ -1,8 +1,8 @@
 find_package(GOSIP)
 # QUIET)
 
-# JAM: remove commments of DEFINITIONS to test old plain C mode
-# (direct copy of gosipcmd code)
+# JAM: remove commments of DEFINITIONS to test old plain C mode (direct copy of
+# gosipcmd code)
 
 if(GOSIP_FOUND)
   dabc_link_library(
@@ -13,13 +13,14 @@ if(GOSIP_FOUND)
     LIBRARIES dabc::DabcBase dabc::DabcMbs ${GOSIP_LIBRARY}
     INCLUDES ${GOSIP_INCLUDE_DIR})
 
-dabc_install_plugin_data(
+  dabc_install_plugin_data(
     DabcGosip
     FILES htm
     DESTINATION ${DABC_INSTALL_PLUGINDIR}/gosip)
 endif()
 
-DABC_EXECUTABLE(rgoc
-#			 DEFINITIONS GOSIP_COMMAND_PLAINC
-                SOURCES rgoc.cxx               
-                LIBRARIES DabcBase)
+dabc_executable(
+  rgoc
+  # DEFINITIONS GOSIP_COMMAND_PLAINC
+  SOURCES rgoc.cxx
+  LIBRARIES DabcBase)

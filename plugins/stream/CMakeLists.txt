@@ -11,10 +11,12 @@ if(Stream_FOUND)
     LIBRARIES dabc::DabcBase dabc::DabcMbs dabc::DabcHadaq ${Stream_LIBRARY}
     INCLUDES ${STREAM_INCLUDE_DIR})
 
-   # file used in code relative to $DABCSYS, keep path for a while
-   configure_file(src/stream_engine.cpp ${CMAKE_BINARY_DIR}/plugins/stream/src/stream_engine.cpp COPYONLY)
+  # file used in code relative to $DABCSYS, keep path for a while
+  configure_file(
+    src/stream_engine.cpp
+    ${CMAKE_BINARY_DIR}/plugins/stream/src/stream_engine.cpp COPYONLY)
 
-   dabc_install_plugin_data(
+  dabc_install_plugin_data(
     DabcStream
     FILES ${CMAKE_BINARY_DIR}/plugins/stream/src/stream_engine.cpp
     DIRECTORIES icons app
