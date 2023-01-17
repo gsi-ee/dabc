@@ -91,3 +91,7 @@ jobs:
       - name: Build
         shell: bash
         run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Install
+        shell: bash
+        run: cmake --build build --target install
