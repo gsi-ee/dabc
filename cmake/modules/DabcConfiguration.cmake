@@ -28,7 +28,8 @@ if(ROOT_FOUND AND NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
   endif()
   message(
-    "FOUND ROOT with flags ${ROOT_CXX_FLAGS} DABC take standard ${CMAKE_CXX_STANDARD}"
+    STATUS
+      "FOUND ROOT ${ROOT_VERSION} with flags ${ROOT_CXX_FLAGS} DABC take standard ${CMAKE_CXX_STANDARD}"
   )
 endif()
 

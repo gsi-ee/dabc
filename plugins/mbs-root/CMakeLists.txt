@@ -1,4 +1,6 @@
-if(ROOT_FOUND)
+if(ROOT_FOUND AND ((CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
+                   OR (ROOT_VERSION VERSION_LESS 6.26.08)))
+
   include(${ROOT_USE_FILE})
 
   dabc_link_library(
