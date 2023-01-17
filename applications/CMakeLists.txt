@@ -1,5 +1,3 @@
-include(ExternalProject)
-
 set(applications core-test net-test hadaq ib-test)
 
 if(NOT APPLE)

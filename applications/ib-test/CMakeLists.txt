@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.9)
-project(dabc-ib-test)
-find_package(DABC)
+if(NOT PROJECT_NAME STREQUAL DABC)
+  cmake_minimum_required(VERSION 3.13)
+  project(dabc-ib-test)
+  find_package(DABC)
+endif()
 
 if(DabcVerbs_LIBRARY)
   find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)

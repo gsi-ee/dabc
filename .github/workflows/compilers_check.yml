@@ -71,7 +71,8 @@ jobs:
             -S . \
             -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DCMAKE_INSTALL_PREFIX:PATH=instdir
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir \
+            -DDABC_DIR=build
 
       - name: Build
         shell: bash

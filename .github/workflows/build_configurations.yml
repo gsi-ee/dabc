@@ -86,7 +86,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_INSTALL_PREFIX:PATH=instdir \
             ${{ matrix.configuration.cmake_flags }} \
-            -DCMAKE_INSTALL_PREFIX=/tmp/dabc
+            -DDABC_DIR=build
 
       - name: Build
         shell: bash

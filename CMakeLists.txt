@@ -5,7 +5,7 @@ project(
   VERSION 2.11.0
   LANGUAGES C CXX)
 
-#cmake_policy(SET CMP0060 NEW) 
+#cmake_policy(SET CMP0060 NEW)
 
 #---Set paths where to put the libraries, executables and headers------------------------------
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
@@ -49,10 +49,6 @@ endif()
 add_subdirectory(base)
 
 add_subdirectory(plugins)
-
-if(DABC_BUILD_APPLICATIONS)
-  add_subdirectory(applications)
-endif()
 
 # ================== Produce DABC headers ==========
 
@@ -106,4 +102,8 @@ else()
   install(
     PROGRAMS ${PROJECT_BINARY_DIR}/macros/dabclogin
     DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
+if(DABC_BUILD_APPLICATIONS)
+  add_subdirectory(applications)
 endif()
