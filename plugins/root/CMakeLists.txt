@@ -28,9 +28,4 @@ if(ROOT_FOUND AND ((CMAKE_VERSION VERSION_GREATER_EQUAL 3.15.0)
     SOURCES utils/dabc_root.cxx
     LIBRARIES DabcBase DabcRoot ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY}
               ${ROOT_XMLIO_LIBRARY})
-
-  dabc_install_plugin_data(
-    DabcRoot
-    DIRECTORIES js
-    DESTINATION ${DABC_INSTALL_PLUGINDIR}/root)
 endif()
