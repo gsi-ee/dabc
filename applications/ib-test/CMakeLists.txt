@@ -13,8 +13,9 @@ if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
   set(VERBS_DEFS WITH_VERBS)
   set(_lib dabc::DabcVerbs)
 
-  add_library(DabcIbTest IbTestApplication.cxx IbTestDefines.cxx IbTestGPU.cxx
-                         IbTestSchedule.cxx IbTestWorkerModule.cxx)
+  add_library(
+    DabcIbTest SHARED IbTestApplication.cxx IbTestDefines.cxx IbTestGPU.cxx
+                      IbTestSchedule.cxx IbTestWorkerModule.cxx)
   target_link_libraries(DabcIbTest dabc::DabcBase ${_lib} ${VERBS_LIBRARIES})
   # DEFINITIONS ${VERBS_DEFS} #TODO
 else()
