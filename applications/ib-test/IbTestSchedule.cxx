@@ -666,10 +666,11 @@ void IbTestClusterRouting::PrintSpineStatistic()
             for (int n=0;n<NumSpines();n++) sum[n]+=switches[n](sw1,sw2);
          }
 
-         int total = 0;
-         for (int n=0;n<NumSpines();n++) total+=sum[n];
+         int total_sum = 0;
+         for (int n=0;n<NumSpines();n++)
+            total_sum += sum[n];
 
-         if (total == 0) continue;
+         if (total_sum == 0) continue;
 
          std::string sbuf;
 
@@ -682,7 +683,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
             if (sum[n]>24*(NumLeafs()-1)*2) sbuf+="*"; else sbuf+=" ";
          }
 
-         DOUT0(" %s ->  %5d %s", SwitchName(sw1), total, sbuf.c_str());
+         DOUT0(" %s ->  %5d %s", SwitchName(sw1), total_sum, sbuf.c_str());
       }
    }
 
@@ -708,10 +709,10 @@ void IbTestClusterRouting::PrintSpineStatistic()
             for (int n=0;n<NumSpines();n++) sum[n]+=switches[n](sw1,sw2);
          }
 
-         int total = 0;
-         for (int n=0;n<NumSpines();n++) total+=sum[n];
-
-         if (total == 0) continue;
+         int total_sum = 0;
+         for (int n=0;n<NumSpines();n++)
+            total_sum+=sum[n];
+         if (total_sum == 0) continue;
 
          std::string sbuf;
 
@@ -723,7 +724,7 @@ void IbTestClusterRouting::PrintSpineStatistic()
             if (sum[n]>24*(NumLeafs()-1)*2) sbuf+="*"; else sbuf+=" ";
          }
 
-         DOUT0(" -> %s  %5d %s", SwitchName(sw2), total, sbuf.c_str());
+         DOUT0(" -> %s  %5d %s", SwitchName(sw2), total_sum, sbuf.c_str());
       }
    }
 }
@@ -1080,9 +1081,9 @@ bool IbTestClusterRouting::SelectNodes(const std::string &all_args, IbTestIntCol
       } else
       if (args[n] == "selnodes")  {
          int newcnt = 0;
-         for (int n=0;n<cnt;n++)
-            if (strncmp(NodeName(ids(n)),"node", 4)==0)
-               ids(newcnt++) = ids(n);
+         for (int node=0;node<cnt;node++)
+            if (strncmp(NodeName(ids(node)),"node", 4)==0)
+               ids(newcnt++) = ids(node);
          cnt = newcnt;
       } else
       if (args[n] == "addnodes")  {
@@ -1278,13 +1279,13 @@ void IbTestSchedule::FillReceiveSchedule(IbTestSchedule& recv)
 
       for (int nsend=0;nsend<numSenders();nsend++)
          if (!slot[nsend].Empty()) {
-            int recv = slot[nsend].node;
+            int nrecv = slot[nsend].node;
 
-            if (slot2[recv].Empty()) {
-               slot2[recv].node = nsend;
-               slot2[recv].lid = slot[nsend].lid;
+            if (slot2[nrecv].Empty()) {
+               slot2[nrecv].node = nsend;
+               slot2[nrecv].lid = slot[nsend].lid;
             } else {
-               EOUT("In slot %d more than 1 sender to node %d", nslot, recv);
+               EOUT("In slot %d more than 1 sender to node %d", nslot, nrecv);
             }
          }
    }
