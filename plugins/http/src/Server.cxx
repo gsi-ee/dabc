@@ -114,7 +114,7 @@ http::Server::Server(const std::string &server_name, dabc::Command cmd) :
       AddLocation(dabcsys, "${DABCSYS}/");
       AddLocation(dabc::format("%s/plugins/http", dabcsys), "httpsys/", "dabc_", "/files/");
 
-      fOwnJsRootSys = fJsRootSys = dabc::format("%s/plugins/root/js", dabcsys);
+      fOwnJsRootSys = fJsRootSys = dabc::format("%s/plugins/http/js", dabcsys);
 
       fHttpSys = dabc::format("%s/plugins/http", dabcsys);
    }

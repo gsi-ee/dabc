@@ -95,5 +95,5 @@ dabc_link_library(
 dabc_install_plugin_data(
   DabcHttp
   FILES example.xml master.xml
-  DIRECTORIES scripts jq img
+  DIRECTORIES js scripts jq img
   DESTINATION ${DABC_INSTALL_PLUGINDIR}/http)
