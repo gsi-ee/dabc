@@ -4,5 +4,5 @@ if(NOT PROJECT_NAME STREQUAL DABC)
   find_package(DABC)
 endif()
 
-add_library(DabcNetTest net-test.cxx)
+add_library(DabcNetTest SHARED net-test.cxx)
 target_link_libraries(DabcNetTest dabc::DabcBase)
