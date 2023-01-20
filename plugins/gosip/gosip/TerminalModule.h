@@ -20,13 +20,12 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
-
-#ifndef GOSIP_COMMAND_PLAINC
 #include "gosip/Command.h"
-#endif
-#include <stdio.h>
 
+#include <stdio.h>
 #include <vector>
+#include <string>
+#include <sstream>
 
 
 
@@ -46,11 +45,7 @@ namespace gosip {
 
 
 
-         int ExecuteCommand(dabc::Command cmd) override;
-
-#ifndef GOSIP_COMMAND_PLAINC
-// JAM command execution functions are put here for C++ implementation:
-
+   int ExecuteCommand(dabc::Command cmd) override;
 
 
 /** printout current command structure*/
@@ -104,10 +99,6 @@ int verify_single (gosip::Command &com);
 int broadcast (gosip::Command &com);
 
 
-#endif
-
-
-#ifndef GOSIP_COMMAND_PLAINC
 
       protected:
           int fFD_pex; /**< file descriptor to driver /dev/mbspex*/
@@ -131,8 +122,9 @@ int broadcast (gosip::Command &com);
 
                   /*** keep Slave of most recent command call here, for broadcast*/
           std::vector<long> fCommandSlave;
-#endif
 
+          /*** return message after command execution */
+         std::string fCommandMessage;
 
       public:
 
@@ -144,20 +136,6 @@ int broadcast (gosip::Command &com);
 
          void ProcessTimerEvent(unsigned timer) override;
 
-#ifdef GOSIP_COMMAND_PLAINC
-         /*** keep result of most recent command call here
-          * TODO: later move to Command class*/
-         static std::vector<long> fCommandResults;
-
-         /*** keep address of most recent command call here*/
-         static std::vector<long> fCommandAddress;
-
-         /*** keep Sfp of most recent command call here, for broadcast*/
-          static std::vector<long> fCommandSfp;
-
-          /*** keep Slave of most recent command call here, for broadcast*/
-          static std::vector<long> fCommandSlave;
-#endif
    };
 }
 
