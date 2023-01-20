@@ -60,7 +60,7 @@ class IbTestApplication : public dabc::Application {
       {
       }
 
-      virtual bool CreateAppModules()
+      bool CreateAppModules() override
       {
          std::string devclass = Par("NetDevice").Value().AsStr();
 
@@ -90,15 +90,15 @@ class IbTestApplication : public dabc::Application {
          return true;
       }
 
-      virtual bool BeforeAppModulesStarted()
-      {
-         DOUT0("Num threads in ib-test = %d %d", dabc::mgr.NumThreads(), dabc::Thread::NumThreadInstances());
-
-         return true;
-      }
+      //bool BeforeAppModulesStarted() override
+      //{
+      //   DOUT0("Num threads in ib-test = %d %d", dabc::mgr.NumThreads(), dabc::Thread::NumThreadInstances());
+      //
+      //   return true;
+      //}
 
       /** use 20 seconds timeout, probably should be extended */
-      virtual int SMCommandTimeout() const
+      int SMCommandTimeout() const override
       {
          // all slaves should be able to connect inside 10 seconds, master timeout could be configurable
          if (dabc::mgr.NodeId()>0) return 10;

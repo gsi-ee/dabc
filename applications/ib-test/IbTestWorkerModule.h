@@ -76,13 +76,13 @@ struct ScheduleEntry {
 class IbTestWorkerModule : public dabc::ModuleSync {
 
    protected:
-      int                 fNodeNumber;
-      int                 fNumNodes;
-      int                 fNumLids;
+      int                 fNodeNumber{0};
+      int                 fNumNodes{0};
+      int                 fNumLids{0};
 
-      int                 fCmdBufferSize; // size of buffer to send/receive command information
-      int                 fCmdDataSize;
-      char*               fCmdDataBuffer;
+      int                 fCmdBufferSize{0}; // size of buffer to send/receive command information
+      int                 fCmdDataSize{0};
+      char*               fCmdDataBuffer{nullptr};
 
       /** \brief symbolic name of global test which should be performed. Can be:
        *     "TimeSync" - long test of the time synchronisation stability
@@ -91,49 +91,49 @@ class IbTestWorkerModule : public dabc::ModuleSync {
       std::string         fTestKind;
 
       /** Size of allocated memory pool in MiBytes, used in all-to-all tests */
-      long                fTestPoolSize;
+      long                fTestPoolSize{0};
 
       /** Name of the file with the schedule */
       std::string         fTestScheduleFile;
 
-      double* fResults;
+      double*             fResults{nullptr};
 
-      double fCmdDelay;
+      double              fCmdDelay{0};
 
 #ifdef WITH_VERBS
 
       verbs::ContextRef  fIbContext;
 
 #endif
-      verbs::ComplQueue* fCQ;                 ///< completion queue, for a moment single
+      verbs::ComplQueue* fCQ{nullptr};                 ///< completion queue, for a moment single
       verbs::QueuePair** fQPs[IBTEST_MAXLID]; ///< arrays of QueuePairs pointers, NumNodes X NumLids
 
-      verbs::MemoryPool* fPool;         ///< memory pool for tests
-      int                fBufferSize;   ///< requested size of buffers in the pool (actual size can be bigger)
+      verbs::MemoryPool* fPool{nullptr};         ///< memory pool for tests
+      int                fBufferSize{0};   ///< requested size of buffers in the pool (actual size can be bigger)
       int               *fSendQueue[IBTEST_MAXLID];    // size of individual sending queue
       int               *fRecvQueue[IBTEST_MAXLID];    // size of individual receiving queue
-      long               fTotalSendQueue;
-      long               fTotalRecvQueue;
-      long               fTotalNumBuffers;
+      long               fTotalSendQueue{0};
+      long               fTotalRecvQueue{0};
+      long               fTotalNumBuffers{0};
 
       TimeStamping       fStamping;
-      double*            fSyncTimes;
+      double*            fSyncTimes{nullptr};
 
-      verbs::ComplQueue  *fMultiCQ;     // completion queue of multicast group
-      verbs::QueuePair   *fMultiQP;     // connection to multicastgroup
-      verbs::MemoryPool  *fMultiPool;   // memory pool of multicast group
-      int                fMultiBufferSize;  ///< requested size of buffers in the mcast pool (actual size can be bigger)
-      int                fMultiRecvQueueSize; // maximal number of items in multicast recieve queue
-      int                fMultiRecvQueue;  // current number of items in multicast recieve queue
-      int                fMultiSendQueueSize; // maximal size of send queue
-      int                fMultiSendQueue; // current size of send queue
-      int                fMultiKind;     // 0 - nothing, 1 - receiver, 10 -sender, 11 - both
+      verbs::ComplQueue  *fMultiCQ{nullptr};     // completion queue of multicast group
+      verbs::QueuePair   *fMultiQP{nullptr};     // connection to multicastgroup
+      verbs::MemoryPool  *fMultiPool{nullptr};   // memory pool of multicast group
+      int                fMultiBufferSize{0};  ///< requested size of buffers in the mcast pool (actual size can be bigger)
+      int                fMultiRecvQueueSize{0}; // maximal number of items in multicast recieve queue
+      int                fMultiRecvQueue{0};  // current number of items in multicast recieve queue
+      int                fMultiSendQueueSize{0}; // maximal size of send queue
+      int                fMultiSendQueue{0}; // current size of send queue
+      int                fMultiKind{0};     // 0 - nothing, 1 - receiver, 10 -sender, 11 - both
 
-      dabc::Ratemeter*   fRecvRatemeter;
-      dabc::Ratemeter*   fSendRatemeter;
-      dabc::Ratemeter*   fWorkRatemeter;
+      dabc::Ratemeter*   fRecvRatemeter{nullptr};
+      dabc::Ratemeter*   fSendRatemeter{nullptr};
+      dabc::Ratemeter*   fWorkRatemeter{nullptr};
 
-      double             fTrendingInterval;   ///< interval (in seconds) for send/recv rate trending
+      double             fTrendingInterval{0};   ///< interval (in seconds) for send/recv rate trending
 
       /** array indicating active nodes in the system,
        *  Accumulated in the beginning by the master and distributed to all other nodes.
@@ -244,13 +244,13 @@ class IbTestWorkerModule : public dabc::ModuleSync {
 
       virtual ~IbTestWorkerModule();
 
-      virtual int ExecuteCommand(dabc::Command cmd);
+      int ExecuteCommand(dabc::Command cmd) override;
 
-      virtual void MainLoop();
+      void MainLoop() override;
 
-      virtual void BeforeModuleStart();
+      void BeforeModuleStart() override;
 
-      virtual void AfterModuleStop();
+      void AfterModuleStop() override;
 };
 
 

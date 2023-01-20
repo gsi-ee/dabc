@@ -157,7 +157,7 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
           DOUT0("#### ~NetTestReceiverModule");
       }
 
-      int ExecuteCommand(dabc::Command cmd)
+      int ExecuteCommand(dabc::Command cmd) override
       {
          if (cmd.IsName("ChangeSleepTime")) {
             fSleepTime = cmd.GetInt("SleepTime", 0);
@@ -170,7 +170,7 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
          return ModuleAsync::ExecuteCommand(cmd);
       }
 
-      virtual bool ProcessRecv(unsigned port)
+      bool ProcessRecv(unsigned port) override
       {
          dabc::Buffer buf = Recv(port);
 
@@ -189,12 +189,12 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
          return true;
       }
 
-      void BeforeModuleStart()
+      void BeforeModuleStart() override
       {
          DOUT2("ReceiverModule starting");
       }
 
-      void AfterModuleStop()
+      void AfterModuleStop() override
       {
          DOUT2("ReceiverModule finish");
       }
@@ -216,7 +216,7 @@ class NetTestSpecialModule : public dabc::ModuleAsync {
          fCnt = 0;
       }
 
-      bool ProcessRecv(unsigned port)
+      bool ProcessRecv(unsigned port) override
       {
          dabc::Buffer buf = Recv(port);
          if (buf.null()) { EOUT("no buffer is received"); return false; }
@@ -225,7 +225,7 @@ class NetTestSpecialModule : public dabc::ModuleAsync {
          return true;
       }
 
-      bool ProcessSend(unsigned port)
+      bool ProcessSend(unsigned port) override
       {
          dabc::Buffer buf = TakeBuffer();
          if (buf.null()) { EOUT("no free buffer"); return false; }
@@ -235,7 +235,7 @@ class NetTestSpecialModule : public dabc::ModuleAsync {
          return true;
       }
 
-      void AfterModuleStop()
+      void AfterModuleStop() override
       {
          DOUT1("Total num buffers %d", fCnt);
       }
