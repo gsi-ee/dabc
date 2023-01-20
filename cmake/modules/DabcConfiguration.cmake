@@ -88,8 +88,14 @@ else()
 endif()
 # -----------------------------
 
+foreach(lib pthread dl)
+   find_library(DABC_${lib}_LIBRARY ${lib})
+endforeach()
+
 if(NOT APPLE)
+  find_library(DABC_rt_LIBRARY rt)
   if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    find_library(DABC_m_LIBRARY m)
     find_library(DABC_cpp_LIBRARY "c++")
   endif()
 endif()

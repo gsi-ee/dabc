@@ -116,13 +116,19 @@ dabc_link_library(
           dabc/XmlEngine.h
   EXTRA_HEADERS ${PROJECT_BINARY_DIR}/include/dabc/defines.h
   INCDIR dabc
-  LIBRARIES ${DABC_cpp_LIBRARY}
+  LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_dl_LIBRARY} ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY}
   COPY_HEADERS)
 
-set(DABC_BASESUB_S src/threads.cxx src/timing.cxx src/logging.cxx
-                   src/string.cxx src/XmlEngine.cxx src/ConfigBase.cxx)
-dabc_executable(dabc_xml SOURCES run/dabc_xml.cxx ${DABC_BASESUB_S}
-                                 DEPENDENCIES DabcBase)
+dabc_executable(
+   dabc_xml
+   SOURCES src/threads.cxx
+           src/timing.cxx
+           src/logging.cxx
+           src/string.cxx
+           src/XmlEngine.cxx
+           src/ConfigBase.cxx
+           run/dabc_xml.cxx
+   LIBRARIES ${DABC_pthread_LIBRARY} ${DABC_rt_LIBRARY} ${DABC_m_LIBRARY} ${DABC_cpp_LIBRARY})
 
 dabc_executable(
   dabc_exe
