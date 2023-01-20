@@ -74,7 +74,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          DOUT3("Async module %s destroyed", GetName());
       }
 
-      virtual bool ProcessBuffer(unsigned pool)
+      bool ProcessBuffer(unsigned pool) override
       {
 //         DOUT0("core-test ProcessBuffer %s cansend %s", GetName(), DBOOL(CanSend()));
 
@@ -88,7 +88,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
       }
 
 
-      virtual bool ProcessRecv(unsigned port)
+      bool ProcessRecv(unsigned port) override
       {
          fCntRecv++;
 
@@ -113,7 +113,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          return true;
       }
 
-      virtual bool ProcessSend(unsigned port)
+      bool ProcessSend(unsigned port) override
       {
          dabc::Buffer buf;
 
@@ -136,13 +136,13 @@ class TestModuleAsync : public dabc::ModuleAsync {
          return true;
       }
 
-      virtual void BeforeModuleStart()
+      void BeforeModuleStart() override
       {
 //         DOUT0("Module %s starting", GetName());
       }
 
 
-      virtual void AfterModuleStop()
+      void AfterModuleStop() override
       {
 //         DOUT0("Module %s CntRecv %2d CntSend %2d NumSend %d NumRecv %d", GetName(), fCntRecv, fCntSend, fNumSend, fNumRecv);
 //         if (fKind == 0) DOUT0("Module %s CanSend:%s", GetName(), DBOOL(CanSend());
@@ -178,7 +178,7 @@ class TestModuleSync : public dabc::ModuleSync {
          DOUT0("Sync module %s destroyed", GetName());
       }
 
-      virtual void MainLoop()
+      void MainLoop() override
       {
          switch (fKind) {
             case 0: GeneratorLoop(); break;
@@ -213,7 +213,7 @@ class TestModuleSync : public dabc::ModuleSync {
          }
       }
 
-      virtual void AfterModuleStop()
+      void AfterModuleStop() override
       {
          DOUT0("Module %s did stop", GetName());
       }
@@ -240,7 +240,7 @@ class CoreTestApplication : public dabc::Application {
          return Par("TestKind").Value().AsStr() == "sync";
       }
 
-      virtual bool CreateAppModules()
+      bool CreateAppModules() override
       {
          dabc::mgr.CreateMemoryPool("Pool");
 
@@ -294,7 +294,7 @@ void TestChain(bool isM, int number, int testkind = 0, double test_tm = 2.)
 
    dabc::mgr.CreateMemoryPool("Pool", BUFFERSIZE, number*QUEUESIZE*2);
 
-   for (int n=0;n<number;n++) {
+   for (int n = 0; n < number; n++) {
       int kind = 1;
       if (n == 0)
          kind = 0;
@@ -414,7 +414,7 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
 
       virtual ~TimeoutTestModuleAsync() {}
 
-      virtual void ProcessTimerEvent(unsigned timer)
+      void ProcessTimerEvent(unsigned timer) override
       {
          if (TimerName(timer) == "Timer1") {
             fCounter1++;
@@ -423,7 +423,7 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
             fCounter2++;
       }
 
-      virtual void AfterModuleStop()
+      void AfterModuleStop() override
       {
          DOUT0("Module %s Timer1 %ld Timer2 %ld", GetName(), fCounter1, fCounter2);
       }
