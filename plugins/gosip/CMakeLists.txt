@@ -15,7 +15,7 @@ if(GOSIP_FOUND)
 
   dabc_install_plugin_data(
     DabcGosip
-    FILES htm
+    DIRECTORIES htm app
     DESTINATION ${DABC_INSTALL_PLUGINDIR}/gosip)
 endif()
 
