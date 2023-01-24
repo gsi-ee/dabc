@@ -20,6 +20,8 @@
 #include "dabc/string.h"
 #endif
 
+#include <cstdint>
+
 namespace dabc {
 
    class Profiler;
