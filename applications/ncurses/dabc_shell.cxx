@@ -88,7 +88,7 @@ struct LevelItem {
 
       my_items[0] = new_item(fNodeName.c_str(), fNodeName.c_str());
       my_items[1] = new_item("Exit", "Exit");
-      my_items[2] = 0;
+      my_items[2] = nullptr;
 
       my_menu = new_menu(my_items);
 
@@ -114,7 +114,7 @@ struct LevelItem {
       }
 
       my_items[num_items-1] = new_item("Exit", "Exit");
-      my_items[num_items] = 0;
+      my_items[num_items] = nullptr;
 
       my_menu = new_menu(my_items);
 

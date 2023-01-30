@@ -69,7 +69,7 @@ mbs_root::DabcSubEvent::DabcSubEvent():TObject()
             // root always needs dummy default constructor for tree reconstruction!
             fLen=0;
             fAllocLen=0;
-            fData=0;
+            fData=nullptr;
         }
 
 mbs_root::DabcSubEvent::DabcSubEvent(Int_t crate, Int_t control, Int_t procid, Bool_t init, Int_t capacity):

@@ -114,11 +114,11 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
                fDataMoverName, &fDataMoverIndx,
                rfioCopyMode, (char*) rfioLustrePath.c_str(),
                rfioCopyFrac, rfioMaxFile, rfioPathConv);
-         if (fRemote == 0) {
+         if (!fRemote) {
             EOUT("Fail to create connection with RFIO, using following arguments"
                   "rfioBase=%s rfioOptions=%s rfioLustrePath=%s rfioCopyMode=%d rfioCopyFrac=%d rfioMaxFile=%d rfioPathConv=%d",
                   rfioBase, rfioOptions.c_str(), rfioLustrePath.c_str(), rfioCopyMode, rfioCopyFrac, rfioMaxFile, rfioPathConv);
-            return 0;
+            return nullptr;
          }
 
          DOUT2("Successfully opened connection to datamover %d %s", fDataMoverIndx, fDataMoverName);
@@ -136,7 +136,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 
    if (rev != 0) {
       EOUT("Fail to create new RFIO file %s via existing datamover %d %s connection", fname, fDataMoverIndx, fDataMoverName);
-      return 0;
+      return nullptr;
    }
 
    fOpenedCounter++;
