@@ -8,11 +8,11 @@ namespace mbs_root {
    class DabcSubEvent : public TObject {
    private:
       Int_t fSubCrate;
-        Int_t  fProcid{0};
-        Int_t  fControl{0};
-        Int_t  fAllocLen{0};    // maximum allocated length
-        Int_t  fLen{0};     // used length- root will only store this len to tree
-        Int_t *fData{nullptr};      //[fLen]
+      Int_t fProcid{0};
+      Int_t fControl{0};
+      Int_t fAllocLen{0};    // maximum allocated length
+      Int_t fLen{0};         // used length- root will only store this len to tree
+      Int_t *fData{nullptr}; //[fLen]
    public:
       Int_t GetSubCrate();
       void SetSubCrate(Int_t cr);
