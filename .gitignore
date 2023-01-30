@@ -1,5 +1,12 @@
 x86_64/
 include/
+bin/
+lib/
+dabclogin
+
+config/Makefile.gener
+applications/*/*.so
+applications/hadaq/example
 
 .project
 .settings
