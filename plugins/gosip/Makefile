@@ -5,6 +5,8 @@ ifndef nogosip
 
 include $(DABCSYS)/config/Makefile.config
 
+ifdef DABC_GOSIP
+
 ifdef DABCMAINMAKE
 GOSIPDIR = plugins/gosip
 else
@@ -37,10 +39,12 @@ libs:: $(DABCGOSIP_LIB)
 #	@cp -f $< $@
 
 $(DABCGOSIP_LIB):   $(DABCGOSIP_O) $(GOSIP_DEPEND)  
-	@$(MakeLib) $(DABCGOSIP_LIBNAME) "$(DABCGOSIP_O) $(GOSIP_STATIC)" $(TGTDLLPATH) "$(DABCGOSIP_EXTRALIBS)" 
+	@$(MakeLib) $(DABCGOSIP_LIBNAME) "$(DABCGOSIP_O)" $(TGTDLLPATH) "$(call lddiropt,$(DABC_GOSIP_LIBDIR)) -lmbspex -lDabcMbs -lDabcMbs" 
 
 ########### extra rules #############
-$(DABCGOSIP_O) $(DABCGOSIP_D) : INCLUDES += $(GOSIPDIR)
+$(DABCGOSIP_O) $(DABCGOSIP_D) : INCLUDES += $(DABC_GOSIP_INCDIR)
+
+endif
 
 include $(DABCSYS)/config/Makefile.rules
 
