@@ -5,14 +5,16 @@ ifndef nogosip
 
 include $(DABCSYS)/config/Makefile.config
 
-ifdef DABC_GOSIP
-
 ifdef DABCMAINMAKE
 GOSIPDIR = plugins/gosip
+RGOC_EXE      = $(DABCBINPATH)/rgoc
 else
 GOSIPDIR = .
 INCLUDES += $(GOSIPDIR)
+RGOC_EXE      = rgoc
 endif
+
+ifdef DABC_GOSIP
 
 GOSIPDIRI         = $(GOSIPDIR)/gosip
 GOSIPDIRS         = $(GOSIPDIR)/src
@@ -27,7 +29,7 @@ DABCGOSIP_D       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCGOSIP_
 
 # used in the main Makefile
 
-#ALLHDRS           += $(patsubst $(GOSIPDIR)/%.h, $(DABCINCPATH)/%.h, $(GOSIP_H))
+ALLHDRS           += $(patsubst $(GOSIPDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCGOSIP_H))
 ALLDEPENDENC      += $(DABCGOSIP_D)
 
 libs:: $(DABCGOSIP_LIB)
@@ -45,6 +47,22 @@ $(DABCGOSIP_LIB):   $(DABCGOSIP_O) $(GOSIP_DEPEND)
 $(DABCGOSIP_O) $(DABCGOSIP_D) : INCLUDES += $(DABC_GOSIP_INCDIR)
 
 endif
+
+RGOC_EXES     = $(GOSIPDIR)/rgoc.$(SrcSuf)
+RGOC_EXEO     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(RGOC_EXES))
+RGOC_EXED     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(RGOC_EXES))
+
+ALLDEPENDENC      += $(RGOC_EXED)
+
+$(RGOC_EXE) : $(RGOC_EXEO) $(DABCBASE_LIB)
+	$(LD) $(LDFLAGSPRE) -O $(RGOC_EXEO) $(LIBS_CORESET) -o $(RGOC_EXE)
+
+
+exes:: $(RGOC_EXE)
+
+clean::
+	@$(RM) $(RGOC_EXE)
+
 
 include $(DABCSYS)/config/Makefile.rules
 
