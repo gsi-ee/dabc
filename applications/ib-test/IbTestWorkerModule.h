@@ -190,7 +190,7 @@ class IbTestWorkerModule : public dabc::ModuleSync {
 
       bool MasterCollectActiveNodes();
 
-      bool MasterCommandRequest(int cmdid, void* cmddata = 0, int cmddatasize = 0, void* allresults = 0, int resultpernode = 0);
+      bool MasterCommandRequest(int cmdid, void *cmddata = nullptr, int cmddatasize = 0, void *allresults = nullptr, int resultpernode = 0);
 
       bool CalibrateCommandsChannel(int nloop = 10);
 

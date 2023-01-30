@@ -83,9 +83,9 @@ extern int IbTestMatrixSigma;
 template<class T>
 class IbTestMatrix {
    public:
-      IbTestMatrix() : fNRow(0), fNCol(0), fMatrix(0) {}
+      IbTestMatrix() : fNRow(0), fNCol(0), fMatrix(nullptr) {}
 
-      IbTestMatrix(int _nrow, int _ncol) : fNRow(_nrow), fNCol(_ncol), fMatrix(0) {
+      IbTestMatrix(int _nrow, int _ncol) : fNRow(_nrow), fNCol(_ncol), fMatrix(nullptr) {
          Allocate();
       }
 
@@ -161,7 +161,7 @@ class IbTestMatrix {
            for(int n=0;n<nrow();n++)
              delete[] fMatrix[n];
            delete[] fMatrix;
-           fMatrix = 0;
+           fMatrix = nullptr;
          }
       }
 
@@ -174,9 +174,9 @@ class IbTestMatrix {
 template<class T>
 class IbTestColumn {
    public:
-      IbTestColumn() : fSize(0), fVector(0) {}
+      IbTestColumn() : fSize(0), fVector(nullptr) {}
 
-      IbTestColumn(int _size) : fSize(_size), fVector(0)
+      IbTestColumn(int _size) : fSize(_size), fVector(nullptr)
       {
          Allocate();
       }

@@ -47,7 +47,7 @@ IbTestClusterRouting::~IbTestClusterRouting()
    for (int n1=0;n1<MaxNumNodes;n1++) {
       for (int n2=0;n2<MaxNumNodes;n2++) delete[] fMatrix[n1][n2];
       delete[] fMatrix[n1];
-      fMatrix[n1] = 0;
+      fMatrix[n1] = nullptr;
    }
 }
 
@@ -737,9 +737,9 @@ bool IbTestClusterRouting::MatchNodes(IbTestClusterRouting& other)
    while ((n1<NumNodes()) && (n2<other.NumNodes())) {
       const char* n1name = NodeName(n1);
       const char* n2name = other.NodeName(n2);
-      if ((n1name==0) || (n2name==0)) { EOUT("Cannot define node name - FAILURE"); return false; }
+      if (!n1name || !n2name) { EOUT("Cannot define node name - FAILURE"); return false; }
 
-      if (strcmp(n1name, n2name)==0) {
+      if (strcmp(n1name, n2name) == 0) {
          n1++; n2++; continue;
       }
 
@@ -1197,8 +1197,8 @@ bool IbTestClusterRouting::LoadNodesList(const std::string &fname, IbTestIntColu
 
 IbTestSchedule::IbTestSchedule()
 {
-   fSchedule = 0;
-   fTimeSlots = 0;
+   fSchedule = nullptr;
+   fTimeSlots = nullptr;
 
    fNumSenders = 0;
    fMaxNumSlots = 0;
@@ -1209,8 +1209,8 @@ IbTestSchedule::IbTestSchedule()
 
 IbTestSchedule::IbTestSchedule(int MaxNumSlots, int NumSenders)
 {
-  fSchedule = 0;
-  fTimeSlots = 0;
+  fSchedule = nullptr;
+  fTimeSlots = nullptr;
 
   fNumSenders = 0;
   fMaxNumSlots = 0;
@@ -1337,13 +1337,13 @@ bool IbTestSchedule::ShiftToNextOperation(int node, double& basetm, int& nslot)
 
 IbTestScheduleItem* IbTestSchedule::getScheduleSlot(int nslot)
 {
-   if ((nslot<0) || (nslot>=fMaxNumSlots)) return 0;
+   if ((nslot<0) || (nslot>=fMaxNumSlots)) return nullptr;
    return fSchedule[nslot];
 }
 
 double IbTestSchedule::timeSlot(int nslot)
 {
-   if ((nslot<0) || (nslot>fMaxNumSlots) || (fTimeSlots==0)) return 0.;
+   if ((nslot<0) || (nslot>fMaxNumSlots) || !fTimeSlots) return 0.;
    return fTimeSlots[nslot];
 }
 
@@ -1369,8 +1369,8 @@ double IbTestSchedule::calcOccupation()
 double IbTestSchedule::calcBandwidth(IbTestIntMatrix* matr)
 {
    double time = totalTime();
-   if ((time<=0) || (matr==0)) return 0;
-   double sum = 0;
+   if ((time<=0) || !matr) return 0.;
+   double sum = 0.;
    for(int nslot=0;nslot<numSlots();nslot++) {
      IbTestScheduleItem* slot_sch = getScheduleSlot(nslot);
 

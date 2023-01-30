@@ -108,29 +108,29 @@ IbTestWorkerModule::IbTestWorkerModule(const std::string &name, dabc::Command cm
    if (!fTestScheduleFile.empty())
       fPreparedSch.ReadFromFile(fTestScheduleFile);
 
-   fResults = 0;
+   fResults = nullptr;
 
    fCmdDelay = 0.;
 
    for (int n=0;n<IBTEST_MAXLID;n++) {
-      fQPs[n] = 0;
-      fSendQueue[n] = 0;
-      fRecvQueue[n] = 0;
+      fQPs[n] = nullptr;
+      fSendQueue[n] = nullptr;
+      fRecvQueue[n] = nullptr;
    }
    fTotalSendQueue = 0;
    fTotalRecvQueue = 0;
    fTotalNumBuffers = 0;
 
-   fCQ = 0;
+   fCQ = nullptr;
 
-   fPool = 0;
+   fPool = nullptr;
    fBufferSize = 0;
 
-   fSyncTimes = 0;
+   fSyncTimes = nullptr;
 
-   fMultiCQ = 0;
-   fMultiQP = 0;
-   fMultiPool = 0;
+   fMultiCQ = nullptr;
+   fMultiQP = nullptr;
+   fMultiPool = nullptr;
    fMultiBufferSize = 0;
    fMultiRecvQueueSize = 0;
    fMultiRecvQueue = 0;
@@ -138,9 +138,9 @@ IbTestWorkerModule::IbTestWorkerModule(const std::string &name, dabc::Command cm
    fMultiSendQueue = 0;
    fMultiKind = 0;
 
-   fRecvRatemeter = 0;
-   fSendRatemeter = 0;
-   fWorkRatemeter = 0;
+   fRecvRatemeter = nullptr;
+   fSendRatemeter = nullptr;
+   fWorkRatemeter = nullptr;
 
    fTrendingInterval = 0;
 }
@@ -151,29 +151,29 @@ IbTestWorkerModule::~IbTestWorkerModule()
 
    if (fCmdDataBuffer) {
       delete [] fCmdDataBuffer;
-      fCmdDataBuffer = 0;
+      fCmdDataBuffer = nullptr;
    }
 
    if (fRecvRatemeter) {
       delete fRecvRatemeter;
-      fRecvRatemeter = 0;
+      fRecvRatemeter = nullptr;
    }
 
    if (fSendRatemeter) {
       delete fSendRatemeter;
-      fSendRatemeter = 0;
+      fSendRatemeter = nullptr;
    }
 
    if (fWorkRatemeter) {
       delete fWorkRatemeter;
-      fWorkRatemeter = 0;
+      fWorkRatemeter = nullptr;
    }
 
    AllocResults(0);
 
    if (fSyncTimes) {
       delete [] fSyncTimes;
-      fSyncTimes = 0;
+      fSyncTimes = nullptr;
    }
 }
 
@@ -617,7 +617,7 @@ void* IbTestWorkerModule::GetPoolBuffer(int indx, verbs::MemoryPool* pool)
 #ifdef WITH_VERBS
    if (pool && (indx>=0)) return pool->GetSendBufferLocation(indx);
 #endif
-   return 0;
+   return nullptr;
 }
 
 void IbTestWorkerModule::ReleaseExclusive(int indx, verbs::MemoryPool* pool)
@@ -925,7 +925,7 @@ bool IbTestWorkerModule::MasterConnectQPs()
    memset(recs, 0, NumNodes() * NumNodes() * NumLids() * sizeof(IbTestConnRec));
 
    // own records will be add automatically
-   if (!MasterCommandRequest(IBTEST_CMD_CREATEQP, 0, 0, recs, NumNodes()*NumLids()*sizeof(IbTestConnRec))) {
+   if (!MasterCommandRequest(IBTEST_CMD_CREATEQP, nullptr, 0, recs, NumNodes()*NumLids()*sizeof(IbTestConnRec))) {
       EOUT("Cannot create and collect QPs");
       delete[] recs;
       return false;
@@ -1424,7 +1424,7 @@ bool IbTestWorkerModule::MasterTiming()
    int setsize = 2;
    double allres[setsize*NumNodes()];
 
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
+   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, nullptr, 0, allres, setsize*sizeof(double))) return false;
 
    MasterCleanup(0);
 
@@ -1513,13 +1513,13 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    DOUT2("ExecuteAllToAll - start");
 
    dabc::Ratemeter sendrate, recvrate, multirate;
-   dabc::Ratemeter** fIndividualRates = 0;
+   dabc::Ratemeter** fIndividualRates = nullptr;
    double fMeasureInterval = 0; // set 0 to disable individual time measurements
 
-   if (fMeasureInterval>0) {
+   if (fMeasureInterval > 0) {
        fIndividualRates = new dabc::Ratemeter*[NumNodes()];
        for (int n=0;n<NumNodes();n++) {
-          fIndividualRates[n] = 0;
+          fIndividualRates[n] = nullptr;
           if (n!=Node()) {
               fIndividualRates[n] = new dabc::Ratemeter;
               fIndividualRates[n]->DoMeasure(fMeasureInterval, 10000, starttime);
@@ -1539,9 +1539,9 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
        fSendRatemeter->DoMeasure(ratemeterinterval, npoints, starttime);
        fWorkRatemeter->DoMeasure(ratemeterinterval, npoints, starttime);
    } else {
-      if (fRecvRatemeter) { delete fRecvRatemeter; fRecvRatemeter = 0; }
-      if (fSendRatemeter) { delete fSendRatemeter; fSendRatemeter = 0; }
-      if (fWorkRatemeter) { delete fWorkRatemeter; fWorkRatemeter = 0; }
+      if (fRecvRatemeter) { delete fRecvRatemeter; fRecvRatemeter = nullptr; }
+      if (fSendRatemeter) { delete fSendRatemeter; fSendRatemeter = nullptr; }
+      if (fWorkRatemeter) { delete fWorkRatemeter; fWorkRatemeter = nullptr; }
    }
 
    // schedule variables
@@ -1605,7 +1605,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
             fSendSch.FillRegularTime(schstep / fPreparedSch.numSlots() * (NumNodes()-1));
          } else {
             fSendSch.Allocate(NumNodes()-1, NumNodes());
-            fSendSch.FillRoundRoubin(0, schstep);
+            fSendSch.FillRoundRoubin(nullptr, schstep);
          }
          break;
 
@@ -1613,7 +1613,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       default:
          // default, all-to-all round-robin schedule
          fSendSch.Allocate(NumNodes()-1, NumNodes());
-         fSendSch.FillRoundRoubin(0, schstep);
+         fSendSch.FillRoundRoubin(nullptr, schstep);
          break;
    }
 
@@ -2165,7 +2165,7 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite
    for (int n = 0; n < setsize * NumNodes(); n++)
       allres[n] = 0.;
 
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
+   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, nullptr, 0, allres, setsize*sizeof(double))) return false;
 
 //   DOUT((1,"Results of all-to-all test");
    DOUT0("  # |      Node |   Write |   Read ");
@@ -2422,7 +2422,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    for (int n = 0; n < setsize * NumNodes(); n++)
       allres[n] = 0.;
 
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
+   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, nullptr, 0, allres, setsize*sizeof(double))) return false;
 
 //   DOUT((1,"Results of all-to-all test");
    DOUT0("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU  | Multicast ");
@@ -2590,7 +2590,7 @@ void IbTestWorkerModule::MasterCleanup(int mainnode)
 
    if (!MasterCommandRequest(IBTEST_CMD_ASKQUEUE)) return;
 
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return;
+   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, nullptr, 0, allres, setsize*sizeof(double))) return;
 
    for (int n=0;n<NumNodes();n++)
       if (fActiveNodes[n]) {

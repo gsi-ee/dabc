@@ -99,7 +99,7 @@ class IbTestClusterRouting {
       /* Adds node of name and lid to the list of nodes.
        * If node with such name exists, liddiff will return difference
        * between base lid and specified lid parameter */
-      int AddNode(const std::string &name, int lid = 0, int* liddiff = 0);
+      int AddNode(const std::string &name, int lid = 0, int* liddiff = nullptr);
       int AddSwitch(const std::string &name);
 
       void ExcludeNode(int nodeid);
@@ -294,11 +294,11 @@ class IbTestSchedule {
 
       double calcBandwidth(IbTestIntMatrix* matr);
 
-      void FillRoundRoubin(IbTestIntColumn* ids = 0, double schstep = 1.);
+      void FillRoundRoubin(IbTestIntColumn* ids = nullptr, double schstep = 1.);
 
-      bool BuildOptimized(IbTestClusterRouting& routing, IbTestIntColumn* ids = 0, bool show = false);
+      bool BuildOptimized(IbTestClusterRouting& routing, IbTestIntColumn* ids = nullptr, bool show = false);
 
-      bool BuildRegularSchedule(IbTestClusterRouting& routing, IbTestIntColumn* ids = 0, bool show = false);
+      bool BuildRegularSchedule(IbTestClusterRouting& routing, IbTestIntColumn* ids = nullptr, bool show = false);
 
       double CheckConjunction(IbTestClusterRouting& routing, bool show = false);
 
@@ -317,7 +317,7 @@ class IbTestSchedule {
       bool RollBack(IbTestScheduleMoveList& lst);
 
       /** \brief Check that schedule has all necessary transfers */
-      bool ProveSchedule(IbTestIntColumn* ids = 0);
+      bool ProveSchedule(IbTestIntColumn* ids = nullptr);
 
       /** \brief Select schedule for only specified ids, recode ids according to their sequence number */
       bool RecodeIds(const IbTestIntColumn& ids, IbTestSchedule& new_sch);
