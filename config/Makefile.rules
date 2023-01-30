@@ -3,6 +3,7 @@
 ifndef Dabc_Makefile_rules
 Dabc_Makefile_rules = true
 
+dummy=$(BLD_DIR)/dummy.d
 
 ifdef DABCMAINMAKE
 AUTO_DIRS = $(sort $(CREATE_DIRS) $(dir $(ALLDEPENDENC)) $(dir $(ALLHDRS))) 
@@ -35,7 +36,7 @@ else
 OPTFLAGS = $(OPTIMIZEMODE)
 endif
 
-$(BLD_DIR)/dummy.d: $(AUTO_DIRS) build-init
+$(dummy): $(AUTO_DIRS) build-init
 	@(if [ ! -f $(BLD_DIR) ] ; then mkdir -p $(BLD_DIR); fi)
 	@(if [ ! -f $@ ] ; then touch $@; fi)
 
@@ -46,24 +47,24 @@ $(AUTO_DIRS):
 
 .SUFFIXES: .$(SrcSuf) .$(DepSuf) .$(HedSuf) .$(CSuf)
 
-$(BLD_DIR)/%.$(ObjSuf): %.$(SrcSuf)
+$(BLD_DIR)/%.$(ObjSuf): %.$(SrcSuf) $(dummy)
 	$(CXX) -c $< $(OPTFLAGS) $(CXXFLAGS) -o $@ 
 
-%.$(ObjSuf): %.$(SrcSuf)
+%.$(ObjSuf): %.$(SrcSuf) $(dummy)
 	$(CXX) -c $< $(OPTFLAGS) $(CXXFLAGS) -o $@ 
 
-$(BLD_DIR)/%.$(ObjSuf): %.$(CSuf)
+$(BLD_DIR)/%.$(ObjSuf): %.$(CSuf) $(dummy)
 	$(CC) -c $< $(OPTFLAGS) $(CFLAGS) -o $@
 
-$(BLD_DIR)/%.$(DepSuf): %.$(SrcSuf)
+$(BLD_DIR)/%.$(DepSuf): %.$(SrcSuf) $(dummy)
 	@echo "Dependency: $@"
 	@$(CXX) $(CXXFLAGS) $< -o $@ -MM -MT "$(BLD_DIR)/$*.o $(BLD_DIR)/$*.d"
 
-%.$(DepSuf): %.$(SrcSuf)
+%.$(DepSuf): %.$(SrcSuf) $(dummy)
 	@echo "Dependency: $@"
 	@$(CXX) $(CXXFLAGS) $< -o $@ -MM -MT "$*.o $*.d"
 
-$(BLD_DIR)/%.$(DepSuf): %.$(CSuf)
+$(BLD_DIR)/%.$(DepSuf): %.$(CSuf) $(dummy)
 	@echo "Dependency: $@"
 	@$(CC) $(CFLAGS) $< -o $@ -MM -MT "$(BLD_DIR)/$*.o $(BLD_DIR)/$*.d"
 
@@ -76,7 +77,7 @@ ifdef ALLDEPENDENC
 endif
 
 ## this must be last include in complete makefile
--include $(BLD_DIR)/dummy.d
+-include $(dummy)
 
 endif
 
