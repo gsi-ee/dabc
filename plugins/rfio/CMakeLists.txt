@@ -16,5 +16,5 @@ dabc_link_library(
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION}
                                                  VERSION_GREATER_EQUAL 10)
-  target_compile_options(DabcRfio PRIVATE -Wstringop-overflow=0)
+  target_compile_options(DabcRfio PRIVATE -Wno-stringop-overflow -Wno-sign-compare -Wno-shadow)
 endif()
