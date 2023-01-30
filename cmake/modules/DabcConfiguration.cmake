@@ -38,9 +38,9 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-  add_compile_options(-Wshadow -W -Woverloaded-virtual -fsigned-char)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow -W -Woverloaded-virtual -fsigned-char -Wzero-as-null-pointer-constant")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-  add_compile_options(-stdlib=libc++ -W -Woverloaded-virtual -fsigned-char)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Woverloaded-virtual -fsigned-char")
 endif()
 
 set(DABC_CXX_STANDARD
