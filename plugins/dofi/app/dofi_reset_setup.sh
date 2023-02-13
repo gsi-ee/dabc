@@ -1,5 +1,5 @@
 #!/bin/bash
-RDOC="/daq/usr/adamczew/pi/dabc/git/bin/rdoficom"
+RDOC=${DABCSYS}/bin/rdoficom
 #start_dec=0
 #stop_dec=191
 #for i in $(seq $start_dec $stop_dec);

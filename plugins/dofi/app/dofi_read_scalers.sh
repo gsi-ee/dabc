@@ -1,6 +1,6 @@
 #!/bin/bash
 # JAM 13-02-2023: example how to use rdoficom for example script functgions
-RDOC="/daq/usr/adamczew/pi/dabc/git/bin/rdoficom"
+RDOC=${DABCSYS}/bin/rdoficom
 echo "input scaler:" 
 #start_dec=192
 #stop_dec=201
