@@ -16,6 +16,9 @@
 #ifndef DOFI_Player
 #define DOFI_Player
 
+#include <cstddef>
+#include <cstring>
+
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
 #endif

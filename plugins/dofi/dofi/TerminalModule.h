@@ -31,14 +31,16 @@
 
 #include "dofi/Command.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <string>
 #include <sstream>
 
+extern "C"
+{
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
-
+}
 /****************************************************************/
 /** we use this spi device for communication with muppet fpga */
 #define DOFI_SPIDEV_DEFAULT "/dev/spidev1.2"

@@ -20,6 +20,9 @@
 #include "dabc/Factory.h"
 #endif
 
+#include <cstddef>
+#include <cstring>
+
 /** \brief Support for DOFI - communication protocol for different software kinds */
 
 namespace dofi {

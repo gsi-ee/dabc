@@ -55,6 +55,10 @@ if(gosip)
   add_subdirectory(gosip)
 endif()
 
+if(dofi)
+  add_subdirectory(dofi)
+endif()
+
 if(ltsm)
   add_subdirectory(ltsm)
 endif()

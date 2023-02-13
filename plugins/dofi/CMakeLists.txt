@@ -6,12 +6,12 @@ if(DOFI_FOUND)
     SOURCES src/Factory.cxx src/Player.cxx src/TerminalModule.cxx
     HEADERS dofi/Factory.h dofi/Player.h dofi/TerminalModule.h dofi/Command.h
     INCDIR dofi
-    LIBRARIES dabc::DabcBase 
-    INCLUDES ${DOFI_INCLUDE_DIR})
+    LIBRARIES dabc::DabcBase )
+    #INCLUDES ${DOFI_INCLUDE_DIR})
 
   dabc_install_plugin_data(
-    Dabcdofi
-    DIRECTORIES htm app
+    DabcDofi
+    DIRECTORIES app
     DESTINATION ${DABC_INSTALL_PLUGINDIR}/dofi)
 endif()
 

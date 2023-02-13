@@ -3,8 +3,8 @@
 
 #include"dabc/Command.h"
 #include "dabc/logging.h"
-#include <stdarg.h>
-#include <string.h>
+#include <cstdarg>
+#include <cstring>
 
 #define RDOC_DEFAULTPORT 54321
 #define DOFI_MAXTEXT 128
