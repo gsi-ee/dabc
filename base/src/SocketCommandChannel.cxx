@@ -146,7 +146,7 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
       SocketIOAddon* addon = new SocketIOAddon(fd);
       addon->SetDeliverEventsToWorker(true);
 
-      DOUT0("SocketCommand - create client side fd:%d worker:%s for:%s", fd, GetName(), fRemoteHostName.c_str());
+      DOUT2("SocketCommand - create client side fd:%d worker:%s for:%s", fd, GetName(), fRemoteHostName.c_str());
 
       AssignAddon(addon);
 

@@ -83,6 +83,7 @@ dabc_build_option(user ON "Enable USER plugin")
 dabc_build_option(verbs ON "Enable VERBS plugin")
 dabc_build_option(root ON "Enable ROOT plugin")
 dabc_build_option(dogma ON "Enable DOGMA plugin")
+dabc_build_option(dofi ON "Enable DOFI plugin")
 dabc_build_option(mbsroot ON "Enable MBS-ROOT plugin")
 
 # --- The 'all' option switches ON major options ------------------------------
@@ -104,6 +105,7 @@ if(all)
   set(verbs_defvalue ON)
   set(root_defvalue ON)
   set(dogma_defvalue ON)
+  set(dofi_defvalue ON)
   set(mbsroot_defvalue ON)
 endif()
 
@@ -126,6 +128,7 @@ if(minimal)
   set(verbs_defvalue OFF)
   set(root_defvalue OFF)
   set(dogma_defvalue OFF)
+  set(dofi_defvalue OFF)
   set(mbsroot_defvalue OFF)
 endif()
 
