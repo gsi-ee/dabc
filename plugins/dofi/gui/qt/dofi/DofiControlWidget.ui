@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DofiControlWidget</class>
+ <widget class="QWidget" name="DofiControlWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>180</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>DofiControlWidget</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QPushButton" name="ResetScalerspushButton">
+     <property name="toolTip">
+      <string>Press to reset scalers (input and output)</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../muppeticons.qrc">
+       <normaloff>:/icons/undo.png</normaloff>:/icons/undo.png</iconset>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../muppeticons.qrc"/>
+ </resources>
+ <connections/>
+</ui>
