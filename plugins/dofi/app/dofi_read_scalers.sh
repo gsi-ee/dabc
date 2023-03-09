@@ -10,7 +10,7 @@ echo "input scaler:"
   #./spi_muppet1_rw --read ${ix}
 #done
 
-$RDOC -x -r ra-9 0x100 9 
+$RDOC -x -r ra-9 0xc0 9 
 
 echo ""
 echo "output scaler:" 
@@ -21,6 +21,6 @@ echo "output scaler:"
    #ix=$(printf "0x%x" $i)
   #./spi_muppet1_rw --read ${ix}
 #done
-$RDOC -x -r ra-9 0xC0 9 
+$RDOC -x -r ra-9 0x100 9 
 
 

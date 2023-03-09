@@ -348,7 +348,7 @@ int dofi::TerminalModule::busio (dofi::Command &com)
     fCommandAddress.push_back (com.address); // mind repeat mode
     fCommandResults.push_back (com.value); // actual read or modified value
     cursor++;
-    com.address += 4;
+    com.address += 1; //4; only for PCIe bus etc.
   }    // while
   com.address = savedaddress;    // restore initial base address for slave broadcast option
   return rev;
