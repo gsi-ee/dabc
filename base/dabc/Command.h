@@ -138,8 +138,8 @@ namespace dabc {
          bool SetDouble(const std::string &name, double v) { return SetField(name, v); }
          double GetDouble(const std::string &name, double dflt = 0.) const { return GetField(name).AsDouble(dflt); }
 
-         bool SetUInt(const std::string &name, unsigned v) { return SetField(name, v); }
-         unsigned GetUInt(const std::string &name, unsigned dflt = 0) const { return GetField(name).AsUInt(dflt); }
+         bool SetUInt(const std::string &name, uint64_t v) { return SetField(name, v); }
+         uint64_t GetUInt(const std::string &name, uint64_t dflt = 0) const { return GetField(name).AsUInt(dflt); }
 
          /** \brief Set pointer argument for the command */
          void SetPtr(const std::string &name, void* p);
