@@ -752,12 +752,12 @@ std::string dabc::RecordField::AsStr(const std::string &dflt) const
    switch (fKind) {
       case kind_none: return dflt;
       case kind_bool: return valueInt != 0 ? xmlTrueValue : xmlFalseValue;
-      case kind_int: return dabc::format("%ld", (long) valueInt);
+      case kind_int: return std::to_string(valueInt);
       case kind_datime: {
          std::string res = dabc::DateTime(valueUInt).AsJSString(3);
          return res.empty() ? dflt : res;
       }
-      case kind_uint: return dabc::format("%lu", (long unsigned) valueUInt);
+      case kind_uint: return std::to_string(valueUInt);
       case kind_double: return dabc::format("%g", valueDouble);
       case kind_arrint:
       case kind_arruint:
@@ -837,21 +837,21 @@ std::string dabc::RecordField::AsJson() const
 {
    switch (fKind) {
       case kind_none: return "null";
-      case kind_bool: return valueInt != 0 ? "true" : "false";
-      case kind_int: return dabc::format("%ld", (long) valueInt);
+      case kind_bool: return (valueInt != 0) ? "true" : "false";
+      case kind_int: return std::to_string(valueInt);
       case kind_datime: {
          std::string res = dabc::DateTime(valueUInt).AsJSString(3);
          if (res.length()>0)
             return dabc::format("\"%s\"", res.c_str());
          break;
       }
-      case kind_uint: return dabc::format("%lu", (long unsigned) valueUInt);
+      case kind_uint: return std::to_string(valueUInt);
       case kind_double: return dabc::format("%g", valueDouble);
       case kind_arrint: {
          std::string res("[");
          for (int64_t n=0; n<valueInt;n++) {
             if (n>0) res.append(",");
-            res.append(dabc::format("%ld", (long) arrInt[n]));
+            res.append(std::to_string(arrInt[n]));
          }
          res.append("]");
          return res;
@@ -859,8 +859,8 @@ std::string dabc::RecordField::AsJson() const
       case kind_arruint: {
          std::string res("[");
          for (int64_t n=0; n<valueInt;n++) {
-            if (n>0) res.append(",");
-            res.append(dabc::format("%lu", (long unsigned) arrUInt[n]));
+            if (n > 0) res.append(",");
+            res.append(std::to_string(arrUInt[n]));
          }
          res.append("]");
          return res;
@@ -934,12 +934,12 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
       case kind_double: res.emplace_back(AsStr()); break;
       case kind_arrint: {
          for (int64_t n=0; n<valueInt;n++)
-            res.emplace_back(dabc::format("%ld", (long) arrInt[n]));
+            res.emplace_back(std::to_string(arrInt[n]));
          break;
       }
       case kind_arruint: {
          for (int64_t n=0; n<valueInt;n++)
-            res.emplace_back(dabc::format("%lu", (long unsigned) arrUInt[n]));
+            res.emplace_back(std::to_string(arrUInt[n]));
          break;
       }
       case kind_arrdouble: {
