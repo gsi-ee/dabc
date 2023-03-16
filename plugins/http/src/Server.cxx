@@ -429,10 +429,10 @@ bool http::Server::Process(const char* uri, const char* _query,
             content_type = GetMimeType(filename.c_str());
 
          if (cmd.HasField("MVersion"))
-            content_header.append(dabc::format("MVersion: %u\r\n", cmd.GetUInt("MVersion")));
+            content_header.append(dabc::format("MVersion: %u\r\n", (unsigned) cmd.GetUInt("MVersion")));
 
          if (cmd.HasField("BVersion"))
-            content_header.append(dabc::format("BVersion: %u\r\n", cmd.GetUInt("BVersion")));
+            content_header.append(dabc::format("BVersion: %u\r\n", (unsigned) cmd.GetUInt("BVersion")));
 
          content_bin = cmd.GetRawData();
          if (content_bin.null()) content_str = cmd.GetStr("StringReply");
