@@ -223,9 +223,9 @@ int main (int argc, char *argv[])
      for (int r = 0; r < numresults; ++r)
      {
        std::string name = "VALUE_" + std::to_string (r);
-       theCommand.value = dcmd.GetInt (name.c_str (), -1);
+       theCommand.value = dcmd.GetUInt (name.c_str (), -1);
        std::string address = "ADDRESS_" + std::to_string (r);
-       theCommand.address = dcmd.GetInt (address.c_str (), -1);
+       theCommand.address = dcmd.GetUInt (address.c_str (), -1);
        if (theCommand.value != -1)
          theCommand.output();
      }

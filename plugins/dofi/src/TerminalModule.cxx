@@ -39,7 +39,7 @@
   if (com.verboselevel) com.dump_command ();
 
 dofi::TerminalModule::TerminalModule (const std::string &name, dabc::Command cmd) :
-    dabc::ModuleAsync (name, cmd), fFD_spi(0),fConfigfile(0), fLinecount(0)
+    dabc::ModuleAsync (name, cmd), fFD_spi(0),fConfigfile(nullptr), fLinecount(0)
 {
 	fSPI_Device = Cfg("SPI_Device", cmd).AsStr(DOFI_SPIDEV_DEFAULT); // may change these parameters in dabc xml config file
 	fSPI_mode =Cfg("SPI_Mode", cmd).AsInt(0);
@@ -77,7 +77,7 @@ int dofi::TerminalModule::ExecuteCommand (dabc::Command cmd)
     for (unsigned int r = 0; r < fCommandResults.size (); ++r)
     {
       std::string name = "VALUE_" + std::to_string (r);
-      cmd.SetInt (name.c_str (), fCommandResults[r]);
+      cmd.SetUInt (name.c_str (), fCommandResults[r]);
       std::string address = "ADDRESS_" + std::to_string (r);
       cmd.SetInt (address.c_str (), fCommandAddress[r]);
     }
@@ -203,12 +203,12 @@ int dofi::TerminalModule::next_config_values (dofi::Command &com)
     // parse optional command identifier
     //if (strcasestr (cmd[2], "setbit") != 0)
     //JAM2017 -  this was not posix standard, gcc 6.3 doesnt like it. we do workaround:
-    if ((strstr (cmd[2], "setbit") != 0) || (strstr (cmd[2], "SETBIT") != 0))
+    if ((strstr (cmd[2], "setbit") != nullptr) || (strstr (cmd[2], "SETBIT") != nullptr))
     {
       com.command = DOFI_SETBIT;
     }
     //else if (strcasestr (cmd[4], "clearbit") != 0)
-    if ((strstr (cmd[2], "clearbit") != 0) || (strstr (cmd[2], "CLEARBIT") != 0))
+    if ((strstr (cmd[2], "clearbit") != nullptr) || (strstr (cmd[2], "CLEARBIT") != nullptr))
     {
       com.command = DOFI_CLEARBIT;
     }

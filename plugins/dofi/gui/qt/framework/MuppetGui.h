@@ -203,16 +203,16 @@ protected:
 //
 
   /** Read from spi address at raspi host:port, returns value*/
-  int ReadMuppet (QString& host, int port, int address);
+  unsigned long long ReadMuppet (QString& host, int port, int address);
 
   /** Read from spi address next times words at raspi host:port. values are written into destbuffer*/
   int MultiReadMuppet (QString& host, int port, int baseaddress, int times, unsigned long long* destbuffer);
 
   /** Write value to spi address at raspi host:port*/
-  int WriteMuppet (QString& host, int port, int address, int value);
+  int WriteMuppet (QString& host, int port, int address, unsigned long long value);
 
   /** Save value to currently open *.dof configuration file*/
-  int SaveMuppet (QString& host, int port, int address, int value);
+  int SaveMuppet (QString& host, int port, int address, unsigned long long value);
 
   /** execute (rdofi) command in shell. Return value is output of command*/
   QString ExecuteMuppetCmd (QString& command,  int timeout=5000);

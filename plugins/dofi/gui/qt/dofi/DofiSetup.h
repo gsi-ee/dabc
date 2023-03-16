@@ -175,8 +175,9 @@ public:
   {
     if (outchannel < DOFI_NUM_CHANNELS && inchannel < DOFI_NUM_CHANNELS)
     {
-      unsigned long long mask = (1 << inchannel);
+      unsigned long long mask = ((unsigned long long) 1 << inchannel);
       fOutputANDBits[outchannel] |= mask;
+      printf("AddOutputAND -mask:0x%llx reg:0x%llx\n",mask, fOutputANDBits[outchannel]);
     }
   }
 
@@ -184,8 +185,9 @@ public:
   {
     if (outchannel < DOFI_NUM_CHANNELS && inchannel < DOFI_NUM_CHANNELS)
     {
-      unsigned long long mask = (1 << inchannel);
+      unsigned long long mask = ((unsigned long long) 1 << inchannel);
       fOutputANDBits[outchannel] &= ~mask;
+      printf("ClearOutputAND -mask:0x%llx reg:0x%llx\n",mask, fOutputANDBits[outchannel]);
     }
   }
 
@@ -194,7 +196,7 @@ public:
     bool rev = false;
     if (outchannel < DOFI_NUM_CHANNELS && inchannel < DOFI_NUM_CHANNELS)
     {
-      unsigned long long mask = (1 << inchannel);
+      unsigned long long mask = ((unsigned long long) 1 << inchannel);
       rev = ((fOutputANDBits[outchannel] & mask) == mask);
 //      if(fOutputANDBits[outchannel])
 //        std::cout<<"IsOutputAND out:"<<outchannel<<", in:"<<inchannel<<" register:"<< fOutputANDBits[outchannel]<<", mask:"<< mask<<"result:"<<rev <<std::endl;
@@ -232,7 +234,7 @@ public:
   {
     if (outchannel < DOFI_NUM_CHANNELS && inchannel < DOFI_NUM_CHANNELS)
     {
-      unsigned long long mask = (1 << inchannel);
+      unsigned long long mask = ((unsigned long long) 1 << inchannel);
       fOutputORBits[outchannel] |= mask;
     }
   }
@@ -241,7 +243,7 @@ public:
   {
     if (outchannel < DOFI_NUM_CHANNELS && inchannel < DOFI_NUM_CHANNELS)
     {
-      unsigned long long mask = (1 << inchannel);
+      unsigned long long mask = ((unsigned long long) 1 << inchannel);
       fOutputORBits[outchannel] &= ~mask;
     }
   }
@@ -251,7 +253,7 @@ public:
      bool rev = false;
      if (outchannel < DOFI_NUM_CHANNELS && inchannel < DOFI_NUM_CHANNELS)
      {
-       unsigned long long mask = (1 << inchannel);
+       unsigned long long mask = ((unsigned long long) 1 << inchannel);
        rev = ((fOutputORBits[outchannel] & mask) == mask);
      }
      return rev;

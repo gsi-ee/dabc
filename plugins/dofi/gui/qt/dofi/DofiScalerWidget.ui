@@ -6,40 +6,126 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>506</width>
-    <height>267</height>
+    <width>689</width>
+    <height>299</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>DofiScalerWidget</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
-    <widget class="QGroupBox" name="InputScalergroupBox">
-     <property name="title">
-      <string>Input Scalers</string>
+    <widget class="QFrame" name="Buttonframe">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
      </property>
-     <layout class="QGridLayout" name="gridLayout_4">
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="ResetScalersButton">
+        <property name="toolTip">
+         <string>Press to reset scalers (input and output)</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../muppeticons.qrc">
+          <normaloff>:/icons/undo.png</normaloff>:/icons/undo.png</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="StopScalersButton">
+        <property name="toolTip">
+         <string>Press to stop counting (input and output)</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../muppeticons.qrc">
+          <normaloff>:/icons/Stop.png</normaloff>:/icons/Stop.png</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="StartScalersButton">
+        <property name="toolTip">
+         <string>Press to start counting (input and output)</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../muppeticons.qrc">
+          <normaloff>:/icons/start.png</normaloff>:/icons/start.png</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>546</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="ScalergroupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <weight>75</weight>
+       <italic>true</italic>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>Scaler values</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
-       <widget class="QTableWidget" name="InputScalersTableWidget">
+       <widget class="QTableWidget" name="ScalersTableWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>10</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="font">
          <font>
           <family>Courier 10 Pitch</family>
           <pointsize>12</pointsize>
+          <weight>75</weight>
+          <italic>true</italic>
+          <bold>true</bold>
          </font>
         </property>
         <property name="editTriggers">
          <set>QAbstractItemView::NoEditTriggers</set>
         </property>
+        <attribute name="horizontalHeaderCascadingSectionResizes">
+         <bool>true</bool>
+        </attribute>
         <attribute name="horizontalHeaderMinimumSectionSize">
-         <number>14</number>
+         <number>50</number>
         </attribute>
         <attribute name="horizontalHeaderDefaultSectionSize">
-         <number>200</number>
+         <number>300</number>
+        </attribute>
+        <attribute name="horizontalHeaderStretchLastSection">
+         <bool>true</bool>
         </attribute>
         <row>
          <property name="text">
-          <string>1</string>
+          <string>0</string>
          </property>
         </row>
         <column>
@@ -52,45 +138,14 @@
            <bold>true</bold>
           </font>
          </property>
+         <property name="background">
+          <color>
+           <red>170</red>
+           <green>255</green>
+           <blue>0</blue>
+          </color>
+         </property>
         </column>
-        <item row="0" column="0">
-         <property name="text">
-          <string>233</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QGroupBox" name="OutputScalergroupBox">
-     <property name="title">
-      <string>Output Scalers</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_5">
-      <item row="0" column="0">
-       <widget class="QTableWidget" name="OutputScalersTableWidget">
-        <property name="font">
-         <font>
-          <family>Courier 10 Pitch</family>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="editTriggers">
-         <set>QAbstractItemView::NoEditTriggers</set>
-        </property>
-        <attribute name="horizontalHeaderDefaultSectionSize">
-         <number>200</number>
-        </attribute>
-        <attribute name="verticalHeaderMinimumSectionSize">
-         <number>19</number>
-        </attribute>
-        <row>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </row>
         <column>
          <property name="text">
           <string>Output</string>
@@ -101,10 +156,28 @@
            <bold>true</bold>
           </font>
          </property>
+         <property name="background">
+          <color>
+           <red>255</red>
+           <green>170</green>
+           <blue>255</blue>
+          </color>
+         </property>
         </column>
         <item row="0" column="0">
          <property name="text">
           <string>233</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignTrailing|AlignVCenter</set>
+         </property>
+        </item>
+        <item row="0" column="1">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="textAlignment">
+          <set>AlignTrailing|AlignVCenter</set>
          </property>
         </item>
        </widget>
@@ -114,6 +187,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../muppeticons.qrc"/>
+ </resources>
  <connections/>
 </ui>

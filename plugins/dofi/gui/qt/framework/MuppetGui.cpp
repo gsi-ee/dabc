@@ -540,9 +540,9 @@ void MuppetGui::SaveRegisters ()
 
 
 
-int MuppetGui::ReadMuppet (QString& host, int port, int address)
+unsigned long long MuppetGui::ReadMuppet (QString& host, int port, int address)
 {
-int value = -1;
+unsigned long long  value = 0;
 
  char buffer[1024];
  snprintf (buffer, 1024, "rdoficom %s:%d -r  0x%x  ", host.toLatin1 ().constData (), port,  address);
@@ -552,22 +552,22 @@ int value = -1;
 if (result != "ERROR")
 {
   DebugTextWindow (result);
-  value = result.toInt (0, 0);
+  value = result.toLongLong (0, 0);
 }
 else
 {
-  value = -1;
+  value = 0; // todo error handling
 }
 return value;
 }
 
-int MuppetGui::WriteMuppet (QString& host, int port, int address, int value)
+int MuppetGui::WriteMuppet (QString& host, int port, int address, unsigned long long value)
 {
   int rev = 0;
   if (fSaveConfig)
       return SaveMuppet (host, port, address, value);
  char buffer[1024];
- snprintf (buffer, 1024, "rdoficom %s:%d  -w  0x%x %d ", host.toLatin1 ().constData (), port, address, value);
+ snprintf (buffer, 1024, "rdoficom %s:%d  -w  0x%x 0x%llx ", host.toLatin1 ().constData (), port, address, value);
  QString com (buffer);
  QString result = ExecuteMuppetCmd (com);
 if (result == "ERROR")
@@ -575,11 +575,11 @@ if (result == "ERROR")
 return rev;
 }
 
-int MuppetGui::SaveMuppet (QString& host, int port, int address, int value)
+int MuppetGui::SaveMuppet (QString& host, int port, int address, unsigned long long value)
 {
 //std::cout << "# SaveMuppet" << std::endl;
   static char buffer[1024] = { };
-  snprintf (buffer, 1024, "%s %d %x %x \n", host.toLatin1 ().constData (), port, address, value);
+  snprintf (buffer, 1024, "%s %d %x %llx \n", host.toLatin1 ().constData (), port, address, value);
   QString line (buffer);
   return (WriteConfigFile (line));
 }

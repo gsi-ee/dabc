@@ -51,6 +51,54 @@ DofiGui::DofiGui (QWidget* parent) :
   if(fDofiControlWidget)
        {
 	  	 fDofiControlWidget->setWindowTitle("Main Control");
+
+	  	fDofiControlWidget->OutputORTableWidget->setRowCount(DOFI_NUM_CHANNELS);
+	  	fDofiControlWidget->OutputORTableWidget->setColumnCount(DOFI_NUM_CHANNELS);
+	    fDofiControlWidget->OutputANDTableWidget->setRowCount(DOFI_NUM_CHANNELS);
+	    fDofiControlWidget->OutputANDTableWidget->setColumnCount(DOFI_NUM_CHANNELS);
+
+
+	  	for (int outs = 0; outs < DOFI_NUM_CHANNELS; ++outs)
+    {
+      fDofiControlWidget->OutputORTableWidget->setHorizontalHeaderItem (outs,
+          new QTableWidgetItem (QString ("%1").arg (outs)));
+      fDofiControlWidget->OutputANDTableWidget->setHorizontalHeaderItem (outs,
+          new QTableWidgetItem (QString ("%1").arg (outs)));
+      for (int ins = 0; ins < DOFI_NUM_CHANNELS; ++ins)
+      {
+
+        fDofiControlWidget->OutputORTableWidget->setVerticalHeaderItem (ins,
+            new QTableWidgetItem (QString ("%1").arg (ins)));
+        fDofiControlWidget->OutputANDTableWidget->setVerticalHeaderItem (ins,
+            new QTableWidgetItem (QString ("%1").arg (ins)));
+        fDofiInOutOR[ins][outs] = new QCheckBox ();
+        QObject::connect (fDofiInOutOR[ins][outs], SIGNAL(toggled(bool)),this,SLOT (InOutOR_toggled(bool)));
+        fDofiControlWidget->OutputORTableWidget->setCellWidget (ins, outs, fDofiInOutOR[ins][outs]);
+
+        fDofiInOutAND[ins][outs] = new QCheckBox ();
+        QObject::connect (fDofiInOutAND[ins][outs], SIGNAL(toggled(bool)),this,SLOT (InOutAND_toggled(bool)));
+
+        fDofiControlWidget->OutputANDTableWidget->setCellWidget (ins, outs, fDofiInOutAND[ins][outs]);
+
+      } // ins
+    }    // outs
+
+
+	  	 QObject::connect (fDofiControlWidget->SelectedANDcheckBox, SIGNAL(toggled(bool)),this,SLOT (InOutAND_selected_toggled(bool)));
+	  	 QObject::connect (fDofiControlWidget->SelectedORcheckBox, SIGNAL(toggled(bool)),this,SLOT (InOutOR_selected_toggled(bool)));
+
+//	    QObject::connect (fDofiControlWidget->OutputORTableWidget, SIGNAL(currentCellChanged(int,int,int,int)),this,SLOT (InOutOR_tablechanged(int,int,int,int)));
+//	    QObject::connect (fDofiControlWidget->OutputANDTableWidget, SIGNAL(currentCellChanged(int,int,int,int)),this,SLOT (InOutAND_tablechanged(int,int,int,int)));
+//
+//	    QObject::connect (fDofiControlWidget->OutputORTableWidget, SIGNAL(cellChanged(int,int)),this,SLOT (InOutOR_Cell_changed(int,int)));
+//	    QObject::connect (fDofiControlWidget->OutputANDTableWidget, SIGNAL(cellChanged(int,int)),this,SLOT (InOutAND_Cell_changed(int,int)));
+//
+//	    QObject::connect (fDofiControlWidget->OutputORTableWidget, SIGNAL(cellDoubleClicked(int,int)),this,SLOT (InOutOR_Cell_doubleclicked(int,int)));
+//	    QObject::connect (fDofiControlWidget->OutputANDTableWidget, SIGNAL(cellDoubleClicked(int,int)),this,SLOT (InOutAND_Cell_doubleclicked(int,int)));
+
+	    fDofiControlWidget->update();
+
+
          fDofiControlWidget->show();
          QMdiSubWindow* subtrig=mdiArea->addSubWindow(fDofiControlWidget, wflags);
          subtrig->setAttribute(Qt::WA_DeleteOnClose, false);
@@ -61,15 +109,15 @@ DofiGui::DofiGui (QWidget* parent) :
           fDofiScalerWidget->setWindowTitle("Scalers");
 
           // here initialize the tables:
-          fDofiScalerWidget->InputScalersTableWidget->setRowCount(DOFI_NUM_CHANNELS);
-          fDofiScalerWidget->OutputScalersTableWidget->setRowCount(DOFI_NUM_CHANNELS);
+          fDofiScalerWidget->ScalersTableWidget->setRowCount(DOFI_NUM_CHANNELS);
           for(int i=0; i<DOFI_NUM_CHANNELS;++i)
           {
+            fDofiScalerWidget->ScalersTableWidget->setVerticalHeaderItem(i,new QTableWidgetItem(QString("%1").arg(i)));
             QTableWidgetItem* itemin= new QTableWidgetItem("init");
-            fDofiScalerWidget->InputScalersTableWidget->setItem(i,0,itemin);
+            fDofiScalerWidget->ScalersTableWidget->setItem(i,0,itemin);
 
             QTableWidgetItem* itemout= new QTableWidgetItem("init");
-            fDofiScalerWidget->OutputScalersTableWidget->setItem(i,0,itemout);
+            fDofiScalerWidget->ScalersTableWidget->setItem(i,1,itemout);
 
           }
 
@@ -83,93 +131,11 @@ DofiGui::DofiGui (QWidget* parent) :
   ClearOutputBtn_clicked ();
 
 
-//  QObject::connect (fDofiWidget->OffsetButton, SIGNAL (clicked ()), this, SLOT (OffsetBtn_clicked ()));
-//
-//
-//  QObject::connect (fDofiWidget->TriggerButton, SIGNAL (clicked ()), this, SLOT (TriggerBtn_clicked ()));
-//
-//  QObject::connect (fDofiWidget->QFWResetButton, SIGNAL (clicked ()), this, SLOT (QFWResetBtn_clicked ()));
+QObject::connect (fDofiScalerWidget->ResetScalersButton, SIGNAL (clicked ()), this, SLOT (ResetScalersBtn_clicked ()));
+QObject::connect (fDofiScalerWidget->StartScalersButton, SIGNAL (clicked ()), this, SLOT (StartScalersBtn_clicked ()));
+QObject::connect (fDofiScalerWidget->StopScalersButton, SIGNAL (clicked ()), this, SLOT (StopScalersBtn_clicked ()));
 
 
-
-
-
-//  QObject::connect(fDofiWidget->DACModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(DACMode_changed(int)));
-
-// JAM2017: some more signals for the autoapply feature:
-
-//QObject::connect(fDofiWidget->ModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(QFW_changed()));
-//QObject::connect (fDofiWidget->MasterTriggerBox, SIGNAL(stateChanged(int)), this, SLOT (QFW_changed()));
-//QObject::connect (fDofiWidget->InternalTriggerBox, SIGNAL(stateChanged(int)), this, SLOT (QFW_changed()));
-//QObject::connect (fDofiWidget->FesaModeBox, SIGNAL(stateChanged(int)), this, SLOT (QFW_changed()));
-//
-//QObject::connect (fDofiWidget->TSLoop1lineEdit, SIGNAL(returnPressed()),this,SLOT (QFW_changed()));
-//QObject::connect (fDofiWidget->TSLoop2lineEdit, SIGNAL(returnPressed()),this,SLOT (QFW_changed()));
-//QObject::connect (fDofiWidget->TSLoop3lineEdit, SIGNAL(returnPressed()),this,SLOT (QFW_changed()));
-//QObject::connect (fDofiWidget->TS1TimelineEdit, SIGNAL(returnPressed()),this,SLOT (QFW_changed()));
-//QObject::connect (fDofiWidget->TS2TimelineEdit, SIGNAL(returnPressed()),this,SLOT (QFW_changed()));
-//QObject::connect (fDofiWidget->TS3TimelineEdit, SIGNAL(returnPressed()),this,SLOT (QFW_changed()));
-//
-//QObject::connect (fDofiWidget->DACStartValueLineEdit, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DACOffsetLineEdit, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DACDeltaOffsetLineEdit, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DACCalibTimeLineEdit, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//
-//QObject::connect (fDofiWidget->DAClineEdit_1, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_2, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_3, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_4, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_5, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_6, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_7, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_8, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_9, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_10, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_11, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_12, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_13, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_14, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_15, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_16, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_17, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_18, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_19, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_20, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_21, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_22, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_23, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_24, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_25, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_26, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_27, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_28, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_29, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_30, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_31, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//QObject::connect (fDofiWidget->DAClineEdit_32, SIGNAL(returnPressed()),this,SLOT (DAC_changed()));
-//
-//QObject::connect (fDofiWidget->FanDial, SIGNAL(valueChanged(int)),this,SLOT (Fan_changed()));
-//
-//
-//QObject::connect (fDofiViewpanelWidget->SampleButton, SIGNAL (clicked ()), this, SLOT (ShowSample ()));
-//
-//QObject::connect (fDofiCSAWidget->CSA_inswitch_tocsa_radioButton, SIGNAL (toggled (bool)), this, SLOT (CSA_changed()));
-
-// JAM 29-7-21: we do not need to connect second radio button, since they are grouped exclusively. avoid second call of slots
-//QObject::connect (fDofiCSAWidget->CSA_inswitch_bypass_radioButton, SIGNAL (toggled (bool)), this, SLOT (CSA_changed()));
-
-//QObject::connect (fDofiCSAWidget->CSA_autorange_auto_radioButton, SIGNAL (toggled (bool)), this, SLOT (CSA_changed()));
-//
-////QObject::connect (fDofiCSAWidget->CSA_autorange_manual_radioButton, SIGNAL (toggled (bool)), this, SLOT (CSA_changed()));
-//
-//QObject::connect (fDofiCSAWidget->CSA_outswitch_fromcsa_radioButton, SIGNAL (toggled (bool)), this, SLOT (CSA_changed()));
-//
-////QObject::connect (fDofiCSAWidget->CSA_outswitch_bypass_radioButton, SIGNAL (toggled (bool)), this, SLOT (CSA_changed()));
-//
-//QObject::connect (fDofiCSAWidget->CSA_feedback_spinBox, SIGNAL (valueChanged(int)), this, SLOT (CSA_spinbox_changed(int)));
-//
-//
-//QObject::connect (fDofiCSAWidget->CSA_feedbackLineEdit, SIGNAL (returnPressed()), this, SLOT (CSA_lineEdit_changed()));
 
 ReadSettings();
 
@@ -185,143 +151,6 @@ DofiGui::~DofiGui ()
 
 
 
-void DofiGui::ApplyGUISettings()
-{
-  //std::cout << "DofiGui::ApplyGUISettings()"<< std::endl;
-  // depending on activated view, we either set qfw parameters or change DAC programming
-
-//// TODO JAM2019 - for subwindow mode, always apply everything
-//  //if(fDofiWidget->QFW_DAC_tabWidget->currentIndex()==0)
-//{
-//  ApplyQFWSettings();
-//
-//}
-////else if (fDofiWidget->QFW_DAC_tabWidget->currentIndex()==1)
-//{
-//  ApplyDACSettings();
-//}
-////else if (fDofiWidget->QFW_DAC_tabWidget->currentIndex()==2)
-//{
-//  ApplyFanSettings();
-//}
-//
-//{
-//  ApplyCSASettings();
-//}
-
-
-}
-
-
-//void DofiGui::ApplyFanSettings()
-//{
-//  EvaluateFans(); // from gui to memory
-//  SetFans ();
-//}
-//
-//
-//void DofiGui::ApplyQFWSettings()
-//{
-//  EvaluateView(); // from gui to memory
-//  SetRegisters ();
-//}
-//
-//void DofiGui::ApplyDACSettings()
-//{
-//  EvaluateDAC();
-//  ApplyDAC();
-//}
-//
-//void DofiGui::QFW_changed ()
-//{
-//  MUPPET_LOCK_SLOT
-//  MUPPET_AUTOAPPLY(ApplyQFWSettings());
-//  MUPPET_UNLOCK_SLOT
-//}
-//
-//void DofiGui::DAC_changed ()
-//{
-//  MUPPET_LOCK_SLOT
-//  MUPPET_AUTOAPPLY(ApplyDACSettings());
-//  MUPPET_UNLOCK_SLOT
-//}
-//
-//void DofiGui::Fan_changed ()
-//{
-//  MUPPET_LOCK_SLOT
-//  MUPPET_AUTOAPPLY(ApplyFanSettings());
-//
-//  // for autoapply refresh fan readout immediately:
-//  if(AssertNoBroadcast(false))
-//  {
-//    GetSensors();
-//    RefreshSensors();
-//  }
-//  MUPPET_UNLOCK_SLOT
-//}
-//
-//
-//void DofiGui::CSA_changed ()
-//{
-//  //std::cout << "DofiGui::CSA_changed()"<< std::endl;
-//  MUPPET_LOCK_SLOT
-//  MUPPET_AUTOAPPLY(ApplyCSASettings());
-//  MUPPET_UNLOCK_SLOT
-//}
-//
-//void DofiGui::CSA_spinbox_changed (int value)
-//{
-//  //std::cout << "DofiGui::CSA_spinbox_changed() to "<< value<< std::endl;
-//  QString pre;
-//  QString text;
-//  fNumberBase==16? pre="0x" : pre="";
-//  uint8_t feedback =(value & 0xF);
-//  fDofiCSAWidget->CSA_feedbackLineEdit->setText (pre+text.setNum (feedback, fNumberBase));
-//  CSA_changed();
-//}
-//
-//
-//void DofiGui::CSA_lineEdit_changed()
-//{
-//  //std::cout << "DofiGui::CSA_lineEdit_changed()"<< std::endl;
-//  uint8_t feedback = fDofiCSAWidget->CSA_feedbackLineEdit->text().toInt(0, fNumberBase) & 0xF;
-//  fDofiCSAWidget->CSA_feedback_spinBox->setValue(feedback);
-//  CSA_changed();
-//}
-//
-//
-//void DofiGui::ApplyCSASettings()
-//{
-//  EvaluateCSA();
-//  ApplyCSA();
-//}
-//
-//
-//void DofiGui::EvaluateCSA()
-//{
-//  theSetup_GET_FOR_SLAVE(DofiSetup);
-//
-//  // first synchronize spinBox with hex text field:
-////  int value=fDofiCSAWidget->CSA_feedbackLineEdit->text().toInt(0, fNumberBase);
-////  fDofiCSAWidget->CSA_feedback_spinBox->setValue(value);
-//  uint8_t feedback = fDofiCSAWidget->CSA_feedbackLineEdit->text().toInt(0, fNumberBase) & 0xF;
-////(fDofiCSAWidget->CSA_feedback_spinBox->value() & 0xF);
-//  bool autorangemanual= fDofiCSAWidget->CSA_autorange_manual_radioButton->isChecked();
-//  bool inswitchbypass= fDofiCSAWidget->CSA_inswitch_bypass_radioButton->isChecked();
-//  bool outswitchbypass= fDofiCSAWidget->CSA_outswitch_bypass_radioButton->isChecked();
-//  //std::cout << "DofiGui::EvaluateCSA sees autorangemanual:"<<autorangemanual<<", inbypass:"<<inswitchbypass << ", outbypass:"<< outswitchbypass<<", feedback:"<< (int)feedback << std::endl;
-//  theSetup->SetCSASettings(autorangemanual, inswitchbypass, outswitchbypass, feedback);
-//  //std::cout << "DofiGui::EvaluateCSA() sets register value 0x"<< std::hex << theSetup->GetCSAControl()<< std::dec<< std::endl;
-//}
-//
-//
-//void DofiGui::ApplyCSA()
-//{
-//  theSetup_GET_FOR_SLAVE(DofiSetup);
-//  int onvalue=theSetup->GetCSAControl() | 0x100; // JAM 29-7-21: need bit 8 to enable
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_CSA_CTRL, onvalue);
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_CSA_CTRL, theSetup->GetCSAControl()); // bit 8 is zero here anyway
-//}
 
 
 
@@ -336,100 +165,6 @@ void DofiGui::ResetSlave ()
 
 
 
-//void DofiGui::OffsetBtn_clicked ()
-//{
-//char buffer[1024];
-//EvaluateSlave ();
-//snprintf (buffer, 1024, "Really scan offset for SFP chain %d, Slave %d ?", fSFP, fSlave);
-//if (QMessageBox::question (this, fImplementationName, QString (buffer), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes)
-//    != QMessageBox::Yes)
-//{
-//  //std::cout <<"QMessageBox does not return yes! "<< std::endl;
-//  return;
-//}
-//
-//MUPPET_BROADCAST_ACTION(ScanOffsets());
-//}
-
-
-
-
-
-
-//void DofiGui::ScanOffsets ()
-//{
-//  char buffer[1024];
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_DO_OFFSET, 1);
-//  printm("--- SFP %d Dofi %d : Doing offset measurement... ",fSFP, fSlave);
-//  QApplication::setOverrideCursor( Qt::WaitCursor );
-//
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_DO_OFFSET, 0);
-//  sleep(2);
-//  AppendTextWindow ("    ... done. Dumping offset values:");
-//
-//  snprintf (buffer, 1024, "gosipcmd -d -r -x -- 0x%x 0x%x 0x%x 0x%x", fSFP, fSlave, POLAND_REG_OFFSET_BASE, 32);
-//  QString com (buffer);
-//  QString result = ExecuteMuppetCmd (com);
-//  AppendTextWindow (result);
-//  QApplication::restoreOverrideCursor();
-//
-//}
-//
-//
-//
-//void DofiGui::TriggerBtn_clicked ()
-//{
-//  //std::cout << "DofiGui::TriggerBtn_clicked"<< std::endl;
-//  char buffer[1024];
-//  fTriggerOn ?   snprintf (buffer, 1024, "Really disable Frontend Trigger acceptance?") : snprintf (buffer, 1024, "Really enable Frontend Trigger acceptance?");
-//
-//  if (QMessageBox::question (this, fImplementationName, QString (buffer), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes)
-//      != QMessageBox::Yes)
-//  {
-//    //std::cout <<"QMessageBox does not return yes! "<< std::endl;
-//    return;
-//  }
-//
-//  fTriggerOn ? fTriggerOn=false: fTriggerOn=true;
-//
-//
-//  int value = (fTriggerOn ? 1 : 0);
-//  QString state= (fTriggerOn ? "ON" : "OFF");
-//  WriteMuppet (-1, -1, POLAND_REG_TRIG_ON, value); // send broadcast of register to all slaves.
-//  QString msg="--- Set all devices trigger acceptance to ";
-//  AppendTextWindow (msg+state);
-//  RefreshTrigger();
-//
-//
-//}
-//
-//void DofiGui::RefreshTrigger()
-//{
-//   // todo: modify label
-//  QString labelprefix="<html><head/><body><p>Trigger";
-//  QString labelstate = fTriggerOn ? " <span style=\" font-weight:600; color:#00ff00;\">ON </span></p></body></html>" :
-//      " <span style=\" font-weight:600; color:#ff0000;\">OFF</span></p></body></html>" ;
-//  fDofiWidget->TriggerLabel->setText(labelprefix+labelstate);
-//
-//}
-//
-//
-//void DofiGui::QFWResetBtn_clicked ()
-//{
-//char buffer[1024];
-//EvaluateSlave ();
-//snprintf (buffer, 1024, "Really Reset QFWs for SFP chain %d, Slave %d ?", fSFP, fSlave);
-//if (QMessageBox::question (this, fImplementationName, QString (buffer), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes)
-//    != QMessageBox::Yes)
-//{
-//  //std::cout <<"QMessageBox does not return yes! "<< std::endl;
-//  return;
-//}
-//fDoResetQFW=true;
-//QFW_changed ();
-//fDoResetQFW=false;
-//
-//}
 
 
 void DofiGui::DumpSlave ()
@@ -475,7 +210,7 @@ theSetup_GET_FOR_SLAVE(DofiSetup);
 
 for(int inc=0; inc<DOFI_NUM_CHANNELS; ++inc)
 {
-  QTableWidgetItem* item=fDofiScalerWidget->InputScalersTableWidget->item(inc,0);
+  QTableWidgetItem* item=fDofiScalerWidget->ScalersTableWidget->item(inc,0);
   qulonglong scaler=theSetup->fInputScalers[inc];
   text=pre+QString("%1").arg(scaler,0,fNumberBase);
   item->setText(text);
@@ -483,83 +218,47 @@ for(int inc=0; inc<DOFI_NUM_CHANNELS; ++inc)
 
 for(int out=0; out<DOFI_NUM_CHANNELS; ++out)
 {
-  QTableWidgetItem* item=fDofiScalerWidget->OutputScalersTableWidget->item(out,0);
+  QTableWidgetItem* item=fDofiScalerWidget->ScalersTableWidget->item(out,1);
   qulonglong scaler=theSetup->fOutputScalers[out];
   text=pre+QString("%1").arg(scaler,0,fNumberBase);
   item->setText(text);
 }
 
+for(int outs=0; outs<DOFI_NUM_CHANNELS; ++outs)
+         {
+
+         for(int ins=0; ins<DOFI_NUM_CHANNELS;++ins)
+           {
+           bool isor=theSetup->IsOutputOR(outs, ins);
+           fDofiInOutOR[ins][outs]->setChecked(isor);
+           bool isand=theSetup->IsOutputAND(outs, ins);
+           fDofiInOutAND[ins][outs]->setChecked(isand);
+
+           }
+         }
 
 
-//RefreshMode();
-//
-//
-//fDofiWidget->TSLoop1lineEdit->setText (pre+text.setNum (theSetup->fSteps[0], fNumberBase));
-//fDofiWidget->TSLoop2lineEdit->setText (pre+text.setNum (theSetup->fSteps[1], fNumberBase));
-//fDofiWidget->TSLoop3lineEdit->setText (pre+text.setNum (theSetup->fSteps[2], fNumberBase));
-//fDofiWidget->TS1TimelineEdit->setText (text.setNum (theSetup->GetStepTime(0)));
-//fDofiWidget->TS2TimelineEdit->setText (text.setNum (theSetup->GetStepTime(1)));
-//fDofiWidget->TS3TimelineEdit->setText (text.setNum (theSetup->GetStepTime(2)));
-//fDofiWidget->MasterTriggerBox->setChecked (theSetup->IsTriggerMaster ());
-//fDofiWidget->FesaModeBox->setChecked (theSetup->IsFesaMode ());
-//fDofiWidget->InternalTriggerBox->setChecked (theSetup->IsInternalTrigger ());
-//
-//
-//fDofiWidget->EventCounterNumber->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter1->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter2->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter3->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter4->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter5->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter6->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter7->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//fDofiWidget->ErrorCounter8->setMode((fNumberBase==16) ? QLCDNumber::Hex :  QLCDNumber::Dec);
-//
-//
-//fDofiWidget->EventCounterNumber->display ((int) theSetup->fEventCounter);
-//fDofiWidget->ErrorCounter1->display ((int) theSetup->fErrorCounter[0]);
-//fDofiWidget->ErrorCounter2->display ((int) theSetup->fErrorCounter[1]);
-//fDofiWidget->ErrorCounter3->display ((int) theSetup->fErrorCounter[2]);
-//fDofiWidget->ErrorCounter4->display ((int) theSetup->fErrorCounter[3]);
-//fDofiWidget->ErrorCounter5->display ((int) theSetup->fErrorCounter[4]);
-//fDofiWidget->ErrorCounter6->display ((int) theSetup->fErrorCounter[5]);
-//fDofiWidget->ErrorCounter7->display ((int) theSetup->fErrorCounter[6]);
-//fDofiWidget->ErrorCounter8->display ((int) theSetup->fErrorCounter[7]);
-//
-//RefreshDACMode();
-//RefreshDAC(); // probably this is already triggered by signal
-//RefreshTrigger(); // show real trigger register as read back from actual device
-//
-//RefreshSensors();
-//fDofiViewpanelWidget->RefreshEventCounter(); // hex/dec toggle here
-//
-//RefreshCSA();
-//
-//RefreshChains();
+
+
 RefreshStatus();
 }
 
 void DofiGui::EvaluateView ()
 {
-EvaluateSlave ();
-//EvaluateMode  ();
-
-theSetup_GET_FOR_SLAVE(DofiSetup);
-
-
-// copy widget values to structure
-//theSetup->fSteps[0] = fDofiWidget->TSLoop1lineEdit->text ().toUInt (0, fNumberBase);
-//theSetup->fSteps[1] = fDofiWidget->TSLoop2lineEdit->text ().toUInt (0, fNumberBase);
-//theSetup->fSteps[2] = fDofiWidget->TSLoop3lineEdit->text ().toUInt (0, fNumberBase);
-//
-//theSetup->SetStepTime(fDofiWidget->TS1TimelineEdit->text ().toDouble (),0);
-//theSetup->SetStepTime(fDofiWidget->TS2TimelineEdit->text ().toDouble (),1);
-//theSetup->SetStepTime(fDofiWidget->TS3TimelineEdit->text ().toDouble (),2);
-//
-//
-//theSetup->SetTriggerMaster (fDofiWidget->MasterTriggerBox->isChecked ());
-//theSetup->SetFesaMode (fDofiWidget->FesaModeBox->isChecked ());
-//theSetup->SetInternalTrigger (fDofiWidget->InternalTriggerBox->isChecked ());
+  EvaluateSlave ();
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  for (int out = 0; out < DOFI_NUM_CHANNELS; ++out)
+  {
+    theSetup->fOutputORBits[out] = 0;
+    theSetup->fOutputANDBits[out] = 0;
+    for (int in = 0; in < DOFI_NUM_CHANNELS; ++in)
+    {
+      unsigned long long orset = (fDofiInOutOR[in][out]->isChecked() ? 1 : 0);
+      theSetup->fOutputORBits[out] |= (orset << in);
+      unsigned long long andset = (fDofiInOutAND[in][out]->isChecked() ? 1 : 0);
+      theSetup->fOutputANDBits[out] |= (andset << in);
+    }
+  }
 
 }
 
@@ -567,49 +266,38 @@ theSetup_GET_FOR_SLAVE(DofiSetup);
 
 void DofiGui::SetRegisters ()
 {
-  //std::cout << "DofiGui::SetRegisters()"<< std::endl;
-
-
+  std::cout << "DofiGui::SetRegisters()"<< std::endl;
 // write register values from strucure with gosipcmd
   theSetup_GET_FOR_SLAVE(DofiSetup);
-//if (AssertNoBroadcast (false)) // NOTE: after change to broadcast action, this is always true JAM2017
-//if(!fBroadcasting) // use macro flag instead!
-//{
-//  // update trigger modes only in single device
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_INTERNAL_TRIGGER, theSetup->fInternalTrigger);
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_MASTERMODE, theSetup->fTriggerMode);
-//}
-//
-//if(fDoResetQFW)
-//{
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_QFW_RESET, 0);
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_QFW_RESET, 1);
-//  //std::cout << "DofiGui::SetRegisters did reset QFW for ("<<fSFP<<", "<<fSlave<<")"<< std::endl;
-//}
-//
-//
-//
-//WriteMuppet (fSFP, fSlave, POLAND_REG_QFW_MODE, theSetup->fQFWMode);
-//
-//// following is required to really activate qfw mode (thanks Sven Loechner for fixing):
-//WriteMuppet (fSFP, fSlave, POLAND_REG_QFW_PRG, 1);
-//WriteMuppet (fSFP, fSlave, POLAND_REG_QFW_PRG, 0);
-//
-//
-//
-//// WriteMuppet(fSFP, fSlave, POLAND_REG_TRIGCOUNT, theSetup->fEventCounter);
-//
-//for (int i = 0; i < POLAND_TS_NUM; ++i)
-//{
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_STEPS_BASE + 4 * i, theSetup->fSteps[i]);
-//  WriteMuppet (fSFP, fSlave, POLAND_REG_TIME_BASE + 4 * i, theSetup->fTimes[i]);
-//}
-////    for(int e=0; e<POLAND_ERRCOUNT_NUM;++e)
-////     {
-////       WriteMuppet(fSFP, fSlave, POLAND_REG_ERRCOUNT_BASE + 4*e, theSetup->fErrorCounter[e]);
-////     }
-//
-//// TODO: error handling with exceptions?
+
+  // TODO: instead of single register writes, implement multiwrite in rdoficommand JAM 15-03-2023
+  for(int outs=0; outs<DOFI_NUM_CHANNELS; ++outs)
+  {
+    unsigned long long value=theSetup->fOutputANDBits[outs];
+    int address=DOFI_ANDCTRL_BASE + outs;
+    int rev=WriteMuppet(fHost,fPort, address, value);
+    if(rev)
+    {
+      printm("SetRegisters: Error writing 0x%lx to output AND register %d (0x%x)", value, outs, address);
+    }
+  }
+
+  // here also multiwrite of 64 bit array starting with base
+  for(int outs=0; outs<DOFI_NUM_CHANNELS; ++outs)
+   {
+     unsigned long long value=theSetup->fOutputORBits[outs];
+     int address=DOFI_ORCTRL_BASE + outs;
+     int rev=WriteMuppet(fHost,fPort, address, value);
+     if(rev)
+     {
+       printm("SetRegisters: Error writing 0x%lx to output OR register %d (0x%x)", value, outs, address);
+     }
+   }
+
+  // TODO: set the input shape/invert registers
+
+
+
 
 }
 
@@ -662,5 +350,187 @@ void DofiGui::SaveRegisters ()
 }
 
 
+void DofiGui::AutoApplyOR (int input, int output, bool on)
+{
+  // keep setup structure always consistent:
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  on ? theSetup->AddOutputOR (output, input) : theSetup->ClearOutputOR (output, input);
 
+  // only write the output register that is concerned;
+  unsigned long long value=theSetup->fOutputORBits[output];
+  int address=   DOFI_ORCTRL_BASE + output;
+  int rev=WriteMuppet(fHost, fPort, address, value);
+  if(rev<0)
+  {
+    printm("Error writing to Mupppet in AutoApplyOR (%d,%d,%d)",output,input,on);
+  }
+
+}
+
+
+void DofiGui::AutoApplyAND (int input, int output, bool on)
+{
+  // keep setup structure always consistent:
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  on ? theSetup->AddOutputAND (output, input) : theSetup->ClearOutputAND (output, input);
+
+  // only write the output register that is concerned;
+  unsigned long long value=theSetup->fOutputANDBits[output];
+  int address=   DOFI_ANDCTRL_BASE + output;
+  int rev=WriteMuppet(fHost, fPort, address, value);
+  if(rev<0)
+  {
+    printm("Error writing to Mupppet in AutoApplyAND (%d,%d,%d)",output,input,on);
+  }
+
+}
+
+
+
+
+
+void DofiGui::InOutOR_toggled(bool on)
+{
+  MUPPET_LOCK_SLOT
+  int row=fDofiControlWidget->OutputORTableWidget->currentRow();
+  int col=fDofiControlWidget->OutputORTableWidget->currentColumn();
+  std::cout<<"DofiGui::InOutOR_toggled("<<row<<","<<col<<","<<on<<")" << std::endl;
+  MUPPET_AUTOAPPLY(AutoApplyOR(row,col,on));
+
+  QList<QTableWidgetSelectionRange> selection=fDofiControlWidget->OutputORTableWidget->selectedRanges();
+     for (int i = 0; i < selection.size(); ++i) {
+       QTableWidgetSelectionRange range=selection.at(i);
+       std::cout<<"selection "<<i<<" is:("<<range.leftColumn()<<","<<range.rightColumn()<<","<<range.topRow()<<","<<range.bottomRow()<<")" << std::endl;
+
+     }
+  MUPPET_UNLOCK_SLOT
+}
+
+void DofiGui::InOutAND_toggled(bool on)
+{
+  MUPPET_LOCK_SLOT
+  int row=fDofiControlWidget->OutputANDTableWidget->currentRow();
+  int col=fDofiControlWidget->OutputANDTableWidget->currentColumn();
+  std::cout<<"DofiGui::InOutANDtoggled("<<row<<","<<col<<","<<on<<")" << std::endl;
+
+
+
+  MUPPET_AUTOAPPLY(AutoApplyAND(row,col,on));
+  MUPPET_UNLOCK_SLOT
+}
+
+
+
+void DofiGui::InOutOR_selected_toggled (bool on)
+{
+  MUPPET_LOCK_SLOT
+  std::cout << "DofiGui::InOutOR_selected_toggled(" << on << ")" << std::endl;
+  QList < QTableWidgetSelectionRange > selection = fDofiControlWidget->OutputORTableWidget
+      ->selectedRanges ();
+  for (int i = 0; i < selection.size (); ++i)
+  {
+    QTableWidgetSelectionRange range = selection.at (i);
+    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn ()
+        << "," << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
+    // here change checkboxes within ranges to the desired state:
+    for (int row = range.topRow (); row <= range.bottomRow (); ++row)
+    {
+      for (int col = range.leftColumn (); col <= range.rightColumn (); ++col)
+      {
+        fDofiInOutOR[row][col]->setChecked(on);
+        MUPPET_AUTOAPPLY(AutoApplyOR (row, col, on));
+      }
+    }
+  }
+  MUPPET_UNLOCK_SLOT
+}
+
+
+void DofiGui::InOutAND_selected_toggled (bool on)
+{
+  MUPPET_LOCK_SLOT
+  std::cout << "DofiGui::InOutAND_selected_toggled(" << on << ")" << std::endl;
+  QList < QTableWidgetSelectionRange > selection = fDofiControlWidget->OutputANDTableWidget->selectedRanges ();
+  for (int i = 0; i < selection.size (); ++i)
+  {
+    QTableWidgetSelectionRange range = selection.at (i);
+    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn () << ","
+        << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
+    // here change checkboxes within ranges to the desired state:
+
+    for (int row = range.topRow (); row <= range.bottomRow (); ++row)
+    {
+      for (int col = range.leftColumn (); col <= range.rightColumn (); ++col)
+      {
+        fDofiInOutAND[row][col]->setChecked(on);
+        MUPPET_AUTOAPPLY(AutoApplyAND (row, col, on));
+      }
+    }
+  }
+  MUPPET_UNLOCK_SLOT
+}
+
+
+//
+//void DofiGui::InOutOR_tablechanged(int row,int col, int prer, int prec)
+//{
+//  std::cout<<"DofiGui::InOutOR_tablechanged("<<row<<","<<col<<","<<prer<<","<<prec<<")" << std::endl;
+//  QList<QTableWidgetSelectionRange> selection=fDofiControlWidget->OutputORTableWidget->selectedRanges();
+//  for (int i = 0; i < selection.size(); ++i) {
+//    QTableWidgetSelectionRange range=selection.at(i);
+//    std::cout<<"selection "<<i<<" is:("<<range.leftColumn()<<","<<range.rightColumn()<<","<<range.topRow()<<","<<range.bottomRow()<<")" << std::endl;
+//  }
+//
+//}
+//
+//void DofiGui::InOutAND_tablechanged(int row,int col, int prer, int prec)
+//{
+//  std::cout<<"DofiGui::InOutAND_tablechanged("<<row<<","<<col<<","<<prer<<","<<prec<<")" << std::endl;
+//  QList<QTableWidgetSelectionRange> selection=fDofiControlWidget->OutputANDTableWidget->selectedRanges();
+//    for (int i = 0; i < selection.size(); ++i) {
+//      QTableWidgetSelectionRange range=selection.at(i);
+//      std::cout<<"selection "<<i<<" is:("<<range.leftColumn()<<","<<range.rightColumn()<<","<<range.topRow()<<","<<range.bottomRow()<<")" << std::endl;
+//    }
+
+
+
+//}
+//
+//void DofiGui::InOutOR_Cell_changed(int row, int col)
+//{
+//  std::cout<<"DofiGui::InOutOR_Cell_changed("<<row<<","<<col<<")" << std::endl;
+//}
+//
+//void DofiGui::InOutAND_Cell_changed(int row, int col)
+//{
+//  std::cout<<"DofiGui::InOutAND_Cell_changed("<<row<<","<<col<<")" << std::endl;
+//}
+//
+//void DofiGui::InOutOR_Cell_doubleclicked(int row, int col)
+//{
+//  std::cout<<"DofiGui::InOutOR_Cell_doubleclicked("<<row<<","<<col<<")" << std::endl;
+//
+//}
+//void DofiGui::InOutAND_Cell_doubleclicked(int row, int col)
+//{
+//  std::cout<<"DofiGui::InOutAND_Cell_doubleclicked("<<row<<","<<col<<")" << std::endl;
+//}
+
+
+void  DofiGui::ResetScalersBtn_clicked ()
+{
+  std::cout<<"DofiGui:::ResetScalersBtn_clicked ()" << std::endl;
+}
+
+
+void  DofiGui::StartScalersBtn_clicked ()
+{
+  std::cout<<"DofiGui:::StartScalersBtn_clicked ()" << std::endl;
+}
+
+
+void  DofiGui::StopScalersBtn_clicked ()
+{
+  std::cout<<"DofiGui:::StopScalersBtn_clicked ()" << std::endl;
+}
 

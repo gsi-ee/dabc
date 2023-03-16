@@ -50,7 +50,7 @@ typedef enum
   char verboselevel; /**< level of debug 0=off*/
   char hexformat; /**< hexoutput(1) or decimal (0)*/
   long address; /**< address on slave*/
-  long value; /**< value to write, or read back*/
+  unsigned long long value; /**< value to write, or read back*/
   long repeat; /**< number of words for incremental read*/
 
   char filename[DOFI_MAXTEXT]; /**< optional name of configuration file*/
@@ -198,7 +198,7 @@ typedef enum
 		 else
 		 {
 			 hexformat == 1 ? DOUT0 ("\t address: 0x%lx", address) : DOUT0 ("\t address: %ld", address);
-			 hexformat == 1 ? DOUT0 ("\t value: 0x%lx", value) : DOUT0 ("\t value: %ld", value);
+			 hexformat == 1 ? DOUT0 ("\t value: 0x%llx", value) : DOUT0 ("\t value: %lld", value);
 			 hexformat == 1 ? DOUT0 ("\t repeat: 0x%lx", repeat) : DOUT0 ("\t repeat: %ld", repeat);
 		 //  DOUT0 ("\t broadcast: %d \n", broadcast);
 		 }
@@ -210,12 +210,12 @@ typedef enum
        if (verboselevel)
        {
          hexformat ?
-             DOUT0 ("Address: 0x%lx  Data: 0x%lx", address, value) :
-             DOUT0 ("Address: %ld  Data: %ld ", address, value);
+             DOUT0 ("Address: 0x%lx  Data: 0x%llx", address, value) :
+             DOUT0 ("Address: %ld  Data: %lld ", address, value);
        }
        else
        {
-         hexformat ? DOUT0 ("0x%lx", value) : DOUT0 ("%ld", value);
+         hexformat ? DOUT0 ("0x%llx", value) : DOUT0 ("%lld", value);
        }
      }
 
@@ -226,7 +226,7 @@ typedef enum
        dest.SetInt ("VERBOSELEVEL", verboselevel);
        dest.SetInt ("HEXFORMAT", hexformat);
        dest.SetInt ("ADDRESS", (int) address);
-       dest.SetInt ("VALUE", (int) value);
+       dest.SetUInt ("VALUE", (unsigned) value);
        dest.SetInt ("REPEAT", (int) repeat);
        dest.SetStr ("FILENAME", filename);
      }
@@ -237,7 +237,7 @@ typedef enum
        verboselevel = src.GetInt ("VERBOSELEVEL");
        hexformat = src.GetInt ("HEXFORMAT");
        address = src.GetInt ("ADDRESS");
-       value = src.GetInt ("VALUE");
+       value = src.GetUInt ("VALUE");
        repeat = src.GetInt ("REPEAT");
        strncpy (filename, src.GetStr ("FILENAME").c_str (), DOFI_MAXTEXT);
      }

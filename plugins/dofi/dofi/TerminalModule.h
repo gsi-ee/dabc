@@ -184,7 +184,7 @@ typedef enum
   //~ int fErrcount; /**< errorcount for verify*/
 
 	/*** keep result of most recent command call here */
-	std::vector<long> fCommandResults;
+	std::vector<unsigned long long> fCommandResults;
 
 		 /*** keep address of most recent command call here*/
 	std::vector<long> fCommandAddress;

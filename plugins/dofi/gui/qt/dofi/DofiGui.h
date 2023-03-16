@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <QProcess>
 #include <QString>
-
+#include <QCheckBox>
 
 
 class DofiGui: public MuppetGui
@@ -36,6 +36,15 @@ protected:
   DofiScalerWidget* fDofiScalerWidget;
 
 
+  /** checkbox to define which input (first index) shall be routed to output (second index).
+   * checked inputs are ORED for output*/
+   QCheckBox* fDofiInOutOR[DOFI_NUM_CHANNELS][DOFI_NUM_CHANNELS];
+
+  /** checkbox to define which input (first index) shall be routed to output (second index).
+    * checked inputs are ANDEDED for output*/
+   QCheckBox* fDofiInOutAND[DOFI_NUM_CHANNELS][DOFI_NUM_CHANNELS];
+
+
   /** toggle general trigger state*/
   bool fTriggerOn;
 
@@ -47,22 +56,6 @@ protected:
   void RefreshView ();
 
 
-
- /** helper function for broadcast: get shown set up and put it immediately to hardware.*/
-  void ApplyGUISettings();
-
-//  /** helper function for broadcast: get shown set up and put it immediately to hardware.*/
-//   void ApplyQFWSettings();
-//
-//   /** helper function for broadcast: get shown set up and put it immediately to hardware.*/
-//   void ApplyDACSettings();
-//
-//
-//   /** helper function for broadcast: get shown set up and put it immediately to hardware.*/
-//   void ApplyFanSettings();
-//
-//   /** helper function for broadcast: get shown set up and put it immediately to hardware.*/
-//   void ApplyCSASettings();
 
   /** helper function for broadcast: rest current poland slave*/
   virtual void ResetSlave ();
@@ -76,27 +69,6 @@ protected:
   /** copy values from gui to internal status object*/
   void EvaluateView ();
 
-//  /** copy gui contents of sensors tab to setup structure*/
-//   void EvaluateFans();
-//
-//   /** copy gui contents of CSA tab to setup structure*/
-//   void EvaluateCSA();
-
-
-  /** copy sfp and slave from gui to variables*/
-  //void EvaluateSlave ();
-
-//  /** find out measurement mode from selected combobox entry.*/
-//  void EvaluateMode();
-//
-//
-//
-//
-//  /** update measurement range in combobox entry*/
-//    void RefreshMode();
-
-//    /** refresh view of general trigger state*/
-//    void RefreshTrigger();
 
   /** set register from status structure*/
   void SetRegisters ();
@@ -106,68 +78,44 @@ protected:
 
 
 
-//  /** refresh view of temp/fan sensors from status structure*/
-//   void RefreshSensors();
-//
-//
-//  /** read temp sensors into status structure*/
-//   void GetSensors ();
-//
-//   /** set fan speed value*/
-//   void SetFans ();
 
-//   /** set CSA properties value*/
-//   void ApplyCSA();
-//
-//   /** Refresh view of CSA contents*/
-//    void RefreshCSA();
 
   /** get registers and write them to config file*/
   void SaveRegisters();
 
+  /**do change of input-output OR relation if auto apply mode is on */
+  void AutoApplyOR (int output, int input, bool on);
 
+  /**do change of input-output AND relation if auto apply mode is on */
+  void AutoApplyAND (int output, int input, bool on);
 
-
-//  /** Apply DAC setup to frontends*/
-//  void ApplyDAC();
-//
-//  /** Refresh view of DAC contents*/
-//  void RefreshDAC();
-//
-//  /** Refresh view of DAC mode*/
-//  void RefreshDACMode();
-//
-//  /** Refresh widget (enable/disable) of DAC mode*/
-//   void EnableDACModeWidgets(int mode);
-//
-//
-//  /** copy gui contents of DAC tab to setup structure*/
-//  void EvaluateDAC();
-//
-//  void GetSample(DofiSample* theSample);
-//
-//#ifdef USE_PEXOR_LIB
-//// this function stolen and adopted from polandtest:
-//int UnpackQfw (pexor::DMA_Buffer* tokbuf, DofiSample* theSample);
-//#endif
 
 
 public slots:
 
+virtual void InOutOR_toggled(bool on);
+virtual void InOutAND_toggled(bool on);
+
+virtual void InOutOR_selected_toggled(bool on);
+virtual void InOutAND_selected_toggled(bool on);
 
 
-//  virtual void OffsetBtn_clicked ();
-//  virtual void DACMode_changed(int ix);
-//  virtual void TriggerBtn_clicked ();
-//  virtual void QFWResetBtn_clicked();
-//  virtual void QFW_changed ();
-//  virtual void DAC_changed ();
-//  virtual void Fan_changed ();
-//  virtual void CSA_changed ();
-//  virtual void CSA_spinbox_changed (int value);
-//  virtual void CSA_lineEdit_changed();
+
+
+//virtual void InOutOR_tablechanged(int,int,int,int);
+//virtual void InOutAND_tablechanged(int,int,int,int);
+
 //
-//  virtual void ShowSample ();
+//virtual void InOutOR_Cell_changed(int,int);
+//virtual void InOutAND_Cell_changed(int,int);
+//
+//virtual void InOutOR_Cell_doubleclicked(int,int);
+//virtual void InOutAND_Cell_doubleclicked(int,int);
+
+
+virtual void ResetScalersBtn_clicked ();
+virtual void StartScalersBtn_clicked ();
+virtual void StopScalersBtn_clicked ();
 };
 
 #endif
