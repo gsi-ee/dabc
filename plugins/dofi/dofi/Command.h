@@ -93,27 +93,7 @@ typedef enum
        int do_exit = 0;
        if (command == dofi::DOFI_NOP)
          do_exit = 1;
-//       if (fd_pex < 0)
-//         do_exit = 1;
-       //~ if ((command != dofi::DOFI_CONFIGURE) && (command != dofi::DOFI_VERIFY) && (command != dofi::DOFI_RESET))
-       //~ {
-         //~ if (sfp < -1) /*allow broadcast statements -1*/
-           //~ do_exit = 1;
-         //~ if ((command != dofi::DOFI_INIT) && (slave < -1))
-           //~ do_exit = 1;
-         //~ if ((command != dofi::DOFI_INIT) && (address < -1))
-           //~ do_exit = 1;
-       //~ }
-       //~ else
-       //~ {
-         //~ broadcast = 0;    // disable broadcast for configure, verify and reset if it was chosen by mistake
-       //~ }
 
-       //~ if ((command == dofi::DOFI_READ || command == dofi::DOFI_SETBIT || command == dofi::DOFI_CLEARBIT)
-           //~ && (sfp == -1 || slave == -1))
-       //~ {
-         //~ broadcast = 1;    // allow implicit broadcast read switched by -1 argument for sfp or slave
-       //~ }
 
        if (do_exit)
        {

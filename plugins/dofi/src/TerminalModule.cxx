@@ -281,7 +281,7 @@ int dofi::TerminalModule::read (dofi::Command &com)
 int dofi::TerminalModule::changebits (dofi::Command &com)
 {
   int rev = 0;
-  long bitmask = 0;
+  unsigned long long bitmask = 0;
   DOFI_ASSERT_DEVHANDLE;
   bitmask = com.value;
   std::stringstream hexstream;

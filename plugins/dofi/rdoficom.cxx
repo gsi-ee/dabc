@@ -226,7 +226,7 @@ int main (int argc, char *argv[])
        theCommand.value = dcmd.GetUInt (name.c_str (), -1);
        std::string address = "ADDRESS_" + std::to_string (r);
        theCommand.address = dcmd.GetUInt (address.c_str (), -1);
-       if (theCommand.value != -1)
+       //if (theCommand.value != -1)
          theCommand.output();
      }
    }

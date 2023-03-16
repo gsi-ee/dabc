@@ -37,7 +37,7 @@ DofiGui::DofiGui (QWidget* parent) :
     MuppetGui (parent)
 {
   fImplementationName="DOFI";
-  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.50 of 03-March-2023 by JAM (j.adamczewski@gsi.de)";
+  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.51 of 16-March-2023 by JAM (j.adamczewski@gsi.de)";
   setWindowTitle(QString("%1 GUI").arg(fImplementationName));
 
 
@@ -87,14 +87,6 @@ DofiGui::DofiGui (QWidget* parent) :
 	  	 QObject::connect (fDofiControlWidget->SelectedANDcheckBox, SIGNAL(toggled(bool)),this,SLOT (InOutAND_selected_toggled(bool)));
 	  	 QObject::connect (fDofiControlWidget->SelectedORcheckBox, SIGNAL(toggled(bool)),this,SLOT (InOutOR_selected_toggled(bool)));
 
-//	    QObject::connect (fDofiControlWidget->OutputORTableWidget, SIGNAL(currentCellChanged(int,int,int,int)),this,SLOT (InOutOR_tablechanged(int,int,int,int)));
-//	    QObject::connect (fDofiControlWidget->OutputANDTableWidget, SIGNAL(currentCellChanged(int,int,int,int)),this,SLOT (InOutAND_tablechanged(int,int,int,int)));
-//
-//	    QObject::connect (fDofiControlWidget->OutputORTableWidget, SIGNAL(cellChanged(int,int)),this,SLOT (InOutOR_Cell_changed(int,int)));
-//	    QObject::connect (fDofiControlWidget->OutputANDTableWidget, SIGNAL(cellChanged(int,int)),this,SLOT (InOutAND_Cell_changed(int,int)));
-//
-//	    QObject::connect (fDofiControlWidget->OutputORTableWidget, SIGNAL(cellDoubleClicked(int,int)),this,SLOT (InOutOR_Cell_doubleclicked(int,int)));
-//	    QObject::connect (fDofiControlWidget->OutputANDTableWidget, SIGNAL(cellDoubleClicked(int,int)),this,SLOT (InOutAND_Cell_doubleclicked(int,int)));
 
 	    fDofiControlWidget->update();
 
@@ -471,50 +463,7 @@ void DofiGui::InOutAND_selected_toggled (bool on)
 }
 
 
-//
-//void DofiGui::InOutOR_tablechanged(int row,int col, int prer, int prec)
-//{
-//  std::cout<<"DofiGui::InOutOR_tablechanged("<<row<<","<<col<<","<<prer<<","<<prec<<")" << std::endl;
-//  QList<QTableWidgetSelectionRange> selection=fDofiControlWidget->OutputORTableWidget->selectedRanges();
-//  for (int i = 0; i < selection.size(); ++i) {
-//    QTableWidgetSelectionRange range=selection.at(i);
-//    std::cout<<"selection "<<i<<" is:("<<range.leftColumn()<<","<<range.rightColumn()<<","<<range.topRow()<<","<<range.bottomRow()<<")" << std::endl;
-//  }
-//
-//}
-//
-//void DofiGui::InOutAND_tablechanged(int row,int col, int prer, int prec)
-//{
-//  std::cout<<"DofiGui::InOutAND_tablechanged("<<row<<","<<col<<","<<prer<<","<<prec<<")" << std::endl;
-//  QList<QTableWidgetSelectionRange> selection=fDofiControlWidget->OutputANDTableWidget->selectedRanges();
-//    for (int i = 0; i < selection.size(); ++i) {
-//      QTableWidgetSelectionRange range=selection.at(i);
-//      std::cout<<"selection "<<i<<" is:("<<range.leftColumn()<<","<<range.rightColumn()<<","<<range.topRow()<<","<<range.bottomRow()<<")" << std::endl;
-//    }
 
-
-
-//}
-//
-//void DofiGui::InOutOR_Cell_changed(int row, int col)
-//{
-//  std::cout<<"DofiGui::InOutOR_Cell_changed("<<row<<","<<col<<")" << std::endl;
-//}
-//
-//void DofiGui::InOutAND_Cell_changed(int row, int col)
-//{
-//  std::cout<<"DofiGui::InOutAND_Cell_changed("<<row<<","<<col<<")" << std::endl;
-//}
-//
-//void DofiGui::InOutOR_Cell_doubleclicked(int row, int col)
-//{
-//  std::cout<<"DofiGui::InOutOR_Cell_doubleclicked("<<row<<","<<col<<")" << std::endl;
-//
-//}
-//void DofiGui::InOutAND_Cell_doubleclicked(int row, int col)
-//{
-//  std::cout<<"DofiGui::InOutAND_Cell_doubleclicked("<<row<<","<<col<<")" << std::endl;
-//}
 
 
 void  DofiGui::ResetScalersBtn_clicked ()
