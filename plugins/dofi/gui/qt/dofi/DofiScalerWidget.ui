@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>689</width>
+    <width>671</width>
     <height>299</height>
    </rect>
   </property>
@@ -53,6 +53,32 @@
         <property name="icon">
          <iconset resource="../muppeticons.qrc">
           <normaloff>:/icons/start.png</normaloff>:/icons/start.png</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ScalerTimerCheckBox">
+        <property name="toolTip">
+         <string>Check to refresh scalers every n seconds</string>
+        </property>
+        <property name="text">
+         <string>Monitor scalers</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="ScalerSpinBox">
+        <property name="toolTip">
+         <string>Period of automatic scaler refresh</string>
+        </property>
+        <property name="suffix">
+         <string> s</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>999</number>
         </property>
        </widget>
       </item>
@@ -118,10 +144,10 @@
          <number>50</number>
         </attribute>
         <attribute name="horizontalHeaderDefaultSectionSize">
-         <number>300</number>
+         <number>150</number>
         </attribute>
         <attribute name="horizontalHeaderStretchLastSection">
-         <bool>true</bool>
+         <bool>false</bool>
         </attribute>
         <row>
          <property name="text">
@@ -164,6 +190,30 @@
           </color>
          </property>
         </column>
+        <column>
+         <property name="text">
+          <string>InRate [Hz]</string>
+         </property>
+         <property name="background">
+          <color>
+           <red>0</red>
+           <green>170</green>
+           <blue>127</blue>
+          </color>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>OutRate [Hz]</string>
+         </property>
+         <property name="background">
+          <color>
+           <red>255</red>
+           <green>0</green>
+           <blue>255</blue>
+          </color>
+         </property>
+        </column>
         <item row="0" column="0">
          <property name="text">
           <string>233</string>
@@ -190,5 +240,22 @@
  <resources>
   <include location="../muppeticons.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>ScalerTimerCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ScalerSpinBox</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>201</x>
+     <y>34</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>36</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

@@ -57,6 +57,22 @@ public:
   unsigned long long fOutputScalers[DOFI_NUM_CHANNELS];
 
 
+  /* input scaler values of last but previous scan, for rates */
+   unsigned long long fInputScalersBefore[DOFI_NUM_CHANNELS];
+
+  /* input scaler values of last but previous scan, for rates */
+   unsigned long long fOutputScalersBefore[DOFI_NUM_CHANNELS];
+
+
+  /** most recent rate of input channels in 1/s */
+  double  fInputRate[DOFI_NUM_CHANNELS];
+
+  /** most recent rate of output channels in 1/s */
+  double  fOutputRate[DOFI_NUM_CHANNELS];
+
+
+
+
   DofiSetup () :
       MuppetSetup ()
   {
@@ -78,6 +94,10 @@ public:
     {
       fInputScalers[i] = 0;
       fOutputScalers[i] = 0;
+      fInputScalersBefore[i] = 0;
+      fOutputScalersBefore[i] = 0;
+      fInputRate[i] = 0.0;
+      fOutputRate[i] = 0.0;
     }
 
   }
@@ -177,7 +197,7 @@ public:
     {
       unsigned long long mask = ((unsigned long long) 1 << inchannel);
       fOutputANDBits[outchannel] |= mask;
-      printf("AddOutputAND -mask:0x%llx reg:0x%llx\n",mask, fOutputANDBits[outchannel]);
+      //printf("AddOutputAND -mask:0x%llx reg:0x%llx\n",mask, fOutputANDBits[outchannel]);
     }
   }
 
@@ -187,7 +207,7 @@ public:
     {
       unsigned long long mask = ((unsigned long long) 1 << inchannel);
       fOutputANDBits[outchannel] &= ~mask;
-      printf("ClearOutputAND -mask:0x%llx reg:0x%llx\n",mask, fOutputANDBits[outchannel]);
+      //printf("ClearOutputAND -mask:0x%llx reg:0x%llx\n",mask, fOutputANDBits[outchannel]);
     }
   }
 
@@ -258,6 +278,26 @@ public:
      }
      return rev;
    }
+
+
+  void SaveScalers()
+  {
+    for (int i = 0; i < DOFI_NUM_CHANNELS; ++i)
+      {
+        fInputScalersBefore[i] =  fInputScalers[i];
+        fOutputScalersBefore[i] = fOutputScalers[i];
+      }
+  }
+
+ void EvaluateRates(double deltatime)
+ {
+   if(deltatime==0) return;
+   for (int i = 0; i < DOFI_NUM_CHANNELS; ++i)
+        {
+          fInputRate[i] = (fInputScalers[i] -fInputScalersBefore[i])/deltatime;
+          fOutputRate[i] = (fOutputScalers[i] - fOutputScalersBefore[i])/deltatime;
+        }
+ }
 
 
   void Dump ()

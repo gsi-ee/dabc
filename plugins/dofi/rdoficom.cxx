@@ -91,7 +91,7 @@ int main (int argc, char *argv[])
 
    /* get arguments*/
    optind = 1;
-   while ((opt = getopt (argc, argv, "hzwrsunc:dx")) != -1)
+   while ((opt = getopt (argc, argv, "hzwrsunefc:dx")) != -1)
     {
      switch (opt)
      {

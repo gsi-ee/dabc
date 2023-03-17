@@ -206,7 +206,7 @@ typedef enum
        dest.SetInt ("VERBOSELEVEL", verboselevel);
        dest.SetInt ("HEXFORMAT", hexformat);
        dest.SetInt ("ADDRESS", (int) address);
-       dest.SetUInt ("VALUE", (unsigned) value);
+       dest.SetUInt ("VALUE", value);
        dest.SetInt ("REPEAT", (int) repeat);
        dest.SetStr ("FILENAME", filename);
      }

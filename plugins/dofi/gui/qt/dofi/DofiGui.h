@@ -9,6 +9,7 @@
 #include <QProcess>
 #include <QString>
 #include <QCheckBox>
+#include <QTime>
 
 
 class DofiGui: public MuppetGui
@@ -45,16 +46,20 @@ protected:
    QCheckBox* fDofiInOutAND[DOFI_NUM_CHANNELS][DOFI_NUM_CHANNELS];
 
 
-  /** toggle general trigger state*/
-  bool fTriggerOn;
+   /** timer for periodic update of scalers*/
+    QTimer* fScalerTimer;
 
-  /** this flag controls if we want to have the QFW reset action on next refresh*/
-  bool fDoResetQFW;
+    /** most recent time of scaler update */
+    QTime fScalerSampleTime;
+
 
 
   /** update register display*/
   void RefreshView ();
 
+  void RefreshScalers ();
+
+  void RefreshControlBits ();
 
 
   /** helper function for broadcast: rest current poland slave*/
@@ -77,7 +82,8 @@ protected:
   void GetRegisters ();
 
 
-
+  /** get scaler registers only*/
+    void GetScalers ();
 
 
   /** get registers and write them to config file*/
@@ -95,27 +101,17 @@ public slots:
 
 virtual void InOutOR_toggled(bool on);
 virtual void InOutAND_toggled(bool on);
-
 virtual void InOutOR_selected_toggled(bool on);
 virtual void InOutAND_selected_toggled(bool on);
-
-
-
-
-//virtual void InOutOR_tablechanged(int,int,int,int);
-//virtual void InOutAND_tablechanged(int,int,int,int);
-
-//
-//virtual void InOutOR_Cell_changed(int,int);
-//virtual void InOutAND_Cell_changed(int,int);
-//
-//virtual void InOutOR_Cell_doubleclicked(int,int);
-//virtual void InOutAND_Cell_doubleclicked(int,int);
-
 
 virtual void ResetScalersBtn_clicked ();
 virtual void StartScalersBtn_clicked ();
 virtual void StopScalersBtn_clicked ();
+
+virtual void ScalerTimeout();
+virtual void ScalerTimer_changed (int on);
+
+
 };
 
 #endif

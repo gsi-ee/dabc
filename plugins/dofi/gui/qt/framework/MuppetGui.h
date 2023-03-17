@@ -214,6 +214,9 @@ protected:
   /** Save value to currently open *.dof configuration file*/
   int SaveMuppet (QString& host, int port, int address, unsigned long long value);
 
+  /** Execute a single command with simple argument passed as flag string */
+  int MuppetSingleCommand (QString& host, int port, QString flag);
+
   /** execute (rdofi) command in shell. Return value is output of command*/
   QString ExecuteMuppetCmd (QString& command,  int timeout=5000);
 

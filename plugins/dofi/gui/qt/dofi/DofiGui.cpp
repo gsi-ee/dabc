@@ -25,7 +25,13 @@
 
 
 
-
+enum DofiScalerColumns_t
+{
+  dofi_scaler_in=0,
+  dofi_scaler_out=1,
+  dofi_scaler_inrate=2,
+  dofi_scaler_outrate=3
+};
 
 // *********************************************************
 
@@ -37,7 +43,7 @@ DofiGui::DofiGui (QWidget* parent) :
     MuppetGui (parent)
 {
   fImplementationName="DOFI";
-  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.51 of 16-March-2023 by JAM (j.adamczewski@gsi.de)";
+  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.52 of 17-March-2023 by JAM (j.adamczewski@gsi.de)";
   setWindowTitle(QString("%1 GUI").arg(fImplementationName));
 
 
@@ -106,13 +112,23 @@ DofiGui::DofiGui (QWidget* parent) :
           {
             fDofiScalerWidget->ScalersTableWidget->setVerticalHeaderItem(i,new QTableWidgetItem(QString("%1").arg(i)));
             QTableWidgetItem* itemin= new QTableWidgetItem("init");
-            fDofiScalerWidget->ScalersTableWidget->setItem(i,0,itemin);
+            fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_in, itemin);
 
             QTableWidgetItem* itemout= new QTableWidgetItem("init");
-            fDofiScalerWidget->ScalersTableWidget->setItem(i,1,itemout);
+            fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_out, itemout);
+
+            QTableWidgetItem* iteminrate= new QTableWidgetItem("init");
+            fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_inrate, iteminrate);
+
+            QTableWidgetItem* itemoutrate= new QTableWidgetItem("init");
+            fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_outrate, itemoutrate);
 
           }
 
+          fScalerTimer = new QTimer (this);
+            //fScalerTimer->setInterval (2000);
+          QObject::connect (fScalerTimer, SIGNAL (timeout ()), this, SLOT (ScalerTimeout ()));
+          QObject::connect (fDofiScalerWidget->ScalerTimerCheckBox, SIGNAL(stateChanged(int)), this, SLOT(ScalerTimer_changed(int)));
 
 
           fDofiScalerWidget->show();
@@ -148,15 +164,9 @@ DofiGui::~DofiGui ()
 
 void DofiGui::ResetSlave ()
 {
-// WriteMuppet (fSFP, fSlave, POLAND_REG_RESET, 0);
-// WriteMuppet (fSFP, fSlave, POLAND_REG_RESET, 1);
-  // TODO
  printm("Did reset DOFI at %s:%d\n",fHost.toLatin1 ().constData (), fPort);
+ MuppetSingleCommand(fHost, fPort, "-z");
 }
-
-
-
-
 
 
 void DofiGui::DumpSlave ()
@@ -194,46 +204,68 @@ void DofiGui::DumpSlave ()
 void DofiGui::RefreshView ()
 {
 // display setup structure to gui:
-QString text;
-QString pre;
-fNumberBase==16? pre="0x" : pre="";
-theSetup_GET_FOR_SLAVE(DofiSetup);
-
-
-for(int inc=0; inc<DOFI_NUM_CHANNELS; ++inc)
-{
-  QTableWidgetItem* item=fDofiScalerWidget->ScalersTableWidget->item(inc,0);
-  qulonglong scaler=theSetup->fInputScalers[inc];
-  text=pre+QString("%1").arg(scaler,0,fNumberBase);
-  item->setText(text);
-}
-
-for(int out=0; out<DOFI_NUM_CHANNELS; ++out)
-{
-  QTableWidgetItem* item=fDofiScalerWidget->ScalersTableWidget->item(out,1);
-  qulonglong scaler=theSetup->fOutputScalers[out];
-  text=pre+QString("%1").arg(scaler,0,fNumberBase);
-  item->setText(text);
-}
-
-for(int outs=0; outs<DOFI_NUM_CHANNELS; ++outs)
-         {
-
-         for(int ins=0; ins<DOFI_NUM_CHANNELS;++ins)
-           {
-           bool isor=theSetup->IsOutputOR(outs, ins);
-           fDofiInOutOR[ins][outs]->setChecked(isor);
-           bool isand=theSetup->IsOutputAND(outs, ins);
-           fDofiInOutAND[ins][outs]->setChecked(isand);
-
-           }
-         }
-
-
-
-
+RefreshScalers();
+RefreshControlBits();
 RefreshStatus();
 }
+
+
+void DofiGui::RefreshScalers ()
+{
+  QString text;
+  QString pre;
+  fNumberBase == 16 ? pre = "0x" : pre = "";
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  QTableWidgetItem *item = 0;
+  qulonglong scaler;
+  double rate = 0.0;
+  for (int c = 0; c < DOFI_NUM_CHANNELS; ++c)
+  {
+    item = fDofiScalerWidget->ScalersTableWidget->item (c, dofi_scaler_in);
+    scaler = theSetup->fInputScalers[c];
+    text = pre + QString ("%1").arg (scaler, 0, fNumberBase);
+    item->setText (text);
+
+    item = fDofiScalerWidget->ScalersTableWidget->item (c, dofi_scaler_out);
+    scaler = theSetup->fOutputScalers[c];
+    text = pre + QString ("%1").arg (scaler, 0, fNumberBase);
+    item->setText (text);
+
+    item = fDofiScalerWidget->ScalersTableWidget->item (c, dofi_scaler_inrate);
+    rate = theSetup->fInputRate[c];
+    text = QString ("%1").arg (rate);
+    item->setText (text);
+
+    item = fDofiScalerWidget->ScalersTableWidget->item (c, dofi_scaler_outrate);
+    rate = theSetup->fOutputRate[c];
+    text = QString ("%1").arg (rate);
+    item->setText (text);
+
+  }
+
+}
+
+void DofiGui::RefreshControlBits ()
+{
+theSetup_GET_FOR_SLAVE(DofiSetup);
+for (int outs = 0; outs < DOFI_NUM_CHANNELS; ++outs)
+{
+
+  for (int ins = 0; ins < DOFI_NUM_CHANNELS; ++ins)
+  {
+    bool isor = theSetup->IsOutputOR (outs, ins);
+    fDofiInOutOR[ins][outs]->setChecked (isor);
+    bool isand = theSetup->IsOutputAND (outs, ins);
+    fDofiInOutAND[ins][outs]->setChecked (isand);
+
+  }
+}
+
+}
+
+
+
+
 
 void DofiGui::EvaluateView ()
 {
@@ -295,16 +327,13 @@ void DofiGui::SetRegisters ()
 
 void DofiGui::GetRegisters ()
 {
-  std::cout<<"DofiGui::GetRegisters ()" << std::endl;
+  //std::cout<<"DofiGui::GetRegisters ()" << std::endl;
 // read register values from hardware into structure
 int status=0;
-//if (!AssertNoBroadcast ())
-//  return;
 
 theSetup_GET_FOR_SLAVE(DofiSetup);
 
 
-//MultiReadMuppet (QString &host, int port, int baseaddress, int times, unsigned long long *destbuffer)
 
 status=MultiReadMuppet (fHost, fPort, DOFI_SIGNALCTRL_BASE, DOFI_NUM_CHANNELS,theSetup->fSignalControl);
 if(status) printm("GetRegisters error %d when reading input signal registers!",status);
@@ -315,17 +344,30 @@ if(status) printm("GetRegisters error %d when reading output OR registers!",stat
 status=MultiReadMuppet (fHost, fPort, DOFI_ANDCTRL_BASE, DOFI_NUM_CHANNELS,theSetup->fOutputANDBits);
 if(status) printm("GetRegisters error %d when reading output AND registers!",status);
 
-status=MultiReadMuppet (fHost, fPort, DOFI_INPUTSCALER_BASE, DOFI_NUM_CHANNELS,theSetup->fInputScalers);
-if(status) printm("GetRegisters error %d when reading input scalers!",status);
 
-status=MultiReadMuppet (fHost, fPort, DOFI_OUTPUTSCALER_BASE, DOFI_NUM_CHANNELS,theSetup->fOutputScalers);
-if(status) printm("GetRegisters error %d when reading output scalers!",status);
+GetScalers();
 
 
 
 }
 
+void DofiGui::GetScalers ()
+{
+  int status=0;
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  theSetup->SaveScalers();// first save previous scaler values for rate calculations
+  QTime nowtime=QTime::currentTime();
+  int deltamillis=fScalerSampleTime.msecsTo(nowtime);
+  //std::cout<<"DofiGui::GetScalers () with "<< deltamillis<<" ms difference to previous"<< std::endl;
 
+  status=MultiReadMuppet (fHost, fPort, DOFI_INPUTSCALER_BASE, DOFI_NUM_CHANNELS,theSetup->fInputScalers);
+  if(status) printm("GetRegisters error %d when reading input scalers!",status);
+  status=MultiReadMuppet (fHost, fPort, DOFI_OUTPUTSCALER_BASE, DOFI_NUM_CHANNELS,theSetup->fOutputScalers);
+  if(status) printm("GetRegisters error %d when reading output scalers!",status);
+
+  theSetup->EvaluateRates(deltamillis/1000.0);
+  fScalerSampleTime=nowtime;
+}
 
 
 
@@ -386,15 +428,8 @@ void DofiGui::InOutOR_toggled(bool on)
   MUPPET_LOCK_SLOT
   int row=fDofiControlWidget->OutputORTableWidget->currentRow();
   int col=fDofiControlWidget->OutputORTableWidget->currentColumn();
-  std::cout<<"DofiGui::InOutOR_toggled("<<row<<","<<col<<","<<on<<")" << std::endl;
+  //std::cout<<"DofiGui::InOutOR_toggled("<<row<<","<<col<<","<<on<<")" << std::endl;
   MUPPET_AUTOAPPLY(AutoApplyOR(row,col,on));
-
-  QList<QTableWidgetSelectionRange> selection=fDofiControlWidget->OutputORTableWidget->selectedRanges();
-     for (int i = 0; i < selection.size(); ++i) {
-       QTableWidgetSelectionRange range=selection.at(i);
-       std::cout<<"selection "<<i<<" is:("<<range.leftColumn()<<","<<range.rightColumn()<<","<<range.topRow()<<","<<range.bottomRow()<<")" << std::endl;
-
-     }
   MUPPET_UNLOCK_SLOT
 }
 
@@ -403,10 +438,7 @@ void DofiGui::InOutAND_toggled(bool on)
   MUPPET_LOCK_SLOT
   int row=fDofiControlWidget->OutputANDTableWidget->currentRow();
   int col=fDofiControlWidget->OutputANDTableWidget->currentColumn();
-  std::cout<<"DofiGui::InOutANDtoggled("<<row<<","<<col<<","<<on<<")" << std::endl;
-
-
-
+  //std::cout<<"DofiGui::InOutANDtoggled("<<row<<","<<col<<","<<on<<")" << std::endl;
   MUPPET_AUTOAPPLY(AutoApplyAND(row,col,on));
   MUPPET_UNLOCK_SLOT
 }
@@ -416,14 +448,14 @@ void DofiGui::InOutAND_toggled(bool on)
 void DofiGui::InOutOR_selected_toggled (bool on)
 {
   MUPPET_LOCK_SLOT
-  std::cout << "DofiGui::InOutOR_selected_toggled(" << on << ")" << std::endl;
+  //std::cout << "DofiGui::InOutOR_selected_toggled(" << on << ")" << std::endl;
   QList < QTableWidgetSelectionRange > selection = fDofiControlWidget->OutputORTableWidget
       ->selectedRanges ();
   for (int i = 0; i < selection.size (); ++i)
   {
     QTableWidgetSelectionRange range = selection.at (i);
-    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn ()
-        << "," << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
+//    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn ()
+//        << "," << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
     // here change checkboxes within ranges to the desired state:
     for (int row = range.topRow (); row <= range.bottomRow (); ++row)
     {
@@ -441,13 +473,13 @@ void DofiGui::InOutOR_selected_toggled (bool on)
 void DofiGui::InOutAND_selected_toggled (bool on)
 {
   MUPPET_LOCK_SLOT
-  std::cout << "DofiGui::InOutAND_selected_toggled(" << on << ")" << std::endl;
+  //std::cout << "DofiGui::InOutAND_selected_toggled(" << on << ")" << std::endl;
   QList < QTableWidgetSelectionRange > selection = fDofiControlWidget->OutputANDTableWidget->selectedRanges ();
   for (int i = 0; i < selection.size (); ++i)
   {
     QTableWidgetSelectionRange range = selection.at (i);
-    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn () << ","
-        << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
+//    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn () << ","
+//        << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
     // here change checkboxes within ranges to the desired state:
 
     for (int row = range.topRow (); row <= range.bottomRow (); ++row)
@@ -468,18 +500,53 @@ void DofiGui::InOutAND_selected_toggled (bool on)
 
 void  DofiGui::ResetScalersBtn_clicked ()
 {
-  std::cout<<"DofiGui:::ResetScalersBtn_clicked ()" << std::endl;
+  //std::cout<<"DofiGui:::ResetScalersBtn_clicked ()" << std::endl;
+  MuppetSingleCommand(fHost, fPort, "-n");
 }
 
 
 void  DofiGui::StartScalersBtn_clicked ()
 {
-  std::cout<<"DofiGui:::StartScalersBtn_clicked ()" << std::endl;
+  //std::cout<<"DofiGui:::StartScalersBtn_clicked ()" << std::endl;
+  MuppetSingleCommand(fHost, fPort, "-e");
 }
 
 
 void  DofiGui::StopScalersBtn_clicked ()
 {
-  std::cout<<"DofiGui:::StopScalersBtn_clicked ()" << std::endl;
+  //std::cout<<"DofiGui:::StopScalersBtn_clicked ()" << std::endl;
+  MuppetSingleCommand(fHost, fPort, "-f");
 }
+
+void DofiGui::ScalerTimeout()
+{
+  //std::cout<<"DofiGui::ScalerTimeout()" << std::endl;
+  // here get scalers and refresh ratemeters
+  MUPPET_LOCK_SLOT
+  GetScalers ();
+  RefreshScalers();
+  MUPPET_UNLOCK_SLOT
+
+}
+
+void DofiGui::ScalerTimer_changed (int on)
+{
+  MUPPET_LOCK_SLOT
+  //std::cout << "ScalerTimer_changed to " <<  on << std::endl;
+  if (on)
+  {
+    int period = 1000 * fDofiScalerWidget->ScalerSpinBox->value ();
+    printm ("Scaler Timer has been started with %d ms period.", period);
+    fScalerTimer->setInterval (period);
+    fScalerTimer->start ();
+  }
+  else
+  {
+    fScalerTimer->stop ();
+    printm ("Scaler Timer has been stopped.");
+  }
+  MUPPET_UNLOCK_SLOT
+}
+
+
 

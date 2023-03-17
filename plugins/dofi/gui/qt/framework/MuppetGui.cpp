@@ -628,7 +628,17 @@ int MuppetGui::MultiReadMuppet (QString &host, int port, int baseaddress, int ti
 }
 
 
-
+int MuppetGui::MuppetSingleCommand (QString& host, int port, QString flag)
+{
+ int rev = 0;
+ char buffer[1024];
+ snprintf (buffer, 1024, "rdoficom %s:%d  %s", host.toLatin1 ().constData (), port,  flag.toLatin1 ().constData ());
+ QString com (buffer);
+ QString result = ExecuteMuppetCmd (com);
+if (result == "ERROR")
+  rev = -1;
+return rev;
+}
 
 
 
