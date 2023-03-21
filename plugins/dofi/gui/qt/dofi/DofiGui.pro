@@ -26,8 +26,8 @@ CONFIG += debug qt warn_off thread
 
 
 
-SOURCES += main.cpp DofiGui.cpp DofiControlWidget.cpp DofiScalerWidget.cpp 
+SOURCES += main.cpp DofiGui.cpp DofiControlWidget.cpp DofiScalerWidget.cpp DofiInputsWidget.cpp 
 
-HEADERS += DofiGui.h DofiControlWidget.h DofiScalerWidget.h DofiSetup.h 
+HEADERS += DofiGui.h DofiControlWidget.h DofiScalerWidget.h DofiInputsWidget.h DofiSetup.h 
 
-FORMS = DofiControlWidget.ui DofiScalerWidget.ui 
+FORMS = DofiControlWidget.ui DofiScalerWidget.ui DofiInputsWidget.ui 

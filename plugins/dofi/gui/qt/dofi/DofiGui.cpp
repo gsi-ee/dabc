@@ -33,6 +33,13 @@ enum DofiScalerColumns_t
   dofi_scaler_outrate=3
 };
 
+enum DofiInputColumns_t
+{
+  dofi_input_invert=0,
+  dofi_input_delay=1,
+  dofi_input_len=2
+};
+
 // *********************************************************
 
 /*
@@ -43,7 +50,7 @@ DofiGui::DofiGui (QWidget* parent) :
     MuppetGui (parent)
 {
   fImplementationName="DOFI";
-  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.52 of 17-March-2023 by JAM (j.adamczewski@gsi.de)";
+  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.60 of 21-March-2023 by JAM (j.adamczewski@gsi.de)";
   setWindowTitle(QString("%1 GUI").arg(fImplementationName));
 
 
@@ -53,6 +60,7 @@ DofiGui::DofiGui (QWidget* parent) :
 
   fDofiControlWidget=new DofiControlWidget(this);
   fDofiScalerWidget = new DofiScalerWidget(this);
+  fDofiInputsWidget= new DofiInputsWidget(this);
 
   if(fDofiControlWidget)
        {
@@ -112,15 +120,20 @@ DofiGui::DofiGui (QWidget* parent) :
           {
             fDofiScalerWidget->ScalersTableWidget->setVerticalHeaderItem(i,new QTableWidgetItem(QString("%1").arg(i)));
             QTableWidgetItem* itemin= new QTableWidgetItem("init");
+            itemin->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
             fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_in, itemin);
 
             QTableWidgetItem* itemout= new QTableWidgetItem("init");
+            itemout->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
             fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_out, itemout);
 
             QTableWidgetItem* iteminrate= new QTableWidgetItem("init");
+            iteminrate->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
             fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_inrate, iteminrate);
 
+
             QTableWidgetItem* itemoutrate= new QTableWidgetItem("init");
+            itemoutrate->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
             fDofiScalerWidget->ScalersTableWidget->setItem(i,dofi_scaler_outrate, itemoutrate);
 
           }
@@ -135,6 +148,60 @@ DofiGui::DofiGui (QWidget* parent) :
           QMdiSubWindow* subtrig=mdiArea->addSubWindow(fDofiScalerWidget, wflags);
           subtrig->setAttribute(Qt::WA_DeleteOnClose, false);
         }
+
+
+  if (fDofiInputsWidget)
+  {
+    fDofiInputsWidget->setWindowTitle ("Input signal shaping");
+    // here initialize the tables:
+    fDofiInputsWidget->InputsTableWidget->setRowCount (DOFI_NUM_CHANNELS);
+    for (int i = 0; i < DOFI_NUM_CHANNELS; ++i)
+    {
+
+      fDofiInvertState[i]= new QRadioButton();
+      fDofiInvertState[i]->setAutoExclusive(false);
+      QObject::connect (fDofiInvertState[i], SIGNAL(toggled(bool)),this,SLOT (InvertState_toggled(bool)));
+      fDofiInputsWidget->InputsTableWidget->setCellWidget (i, dofi_input_invert, fDofiInvertState[i]);
+
+      fDofiDelayBox[i]= new QSpinBox();
+      fDofiDelayBox[i]->setMinimum(0);
+      fDofiDelayBox[i]->setMaximum(16777215);
+      fDofiDelayBox[i]->setAccelerated(true);
+      fDofiDelayBox[i]->setAlignment(Qt::AlignRight);
+      fDofiDelayBox[i]->setDisplayIntegerBase(10); // later change this in refresh function?
+      fDofiDelayBox[i]->setButtonSymbols(QAbstractSpinBox::PlusMinus);
+      QObject::connect (fDofiDelayBox[i], SIGNAL(valueChanged(int)),this,SLOT (Delay_changed(int)));
+      fDofiInputsWidget->InputsTableWidget->setCellWidget (i, dofi_input_delay, fDofiDelayBox[i]);
+
+
+      fDofiLengthBox[i]= new QSpinBox();
+      fDofiLengthBox[i]->setMinimum(0);
+      fDofiLengthBox[i]->setMaximum(16777215);
+      fDofiLengthBox[i]->setAccelerated(true);
+      fDofiLengthBox[i]->setAlignment(Qt::AlignRight);
+      fDofiLengthBox[i]->setDisplayIntegerBase(10); // later change this in refresh function?
+      fDofiLengthBox[i]->setButtonSymbols(QAbstractSpinBox::PlusMinus);
+      QObject::connect (fDofiLengthBox[i], SIGNAL(valueChanged(int)),this,SLOT (Length_changed(int)));
+      fDofiInputsWidget->InputsTableWidget->setCellWidget (i, dofi_input_len, fDofiLengthBox[i]);
+
+
+
+    }
+    fDofiInputsWidget->All_delay_spinBox->setAlignment(Qt::AlignRight);
+    fDofiInputsWidget->All_length_spinBox->setAlignment(Qt::AlignRight);
+
+    QObject::connect (fDofiInputsWidget->All_Invertradio_Button, SIGNAL(toggled(bool)),this,SLOT (InvertState_selected_toggled(bool)));
+    QObject::connect (fDofiInputsWidget->All_delay_spinBox, SIGNAL(valueChanged(int)),this,SLOT (Delay_selected_changed(int)));
+    QObject::connect (fDofiInputsWidget->All_length_spinBox, SIGNAL(valueChanged(int)),this,SLOT (Length_selected_changed(int)));
+
+
+
+    fDofiInputsWidget->show ();
+    QMdiSubWindow *subtrig = mdiArea->addSubWindow (fDofiInputsWidget, wflags);
+    subtrig->setAttribute (Qt::WA_DeleteOnClose, false);
+
+  }
+
 
   ClearOutputBtn_clicked ();
 
@@ -206,6 +273,7 @@ void DofiGui::RefreshView ()
 // display setup structure to gui:
 RefreshScalers();
 RefreshControlBits();
+RefreshInputs ();
 RefreshStatus();
 }
 
@@ -263,6 +331,31 @@ for (int outs = 0; outs < DOFI_NUM_CHANNELS; ++outs)
 
 }
 
+void DofiGui::RefreshInputs ()
+{
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  QString pre;
+  fNumberBase == 16 ? pre = "0x" : pre = "";
+  fDofiInputsWidget->All_delay_spinBox->setDisplayIntegerBase (fNumberBase);
+  fDofiInputsWidget->All_delay_spinBox->setPrefix (pre);
+  fDofiInputsWidget->All_length_spinBox->setDisplayIntegerBase (fNumberBase);
+  fDofiInputsWidget->All_length_spinBox->setPrefix (pre);
+  for (int ins = 0; ins < DOFI_NUM_CHANNELS; ++ins)
+  {
+    bool inverted = theSetup->IsInputInvert (ins);
+    int len = theSetup->GetInputLength (ins);
+    int delay = theSetup->GetInputDelay (ins);
+
+    fDofiInvertState[ins]->setChecked (inverted);
+    fDofiLengthBox[ins]->setValue (len);
+    fDofiLengthBox[ins]->setDisplayIntegerBase (fNumberBase);
+    fDofiLengthBox[ins]->setPrefix (pre);
+    fDofiDelayBox[ins]->setValue (delay);
+    fDofiDelayBox[ins]->setDisplayIntegerBase (fNumberBase);
+    fDofiDelayBox[ins]->setPrefix (pre);
+  }
+
+}
 
 
 
@@ -284,13 +377,27 @@ void DofiGui::EvaluateView ()
     }
   }
 
+  // below the input shape elements:
+
+  for (int in = 0; in < DOFI_NUM_CHANNELS; ++in)
+     {
+       theSetup->fSignalControl[in]=0;
+       unsigned long long invertset = (fDofiInvertState[in]->isChecked() ? 1 : 0);
+       theSetup->fSignalControl[in] |= (invertset & 0x1);
+       unsigned long long delay = fDofiDelayBox[in]->value();
+       theSetup->fSignalControl[in] |= (delay & 0xFFFFFF) << 16;
+       unsigned long long len = fDofiLengthBox[in]->value();
+       theSetup->fSignalControl[in] |= (len & 0xFFFFFF) << 40;
+
+     }
+
 }
 
 
 
 void DofiGui::SetRegisters ()
 {
-  std::cout << "DofiGui::SetRegisters()"<< std::endl;
+  //std::cout << "DofiGui::SetRegisters()"<< std::endl;
 // write register values from strucure with gosipcmd
   theSetup_GET_FOR_SLAVE(DofiSetup);
 
@@ -320,7 +427,16 @@ void DofiGui::SetRegisters ()
 
   // TODO: set the input shape/invert registers
 
-
+  for(int ins=0; ins<DOFI_NUM_CHANNELS; ++ins)
+     {
+       unsigned long long value=theSetup->fSignalControl[ins];
+       int address=DOFI_SIGNALCTRL_BASE + ins;
+       int rev=WriteMuppet(fHost,fPort, address, value);
+       if(rev)
+       {
+         printm("SetRegisters: Error writing 0x%lx to input signalctrl register %d (0x%x)", value, ins, address);
+       }
+     }
 
 
 }
@@ -421,6 +537,46 @@ void DofiGui::AutoApplyAND (int input, int output, bool on)
 
 
 
+void DofiGui::AutoApplyInvert (int input, bool on)
+{
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  theSetup->SetInputInvert (input, on);
+  unsigned long long reg = theSetup->fSignalControl[input];
+  int address = DOFI_SIGNALCTRL_BASE + input;
+  int rev = WriteMuppet (fHost, fPort, address, reg);
+  if (rev < 0)
+  {
+    printm ("Error writing to Mupppet in AutoApplyInvert (%d,%d)", input, on);
+  }
+}
+
+void DofiGui::AutoApplyDelay (int input, int value)
+{
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  theSetup->SetInputDelay (input, value);
+  unsigned long long reg = theSetup->fSignalControl[input];
+  int address = DOFI_SIGNALCTRL_BASE + input;
+  int rev = WriteMuppet (fHost, fPort, address, reg);
+  if (rev < 0)
+  {
+    printm ("Error writing to Mupppet in AutoApplyDelay (%d,%d)", input, value);
+  }
+}
+
+void DofiGui::AutoApplyLength (int input, int value)
+{
+  theSetup_GET_FOR_SLAVE(DofiSetup);
+  theSetup->SetInputLength (input, value);
+  unsigned long long reg = theSetup->fSignalControl[input];
+  int address = DOFI_SIGNALCTRL_BASE + input;
+  int rev = WriteMuppet (fHost, fPort, address, reg);
+  if (rev < 0)
+  {
+    printm ("Error writing to Mupppet in AutoApplyLength (%d,%d)", input, value);
+  }
+}
+
+
 
 
 void DofiGui::InOutOR_toggled(bool on)
@@ -495,7 +651,120 @@ void DofiGui::InOutAND_selected_toggled (bool on)
 }
 
 
+void DofiGui::InvertState_toggled(bool on)
+{
+  MUPPET_LOCK_SLOT
+  int row=fDofiInputsWidget->InputsTableWidget->currentRow();
+   //std::cout << "DofiGui::InvertState_toggled("<<row<<"," << on << ")" << std::endl;
+   MUPPET_AUTOAPPLY(AutoApplyInvert(row,on));
+  MUPPET_UNLOCK_SLOT
+}
 
+
+void DofiGui::InvertState_selected_toggled (bool on)
+{
+  MUPPET_LOCK_SLOT
+  //std::cout << "DofiGui::InvertState_selected_toggled(" << on << ")" << std::endl;
+  QList < QTableWidgetSelectionRange > selection = fDofiInputsWidget->InputsTableWidget
+      ->selectedRanges ();
+  for (int i = 0; i < selection.size (); ++i)
+  {
+    QTableWidgetSelectionRange range = selection.at (i);
+//    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn ()
+//        << "," << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
+    // here change checkboxes within ranges to the desired state:
+    for (int row = range.topRow (); row <= range.bottomRow (); ++row)
+    {
+      for (int col = range.leftColumn (); col <= range.rightColumn (); ++col)
+      {
+        if(col!=dofi_input_invert) continue;
+        fDofiInvertState[row]->setChecked(on);
+        MUPPET_AUTOAPPLY(AutoApplyInvert (row, on));
+      }
+    }
+  }
+  MUPPET_UNLOCK_SLOT
+}
+
+
+
+
+void DofiGui::Delay_changed(int value)
+{
+  MUPPET_LOCK_SLOT
+   int row=fDofiInputsWidget->InputsTableWidget->currentRow();
+  //std::cout << "DofiGui::Delay_changed("<<row<<"," << value << ")" << std::endl;
+   MUPPET_AUTOAPPLY(AutoApplyDelay(row,value));
+   MUPPET_UNLOCK_SLOT
+
+}
+
+
+void DofiGui::Delay_selected_changed(int value)
+{
+  MUPPET_LOCK_SLOT
+  //std::cout << "DofiGui:::Delay_selected_changed(" << value << ")" << std::endl;
+  QList < QTableWidgetSelectionRange > selection = fDofiInputsWidget->InputsTableWidget
+      ->selectedRanges ();
+  for (int i = 0; i < selection.size (); ++i)
+  {
+    QTableWidgetSelectionRange range = selection.at (i);
+//    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn ()
+//        << "," << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
+    // here change checkboxes within ranges to the desired state:
+    for (int row = range.topRow (); row <= range.bottomRow (); ++row)
+    {
+      for (int col = range.leftColumn (); col <= range.rightColumn (); ++col)
+      {
+        if(col!=dofi_input_delay) continue;
+        fDofiDelayBox[row]->setValue(value);
+        MUPPET_AUTOAPPLY(AutoApplyDelay(row, value));
+      }
+
+    }
+  }
+  MUPPET_UNLOCK_SLOT
+}
+
+
+
+
+
+void DofiGui::Length_changed(int value)
+{
+  MUPPET_LOCK_SLOT
+   int row=fDofiInputsWidget->InputsTableWidget->currentRow();
+  //std::cout << "DofiGui::Length_changed("<<row<<"," << value << ")" << std::endl;
+    MUPPET_AUTOAPPLY(AutoApplyLength(row,value));
+    MUPPET_UNLOCK_SLOT
+
+}
+
+void DofiGui::Length_selected_changed(int value)
+{
+  MUPPET_LOCK_SLOT
+  //std::cout << "DofiGui:::Length_selected_changed(" << value << ")" << std::endl;
+  QList < QTableWidgetSelectionRange > selection = fDofiInputsWidget->InputsTableWidget
+      ->selectedRanges ();
+  for (int i = 0; i < selection.size (); ++i)
+  {
+    QTableWidgetSelectionRange range = selection.at (i);
+//    std::cout << "selection " << i << " is:(" << range.leftColumn () << "," << range.rightColumn ()
+//        << "," << range.topRow () << "," << range.bottomRow () << ")" << std::endl;
+    // here change checkboxes within ranges to the desired state:
+    for (int row = range.topRow (); row <= range.bottomRow (); ++row)
+    {
+      for (int col = range.leftColumn (); col <= range.rightColumn (); ++col)
+      {
+      if(col!=dofi_input_len) continue;
+        fDofiLengthBox[row]->setValue(value);
+        MUPPET_AUTOAPPLY(AutoApplyLength(row, value));
+      }
+
+    }
+  }
+  MUPPET_UNLOCK_SLOT
+}
 
 
 void  DofiGui::ResetScalersBtn_clicked ()
@@ -525,6 +794,7 @@ void DofiGui::ScalerTimeout()
   MUPPET_LOCK_SLOT
   GetScalers ();
   RefreshScalers();
+  RefreshStatus();
   MUPPET_UNLOCK_SLOT
 
 }

@@ -139,9 +139,9 @@ public:
   {
     if (channel < DOFI_NUM_CHANNELS)
     {
-      unsigned long long mask = (0xFFFFFF << 40);
+      unsigned long long mask = (0xFFFFFFULL << 40);
       fSignalControl[channel] &= ~mask;
-      fSignalControl[channel] |= (len & 0xFFFFFF) << 40;
+      fSignalControl[channel] |= (len & 0xFFFFFFULL) << 40;
     }
   }
 
