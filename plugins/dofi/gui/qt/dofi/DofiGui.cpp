@@ -50,7 +50,7 @@ DofiGui::DofiGui (QWidget* parent) :
     MuppetGui (parent)
 {
   fImplementationName="DOFI";
-  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.60 of 21-March-2023 by JAM (j.adamczewski@gsi.de)";
+  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.61 of 21-March-2023 by JAM (j.adamczewski@gsi.de)";
   setWindowTitle(QString("%1 GUI").arg(fImplementationName));
 
 
@@ -64,7 +64,7 @@ DofiGui::DofiGui (QWidget* parent) :
 
   if(fDofiControlWidget)
        {
-	  	 fDofiControlWidget->setWindowTitle("Main Control");
+	  	 fDofiControlWidget->setWindowTitle("Logic Matrix");
 
 	  	fDofiControlWidget->OutputORTableWidget->setRowCount(DOFI_NUM_CHANNELS);
 	  	fDofiControlWidget->OutputORTableWidget->setColumnCount(DOFI_NUM_CHANNELS);
@@ -301,12 +301,12 @@ void DofiGui::RefreshScalers ()
 
     item = fDofiScalerWidget->ScalersTableWidget->item (c, dofi_scaler_inrate);
     rate = theSetup->fInputRate[c];
-    text = QString ("%1").arg (rate);
+    text = QString ("%1").arg (rate,0,'f',0);
     item->setText (text);
 
     item = fDofiScalerWidget->ScalersTableWidget->item (c, dofi_scaler_outrate);
     rate = theSetup->fOutputRate[c];
-    text = QString ("%1").arg (rate);
+    text = QString ("%1").arg (rate,0,'f',0);
     item->setText (text);
 
   }
