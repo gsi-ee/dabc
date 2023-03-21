@@ -461,7 +461,7 @@ void MuppetGui::SaveConfig()
   if (fileName.endsWith (".dof"))
   {
     WriteConfigFile (QString ("# Format *.dof\n"));
-    WriteConfigFile (QString ("# usage: rdifucin -x -c file.dof \n"));
+    WriteConfigFile (QString ("# usage: rdoficocm -x -c file.dof \n"));
     WriteConfigFile (QString ("#                                         \n"));
     WriteConfigFile (QString ("# address value (setbit|clearbit)\n"));
 
@@ -579,7 +579,8 @@ int MuppetGui::SaveMuppet (QString& host, int port, int address, unsigned long l
 {
 //std::cout << "# SaveMuppet" << std::endl;
   static char buffer[1024] = { };
-  snprintf (buffer, 1024, "%s %d %x %llx \n", host.toLatin1 ().constData (), port, address, value);
+  //snprintf (buffer, 1024, "%s %d %x %llx \n", host.toLatin1 ().constData (), port, address, value);
+  snprintf (buffer, 1024, "0x%x 0x%llx \n", address, value); // ignore remote location here
   QString line (buffer);
   return (WriteConfigFile (line));
 }

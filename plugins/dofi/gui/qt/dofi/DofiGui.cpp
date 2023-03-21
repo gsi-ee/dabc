@@ -50,7 +50,7 @@ DofiGui::DofiGui (QWidget* parent) :
     MuppetGui (parent)
 {
   fImplementationName="DOFI";
-  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.61 of 21-March-2023 by JAM (j.adamczewski@gsi.de)";
+  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.62 of 21-March-2023 by JAM (j.adamczewski@gsi.de)";
   setWindowTitle(QString("%1 GUI").arg(fImplementationName));
 
 
@@ -166,6 +166,7 @@ DofiGui::DofiGui (QWidget* parent) :
       fDofiDelayBox[i]= new QSpinBox();
       fDofiDelayBox[i]->setMinimum(0);
       fDofiDelayBox[i]->setMaximum(16777215);
+      fDofiDelayBox[i]->setSpecialValueText("no change");
       fDofiDelayBox[i]->setAccelerated(true);
       fDofiDelayBox[i]->setAlignment(Qt::AlignRight);
       fDofiDelayBox[i]->setDisplayIntegerBase(10); // later change this in refresh function?
@@ -177,6 +178,7 @@ DofiGui::DofiGui (QWidget* parent) :
       fDofiLengthBox[i]= new QSpinBox();
       fDofiLengthBox[i]->setMinimum(0);
       fDofiLengthBox[i]->setMaximum(16777215);
+      fDofiLengthBox[i]->setSpecialValueText("no change");
       fDofiLengthBox[i]->setAccelerated(true);
       fDofiLengthBox[i]->setAlignment(Qt::AlignRight);
       fDofiLengthBox[i]->setDisplayIntegerBase(10); // later change this in refresh function?
@@ -244,18 +246,18 @@ void DofiGui::DumpSlave ()
   printm("dump registers of  %s:%d\n",fHost.toLatin1 ().constData (), fPort);
   theSetup_GET_FOR_SLAVE(DofiSetup);
   theSetup->Dump();
-
-  AppendTextWindow ("Input Scalers:\n");
-  snprintf (buffer, 1024, "rdoficom %s:%d %s -r %s  0x%x %d ", fHost.toLatin1 ().constData (), fPort, (fDebug ? "-d":" "), (fNumberBase==16 ? "-x": " "), DOFI_INPUTSCALER_BASE, DOFI_NUM_CHANNELS);
-  QString com (buffer);
-  QString result = ExecuteMuppetCmd (com);
-  AppendTextWindow (result);
-
-  AppendTextWindow ("Output Scalers:\n");
-  snprintf (buffer, 1024, "rdoficom %s:%d %s -r %s  0x%x %d ", fHost.toLatin1 ().constData (), fPort, (fDebug ? "-d":" "), (fNumberBase==16 ? "-x": " "), DOFI_OUTPUTSCALER_BASE, DOFI_NUM_CHANNELS);
-  com=buffer;
-  result = ExecuteMuppetCmd (com);
-  AppendTextWindow (result);
+// supress the first debug functionality now JAM 21-03-22:
+//  AppendTextWindow ("Input Scalers:\n");
+//  snprintf (buffer, 1024, "rdoficom %s:%d %s -r %s  0x%x %d ", fHost.toLatin1 ().constData (), fPort, (fDebug ? "-d":" "), (fNumberBase==16 ? "-x": " "), DOFI_INPUTSCALER_BASE, DOFI_NUM_CHANNELS);
+//  QString com (buffer);
+//  QString result = ExecuteMuppetCmd (com);
+//  AppendTextWindow (result);
+//
+//  AppendTextWindow ("Output Scalers:\n");
+//  snprintf (buffer, 1024, "rdoficom %s:%d %s -r %s  0x%x %d ", fHost.toLatin1 ().constData (), fPort, (fDebug ? "-d":" "), (fNumberBase==16 ? "-x": " "), DOFI_OUTPUTSCALER_BASE, DOFI_NUM_CHANNELS);
+//  com=buffer;
+//  result = ExecuteMuppetCmd (com);
+//  AppendTextWindow (result);
 
   RefreshStatus();
 }

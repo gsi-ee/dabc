@@ -61,7 +61,7 @@
             <enum>QAbstractSpinBox::PlusMinus</enum>
            </property>
            <property name="specialValueText">
-            <string/>
+            <string>del: no change</string>
            </property>
            <property name="accelerated">
             <bool>true</bool>
@@ -86,7 +86,7 @@
             <enum>QAbstractSpinBox::PlusMinus</enum>
            </property>
            <property name="specialValueText">
-            <string/>
+            <string>len: no change</string>
            </property>
            <property name="accelerated">
             <bool>true</bool>
