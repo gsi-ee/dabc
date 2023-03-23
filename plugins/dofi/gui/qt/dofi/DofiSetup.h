@@ -9,6 +9,9 @@
 /** number of input or output:*/
 #define DOFI_NUM_CHANNELS 64
 
+/** nanoseconds per lsb bit in length or delay registers*/
+#define DOFI_TIME_UNIT 10
+
 /** registers for invert, delay, signal length forming, start here: */
 #define DOFI_SIGNALCTRL_BASE 0x0
 

@@ -50,7 +50,7 @@ DofiGui::DofiGui (QWidget* parent) :
     MuppetGui (parent)
 {
   fImplementationName="DOFI";
-  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.62 of 21-March-2023 by JAM (j.adamczewski@gsi.de)";
+  fVersionString="Welcome to Digital signals Over FIbre (DOFI) GUI!\n\t v0.70 of 23-March-2023 by JAM (j.adamczewski@gsi.de)";
   setWindowTitle(QString("%1 GUI").arg(fImplementationName));
 
 
@@ -165,8 +165,10 @@ DofiGui::DofiGui (QWidget* parent) :
 
       fDofiDelayBox[i]= new QSpinBox();
       fDofiDelayBox[i]->setMinimum(0);
-      fDofiDelayBox[i]->setMaximum(16777215);
+      fDofiDelayBox[i]->setMaximum(167772150);
+      fDofiDelayBox[i]->setSingleStep(10);
       fDofiDelayBox[i]->setSpecialValueText("no change");
+      fDofiDelayBox[i]->setSuffix(" ns");
       fDofiDelayBox[i]->setAccelerated(true);
       fDofiDelayBox[i]->setAlignment(Qt::AlignRight);
       fDofiDelayBox[i]->setDisplayIntegerBase(10); // later change this in refresh function?
@@ -177,8 +179,10 @@ DofiGui::DofiGui (QWidget* parent) :
 
       fDofiLengthBox[i]= new QSpinBox();
       fDofiLengthBox[i]->setMinimum(0);
-      fDofiLengthBox[i]->setMaximum(16777215);
+      fDofiLengthBox[i]->setMaximum(167772150);
+      fDofiLengthBox[i]->setSingleStep(10);
       fDofiLengthBox[i]->setSpecialValueText("no change");
+      fDofiLengthBox[i]->setSuffix(" ns");
       fDofiLengthBox[i]->setAccelerated(true);
       fDofiLengthBox[i]->setAlignment(Qt::AlignRight);
       fDofiLengthBox[i]->setDisplayIntegerBase(10); // later change this in refresh function?
@@ -345,8 +349,8 @@ void DofiGui::RefreshInputs ()
   for (int ins = 0; ins < DOFI_NUM_CHANNELS; ++ins)
   {
     bool inverted = theSetup->IsInputInvert (ins);
-    int len = theSetup->GetInputLength (ins);
-    int delay = theSetup->GetInputDelay (ins);
+    int len = theSetup->GetInputLength (ins) * DOFI_TIME_UNIT; // bits to nanosecs
+    int delay = theSetup->GetInputDelay (ins)* DOFI_TIME_UNIT; // bits to nanosecs
 
     fDofiInvertState[ins]->setChecked (inverted);
     fDofiLengthBox[ins]->setValue (len);
@@ -386,9 +390,9 @@ void DofiGui::EvaluateView ()
        theSetup->fSignalControl[in]=0;
        unsigned long long invertset = (fDofiInvertState[in]->isChecked() ? 1 : 0);
        theSetup->fSignalControl[in] |= (invertset & 0x1);
-       unsigned long long delay = fDofiDelayBox[in]->value();
+       unsigned long long delay = fDofiDelayBox[in]->value() / DOFI_TIME_UNIT; // ns to bits
        theSetup->fSignalControl[in] |= (delay & 0xFFFFFF) << 16;
-       unsigned long long len = fDofiLengthBox[in]->value();
+       unsigned long long len = fDofiLengthBox[in]->value()/ DOFI_TIME_UNIT; // ns to bits
        theSetup->fSignalControl[in] |= (len & 0xFFFFFF) << 40;
 
      }
@@ -555,7 +559,7 @@ void DofiGui::AutoApplyInvert (int input, bool on)
 void DofiGui::AutoApplyDelay (int input, int value)
 {
   theSetup_GET_FOR_SLAVE(DofiSetup);
-  theSetup->SetInputDelay (input, value);
+  theSetup->SetInputDelay (input, value/DOFI_TIME_UNIT);
   unsigned long long reg = theSetup->fSignalControl[input];
   int address = DOFI_SIGNALCTRL_BASE + input;
   int rev = WriteMuppet (fHost, fPort, address, reg);
@@ -568,7 +572,7 @@ void DofiGui::AutoApplyDelay (int input, int value)
 void DofiGui::AutoApplyLength (int input, int value)
 {
   theSetup_GET_FOR_SLAVE(DofiSetup);
-  theSetup->SetInputLength (input, value);
+  theSetup->SetInputLength (input, value/DOFI_TIME_UNIT);
   unsigned long long reg = theSetup->fSignalControl[input];
   int address = DOFI_SIGNALCTRL_BASE + input;
   int rev = WriteMuppet (fHost, fPort, address, reg);
