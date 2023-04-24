@@ -157,7 +157,7 @@ DofiGui::DofiGui (QWidget* parent) :
     fDofiInputsWidget->InputsTableWidget->setRowCount (DOFI_NUM_CHANNELS);
     for (int i = 0; i < DOFI_NUM_CHANNELS; ++i)
     {
-
+      fDofiInputsWidget->InputsTableWidget->setVerticalHeaderItem(i,new QTableWidgetItem(QString("%1").arg(i)));
       fDofiInvertState[i]= new QRadioButton();
       fDofiInvertState[i]->setAutoExclusive(false);
       QObject::connect (fDofiInvertState[i], SIGNAL(toggled(bool)),this,SLOT (InvertState_toggled(bool)));
