@@ -64,6 +64,7 @@ export PATH=/home/hadaq/bin:$PATH
 # now build dabc and other software:
 export DABCGIT=/home/hadaq/soft/dabc/git
 export DABCSYS=/home/hadaq/soft/dabc/install/master
+export DABCBIN=/home/hadaq/soft/dabc/bin
 export STREAMGIT=/home/hadaq/soft/streamframe/git
 export STREAMSYS=/home/hadaq/soft/streamframe/install/master
 MYHOST=`/bin/hostname` 
@@ -94,6 +95,17 @@ ln -s $DABCSYS/plugins/ltsm/app/deleteTestfiles_ltsm.pl
 scp lxhadeb09:/home/hadaq/bin/optimize_taskset.sh .
 scp lxhadeb09:/home/hadaq/bin/cleanup_1disk.pl .
 ln -s cleanup_1disk.pl cleanup.pl
+# also required links for EB startup and configuration:
+mkdir -p $DABCBIN
+ln -s $DABCSYS/plugins/hadaq/hades/BnetBuilderHadesFSD.xml $DABCBIN/BnetBuilderHadesFSD.master.xml
+ln -s $DABCBIN/BnetBuilderHadesFSD.master.xml /home/hadaq/oper//BnetBuilderHadesFSD.master.xml
+ln -s $DABCSYS/plugins/hadaq/hades/BnetInputHades.xml $DABCBIN/BnetInputHades.master.xml
+ln -s $DABCBIN/BnetInputHades.master.xml /home/hadaq/oper/BnetInputHades.master.xml
+ln -s $DABCSYS/bin/dabc_exe $DABCBIN/dabc_exe.master
+ln -s $DABCSYS/dabclogin $DABCBIN/dabclogin.master
+cd /home/hadaq/oper
+mkdir oldruninfos
+scp lxhadeb09:/home/hadaq/oper/move_oldruninfos.sh .
 echo provided new software installations for fsq, ltsm, DABC, and STREAM on $MYHOST
 echo please still adjust crontabs for users hades and root /root/bin/set_eth_affinity.pl
 
