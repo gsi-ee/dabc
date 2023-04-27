@@ -1310,14 +1310,14 @@ class DabcCommandPainter extends BasePainter {
 
    showCommand() {
 
-      let dom = this.selectDom();
+      let dom0 = this.selectDom();
 
-      dom.html('');
+      dom0.html('');
 
       if (!this.jsonnode)
          return dom.html('cannot access command definition...<br/>');
 
-      dom.attr('style', 'overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace;');
+      let dom = dom0.append('div').attr('style', 'overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace;');
 
       dom.append('h3').text(this.jsonnode.fullitemname);
 
