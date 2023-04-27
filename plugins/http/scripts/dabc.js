@@ -1288,9 +1288,9 @@ class DabcCommandPainter extends BasePainter {
       this.jsonnode = obj;
    }
 
-   numArgs() { return this.jsonnode ? this.jsonnode["numargs"] : 0; }
+   numArgs() { return this.jsonnode ? this.jsonnode['numargs'] : 0; }
 
-   argName(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n] : ""; }
+   argName(n) { return (n < this.numArgs()) ? this.jsonnode[`arg${n}`] : ''; }
 
    findArg(name) {
       let num = this.numArgs();
@@ -1300,46 +1300,48 @@ class DabcCommandPainter extends BasePainter {
       return -1;
    }
 
-   argKind(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_kind"] : ""; }
+   argKind(n) { return (n < this.numArgs()) ? this.jsonnode[`arg${n}_kind`] : ''; }
 
-   argDflt(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_dflt"] : ""; }
+   argDflt(n) { return (n < this.numArgs()) ? this.jsonnode[`arg${n}_dflt`] : ''; }
 
-   argMin(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_min"] : null; }
+   argMin(n) { return (n < this.numArgs()) ? this.jsonnode[`arg${n}_min`] : null; }
 
-   argMax(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_max"] : null; }
+   argMax(n) { return (n < this.numArgs()) ? this.jsonnode[`arg${n}_max`] : null; }
 
    showCommand() {
 
       let dom = this.selectDom();
 
-      dom.html("");
+      dom.html('');
 
       if (!this.jsonnode)
-         return dom.html("cannot access command definition...<br/>");
+         return dom.html('cannot access command definition...<br/>');
 
-      dom.append("h3").text(this.jsonnode.fullitemname);
+      dom.attr('style', 'overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace;');
 
-      dom.append("button")
-         .attr("title","Execute command " + this.jsonnode.fullitemname)
-         .text("Exectute")
-         .on("click", () => this.invokeCommand());
+      dom.append('h3').text(this.jsonnode.fullitemname);
+
+      dom.append('button')
+         .attr('title', `Execute command ${this.jsonnode.fullitemname}`)
+         .text('Exectute')
+         .on('click', () => this.invokeCommand());
 
       for (let cnt = 0; cnt < this.numArgs(); cnt++) {
          let argname = this.argName(cnt),
              argkind = this.argKind(cnt);
 
-         dom.append("div").html(`Arg: ${argname} <input class="dabccmd_arg${cnt}">`);
+         dom.append('div').html(`Arg: ${argname} <input class="dabccmd_arg${cnt}">`);
 
          let elem = dom.select(`.dabccmd_arg${cnt}`)
-            .attr("type", argkind=="int" ? "number" : "text")
-            .style("width", (argkind=="int") ? "80px" : "170px")
-            .property("value", this.argDflt(cnt));
+            .attr('type', argkind == 'int' ? 'number' : 'text')
+            .style('width', (argkind == 'int') ? '80px' : '170px')
+            .property('value', this.argDflt(cnt));
 
-         if (argkind == "int")
-            elem.attr("min", this.argMin(cnt)).attr("max", this.argMax(cnt));
+         if (argkind == 'int')
+            elem.attr('min', this.argMin(cnt)).attr('max', this.argMax(cnt));
       }
 
-      dom.append("div").classed("dabccmd_res", true);
+      dom.append('div').classed('dabccmd_res', true);
    }
 
    invokeCommand() {
@@ -1349,7 +1351,7 @@ class DabcCommandPainter extends BasePainter {
           resdiv = dom.select('.dabccmd_res'),
           url = this.jsonnode.fullitemname + '/execute';
 
-      resdiv.html("<h5>Send command to server</h5>");
+      resdiv.html('<h5>Send command to server</h5>');
 
       for (let cnt = 0; cnt < this.numArgs(); cnt++) {
          url += (cnt==0) ? '?' : '&';
@@ -1375,7 +1377,7 @@ class DabcCommandPainter extends BasePainter {
               }
               resdiv.html(code);
            })
-          .catch(() => resdiv.html("<h5>missing reply from server</h5>"))
+          .catch(() => resdiv.html('<h5>missing reply from server</h5>'))
           .finally(() => { this.req = false; });
    }
 }
@@ -1396,7 +1398,7 @@ DABC.DrawCommand = function(dom, obj, opt) {
 TH1Painter.prototype.oldFillHistContextMenu = TH1Painter.prototype.fillHistContextMenu;
 
 TH1Painter.prototype.fillHistContextMenu = function(menu) {
-   let itemname = this.getItemName() || "", match_name;
+   let itemname = this.getItemName() || '', match_name;
    ['HLD_HitsPerTDC', 'HLD_ErrPerTDC', 'HLD_ExpectedToT'].forEach(name => {
        if (itemname.indexOf(name) > 0) match_name = true;
    });
