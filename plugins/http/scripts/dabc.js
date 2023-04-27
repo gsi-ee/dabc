@@ -1323,7 +1323,7 @@ class DabcCommandPainter extends BasePainter {
 
       dom.append('button')
          .attr('title', `Execute command ${this.jsonnode.fullitemname}`)
-         .text('Exectute')
+         .text('Execute')
          .on('click', () => this.invokeCommand());
 
       for (let cnt = 0; cnt < this.numArgs(); cnt++) {
