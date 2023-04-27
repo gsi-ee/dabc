@@ -1292,6 +1292,14 @@ class DabcCommandPainter extends BasePainter {
 
    argName(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n] : ""; }
 
+   findArg(name) {
+      let num = this.numArgs();
+      for (let i = 0; i < num; ++i)
+         if (this.argName(i) == name)
+            return i;
+      return -1;
+   }
+
    argKind(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_kind"] : ""; }
 
    argDflt(n) { return (n < this.numArgs()) ? this.jsonnode["arg"+n+"_dflt"] : ""; }
@@ -1338,22 +1346,35 @@ class DabcCommandPainter extends BasePainter {
       if (this.req) return;
 
       let dom = this.selectDom(),
-          resdiv = dom.select(".dabccmd_res"),
-          url = this.jsonnode.fullitemname + "/execute";
+          resdiv = dom.select('.dabccmd_res'),
+          url = this.jsonnode.fullitemname + '/execute';
 
       resdiv.html("<h5>Send command to server</h5>");
 
       for (let cnt = 0; cnt < this.numArgs(); cnt++) {
-         url += (cnt==0) ? "?" : "&";
+         url += (cnt==0) ? '?' : '&';
          url += this.argName(cnt);
-         url += "=";
-         url += dom.select(`.dabccmd_arg${cnt}`).property("value");
+         url += '=';
+         url += dom.select(`.dabccmd_arg${cnt}`).property('value');
       }
 
       this.req = true;
 
-      httpRequest(url, "object")
-          .then(res => resdiv.html(`<h5>Get reply res=${res._Result_}</h5>`))
+      httpRequest(url, 'object')
+          .then(res => {
+             let code = `<h5>Get command ${res._name} reply res = ${res._Result_}</h5>`;
+             for (let key in res) {
+                // do not show internal args
+                if (key[0] == '_') continue;
+
+                let indx = this.findArg(key);
+                // do not show input args
+                if ((indx >= 0) && (dom.select(`.dabccmd_arg${indx}`).property('value') == res[key])) continue;
+
+                code += `<pre>${key} = ${JSON.stringify(res[key])}</pre>`;
+              }
+              resdiv.html(code);
+           })
           .catch(() => resdiv.html("<h5>missing reply from server</h5>"))
           .finally(() => { this.req = false; });
    }
