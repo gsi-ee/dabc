@@ -1345,9 +1345,11 @@ int main(int argc, char* argv[])
                lasthubid = 0;
             }
 
-            if (is_tdc(datakind)) as_tdc = !onlytdc && !onlynew;
+            if (is_tdc(datakind))
+               as_tdc = !onlytdc && !onlynew && !onlyraw;
 
-            if (is_newtdc(datakind)) as_new = !onlytdc && !onlynew;
+            if (is_newtdc(datakind))
+               as_new = !onlytdc && !onlynew && !onlyraw;
 
             if (!as_tdc) {
                if ((onlytdc != 0) && (datakind == onlytdc)) {
@@ -1410,7 +1412,7 @@ int main(int argc, char* argv[])
                   }
                }
 
-               unsigned prefix(9);
+               unsigned prefix = 9;
                if (lasthhubid != 0)
                   prefix = 15;
                else if (lasthubid != 0)
