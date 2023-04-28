@@ -286,7 +286,7 @@ bool IbTestWorkerModule::CreateQPs(void* data)
    return true;
 }
 
-bool IbTestWorkerModule::ConnectQPs(void* data)
+bool IbTestWorkerModule::ConnectQPs(void *data)
 {
 #ifdef WITH_VERBS
 
@@ -313,6 +313,8 @@ bool IbTestWorkerModule::ConnectQPs(void* data)
       }
 
    }
+#else
+   (void) data;
 
 #endif
 
@@ -353,9 +355,6 @@ bool IbTestWorkerModule::CloseQPs()
       fPool = nullptr;
    }
 
-
-
-
 #endif
 
    return true;
@@ -391,12 +390,15 @@ bool IbTestWorkerModule::CreateCommPool(int64_t* pars)
 
 //   DOUT0("Create comm pool %p  size %u X %u", fPool, pars[0], pars[1]);
 
-
    return fPool != nullptr;
 
-#endif
+#else
+
+   (void) pars;
 
    return true;
+
+#endif
 }
 
 
@@ -441,9 +443,18 @@ bool IbTestWorkerModule::Pool_Post(bool issend, int bufindx, int lid, int nremot
 
    return res;
 
-#endif
+#else
+
+   (void) issend;
+   (void) bufindx;
+   (void) lid;
+   (void) nremote;
+   (void) size;
 
    return true;
+
+#endif
+
 }
 
 bool IbTestWorkerModule::Pool_Post_Mcast(bool issend, int bufindx, int size)
@@ -474,8 +485,13 @@ bool IbTestWorkerModule::Pool_Post_Mcast(bool issend, int bufindx, int size)
              else fMultiRecvQueue++;
    }
 
-#endif
+#else
 
+   (void) issend;
+   (void) bufindx;
+   (void) size;
+
+#endif
 
    return true;
 
@@ -493,15 +509,19 @@ verbs::ComplQueue* IbTestWorkerModule::Pool_CQ_Check(bool &iserror, double waitt
 
    if (fCQ) {
       cq = fCQ;
-      if (TotalRecvQueue()+TotalSendQueue() > 0)
+      if (TotalRecvQueue() + TotalSendQueue() > 0)
          res = cq->Wait(waittime);
       else
          res = 0;
    }
 
+#else
+
+   (void) waittime;
+
 #endif
 
-   iserror = (res==2);
+   iserror = (res == 2);
 
    return (res == 1) ? cq : nullptr;
 }
@@ -550,9 +570,13 @@ int IbTestWorkerModule::Pool_Check(int &bufindx, int& lid, int &nremote, double 
 
    return issend ? 10 : 1;
 
-#endif
+#else
 
+   (void) waittime;
+   (void) fasttime;
    return 0;
+
+#endif
 }
 
 
@@ -585,46 +609,60 @@ int IbTestWorkerModule::Pool_Check_Mcast(int &bufindx, double waittime, double f
 
    return issend ? 10 : 1;
 
-#endif
-
+#else
+   (void) waittime;
+   (void) fasttime;
    return 0;
+
+#endif
 }
 
 bool IbTestWorkerModule::IsMulticastSupported()
 {
 #ifdef WITH_VERBS
    return fIbContext.IsMulticast();
-
-#endif
+#else
    return false;
+#endif
 }
 
 
 
 int IbTestWorkerModule::GetExclusiveIndx(verbs::MemoryPool* pool)
 {
-   if (!pool) pool = fPool;
 #ifdef WITH_VERBS
+   if (!pool) pool = fPool;
    unsigned indx;
    if (pool && pool->TakeRawBuffer(indx)) return indx;
-#endif
+#else
+   (void) pool;
    return -1;
+#endif
 }
 
 void* IbTestWorkerModule::GetPoolBuffer(int indx, verbs::MemoryPool* pool)
 {
-   if (!pool) pool = fPool;
 #ifdef WITH_VERBS
-   if (pool && (indx>=0)) return pool->GetSendBufferLocation(indx);
-#endif
+   if (!pool) pool = fPool;
+   if (pool && (indx>=0))
+      return pool->GetSendBufferLocation(indx);
    return nullptr;
+#else
+   (void) indx;
+   (void) pool;
+   return nullptr;
+#endif
 }
 
 void IbTestWorkerModule::ReleaseExclusive(int indx, verbs::MemoryPool* pool)
 {
-   if (!pool) pool = fPool;
 #ifdef WITH_VERBS
-   if (pool && (indx>=0)) pool->ReleaseRawBuffer(indx);
+   if (!pool) pool = fPool;
+   if (pool && (indx>=0))
+      pool->ReleaseRawBuffer(indx);
+#else
+   (void) indx;
+   (void) pool;
 #endif
 }
 
@@ -655,7 +693,6 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
    double now;
 
    dabc::Average slave_oper;
-
 
    int repeatcounter = 0, nsendcomplited = 0;
 
@@ -742,6 +779,9 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
 
    ReleaseExclusive(sendbufindx);
 
+#else
+
+   (void) cmddata;
 
 #endif
 
@@ -2300,6 +2340,8 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
    } // end of extra brakets for context
 
    ctx.Release();
+#else
+   (void) arguments;
 
 #endif
 
@@ -2515,10 +2557,15 @@ bool IbTestWorkerModule::MasterInitMulticast(
                             int firstnode,
                             int lastnode)
 {
+   (void) mode;
+   (void) bufsize;
+   (void) send_queue;
+   (void) recv_queue;
+   (void) firstnode;
+   (void) lastnode;
+
    return false;
 }
-
-
 
 
 void IbTestWorkerModule::ProcessAskQueue()

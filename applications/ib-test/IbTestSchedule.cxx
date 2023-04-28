@@ -1546,7 +1546,7 @@ bool IbTestSchedule::BuildOptimized(IbTestClusterRouting& routing, IbTestIntColu
    return false;
 }
 
-bool IbTestSchedule::BuildRegularSchedule(IbTestClusterRouting& routing, IbTestIntColumn* ids, bool show)
+bool IbTestSchedule::BuildRegularSchedule(IbTestClusterRouting &routing, IbTestIntColumn *ids, bool /* show */)
 {
    // all parameters of regular half-fat tree network are define by number of spines
 
