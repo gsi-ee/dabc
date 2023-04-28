@@ -633,11 +633,12 @@ int IbTestWorkerModule::GetExclusiveIndx(verbs::MemoryPool* pool)
 #ifdef WITH_VERBS
    if (!pool) pool = fPool;
    unsigned indx;
-   if (pool && pool->TakeRawBuffer(indx)) return indx;
+   if (pool && pool->TakeRawBuffer(indx))
+      return indx;
 #else
    (void) pool;
-   return -1;
 #endif
+   return -1;
 }
 
 void* IbTestWorkerModule::GetPoolBuffer(int indx, verbs::MemoryPool* pool)
