@@ -228,15 +228,15 @@ namespace dabc {
 
 
          struct WorkerRec {
-            Worker*        work{nullptr};         ///< pointer on the worker, should we use reference?
-            WorkerAddon*   addon{nullptr};        ///< addon for the worker, maybe thread-specific
+            Worker        *work{nullptr};   ///< pointer on the worker, should we use reference?
+            WorkerAddon   *addon{nullptr};  ///< addon for the worker, maybe thread-specific
             unsigned       doinghalt{0};    ///< indicates that events will not be longer accepted by the worker, all submitted commands still should be executed
             int            recursion{0};    ///< recursion calls of the worker
             unsigned       processed{0};    ///< current number of processed events, when balance between processed and fired is 0, worker can be halted
-            CommandsQueue  cmds;         ///< postponed commands, which are waiting until object is destroyed or halted
+            CommandsQueue  cmds;            ///< postponed commands, which are waiting until object is destroyed or halted
 
-            TimeoutRec     tmout_worker; ///< timeout handling for worker
-            TimeoutRec     tmout_addon;  ///< timeout handling for addon
+            TimeoutRec     tmout_worker;    ///< timeout handling for worker
+            TimeoutRec     tmout_addon;     ///< timeout handling for addon
 
             WorkerRec(Worker* w, WorkerAddon* a) :
                work(w),

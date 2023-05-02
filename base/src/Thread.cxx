@@ -302,7 +302,7 @@ dabc::Thread::~Thread()
    else
       dabc::Object::Destroy(exec); // normally destroy should be called
 
-   for (unsigned n=0;n<fWorkers.size();n++) {
+   for (unsigned n = 0; n < fWorkers.size(); n++) {
       if (fWorkers[n]) {
          //EOUT("Still non-empty worker rec %u  in thread %s destructor", n, GetName());
          delete fWorkers[n];
@@ -311,7 +311,7 @@ dabc::Thread::~Thread()
    }
 
    LockGuard guard(ThreadMutex());
-   if (fState==stError) {
+   if (fState == stError) {
       EOUT("Kill thread in error state, nothing better can be done");
       Kill();
       fState = stStopped;
@@ -1061,8 +1061,8 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          GetName(), evnt.asstring().c_str(),
          fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size());
 
-   if (itemid>0) {
-      if (itemid>=fWorkers.size()) {
+   if (itemid > 0) {
+      if (itemid >= fWorkers.size()) {
          EOUT("Thrd:%p %s FALSE worker id:%u size:%lu evnt:%s - ignore", this, GetName(), itemid, (long unsigned) fWorkers.size(), evnt.asstring().c_str());
          return;
       }
@@ -1088,7 +1088,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
             if (evnt.GetCode() < Worker::evntFirstAddOn)
                worker->ProcessCoreEvent(evnt);
             else if (worker->fAddon.null())
-               EOUT("Get event %u for non-existing addon of worker %s in thread %s", (unsigned) evnt.GetCode(), worker->GetName(), GetName());
+               EOUT("Get event %u for non-existing addon of worker %u %s in thread %s", (unsigned) evnt.GetCode(), (unsigned) itemid, worker->GetName(), GetName());
             else
                worker->fAddon()->ProcessEvent(evnt);
          } else
@@ -1144,7 +1144,6 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
 
          break;
       }
-
 
       case evntCleanupThrd: {
 
