@@ -236,7 +236,6 @@ namespace dabc {
             return nullptr;
          }
 
-
          void PushRef(const T& val)
          {
             if (MakePlaceForNext()) {

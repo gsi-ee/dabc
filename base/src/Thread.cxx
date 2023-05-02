@@ -1087,9 +1087,12 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          if (evnt.GetCode() < Worker::evntFirstSystem) {
             if (evnt.GetCode() < Worker::evntFirstAddOn)
                worker->ProcessCoreEvent(evnt);
-            else if (worker->fAddon.null())
+            else if (worker->fAddon.null()) {
                EOUT("Get event %u for non-existing addon of worker %u %s in thread %s", (unsigned) evnt.GetCode(), (unsigned) itemid, worker->GetName(), GetName());
-            else
+               for (int n = 0; n < fNumQueues; n++)
+                  EOUT("Queue %d size %u", n, fQueues[n].Size());
+
+            } else
                worker->fAddon()->ProcessEvent(evnt);
          } else
             worker->ProcessEvent(evnt);
