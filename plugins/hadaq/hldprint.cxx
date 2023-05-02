@@ -1283,7 +1283,7 @@ int main(int argc, char* argv[])
                   maxhhublen = 0, lasthhubid = 0, lasthhublen = 0,
                   data, datalen, datakind;
 
-         bool standalone_subevnt = sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt;
+         bool standalone_subevnt = (sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt) != 0;
 
          if (dostat)
             substat[sub->GetId()].accumulate(sub->GetSize());
@@ -1302,7 +1302,7 @@ int main(int argc, char* argv[])
 
             if (standalone_subevnt && (ix == 0)) {
                data = 0; // unused
-               datalen = trbSubEvSize - 2; // whole subevent beside last 2 words with 0x5555 id
+               datalen = trbSubEvSize > 2 ? trbSubEvSize - 2 : 0; // whole subevent beside last 2 words with 0x5555 id
                datakind = sub->GetId();
             } else {
                data = sub->Data(ix++);
@@ -1390,7 +1390,7 @@ int main(int argc, char* argv[])
                   // only check data without printing
                   if (as_tdc) PrintTdcData(sub, ix, datalen, 0, errmask);
                   // no errors - no print
-                  if (errmask == 0) { ix+=datalen; continue; }
+                  if (errmask == 0) { ix += datalen; continue; }
 
                   print_subsubhdr = true;
                   errmask = 0;
@@ -1470,11 +1470,13 @@ int main(int argc, char* argv[])
                }
             }
 
-            ix+=datalen;
+            ix += datalen;
+
+            if (standalone_subevnt) break;
          }
       }
 
-      if ((number > 0) && (printcnt>=number)) break;
+      if ((number > 0) && (printcnt >= number)) break;
    }
 
    if (showrate) {
