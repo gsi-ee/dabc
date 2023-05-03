@@ -371,7 +371,7 @@ void dabc::Thread::ProcessNoneEvent()
 
    // here we doing cleanup when no any events there
 
-   unsigned new_size(fWorkers.size());
+   unsigned new_size = fWorkers.size();
 
    while ((new_size > 1) && !fWorkers[new_size-1]->work) {
       new_size--;
@@ -388,7 +388,7 @@ void dabc::Thread::ProcessNoneEvent()
 
    // we check that object is in normal state,
    // otherwise it means that destroyment is already started and will be done in other means
-   if ((new_size==2) && _IsNormalState()) {
+   if ((new_size == 2) && _IsNormalState()) {
       DOUT3("THREAD %s generate cleanup", GetName());
       _Fire(EventId(evntCleanupThrd, 0, 0), priorityLowest);
    }
@@ -842,14 +842,15 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
       fExec->ActivateTimeout(0.01);
 
       return cmd_true;
-   } else
-   if (cmd.IsName("ConfirmSync")) {
+
+   } else if (cmd.IsName("ConfirmSync")) {
+
       return cmd_true;
-   } else
-   if (cmd.IsName("AddWorker")) {
+
+   } else if (cmd.IsName("AddWorker")) {
 
       Reference ref = cmd.GetRef("Worker");
-      Worker* worker = (Worker*) ref();
+      Worker *worker = (Worker *) ref();
 
       DOUT2("AddWorker %p in thrd %p", worker, this);
 
@@ -870,7 +871,7 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
          fWorkers.emplace_back(new WorkerRec(worker, worker->fAddon()));
 
          // from this moment on processor is fully functional
-         worker->fWorkerId = fWorkers.size()-1;
+         worker->fWorkerId = fWorkers.size() - 1;
 
          worker->fWorkerActive = true;
 
@@ -882,20 +883,15 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
       worker->InformThreadAssigned();
 
-      //cmd->Print(1, "DIDjob");
-
       return cmd_true;
 
-   } else
-
-   if (cmd.IsName("InvokeWorkerDestroy")) {
+   } else if (cmd.IsName("InvokeWorkerDestroy")) {
 
       DOUT3("THRD:%s Request to destroy worker id %u", GetName(), cmd.GetUInt("WorkerId"));
 
       return CheckWorkerCanBeHalted(cmd.GetUInt("WorkerId"), actDestroy, cmd);
-   } else
 
-   if (cmd.IsName("HaltWorker")) {
+   } else if (cmd.IsName("HaltWorker")) {
 
       DOUT3("THRD:%s Request to halt worker id %u", GetName(), cmd.GetUInt("WorkerId"));
 
@@ -952,7 +948,8 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
    DOUT4("THRD:%s CheckWorkerCanBeHalted %u doinghalt = %u", GetName(), id, fWorkers[id]->doinghalt);
 
-   if (fWorkers[id]->doinghalt == 0) return cmd_false;
+   if (fWorkers[id]->doinghalt == 0)
+      return cmd_false;
 
    if ((fWorkers[id]->recursion > 0)  || (balance > 0)) {
       DOUT2("THRD:%s ++++++++++++++++++++++ worker %p %s %s event balance %u fired:%u processed:%u recursion %d",
@@ -986,7 +983,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
    // FIXME: this must be legitime method to destroy any worker
    //        one can remove it from workers vector
 
-   // before worker will be really destroyed indicate to the world that processor is disappear
+   // before worker will be really destroyed indicate to the world that processor is disappeared
    WorkersSetChanged();
 
    if (rec) {
@@ -995,12 +992,15 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
          DOUT0("Trying to destroy worker %p id %u via thread %s", rec->work, id, GetName());
 
       // release thread reference from here
-      if (rec->work) rec->work->ClearThreadRef();
+      if (rec->work)
+         rec->work->ClearThreadRef();
 
       // true indicates that object should be destroyed immediately
       if (rec->doinghalt & actDestroy) {
-         if (rec->work && rec->work->DestroyCalledFromOwnThread())
+         if (rec->work && rec->work->DestroyCalledFromOwnThread()) {
             delete rec->work;
+            rec->work = nullptr;
+         }
       }
 
       // inform all commands that everything goes well

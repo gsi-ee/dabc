@@ -45,14 +45,14 @@ int usage(const char* errstr = nullptr)
 
 int main(int argc, char* argv[])
 {
-   int nloop=1;
+   int nloop = 1;
    if ((argc < 2) || !strcmp(argv[1], "-help") || !strcmp(argv[1], "?"))
       return usage();
-   if(argc == 3)
-      {
-         nloop=atoi(argv[2]);
-         printdeb("Will execute command %d times.\n",nloop);
-      }
+   if(argc == 3) {
+      nloop = atoi(argv[2]);
+      printdeb("Will execute command %d times.\n",nloop);
+   }
+
    if (!dabc::CreateManager("shell", 0)) {
       printf("Fail to create manager\n");
       return 1;
@@ -73,8 +73,6 @@ int main(int argc, char* argv[])
 
    auto tm1 = stamp.SpentTillNow(true);
 
-
-
    std::string module_name = nodename + "/dogma";
 
    dabc::Command cmd("GenericRead");
@@ -82,8 +80,7 @@ int main(int argc, char* argv[])
    cmd.SetInt("Addr", 0x1000);
    cmd.SetTimeout(10);
    int res=0;
-   for(int t=0; t<nloop; ++t)
-   {
+   for(int t=0; t<nloop; ++t) {
       res = dabc::mgr.Execute(cmd);
    }
    auto tm2 = stamp.SpentTillNow(true);
