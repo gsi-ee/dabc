@@ -626,8 +626,6 @@ bool IbTestWorkerModule::IsMulticastSupported()
 #endif
 }
 
-
-
 int IbTestWorkerModule::GetExclusiveIndx(verbs::MemoryPool* pool)
 {
 #ifdef WITH_VERBS
