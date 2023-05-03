@@ -32,10 +32,10 @@ if (src && (typeof src == "string")) {
 }
 
 DABC.invokeCommand = function(itemname, args) {
-   let url = itemname + "/execute";
-   if (args && (typeof args == 'string')) url += "?" + args;
+   let url = itemname + '/execute';
+   if (args && (typeof args == 'string')) url += '?' + args;
 
-   httpRequest(url,"object");
+   return httpRequest(url, 'object');
 }
 
 /** @summary add button style as first child */
