@@ -113,7 +113,7 @@ void dabc::SocketCommandClient::CloseClient(bool iserr, const char* msg)
       if (iserr)
          EOUT("%s closing connection due to error %s", ItemName().c_str(), msg);
       else
-         DOUT2("%s closing connection due to %s", ItemName().c_str(), msg);
+         DOUT0("%s closing connection due to %s", ItemName().c_str(), msg);
    }
 
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0)) {
@@ -408,11 +408,9 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
          CloseClient(true, "Socket error");
          break;
 
-
       case SocketAddon::evntSocketCloseInfo:
          CloseClient(false, "Socket closed");
          break;
-
 
       default:
          dabc::Worker::ProcessEvent(evnt);

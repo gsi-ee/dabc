@@ -90,12 +90,12 @@ namespace dabc {
             evntSocketWrite,
             evntSocketError,
             evntSocketStartConnect,
-            evntSocketLast,        ///< from this event number one can add more socket system events
+            evntSocketLast,             ///< from this event number one can add more socket system events
             evntSocketRecvInfo  = Worker::evntFirstSystem,   ///< event delivered to worker when read is completed
-            evntSocketSendInfo,                     ///< event delivered to worker when write is completed
-            evntSocketErrorInfo,                    ///< event delivered to worker when error is detected
-            evntSocketCloseInfo,                    ///< event delivered to worker when socket is closed
-            evntSocketLastInfo                      ///< last system event, used by sockets
+            evntSocketSendInfo,         ///< event delivered to worker when write is completed
+            evntSocketErrorInfo,        ///< event delivered to worker when error is detected
+            evntSocketCloseInfo,         ///< event delivered to worker when socket is closed
+            evntSocketLastInfo           ///< last system event, used by sockets
          };
 
          SocketAddon(int fd = -1);

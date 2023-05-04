@@ -379,7 +379,7 @@ void dabc::Thread::ProcessNoneEvent()
       fWorkers[new_size] = nullptr;
    }
 
-   DOUT3("THREAD %s oldsize %u newsize %u", GetName(), fWorkers.size(), new_size);
+   DOUT0("THREAD %s check cleanup oldsize %u newsize %u", GetName(), (unsigned) fWorkers.size(), new_size);
 
    if (new_size == fWorkers.size()) return;
 
@@ -471,13 +471,13 @@ bool dabc::Thread::SingleLoop(unsigned workerid, double tmout_user)
 
    // check situation that worker is halted and should brake its execution
    // if necessary, worker should fire exception
-   if ((workerid>0) && (workerid<fWorkers.size())) {
+   if ((workerid > 0) && (workerid < fWorkers.size())) {
       if (fWorkers[workerid]->doinghalt) return false;
    }
 
    double tmout = CheckTimeouts();
-   if (tmout_user>=0)
-      if ((tmout<0) || (tmout_user<tmout)) tmout = tmout_user;
+   if (tmout_user >= 0)
+      if ((tmout < 0) || (tmout_user < tmout)) tmout = tmout_user;
 
    EventId evid;
 

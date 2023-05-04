@@ -88,7 +88,6 @@ dabc::SocketAddon::~SocketAddon()
    CloseSocket();
 }
 
-
 void dabc::SocketAddon::ProcessEvent(const EventId& evnt)
 {
    switch (evnt.GetCode()) {
@@ -148,8 +147,7 @@ void dabc::SocketAddon::OnSocketError(int msg, const std::string &)
    if (IsDeliverEventsToWorker()) {
       DOUT2("Addon:%p Connection closed - worker should process", this);
       FireWorkerEvent(msg == 0 ? evntSocketCloseInfo : evntSocketErrorInfo);
-   } else
-   if (fDeleteWorkerOnClose) {
+   } else if (fDeleteWorkerOnClose) {
       DOUT2("Connection closed - destroy socket");
       CloseSocket();
       DeleteWorker();
@@ -946,7 +944,7 @@ void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
        case evntSocketWrite: {
 
           // we could get write event after socket was closed by error - ignore such event
-          if (Socket()<=0) return;
+          if (Socket() <= 0) return;
 
           // we can check if connection established
 
