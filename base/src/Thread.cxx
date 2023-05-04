@@ -1016,6 +1016,8 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
    // indicate for thread itself that it can be optimized
    fCheckThrdCleanup = true;
 
+   _Fire(EventId(evntCheckWorkers), priorityLowest);
+
    return cmd_true;
 }
 
@@ -1189,6 +1191,10 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          break;
       }
 
+      case evntCheckWorkers:
+         ProcessNoneEvent();
+         break;
+
       case evntDoNothing:
          break;
 
@@ -1296,7 +1302,7 @@ double dabc::Thread::CheckTimeouts(bool forcerecheck)
 
    double min_tmout = -1., last_diff = 0.;
 
-   for (unsigned n=1;n<fWorkers.size();n++) {
+   for (unsigned n = 1; n < fWorkers.size(); n++) {
       WorkerRec* rec = fWorkers[n];
       if (!rec || !rec->work) continue;
 

@@ -318,6 +318,7 @@ namespace dabc {
          enum EEvents { evntCheckTmoutWorker = 1,  ///< event used to process timeout for specific worker, used by ActivateTimeout
                         evntCheckTmoutAddon, ///< event used to process timeout for addon, used by ActivateTimeout
                         evntCleanupThrd,     ///< event will be generated when thread can be destroyed
+                        evntCheckWorkers,    ///< event fired when workers array need to be checked
                         evntDoNothing,       ///< event fired to wake-up thread and let thread or processor to perform regular checks
                         evntStopThrd,        ///< event should stop thread
                         evntLastThrd,
