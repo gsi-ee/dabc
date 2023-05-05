@@ -113,7 +113,7 @@ void dabc::SocketCommandClient::CloseClient(bool iserr, const char* msg)
       if (iserr)
          EOUT("%s closing connection due to error %s", ItemName().c_str(), msg);
       else
-         DOUT0("%s closing connection due to %s", ItemName().c_str(), msg);
+         DOUT2("%s closing connection due to %s", ItemName().c_str(), msg);
    }
 
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0)) {
@@ -134,7 +134,7 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
 
       int fd = cmd.GetInt("fd", -1);
 
-      if (fd<=0) return dabc::cmd_false;
+      if (fd <= 0) return dabc::cmd_false;
 
       if (fState != stConnecting) {
          EOUT("Fatal error - connection again when it was established???");
@@ -290,15 +290,13 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
    }
 
    fRecvState = recvHeader;
-   // first of all, sumbit next recv header operation
+   // first of all, submit next recv header operation
    SocketIOAddon *io = dynamic_cast<SocketIOAddon*> (fAddon());
    io->StartRecv(&fRecvHdr, sizeof(fRecvHdr));
 }
 
 bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
 {
-   // DOUT0("Get command reply %s", cmd.GetName());
-
    if (cmd.GetBool("#local_cmd")) {
       cmd.RemoveField("#local_cmd");
       AddCommand(cmd, true);

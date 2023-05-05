@@ -379,7 +379,7 @@ void dabc::Thread::ProcessNoneEvent()
       fWorkers[new_size] = nullptr;
    }
 
-   DOUT0("THREAD %s check cleanup oldsize %u newsize %u", GetName(), (unsigned) fWorkers.size(), new_size);
+   DOUT3("THREAD %s check cleanup oldsize %u newsize %u", GetName(), (unsigned) fWorkers.size(), new_size);
 
    if (new_size == fWorkers.size()) return;
 
