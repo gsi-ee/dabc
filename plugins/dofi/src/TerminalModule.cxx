@@ -16,6 +16,7 @@
 
 #include "dofi/TerminalModule.h"
 #include "dabc/Manager.h"
+#include "dabc/Publisher.h"
 
 #include <unistd.h>
 #include <vector>
@@ -45,6 +46,37 @@ dofi::TerminalModule::TerminalModule (const std::string &name, dabc::Command cmd
 	fSPI_mode =Cfg("SPI_Mode", cmd).AsInt(0);
 	fSPI_bits  =Cfg("SPI_Bits", cmd).AsInt(8);
 	fSPI_speed=Cfg("SPI_Speed", cmd).AsInt(20000000);	
+	
+	
+	// below definitions for web server:
+	
+   fWorkerHierarchy.Create("DOFI", true);
+
+   // web client has same command structure as dabc socket command:1
+   //dabc::CommandDefinition cmddef = CreateCmdDef("DofiCommand");
+   
+   dabc::CommandDefinition cmddef = fWorkerHierarchy.CreateHChild("DofiCommand");
+   cmddef.SetField(dabc::prop_kind, "DABC.Command");
+    //cmddef.SetField(dabc::prop_auth, true); // require authentication
+   cmddef.AddArg("COMMAND", "int", true, dofi::DOFI_READ);
+   cmddef.AddArg("VERBOSELEVEL", "int", true, 0);
+   cmddef.AddArg("HEXFORMAT", "int", true, 0);
+   cmddef.AddArg("ADDRESS", "int", true, 0);
+   cmddef.AddArg("VALUE", "uint", true, 0);
+   cmddef.AddArg("REPEAT", "int", true, 1);
+   cmddef.AddArg("FILENAME", "string", true, 1);
+   
+   dabc::Hierarchy ui = fWorkerHierarchy.CreateHChild("UI");
+   ui.SetField(dabc::prop_kind, "DABC.HTML");
+   ui.SetField("_UserFilePath", "${DABCSYS}/plugins/dofi/htm/");
+   ui.SetField("_UserFileMain", "main.htm");
+
+   CreateTimer("update", 1.);
+   //Publish(fWorkerHierarchy, std::string("/Control/") + fSPI_Device);
+   PublishPars("dofi");
+	
+	
+	
 }
 
 dofi::TerminalModule::~TerminalModule()
@@ -55,8 +87,24 @@ dofi::TerminalModule::~TerminalModule()
 int dofi::TerminalModule::ExecuteCommand (dabc::Command cmd)
 {
   int l_status = 0;
-  if (cmd.IsName ("DofiCommand"))
+  
+   DOUT2("dofi::TerminalModule::ExecuteCommand for %s",cmd.GetName());
+   
+    
+   
+   
+  if (cmd.IsName ("DofiCommand") || cmd.IsName(dabc::CmdHierarchyExec::CmdName()))
   {
+   
+    if(cmd.IsName(dabc::CmdHierarchyExec::CmdName()))
+    {
+		 std::string cmdpath = cmd.GetStr("Item");
+   	     DOUT2("dofi::TerminalModule::ExecuteCommand has command path %s",cmdpath.c_str());
+		 // here suppress wrong hierarchy commmands
+		if(cmdpath.compare("DofiCommand")!=0) return dabc::cmd_false;
+	}
+   
+   
     dofi::Command theCommand;
     theCommand.ExtractDabcCommand (cmd);
     if (theCommand.verboselevel > 1)

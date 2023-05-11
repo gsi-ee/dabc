@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="DofiCommandServer" port="${COMPORT}">
+    <Run>
+	  <lib value="libDabcHttp.so"/>
+      <lib value="libDabcDofi.so"/>
+      <logfile value="master.log"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+      <!--runtime value="100"/-->
+    </Run>
+
+
+   <HttpServer name="http" port="${HTPORT}"/>
+
+   <Publisher name="publ" manager="false"/>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+
+
+    <Module name="dofi" class="dofi::TerminalModule">
+<!--
+     <SPI_Device value="/dev/spidev1.2"/>
+     <SPI_Mode value = "0"/>
+     <SPI_Bits" value = "8"/>
+     <SPI_Speed" value=20000000" />	        
+-->
+    </Module>
+
+  </Context>
+</dabc>
