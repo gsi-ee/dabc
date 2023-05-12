@@ -21,7 +21,7 @@ const DofiCommands = {
 var DOFI_NUM_CHANNELS = 64,
 
 		
-	DOFI_TIME_UNIT = 10,
+	
 
 	/** registers for invert, delay, signal length forming, start here: */
 	DOFI_SIGNALCTRL_BASE = 0x0,
@@ -49,7 +49,7 @@ var DOFI_NUM_CHANNELS = 64,
 	/* address of output scalers from here:*/
 	DOFI_OUTPUTSCALER_BASE = 0x100;
 
-
+let DOFI_TIME_UNIT = 10n;
 
 
 ////////////// State class reflecting remote state and communication:
@@ -85,6 +85,81 @@ class DofiState {
 
 	}
 
+/////////////////////////// functions for manipulating data elements here:
+	SetInputInvert(ch, on) {
+		let channel = Number(ch);
+		let enable = Boolean(on);
+		if (channel < DOFI_NUM_CHANNELS) {
+			enable ? (this.fSignalControl[channel] |= 1n) : (this.fSignalControl[channel] &= ~1n);
+		}
+	}
+
+	IsInputInvert(ch) {
+		let channel = Number(ch);
+		let rev=Boolean(false);
+		if (channel < DOFI_NUM_CHANNELS){			
+		rev=Boolean((this.fSignalControl[channel] & 0x1n)  == 0x1n);
+		}
+		/*console.log("signalcontrol ["+channel+"]="+Number(this.fSignalControl[channel]));	
+		console.log("IsInputInvert ["+channel+"]="+rev);*/
+		
+			
+	return rev;
+	}
+
+
+	SetInputDelay(ch, d) {
+		let channel = Number(ch);
+		let mask = BigInt(0);
+		let delay = BigInt(d)/DOFI_TIME_UNIT;
+		if (channel < DOFI_NUM_CHANNELS) {
+			mask = (0xFFFFFFn << 16);
+			this.fSignalControl[channel] &= ~mask;
+			this.fSignalControl[channel] |= (delay & 0xFFFFFFn) << 16n;
+		}
+	}
+
+	GetInputDelay(ch) {
+		let channel = Number(ch);
+		let value = Number(-1);
+		//let bvalue=BigInt(0);
+		if (channel < DOFI_NUM_CHANNELS) {
+			value = Number(DOFI_TIME_UNIT * BigInt.asIntN(24, (this.fSignalControl[channel] >> 16n) & 0xFFFFFFn));
+			
+		}
+		return value; 
+	}
+
+	SetInputLength(ch, l) {
+		let channel = Number(ch);
+		let mask = BigInt(0);
+		let len = BigInt(l)/DOFI_TIME_UNIT;
+		if (channel < DOFI_NUM_CHANNELS) { 
+			mask = (0xFFFFFFn << 40);
+			this.fSignalControl[channel] &= ~mask;
+			this.fSignalControl[channel] |= (len & 0xFFFFFFn) << 40;
+		}
+	}
+
+	GetInputLength(ch) {
+		let channel = Number(ch);
+		let value = Number(-1);
+		if (channel < DOFI_NUM_CHANNELS) {
+			value = Number(DOFI_TIME_UNIT * BigInt.asIntN(24, (this.fSignalControl[channel] >> 40n) & 0xFFFFFFn));
+		}
+		return value;
+	}
+
+
+ 
+
+
+
+
+
+
+
+/////////////// below funtions for communication with the web server JAM:
 	DabcCommand(cmd, option) {
 		let pre = "../",
 			suf = "/execute",
@@ -134,7 +209,7 @@ class DofiState {
 						let afield = "ADDRESS_" + i;
 						let value = 0;
 						let add = 0;
-						value = Number(reply[vfield]);
+						value = BigInt(reply[vfield]);
 						results.push(value);
 						add = Number(reply[afield]);
 						addrs.push(add);
@@ -150,6 +225,11 @@ class DofiState {
 
 
 	}
+	
+	
+	
+	
+	
 	
 	GetRegisters() {
 
@@ -208,7 +288,10 @@ class DofiState {
 					console.log(rev.addrs);
 					console.log(rev.results);
 				}
+				
+				
 				this.fSignalControl = rev.results;
+				
 				//return true;
 			})
 			.catch(() => {
@@ -415,7 +498,7 @@ RefreshAll () {
 		return this.fDofiState.UpdateMonitor(deltatime).then(() => 
 			{
 				this.SetStatusMessage("Refreshed Scalers");
-				this.RefreshView();
+				this.FillScalersTable();
 				
 			});
 	}
@@ -609,6 +692,7 @@ $("#dofi_command_container").addClass("styleBlue");
 
 
 		this.FillScalersTable();
+		this.FillInputsTable();
 
 
 	}
@@ -650,7 +734,7 @@ $("#dofi_command_container").addClass("styleBlue");
 
 	ClearLogWindow() {
 
-		document.getElementById("logging").innerHTML = "Welcome to DOFI Web GUI!<br/>  -    v0.5, 11-May 2023 by S. Linev/ J. Adamzewski-Musch (JAM)<br/>";
+		document.getElementById("logging").innerHTML = "Welcome to DOFI Web GUI!<br/>  -    v0.51, 12-May 2023 by S. Linev/ J. Adamzewski-Musch (JAM)<br/>";
 		return this.UpdateElementsSize();
 
 
@@ -727,10 +811,6 @@ $("#dofi_command_container").addClass("styleBlue");
 
 
 	FillScalersTable() {
-
-		//let display = this,
-	/*	let olddom = this.selectDom();
-		this.setDom("content_scalers");*/
 		let dom = this.selectDom();
 		dom.selectAll(".scaler_values tbody").html("");
 
@@ -752,8 +832,38 @@ $("#dofi_command_container").addClass("styleBlue");
                                 <td class='scaler_outrate'>${MyDOFI.fOutputRate[i]}</td>`);
 			}
 		} // for i
-		//this.setDom(olddom);
 	}
+
+
+
+	FillInputsTable() {
+		let dom = this.selectDom();
+		dom.selectAll(".input_signals tbody").html("");
+
+		for (let i = 0; i < DOFI_NUM_CHANNELS; i++) {
+			let checkstring = (MyDOFI.IsInputInvert(i) ? "checked" : "");
+			if (MyDOFI.fHexmode) {
+
+
+				dom.select(".input_signals tbody").append("tr")
+					.html(`<td class="insignal_channel" >${i}</td>
+                               <td class='insignal_invert in_invert_${i}'><input   type="checkbox" ${checkstring}></td>
+                                <td class='insignal_delay in_delay_${i}'>0x<input   type="number" value="${MyDOFI.GetInputDelay(i).toString(16)}"  min="0" max="167772150" size="9"></td>
+                                <td class='insignal_length in_length_${i}'>0x<input  type="number" value="${MyDOFI.GetInputLength(i).toString(16)}"  min="0" max="167772150" size="9"</td>
+                                `);
+
+			}
+			else {
+				dom.select(".input_signals tbody").append("tr")
+					.html(`<td class="insignal_channel" >${i}</td>
+                               <td class='insignal_invert in_invert_${i}'><input   type="checkbox" ${checkstring}></td>
+                                <td class='insignal_delay in_delay_${i}'><input   type="number" value="${MyDOFI.GetInputDelay(i)}"  min="0" max="167772150" size="9"></td>
+                                <td class='insignal_length in_length_${i}'><input  type="number" value="${MyDOFI.GetInputLength(i)}"  min="0" max="167772150" size="9"</td>
+                                `);
+			}
+		} // for i
+	}
+
 
 
 

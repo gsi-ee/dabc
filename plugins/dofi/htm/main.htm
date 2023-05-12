@@ -61,14 +61,24 @@
 			top: 0%;
 		}
 
-#content_main {
+#content_inputs {
 			position: fixed;
 			top: 11%;
-			left: 0;
-			width: 60%;
-			height: 42%;
+			left: 0%;
+			width: 26%;
+			height: 52%;
 			overflow-y: auto;
 		}
+		
+#content_matrix {
+			position: fixed;
+			top: 11%;
+			left: 26%;
+			width: 31%;
+			height: 52%;
+			overflow-y: auto;
+		}		
+		
 		
 #content_scalers {
 			position: fixed;
@@ -81,7 +91,7 @@
 
 #content_log {
 			position: fixed;
-			height: 35%;
+			height: 25%;
 			bottom: 11%;
 			left: 0%;
 			width: 60%;
@@ -121,18 +131,7 @@ label {
    font-size:large;
 }
 
-<!--
-#trigger_container {
-			outline: outset medium;
-			position: fixed;
-			top: 0;
-			height: 13%;
-			left: 81%;
-			width: 19%;
-			text-align: center;
-			azimuth: rightwards;
-		}
--->
+
 
 
 
@@ -195,11 +194,60 @@ background-color: LightYellow;
 		
 	</div>
 	
-	<div id="content_main">
-	 <h3>Nothing to see here yet.</h3>
-	
+<!-- c;
+ -->	
+	<div id="content_inputs">
+	 <table border="1" class="input_signals" style="border=2px;table-layout:auto;width: 400px; autoresize:none;overflow:auto;">
+			<caption>
+            <h3>Input Signals</h3>
+         </caption>
+		 <thead>	
+     <tr style="background:#CFCFCF;">
+      <th class='insignal_channel_head'>Channel</th>
+      <th class='insignal_invert_head'>Invert</th>
+      <th class='insignal_delay_head'>Delay [ns]</th>
+      <th class='insignal_length_head'>Length [ns]</th>
+       </tr>
+      </thead>
+        <tbody>
+      <tr style="text-align: right">
+       <td style="background:#CFCFCF; text-align: center">0</td>
+       <td class='insignal_invert'><input   type="checkbox" checked="true"></td>
+       <td class='insignal_delay'><input   type="number" value="0" min="0" max="167772150" size="9"></td>
+       <td class='insignal_length'><input  type="number" value="0" min="0" max="167772150" size="9"></td>
+      </tr>
+    
+       </tbody>
+    </table>
+	 
+	 
+	 
 	</div>
-	<div id="content_scalers">
+	
+	<div id="content_matrix">
+	 
+	 <table border="1" class="logic_matrix" style="border=2px;table-layout:auto;width: 400px; autoresize:none;overflow:auto;">
+			<caption>
+            <h3>Logic Matrix</h3>
+         </caption>
+		 <thead>	
+     <tr style="background:#CFCFCF;">
+      <th class='insignal_channel_head'></th>
+      <th class='insignal_channel_head'>0</th>
+      <th class='insignal_channel_head'>1</th>
+       </tr>
+      </thead>
+        <tbody>
+        <tr style="text-align: right">
+       <td style="background:#CFCFCF; text-align: center">0</td> </tr>
+        <tr style="text-align: right">
+       <td style="background:#CFCFCF; text-align: center">1</td> </tr>
+       
+	    </tbody>
+	  </table>
+	</div>
+	
+<div id="content_scalers">
 		
 		<table border="1" class="scaler_values" style="border=2px;table-layout:fixed; width: 600px;autoresize:none;overflow:auto;">
 			<caption>
@@ -224,11 +272,10 @@ background-color: LightYellow;
      </tr>
        </tbody>
     </table>
-		
-		
-
 
 </div>
+
+
 <div id="content_log">
 <div id="logging"
          style="width: 100%;"></div>

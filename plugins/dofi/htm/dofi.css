@@ -79,6 +79,28 @@ text-align: right;
 
 }
 
+.insignal_channel {
+background:#CFCFCF; 
+text-align: center;
+
+}
+.insignal_invert {
+	text-align: center;
+	
+}
+.insignal_delay {
+	text-align: right;
+	
+
+}
+
+.insignal_length {
+	text-align: right;
+	}
+
+
+
+
 .dofi_status_style {
 text-align: left;
 font-size: 12pt; font-weight:bold;
