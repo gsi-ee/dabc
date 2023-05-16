@@ -128,13 +128,13 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
          }
 
          if (isreading) {
-            long value = 0;
-            if (!dabc::str_to_lint(buf,&value)) {
+            long long value = 0;
+            if (!dabc::str_to_llint(buf, &value)) {
                gosipres.emplace_back("<err>");
                break;
             }
             // DOUT0("Reading ok %ld", value);
-            gosipres.emplace_back(dabc::format("%ld", value));
+            gosipres.emplace_back(dabc::format("%lld", value));
             continue;
          }
 

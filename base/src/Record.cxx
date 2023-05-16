@@ -513,8 +513,8 @@ int64_t dabc::RecordField::AsInt(int64_t dflt) const
       case kind_arrdouble: if (valueInt>0) return (int64_t) arrDouble[0]; break;
       case kind_string:
       case kind_arrstr: {
-         long res;
-         if (str_to_lint(valueStr, &res)) return res;
+         long long res = 0;
+         if (str_to_llint(valueStr, &res)) return res;
          break;
       }
       case kind_buffer: return dflt;
@@ -599,24 +599,25 @@ std::vector<int64_t> dabc::RecordField::AsIntVect() const
          break;
       case kind_string: {
          std::vector<std::string> svect;
-         long res0;
+         long long res0;
          // try to convert string in vector
          if (StrToStrVect(valueStr, svect, false)) {
            for (unsigned n=0;n<svect.size();n++)
-              if (str_to_lint(svect[n].c_str(), &res0))
+              if (str_to_llint(svect[n].c_str(), &res0))
                  res.emplace_back(res0);
            break;
          }
-         if (str_to_lint(valueStr, &res0)) res.emplace_back(res0);
+         if (str_to_llint(valueStr, &res0))
+            res.emplace_back(res0);
          break;
       }
       case kind_arrstr: {
          res.reserve(valueInt);
-         long res0;
+         long long res0 = 0;
          char* p = valueStr;
 
          for (int64_t n=0;n<valueInt;n++) {
-            if (!str_to_lint(p, &res0)) res0 = 0;
+            if (!str_to_llint(p, &res0)) res0 = 0;
             res.emplace_back(res0);
             p += strlen(p)+1;
          }
