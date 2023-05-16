@@ -113,7 +113,7 @@ class DofiState {
 		let mask = BigInt(0);
 		let delay = BigInt(d)/DOFI_TIME_UNIT;
 		if (channel < DOFI_NUM_CHANNELS) {
-			mask = (0xFFFFFFn << 16);
+			mask = (0xFFFFFFn << 16n);
 			this.fSignalControl[channel] &= ~mask;
 			this.fSignalControl[channel] |= (delay & 0xFFFFFFn) << 16n;
 		}
@@ -134,12 +134,29 @@ class DofiState {
 		let channel = Number(ch);
 		let mask = BigInt(0);
 		let len = BigInt(l)/DOFI_TIME_UNIT;
+		
 		if (channel < DOFI_NUM_CHANNELS) { 
-			mask = (0xFFFFFFn << 40);
+			mask = (0xFFFFFFn << 40n);
+			console.log("SetInputLength("+channel+","+len+" old register value:"+this.fSignalControl[channel] );
 			this.fSignalControl[channel] &= ~mask;
-			this.fSignalControl[channel] |= (len & 0xFFFFFFn) << 40;
+			this.fSignalControl[channel] |= (len & 0xFFFFFFn) << 40n;
+			
+			console.log("SetInputLength("+channel+","+len+" sets register value:"+this.fSignalControl[channel] );
 		}
 	}
+	
+	
+/*	 void SetInputLength (unsigned int channel, int len)
+  {
+    if (channel < DOFI_NUM_CHANNELS)
+    {
+      unsigned long long mask = (0xFFFFFFULL << 40);
+      fSignalControl[channel] &= ~mask;
+      fSignalControl[channel] |= (len & 0xFFFFFFULL) << 40;
+    }
+  }*/
+	
+	
 
 	GetInputLength(ch) {
 		let channel = Number(ch);
@@ -186,7 +203,6 @@ class DofiState {
 	DofiCommand(cmd, address, value, repeat, hex, verbose, filename) {
 
 		let cmdurl = "/dofi/DofiCommand/execute";
-		// var xmlHttp = new XMLHttpRequest();   
 		let cmdtext = cmdurl + "?COMMAND=" + cmd;
 		cmdtext += "&VERBOSE=" + verbose;
 		cmdtext += "&ADDRESS=" + address;
@@ -204,6 +220,7 @@ class DofiState {
 				var addrs = [];
 				if (reply['NUMRESULTS'] != null) {
 					numresults = Number(reply['NUMRESULTS']);
+					
 					for (var i = 0; i < numresults; ++i) {
 						let vfield = "VALUE_" + i;
 						let afield = "ADDRESS_" + i;
@@ -214,9 +231,12 @@ class DofiState {
 						add = Number(reply[afield]);
 						addrs.push(add);
 					} // numresults
+					//console.log('Reply1 = ' + numresults);
+				if(numresults==0) return true;
+				return { numresults, results, addrs };
 				} // if (reply['NUMRESULTS']  
 				//console.log('Reply2 = ' + numresults);
-				return { numresults, results, addrs };
+				return true;
 			})
 			.catch(() => {
 				console.log("Dofi command failed - no  results");
@@ -352,22 +372,93 @@ class DofiState {
 
 	}
 
-	SetRegisters () {
+	SetRegisters (options) {
 
-
-
-		// TODO: multiple write here
+var cmd = DofiCommands.DOFI_WRITE;
+		var base;
+	   //console.log("SetRegisters with options:"+options);
+	   
+	   
+	   // TODO: special mode to set all registers?
+	   
+	   
+	   
+// TODO: only write entries that were really changed, like parameter editor JAM23
+       let promises=[];
+       let len = options.length;
+         for (let index = 0; index < len; index++) {
+            let entry = options[index];
+            let key=entry[0];
+            let value=entry[1];
+             let address=0;
+            //console.log("SetRegisters found key"+key+" with value:"+value);
+			 
+			  let delim=key.lastIndexOf("_")+1;
+			  let suffix=key.substring(delim);
+			  let i=Number(suffix);
+			 if (key.includes("in_invert"))
+			 {
+				
+				 //console.log("got suffix:"+suffix+", number="+i);
+				 this.SetInputInvert(i,value);
+				 address=DOFI_SIGNALCTRL_BASE + i;				 
+				 promises[index]=
+				 		this.DofiCommand(cmd, address, this.fSignalControl[i], 1, this.fHexmode, this.fVerbose, "")
+			.then(() => {
+				if (this.fVerbose) {
+					console.log("Wrote to register " + address + ":"+this.fSignalControl[i]+" ("+key+"="+value+")");
+				}
+				})
+			.catch(() => {
+				console.log("Set Registers failed for "+key+"="+value);
+			});
+				 
+				 
+				 
+			 }
+		     else if (key.includes("in_delay"))
+		     {				 
+				 this.SetInputDelay(i,value);
+				 address=DOFI_SIGNALCTRL_BASE + i;				 
+				 promises[index]=
+				 		this.DofiCommand(cmd, address, this.fSignalControl[i], 1, this.fHexmode, this.fVerbose, "")
+			.then(() => {
+				if (this.fVerbose) {
+					console.log("Wrote to register " + address + ":"+this.fSignalControl[i]+" ("+key+"="+value+")");
+				}
+				})
+			.catch(() => {
+				console.log("Set Registers failed for "+key+"="+value);
+			});
+				 
+				 
+			 }
+			 else if (key.includes("in_length"))
+			 {
+				  this.SetInputLength(i,value);
+				 address=DOFI_SIGNALCTRL_BASE + i;				 
+				 promises[index]=
+				 		this.DofiCommand(cmd, address, this.fSignalControl[i], 1, this.fHexmode, this.fVerbose, "")
+			.then(() => {
+				if (this.fVerbose) {
+					console.log("Wrote to register " + address + ":"+this.fSignalControl[i]+" ("+key+"="+value+")");
+				}
+				})
+			.catch(() => {
+				console.log("Set Registers failed for "+key+"="+value);
+			});
+				 
+			 }
+	
+			} // for
 		
-		// TODO: only write entries that were really changed, like parameter editor JAM23
+		//var isok = true;
 
-		//this.DofiCommand("[" + regs.toString() + "]", function(isok, res) {
-		// write register values from strucure with gosipcmd
-		//~ callback(isok);
-		//~ });
 
-		var isok = true;
+	return Promise.all(promises).then(() => { return true; })
+		.catch(() => {return false;} );
 
-		return new Promise(function(thenFunc, errorFunc) {
+		/*return new Promise(function(thenFunc, errorFunc) {
 			// ...
 
 
@@ -375,7 +466,7 @@ class DofiState {
 			thenFunc(isok);
 
 			errorFunc(new Error("Get Registers failed!"));
-		});
+		});*/
 
 
 	}
@@ -395,8 +486,8 @@ EvaluateRates (deltatime) {
    if(deltatime==0) return;
    for (var i = 0; i < DOFI_NUM_CHANNELS; ++i)
         {
-          this.fInputRate[i] = 1000.0 *(this.fInputScalers[i] -this.fInputScalersBefore[i])/deltatime;
-          this.fOutputRate[i] = 1000.0*(this.fOutputScalers[i] - this.fOutputScalersBefore[i])/deltatime;
+          this.fInputRate[i] = 1000.0 *Number(this.fInputScalers[i] -this.fInputScalersBefore[i])/deltatime;
+          this.fOutputRate[i] = 1000.0*Number(this.fOutputScalers[i] - this.fOutputScalersBefore[i])/deltatime;
         }
         //console.log(" EvaluateRates: deltatime="+deltatime +", rate[0]="+this.fInputRate[0]);
  }
@@ -451,40 +542,37 @@ class DofiDisplay extends JSROOT.BasePainter {
 		this.fUpdateInterval = 2000; // ms
 		//~ this.fMiddlerightPos = 0;
 		//~ this.fMiddleWidth = 0;
+		 this.fChanges = ["dummy", "init"]; 
 		this.BuildView();
 	}
 
 	// set up view elements of display:
 	BuildView() {
+		
+	// select first tab of logic matrix tables	
+	document.getElementById("OR").style.display = "block";
 
-
-		//~ let hpainter = new JSROOT.HierarchyPainter('root', null),
-		//~ disp = new JSROOT.CustomDisplay();
-
-		//~ disp.addFrame("EvRateDisplay", "EventRate");
-		//~ disp.addFrame("DatRateDisplay", "DataRate");
-		//~ disp.addFrame("SrvRateDisplay", "ServerRate");
-		//~ disp.addFrame("DeviceInfo", "logger");
-		//~ // use same frame for different items
-		//~ disp.addFrame("ReadoutInfo", "rate_log");
-		//~ disp.addFrame("ReadoutInfo", "rash_log");
-		//~ disp.addFrame("ReadoutInfo", "rast_log");
-		//~ disp.addFrame("ReadoutInfo", "ratf_log");
-
-		//~ hpainter.setDisplay(disp);
-
-		//~ this.hpainter = null;
-
-		//~ hpainter.openOnline("../").then(() => {
-		//~ this.hpainter = hpainter;
-		//~ this.SetTrending(false, 300);
-		//~ hpainter.display("logger");
-		//~ this.SetFileLogMode(4, 0, 0);   // init log window, but keep history and interval from server
-		//~ });
-
-		//this.RefreshView();
-
+	this.RefreshAll();
+ 
+		
 	}
+
+
+
+SelectMatrixTab(evt, tabName) {
+  var i, tabcontent, tablinks;
+  let dom = this.selectDom();
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
 
 
 RefreshAll () {
@@ -503,6 +591,56 @@ RefreshAll () {
 			});
 	}
 
+
+
+ /** @summary add identifier of changed element to list, make warning sign visible */
+      MarkChanged(key) {
+         // first avoid duplicate keys:
+         if (this.fChanges.indexOf(key) >= 0) return;
+         this.fChanges.push(key);
+         console.log("Mark changed :%s", key);
+          $("#status_container").addClass("styleMagenta").removeClass("styleYellow");
+         //this.selectDom().select(".buttonChangedParameter").style("display", null);// show warning sign
+      }
+
+      /** @summary clear changes flag */
+      ClearChanges() {
+         this.fChanges = []; //
+         $("#status_container").addClass("styleYellow").removeClass("styleMagenta");
+         //this.selectDom().select(".buttonChangedParameter").style("display", "none"); // hide warning sign
+      }
+
+
+  EvaluateChanges() {
+	     let elem=["dummy","val"];
+	  	 let changelist=[elem];
+         let dom = this.selectDom(),
+             len = this.fChanges.length;
+          changelist=[];   
+         for (let index = 0; index < len; index++) {
+            //let cursor=changes.pop();
+            let key = this.fChanges[index];
+            console.log("Evaluate change key:%s", key);
+            // here mapping of key to editor field:
+            // first look if we have checkbox:
+            let val=0;
+            let element=dom.select("." + key.toString());
+            if(element.property("type")=="checkbox")
+            {
+            	element.property("checked") ? val=1: val=0;
+            }
+            else
+            {
+              val = dom.select("." + key.toString()).property("value");
+            }
+              changelist.push([key, val]);
+         	}// for index
+         //console.log("Resulting option string:%s", optionstring);
+         
+            return changelist;
+       	     }
+
+
 	ApplySetup () {
 
 		if (this.fDoCommandConfirm) {
@@ -511,14 +649,13 @@ RefreshAll () {
 			if (!response)
 				return;
 		}
-
-
-		//this.SetStatusMessage("Apply setup data:");
-		//this.fDofiState.Update().then(() => this.RefreshView());
-		this.fDofiState.SetRegisters().then(() => {
+		
+		let changes =this.EvaluateChanges();
+		this.fDofiState.SetRegisters(changes).then(() => {
 			this.AddLogText("Setup has been applied");
 			this.UpdateElementsSize();
 			this.SetStatusMessage("Applied setup data.");
+			this.ClearChanges();
 			return true;
 		})
 			.catch(() => {
@@ -640,7 +777,7 @@ ChangeScalers (enabled) {
 
 	RefreshView () {
 
-$("#status_container").addClass("styleYellow");
+$("#status_container").addClass("styleYellow").removeClass("styleMagenta");
 
 $("#dofi_command_container").addClass("styleBlue");
 
@@ -693,7 +830,7 @@ $("#dofi_command_container").addClass("styleBlue");
 
 		this.FillScalersTable();
 		this.FillInputsTable();
-
+	    this.ClearChanges();
 
 	}
 
@@ -734,7 +871,7 @@ $("#dofi_command_container").addClass("styleBlue");
 
 	ClearLogWindow() {
 
-		document.getElementById("logging").innerHTML = "Welcome to DOFI Web GUI!<br/>  -    v0.51, 12-May 2023 by S. Linev/ J. Adamzewski-Musch (JAM)<br/>";
+		document.getElementById("logging").innerHTML = "Welcome to DOFI Web GUI!<br/>  -    v0.52, 16-May 2023 by S. Linev/ J. Adamzewski-Musch (JAM)<br/>";
 		return this.UpdateElementsSize();
 
 
@@ -847,25 +984,60 @@ $("#dofi_command_container").addClass("styleBlue");
 
 				dom.select(".input_signals tbody").append("tr")
 					.html(`<td class="insignal_channel" >${i}</td>
-                               <td class='insignal_invert in_invert_${i}'><input   type="checkbox" ${checkstring}></td>
-                                <td class='insignal_delay in_delay_${i}'>0x<input   type="number" value="${MyDOFI.GetInputDelay(i).toString(16)}"  min="0" max="167772150" size="9"></td>
-                                <td class='insignal_length in_length_${i}'>0x<input  type="number" value="${MyDOFI.GetInputLength(i).toString(16)}"  min="0" max="167772150" size="9"</td>
+                               <td class='insignal_invert'><input   type="checkbox" ${checkstring} class='in_invert_${i}></td>
+                                <td class='insignal_delay'>0x<input   type="number" value="${MyDOFI.GetInputDelay(i).toString(16)}" class='in_delay_${i}' min="0" max="167772150" size="9"></td>
+                                <td class='insignal_length'>0x<input  type="number" value="${MyDOFI.GetInputLength(i).toString(16)}" class='in_length_${i}'  min="0" max="167772150" size="9"</td>
                                 `);
 
 			}
 			else {
 				dom.select(".input_signals tbody").append("tr")
 					.html(`<td class="insignal_channel" >${i}</td>
-                               <td class='insignal_invert in_invert_${i}'><input   type="checkbox" ${checkstring}></td>
-                                <td class='insignal_delay in_delay_${i}'><input   type="number" value="${MyDOFI.GetInputDelay(i)}"  min="0" max="167772150" size="9"></td>
-                                <td class='insignal_length in_length_${i}'><input  type="number" value="${MyDOFI.GetInputLength(i)}"  min="0" max="167772150" size="9"</td>
+                               <td class='insignal_invert'> '<input   type="checkbox" ${checkstring} class='in_invert_${i}'></td>
+                                <td class='insignal_delay'><input   type="number" value="${MyDOFI.GetInputDelay(i)}" class='in_delay_${i}' min="0" max="167772150" size="9"></td>
+                                <td class='insignal_length'><input  type="number" value="${MyDOFI.GetInputLength(i)}" class='in_length_${i}' min="0" max="167772150" size="9"</td>
                                 `);
 			}
 		} // for i
+		
+		// dom.select(" .par_values tbody").selectAll("input").on("change", function() { editor.markChanged(d3.select(this).attr('class')); });
+	    dom.select(" .input_signals tbody").selectAll("input").on("change", function() { MyDisplay.MarkChanged(d3_select(this).attr('class')); });	
+	    this.ClearChanges();
 	}
 
 
+  FillMatrixTables() {
+         let dom = this.selectDom();
 
+         let head_html = "", tab_html = "";
+         //stat.fxStepArray.arr.forEach((step, indx) => {
+            head_html += `<button for="OR_matrix">OR</button>`;
+            tab_html += `<div class="OR_tab" style="display:none">${this.stepPageHtml}</div>`;
+        // });
+
+
+         /*dom.select(".ana_step_tabs_header").html(head_html);
+
+         dom.select(".ana_step_tabs_body").html(step_html);
+
+          // assign tabs buttons handlers
+         dom.select('.ana_step_tabs_header').selectAll("button").on("click", function() {
+            let btn = d3.select(this);
+
+            dom.select('.ana_step_tabs_header').selectAll("button").each(function() {
+               d3.select(this).classed("active_btn", false);
+            });
+
+            btn.classed("active_btn", true);
+
+            dom.selectAll('.ana_step_tabs_body>div').each(function() {
+               let tab = d3.select(this);
+               tab.style('display', tab.classed(btn.attr("for")) ? null : "none");
+            });
+         });
+*/
+
+}
 
 }
 // class DofiState

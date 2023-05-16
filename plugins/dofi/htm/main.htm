@@ -156,11 +156,15 @@ label {
 
       .styleYellow {
 /*          background-color: #FFFF00; */
-background-color: LightYellow;
+		background-color: LightYellow;
       }
 
       .styleBlue {
           background-color: LightBlue;
+      }
+      
+      .styleMagenta {
+          background-color: Orchid;
       }
 
       .MyButtonStyle {
@@ -225,10 +229,20 @@ background-color: LightYellow;
 	</div>
 	
 	<div id="content_matrix">
-	 
-	 <table border="1" class="logic_matrix" style="border=2px;table-layout:auto;width: 400px; autoresize:none;overflow:auto;">
+	    <h3>Logic Matrix</h3>
+	
+   
+   
+   <div class="tab">
+  <button class="tablinks" onclick="MyDisplay.SelectMatrixTab(event, 'OR')">OR</button>
+  <button class="tablinks" onclick="MyDisplay.SelectMatrixTab(event, 'AND')">AND</button>
+  </div>
+
+<div id="OR" class="tabcontent">
+
+<table border="1" class="logic_matrix_and" style="border=2px;table-layout:auto;width: 400px; autoresize:none;overflow:auto;">
 			<caption>
-            <h3>Logic Matrix</h3>
+            <h4>ORed inputs to outputs</h4>
          </caption>
 		 <thead>	
      <tr style="background:#CFCFCF;">
@@ -245,7 +259,63 @@ background-color: LightYellow;
        
 	    </tbody>
 	  </table>
-	</div>
+</div>
+
+<div id="AND" class="tabcontent">
+<table border="1" class="logic_matrix_or" style="border=2px;table-layout:auto;width: 400px; autoresize:none;overflow:auto;">
+	<caption>
+            <h6>ANDed inputs to outputs</h6>
+         </caption>
+		 <thead>	
+     <tr style="background:#CFCFCF;">
+      <th class='insignal_channel_head'></th>
+      <th class='insignal_channel_head'>0</th>
+      <th class='insignal_channel_head'>1</th>
+       </tr>
+      </thead>
+        <tbody>
+        <tr style="text-align: right">
+       <td style="background:#CFCFCF; text-align: center">0</td> </tr>
+        <tr style="text-align: right">
+       <td style="background:#CFCFCF; text-align: center">1</td> </tr>
+       
+	    </tbody>
+	  </table>
+
+
+
+  
+</div>
+   
+   
+</div>
+	 
+	 
+	 
+	 
+	 
+	<!--  <table border="1" class="logic_matrix" style="border=2px;table-layout:auto;width: 400px; autoresize:none;overflow:auto;">
+			<caption>
+            <h3>Logic Matrix</h3>
+         </caption>
+		 <thead>	 -->
+     <!-- <tr style="background:#CFCFCF;">
+      <th class='insignal_channel_head'></th>
+      <th class='insignal_channel_head'>0</th>
+      <th class='insignal_channel_head'>1</th>
+       </tr>
+      </thead>
+        <tbody>
+        <tr style="text-align: right">
+       <td style="background:#CFCFCF; text-align: center">0</td> </tr>
+        <tr style="text-align: right">
+       <td style="background:#CFCFCF; text-align: center">1</td> </tr>
+       
+	    </tbody>
+	  </table> -->
+	  
+	  
+	  
 	
 <div id="content_scalers">
 		
