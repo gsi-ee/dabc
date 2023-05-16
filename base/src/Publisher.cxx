@@ -612,7 +612,7 @@ dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::
             double ddd = 0.;
             long long iii = 0;
             if (str_to_llint(parvalue.c_str(), &iii))
-               res.SetInt(parname, iii);
+               res.SetInt64(parname, iii);
             else if (str_to_double(parvalue.c_str(), &ddd))
                res.SetDouble(parname, ddd);
             else

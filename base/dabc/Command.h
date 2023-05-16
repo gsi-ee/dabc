@@ -132,6 +132,9 @@ namespace dabc {
          bool SetInt(const std::string &name, int v) { return SetField(name, v); }
          int GetInt(const std::string &name, int dflt = 0) const { return GetField(name).AsInt(dflt); }
 
+         bool SetInt64(const std::string &name, int64_t v) { return SetField(name, v); }
+         int64_t GetInt64(const std::string &name, int64_t dflt = 0) const { return GetField(name).AsInt(dflt); }
+
          bool SetBool(const std::string &name, bool v) { return SetField(name, v); }
          bool GetBool(const std::string &name, bool dflt = false) const { return GetField(name).AsBool(dflt); }
 
