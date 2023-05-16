@@ -181,6 +181,28 @@ bool dabc::str_to_lint(const char* val, long* res)
 }
 
 
+bool dabc::str_to_llint(const char* val, long long* res)
+{
+   if (!val || !res) return false;
+
+   while (*val==' ') val++;
+   if (*val == 0) return false;
+
+   if ((strlen(val) > 2) && (val[0] == '0') && ((val[1] == 'x') || (val[1] == 'X'))) {
+      long long unsigned ures = 0;
+      if (sscanf(val+2, "%llx", &ures) == 1) {
+         *res = ures;
+         return true;
+      }
+      return false;
+   }
+
+   if (strpbrk(val,".,eE")) return false; // avoid any float value
+
+   return sscanf(val, "%lld", res) == 1;
+}
+
+
 bool dabc::str_to_uint(const char* val, unsigned* res)
 {
    if (!val || !res) return false;

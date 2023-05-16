@@ -589,27 +589,34 @@ dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::
             }
 
             for (unsigned n=0;n<vect.size();n++) {
-               double ddd;
-               long iii;
-               if (str_to_double(vect[n].c_str(), &ddd)) dblvect.emplace_back(ddd);
-               if (str_to_lint(vect[n].c_str(), &iii)) intvect.emplace_back(ddd);
+               double ddd = 0.;
+               long long iii = 0;
+               if (str_to_double(vect[n].c_str(), &ddd))
+                  dblvect.emplace_back(ddd);
+               if (str_to_llint(vect[n].c_str(), &iii))
+                  intvect.emplace_back(iii);
             }
 
-            if (intvect.size()==vect.size()) res.SetField(parname, intvect); else
-            if (dblvect.size()==vect.size()) res.SetField(parname, dblvect); else
-            res.SetField(parname, vect);
+            if (intvect.size() == vect.size())
+               res.SetField(parname, intvect);
+            else if (dblvect.size() == vect.size())
+               res.SetField(parname, dblvect);
+            else
+               res.SetField(parname, vect);
 
          } else if (parname == "tmout") {
             double tmout = 10;
             if (!str_to_double(parvalue.c_str(), &tmout)) tmout = 10;
             res.SetTimeout(tmout);
          } else {
-            double ddd;
-            long iii;
-            if (str_to_lint(parvalue.c_str(), &iii)) res.SetInt(parname, iii); else
-            if (str_to_double(parvalue.c_str(), &ddd)) res.SetDouble(parname, ddd); else
+            double ddd = 0.;
+            long long iii = 0;
+            if (str_to_llint(parvalue.c_str(), &iii))
+               res.SetInt(parname, iii);
+            else if (str_to_double(parvalue.c_str(), &ddd))
+               res.SetDouble(parname, ddd);
+            else
                res.SetStr(parname, parvalue);
-
          }
 
       } while (!part.empty());
