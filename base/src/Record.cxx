@@ -537,8 +537,8 @@ uint64_t dabc::RecordField::AsUInt(uint64_t dflt) const
       case kind_arrdouble: if (valueInt>0) return (uint64_t) arrDouble[0]; break;
       case kind_string:
       case kind_arrstr: {
-         long unsigned res;
-         if (str_to_luint(valueStr, &res)) return res;
+         long long unsigned res = 0;
+         if (str_to_lluint(valueStr, &res)) return res;
          break;
       }
       case kind_buffer: return dflt;
@@ -658,27 +658,29 @@ std::vector<uint64_t> dabc::RecordField::AsUIntVect() const
          break;
       case kind_string: {
          std::vector<std::string> svect;
-         long unsigned res0;
+         long long unsigned res0 = 0;
          // try to convert string in vector
          if (StrToStrVect(valueStr, svect, false)) {
-           for (unsigned n=0;n<svect.size();n++)
-              if (str_to_luint(svect[n].c_str(), &res0))
+           for (unsigned n = 0; n < svect.size(); n++)
+              if (str_to_lluint(svect[n].c_str(), &res0))
                  res.emplace_back(res0);
            break;
          }
 
-         if (str_to_luint(valueStr, &res0)) res.emplace_back(res0);
+         if (str_to_lluint(valueStr, &res0))
+            res.emplace_back(res0);
          break;
       }
       case kind_arrstr: {
          res.reserve(valueInt);
-         long unsigned res0;
+         long long unsigned res0 = 0;
          char* p = valueStr;
 
-         for (int64_t n=0;n<valueInt;n++) {
-            if (!str_to_luint(p, &res0)) res0 = 0;
+         for (int64_t n = 0; n < valueInt; n++) {
+            if (!str_to_lluint(p, &res0))
+               res0 = 0;
             res.emplace_back(res0);
-            p += strlen(p)+1;
+            p += strlen(p) + 1;
          }
          break;
       }

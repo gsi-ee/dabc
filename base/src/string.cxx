@@ -235,6 +235,22 @@ bool dabc::str_to_luint(const char* val, long unsigned* res)
    return sscanf(val, "%lu", res) == 1;
 }
 
+bool dabc::str_to_lluint(const char* val, long long unsigned* res)
+{
+   if (!val || !res) return false;
+
+   while (*val==' ') val++;
+   if (*val == 0) return false;
+
+   if ((strlen(val) > 2) && (val[0] == '0') && ((val[1] == 'x') || (val[1] == 'X')))
+      return sscanf(val+2, "%llx", res) == 1;
+
+   if (strpbrk(val,".,eE")) return false; // avoid any float value
+
+   return sscanf(val, "%llu", res) == 1;
+}
+
+
 bool dabc::str_to_double(const char* val, double* res)
 {
    if (!val || !res) return false;

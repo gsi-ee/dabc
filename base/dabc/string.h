@@ -79,6 +79,13 @@ namespace dabc {
     *\returns true if succeed */
    extern bool str_to_luint(const char* val, long unsigned* res);
 
+   /** \brief Convert string to long unsigned integer value
+    * One could use hexadecimal (in form 0xabc100)  or decimal format
+    * \param[in]  val   source string
+    * \param[out] res   pointer on result value
+    *\returns true if succeed */
+   extern bool str_to_lluint(const char* val, long long unsigned* res);
+
    /** \brief Convert string to double value
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
