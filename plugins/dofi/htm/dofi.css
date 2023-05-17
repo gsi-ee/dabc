@@ -120,9 +120,22 @@ text-align: right;
 text-align: right;
 
 }
+.matrix_check {
+	text-align: center;
+	
+}
+.outmatrix_channel {
+background:Thistle;
+text-align: center;
+}
+
+.inmatrix_channel {
+background:GreenYellow;
+text-align: center;
+}
 
 .insignal_channel {
-background:#CFCFCF; 
+background:GreenYellow; 
 text-align: center;
 
 }
