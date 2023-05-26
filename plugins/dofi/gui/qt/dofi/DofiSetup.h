@@ -124,9 +124,9 @@ public:
   {
     if (channel < DOFI_NUM_CHANNELS)
     {
-      unsigned long long mask = (0xFFFFFF << 16);
+      unsigned long long mask = (0xFFFFFFULL << 16);
       fSignalControl[channel] &= ~mask;
-      fSignalControl[channel] |= (delay & 0xFFFFFF) << 16;
+      fSignalControl[channel] |= (delay & 0xFFFFFFULL) << 16;
     }
   }
 
