@@ -55,7 +55,7 @@ if(OPENSSL_FOUND)
 
   if(${OPENSSL_VERSION} VERSION_GREATER_EQUAL 3.1.0)
     message(STATUS "Use SSL API VERSION 3.1 for civetweb")
-    list(APPEND extra_defs OPENSSL_API_3_1)
+    list(APPEND extra_defs OPENSSL_API_3_0)
     set(link_ssl ON)
   elseif(${OPENSSL_VERSION} VERSION_GREATER_EQUAL 3.0.0)
     message(STATUS "Use SSL API VERSION 3.0 for civetweb")
