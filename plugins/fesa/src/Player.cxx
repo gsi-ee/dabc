@@ -272,7 +272,7 @@ double fesa::Player::doGet(const std::string &service, const std::string &field)
    }
    catch (...)
    {
-        EOUT("Uncknown exception caught in doGet");
+        EOUT("Unknown exception caught in doGet");
    }
    #else
    (void) service;

@@ -173,7 +173,7 @@ uint32_t mbs::BufferHeader::UsedBufferSize() const
          return i_used * 2;
 
       default: break;
-      //         EOUT("Uncknown buffer type %d-%d", i_type, i_subtype);
+      //         EOUT("Unknown buffer type %d-%d", i_type, i_subtype);
    }
 
    return 0;
@@ -195,7 +195,7 @@ void mbs::BufferHeader::SetUsedBufferSize(uint32_t len)
          break;
 
       default:
-         //         EOUT("Uncknown buffer type %d-%d", i_type, i_subtype);
+         //         EOUT("Unknown buffer type %d-%d", i_type, i_subtype);
          break;
    }
 }
