@@ -282,6 +282,9 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    fHeader.SetUsedBufferSize(sendsize);
    fHeader.SetNumEvents(events);
 
+   if (sendsize + sizeof(fHeader) > (unsigned) fServInfo.iMaxBytes)
+      EOUT("Sending mbs buffer 0x%06x larger than configured client buffer size 0x%06x, add url parameter &bufsize=%d", (unsigned) (sendsize + sizeof(fHeader)), (int) fServInfo.iMaxBytes, (int) ((sendsize + sizeof(fHeader)) / 0x100000 + 2));
+
    // error in evapi, must be + sizeof(mbs::BufferHeader)
    // fHeader.SetFullSize(sendsize - sizeof(mbs::BufferHeader));
 
@@ -351,7 +354,7 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    if (fBufSize == 0) {
       fBufSize = 0x400000;
       dabc::MemoryPoolRef pool = dabc::mgr.FindPool(dabc::xmlWorkPool);
-      auto maxbuf = pool.GetMaxBufSize();
+      auto maxbuf = pool.GetMaxBufSize() * 3 / 2;
       if (maxbuf > fBufSize)
          fBufSize = maxbuf;
    }
