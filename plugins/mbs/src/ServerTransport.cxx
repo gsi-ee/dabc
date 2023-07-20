@@ -345,6 +345,17 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    if (url.HasOption("subid"))
       fSubevId = (unsigned) url.GetOptionInt("subid", fSubevId);
 
+   if (url.HasOption("bufsize"))
+      fBufSize = (unsigned) url.GetOptionInt("bufsize", 0) * 0x100000;
+
+   if (fBufSize == 0) {
+      fBufSize = 0x400000;
+      dabc::MemoryPoolRef pool = dabc::mgr.FindPool(dabc::xmlWorkPool);
+      auto maxbuf = pool.GetMaxBufSize();
+      if (maxbuf > fBufSize)
+         fBufSize = maxbuf;
+   }
+
    // by default transport server is blocking and stream is unblocking
    // blocking has two meaning:
    // - when no connections are there, either block input or not
@@ -418,8 +429,8 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
       dabc::SocketThread::SetNoDelaySocket(fd);
 
       ServerOutputAddon *addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
-      // FIXME: should we configure buffer size or could one ignore it???
-      addon->FillServInfo(0x400000, true);
+
+      addon->FillServInfo(fBufSize, true);
 
       if (portindx<0) portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
 
