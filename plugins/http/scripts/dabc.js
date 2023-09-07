@@ -992,7 +992,7 @@ DABC.ExtractSeries = function(name, kind, obj, history) {
       if (kind=="number") return Number(node[name]);
       if (kind=="time") {
          let d  = new Date(node[name]);
-         return d.getTime() / 1000.;
+         return d.getTime() / 1000;
       }
       return node[name];
    };
@@ -1267,7 +1267,7 @@ class DabcLogPainter extends BasePainter {
             html+="<pre style='margin-top:2px;margin-bottom:0px'>"+this.obj.log[i]+"</pre>";
          }
       } else {
-         html += obj['fullitemname'] + "<br/>";
+         html += this.obj.fullitemname + "<br/>";
          html += "<h5>"+ this.obj.value +"</h5>";
       }
       this.selectDom().select("div").html(html);
@@ -1314,10 +1314,10 @@ class DabcCommandPainter extends BasePainter {
 
       dom0.html('');
 
+      let dom = dom0.append('div').attr('style', 'overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace;');
+
       if (!this.jsonnode)
          return dom.html('cannot access command definition...<br/>');
-
-      let dom = dom0.append('div').attr('style', 'overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace;');
 
       dom.append('h3').text(this.jsonnode.fullitemname);
 
