@@ -307,7 +307,8 @@ MbsDisplay.prototype.RefreshView = function() {
       $("#buttonStartFile").button("option", {icon:  "ui-icon-closethick MyButtonStyle" });
       $("#buttonStartFile").attr("title", "Close output file");
       $("#FileAutoMode").prop('disabled', true);
-      $("#FileRFIO").prop('disabled', true);
+      $("#FileRFIO").prop('disabled', true); 
+      $("#DirectFSQ").prop('disabled', true);
       $("#Filesize").spinner("disable");
 
    } else {
@@ -317,6 +318,7 @@ MbsDisplay.prototype.RefreshView = function() {
       $("#buttonStartFile").attr("title", "Open lmd file for writing");
       $("#FileAutoMode").prop('disabled', false);
       $("#FileRFIO").prop('disabled', false);
+      $("#DirectFSQ").prop('disabled', false);
       $("#Filesize").spinner("enable");
    }
 
@@ -350,11 +352,14 @@ MbsDisplay.prototype.RefreshView = function() {
 
    if($("#FileRFIO").is(':checked')){
       $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-link MyButtonStyle\"></span>");
-      $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
+      $("label[for='FileRFIO']").attr("title",  "Write to RFIO or FSQ server is enabled. Must be connected first with command 'connect rfio -DISK or -ARCHIVE' ; or 'connect fsq' if direct fsq is checked.");
    } else {
       $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-disk MyButtonStyle\"></span>");
       $("label[for='FileRFIO']").attr("title", "Write to local disk is enabled.");
    }
+   
+   
+   
 
    if($("#FileAutoMode").is(':checked')){
       $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-star MyButtonStyle\"></span>");
@@ -363,6 +368,16 @@ MbsDisplay.prototype.RefreshView = function() {
       $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-document MyButtonStyle\"></span>");
       $("label[for='FileAutoMode']").attr("title",  "Use exact file name is enabled. Will return error if file already exists.");
    }
+   
+  // DirectFSQ
+    if($("#DirectFSQ").is(':checked')){
+      $("label[for='DirectFSQ']").html("<span class=\"ui-icon ui-icon-plus MyButtonStyle\"></span>");
+      $("label[for='DirectFSQ']").attr("title",  "Direct FSQ transport is enabled. Must be connected first with command connect fsq");
+   } else {
+      $("label[for='DirectFSQ']").html("<span class=\"ui-icon ui-icon-minus MyButtonStyle\"></span>");
+      $("label[for='DirectFSQ']").attr("title", "Direct FSQ transport is disabled. Remote storage may use RFIO or disk server after connect rfio -DISK or -ARCHIVE");
+   }
+   
 
    if (this.fDoCommandConfirm) {
       $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-comment MyButtonStyle\"></span>");//
@@ -478,6 +493,10 @@ $("#FileAutoMode").checkboxradio({icon: false})
 
 $("#FileRFIO").checkboxradio({icon: false})
               .click(function() { MyDisplay.RefreshView();} );
+              
+$("#DirectFSQ").checkboxradio({icon: false})
+              .click(function() { MyDisplay.RefreshView();} );              
+              
 
 $("#lmd_file_form").submit(
    function(event) {
@@ -501,10 +520,16 @@ $("#lmd_file_form").submit(
              datafilelimit = document.getElementById("Filesize").value,
              options = "cmd= open file " + datafilename + " size=" + datafilelimit;
          if ($("#FileRFIO").is(':checked'))
-            options += " -RFIO";
-         else
-            options += " -DISK";
-
+            {
+                 if ($("#DirectFSQ").is(':checked'))
+                    options += " -FSQ";
+                 else
+                    options += " -RFIO";  
+            }
+            else
+            {
+                    options += " -DISK";
+            }
          if ($("#FileAutoMode").is(':checked'))
             options += " -AUTO";
          let requestmsg = "Really Start writing output file with "  + options + " ?",
@@ -514,14 +539,7 @@ $("#lmd_file_form").submit(
             return;
          }
 
-         options = "cmd= open file " + datafilename + " size=" + datafilelimit;
-         if ($("#FileRFIO").is(':checked'))
-            options += " -RFIO";
-         else
-            options += " -DISK";
-
-         if ($("#FileAutoMode").is(':checked'))
-            options += " -AUTO";
+        
 
          MBS.DabcCommand("CmdMbs", options)
             .then(() => {

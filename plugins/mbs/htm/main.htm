@@ -298,11 +298,16 @@
 
                <td>
                   <input id="FileRFIO" type="checkbox"/>
-                  <label for="FileRFIO"  title="Write to RFIO server. Must be connected first with command connect rfio -DISK or -ARCHIVE.">
+                  <label for="FileRFIO"  title="Write to RFIO or FSQ server. Must be connected first with command connect rfio -DISK or -ARCHIVE; or connect fsq">
                      <span class="ui-icon ui-icon-disk MyButtonStyle"></span>
                   </label>
                </td>
-
+ <td>
+                  <input id="DirectFSQ" type="checkbox"/>
+                  <label for="DirectFSQ"  title="Use direct transport toFSQ server. Must be connected first with command connect fsq">
+                     <span class="ui-icon ui-icon-minus MyButtonStyle"></span>
+                  </label>
+               </td>
             </tr>
          </tbody>
       </table>
