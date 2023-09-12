@@ -164,16 +164,18 @@ uint32_t mbs::BufferHeader::UsedBufferSize() const
 {
    switch (iType) {
       // new buffer type
-      case MBS_TYPE(100,1): return iUsedWords * 2;
+      case MBS_TYPE(100,1):
+         return iUsedWords * 2;
 
-      // old buffer type
+         // old buffer type
       case MBS_TYPE(10,1):
-	 // For buffer sizes > 32k, i_used is not used, use iUsedWords. */
-	 if (iWords > 16360 /* MAX__DLEN */) return iUsedWords * 2;
+        // For buffer sizes > 32k, i_used is not used, use iUsedWords. */
+         if (iWords > 16360 /* MAX__DLEN */)
+            return iUsedWords * 2;
          return i_used * 2;
 
       default: break;
-      //         EOUT("Uncknown buffer type %d-%d", i_type, i_subtype);
+      //  EOUT("Unknown buffer type %d-%d", i_type, i_subtype);
    }
 
    return 0;
@@ -195,7 +197,7 @@ void mbs::BufferHeader::SetUsedBufferSize(uint32_t len)
          break;
 
       default:
-         //         EOUT("Uncknown buffer type %d-%d", i_type, i_subtype);
+         //         EOUT("Unknown buffer type %d-%d", i_type, i_subtype);
          break;
    }
 }
