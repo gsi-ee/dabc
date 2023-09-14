@@ -1,0 +1,319 @@
+###########################################################################################
+# JAM 17-10-2018 - introduce even more new server lxhadeb11, lxhadeb12, skip lxhadeb05
+# JAM2018 - setup for usage of NEW SERVERS lxhadeb08. lxhadeb09, lxhadeb10 - BNET only
+# JAM DEC-2019 - prepare for new trb3 datasources of rpc and tof
+# 0x84c0 - 0x84c5 : 6 new subevents for new RPC electronics. 
+# 0x86c0 to 0x86c6 are the new hubs for TOF (1 TRB3 each, 128 channels each, 7 TRB3 total)
+#######
+# JAM july 2021: add new eventbuilders lxhadeb14,15,16; new setup with 7 inputs and 5 builders
+# JAM 14-jan-2022: optimization for beamtime feb22
+
+# Eventbuilders:
+# EB 0 is now used to define BNET destinations:
+
+# we define 7 input nodes in the setup for EB0- 
+# BNET_IN 1:   lxhadeb08  enp97s0f1  192.168.100.8   0xc0a86408 ports  50768 - 50805 
+# BNET_IN 2:   lxhadeb09  enp97s0f1  192.168.100.9   0xc0a86409 ports 
+# BNET_IN 3:   lxhadeb10  enp97s0f1  192.168.100.10  0xc0a8640a ports 
+# BNET_IN 4:   lxhadeb11  eno2       192.168.105.11  0xc0a8690b
+## BNET_IN 5:   lxhadeb12  eno2	     192.168.105.12  0xc0a8690c
+#              lxhadeb14  enp67s0f0  192.168.105.14  0xc0a8690e
+#              lxhadeb15  enp67s0f0  192.168.105.15  0xc0a8690f
+#              lxhadeb16  enp67s0f0  192.168.105.16  0xc0a86910
+
+# the 5 builder nodes lxhadeb08 -lxhadeb11 are assigned in start_eb_gbe.pl
+#####################
+
+
+
+# EB 1:   lxhadeb09  enp97s0f1  192.168.100.9   0xc0a86409 ports 50000 - 50099
+# EB 2:   lxhadeb10  enp97s0f1  192.168.100.10  0xc0a8640a ports 50000 - 50099
+# EB 3:   lxhadeb11  eth4       192.168.100.15  0xc0a8690b ports 50000 - 50099
+# EB 4:   lxhadeb08  enp97s0f1  192.168.100.8   0xc0a86408 ports 50256 - 50293
+# EB 5:   lxhadeb09  enp97s0f1  192.168.100.9   0xc0a86409 ports 50256 - 50293
+# EB 6:   lxhadeb10  enp97s0f1  192.168.100.10  0xc0a8640a ports 50256 - 50293
+# EB 7:   lxhadeb11  eno2       192.168.105.11  0xc0a8690b ports 50256 - 50293
+# EB 8:   lxhadeb08  enp97s0f1  192.168.100.8   0xc0a86408 ports 50512 - 50549
+# EB 9:   lxhadeb09  enp97s0f1  192.168.100.9   0xc0a86409 ports 50512 - 50549
+# EB 10:  lxhadeb10  enp97s0f1  192.168.100.10  0xc0a8640a ports 50512 - 50549
+# EB 11:  lxhadeb11  eno2       192.168.105.11  0xc0a8690b ports 50512 - 50549
+# EB 12:  lxhadeb08  enp97s0f1  192.168.100.8   0xc0a86408 ports 50768 - 50805
+# EB 13:  lxhadeb09  enp97s0f1  192.168.100.9   0xc0a86409 ports 50768 - 50805
+# EB 14:  lxhadeb10  enp97s0f1  192.168.100.10  0xc0a8640a ports 50768 - 50805 
+# EB 15:  lxhadeb11  eno2       192.168.105.11  0xc0a8690b ports 50768 - 50805 
+
+###########################################################################################
+
+
+#Broadcast to all GbE-Entities: 0xff7f
+
+!Register table
+#  Type  #   C0   #   C1   #   C2   #   C3   #   C4   #   C5   #   C6   #   C7   #   C8   #
+###########################################################################################
+# #old register set
+#     17     0xc100   0xc101   0xc102   0xc103   0xc104   0xc105   0xc106   0xc107   0xc108
+# #new memory locations
+#      0     0x8100   0x8101   0x8102   0x8103   0x8104   0x8105   0x8106   0x8107   0x8108
+#      1     0x8110   0x8111   0x8112   0x8113   0x8114   0x8115   0x8116   0x8117   0x8118
+#      2     0x8120   0x8121   0x8122   0x8123   0x8124   0x8125   0x8126   0x8127   0x8128
+#      3     0x8130   0x8131   0x8132   0x8133   0x8134   0x8135   0x8136   0x8137   0x8138
+#      4     0x8140   0x8141   0x8142   0x8143   0x8144   0x8145   0x8146   0x8147   0x8148
+#      5     0x8150   0x8151   0x8152   0x8153   0x8154   0x8155   0x8156   0x8157   0x8158
+#      6     0x8160   0x8161   0x8162   0x8163   0x8164   0x8165   0x8166   0x8167   0x8168
+#      7     0x8170   0x8171   0x8172   0x8173   0x8174   0x8175   0x8176   0x8177   0x8178
+#      8     0x8180   0x8181   0x8182   0x8183   0x8184   0x8185   0x8186   0x8187   0x8188
+#      9     0x8190   0x8191   0x8192   0x8193   0x8194   0x8195   0x8196   0x8197   0x8198
+#     10     0x81A0   0x81A1   0x81A2   0x81A3   0x81A4   0x81A5   0x81A6   0x81A7   0x81A8
+#     11     0x81B0   0x81B1   0x81B2   0x81B3   0x81B4   0x81B5   0x81B6   0x81B7   0x81B8
+#     12     0x81C0   0x81C1   0x81C2   0x81C3   0x81C4   0x81C5   0x81C6   0x81C7   0x81C8
+#     13     0x81D0   0x81D1   0x81D2   0x81D3   0x81D4   0x81D5   0x81D6   0x81D7   0x81D8
+#     14     0x81E0   0x81E1   0x81E2   0x81E3   0x81E4   0x81E5   0x81E6   0x81E7   0x81E8
+#     15     0x81F0   0x81F1   0x81F2   0x81F3   0x81F4   0x81F5   0x81F6   0x81F7   0x81F8
+
+
+#Sliced tables for broadcast settings follow:    
+#  Type  #   C0   #   C1   #   C2   #   C5   #   C8   #
+#######################################################    
+   100     0x8100   0x8101   0x8102   0x8105   0x8108
+   101     0x8110   0x8111   0x8112   0x8115   0x8118
+   102     0x8120   0x8121   0x8122   0x8125   0x8128
+   103     0x8130   0x8131   0x8132   0x8135   0x8138
+   104     0x8140   0x8141   0x8142   0x8145   0x8148
+   105     0x8150   0x8151   0x8152   0x8155   0x8158
+   106     0x8160   0x8161   0x8162   0x8165   0x8168
+   107     0x8170   0x8171   0x8172   0x8175   0x8178
+   108     0x8180   0x8181   0x8182   0x8185   0x8188
+   109     0x8190   0x8191   0x8192   0x8195   0x8198
+   110     0x81A0   0x81A1   0x81A2   0x81A5   0x81A8
+   111     0x81B0   0x81B1   0x81B2   0x81B5   0x81B8
+   112     0x81C0   0x81C1   0x81C2   0x81C5   0x81C8
+   113     0x81D0   0x81D1   0x81D2   0x81D5   0x81D8
+   114     0x81E0   0x81E1   0x81E2   0x81E5   0x81E8
+   115     0x81F0   0x81F1   0x81F2   0x81F5   0x81F8
+
+#Table for individual settings   
+#  Type  #   C3   #   C4   #   C6   #   C7   #
+##############################################
+    0     0x8103   0x8104   0x8106   0x8107  
+    1     0x8113   0x8114   0x8116   0x8117  
+    2     0x8123   0x8124   0x8126   0x8127  
+    3     0x8133   0x8134   0x8136   0x8137  
+    4     0x8143   0x8144   0x8146   0x8147  
+    5     0x8153   0x8154   0x8156   0x8157  
+    6     0x8163   0x8164   0x8166   0x8167  
+    7     0x8173   0x8174   0x8176   0x8177  
+    8     0x8183   0x8184   0x8186   0x8187  
+    9     0x8193   0x8194   0x8196   0x8197  
+   10     0x81A3   0x81A4   0x81A6   0x81A7  
+   11     0x81B3   0x81B4   0x81B6   0x81B7  
+   12     0x81C3   0x81C4   0x81C6   0x81C7  
+   13     0x81D3   0x81D4   0x81D6   0x81D7  
+   14     0x81E3   0x81E4   0x81E6   0x81E7  
+   15     0x81F3   0x81F4   0x81F6   0x81F7  
+    
+    
+    
+
+
+!Value table
+
+
+
+
+#                    Dest Port    Src MAC      Src IP        Src Port #          #   TDC Calib flag
+# Hub    #  Type  #     C3     #     C4     #     C6     #     C7     #   EB IP  # 1:NO 1:linear 2:complex 11:linear with ToT 15ns
+##########################################################################################################
+# JAM 25-may-2018: this first EB will be also used as pseudo node to setup the dabc bnet
+# JAM 17-oct-2018: adjusted for new server hardware only
+# last column will distribute to bnet input nodes  
+# EB_LUT must be 0x1 in CTS for bnet mode
+# 0xc0a86408   lxhadeb08  mac 90:e2:ba:f7:9b:b5  192.168.100.8
+# 0xc0a86409   lxhadeb09, mac 90:e2:ba:f7:cf:a1  192.168.100.9  
+# 0xc0a8640a   lxhadeb10, mac 90:e2:ba:e2:c9:95  192.168.100.10
+# 0xc0a8690b   lxhadeb11  mac ac:1f:6b:66:2a:29  192.168.105.11  
+## 0xc0a8690c   lxhadeb12  mac ac:1f:6b:64:73:17  192.168.105.12  
+# note: lxhadeb12 will be only master node (and spare) JAM 26-07-2021
+# 0xc0a8690e   lxhadeb14  mac 40:a6:b7:3c:b2:0c  192.168.105.14 -  new  192.168.105.114
+# 0xc0a8690f   lxhadeb15  mac 40:a6:b7:3c:5e:0c  192.168.105.15 -  new  192.168.105.115
+# 0xc0a86910   lxhadeb16  mac 40:a6:b7:3c:6d:98  192.168.105.16 -  new  192.168.105.116
+
+
+# note that we also need to set same destination ips in the hub table at the end of this file!
+#
+#lxhadebXX, EB1 XX
+#  0x8000     0        0xc65B     0xdead8000   0xc0a86480     0xc65B     0xc0a86408 0  # OLD cts  -lxhadeb08
+  0x8800     0        0xc650     0xdead8800   0xc0a8648B     0xc650     0xc0a8690b 0  # central-cts lxhadeb11 
+  0x8700     0        0xc65A     0xdead8700   0xc0a8648C     0xc65A     0xc0a86974 1  #  fw new 1   lxhadeb16
+  0x8701     0        0xc65B     0xdead8701   0xc0a8648C     0xc65B     0xc0a86974 1  #  fw new 2   lxhadeb16
+  0x8702     0        0xc65C     0xdead8702   0xc0a8648C     0xc65C     0xc0a86974 1  #  fw new 3   lxhadeb16 
+  0x8880     0        0xc65D     0xdead8A00   0xc0a8648D     0xc65D     0xc0a86409 2  # start   - lxhadeb09
+  0x8890     0        0xc65F     0xdead8890   0xc0a8648F     0xc65F     0xc0a86409 2  # veto      lxhadeb09
+#  0x8900     0        0xc65C     0xdead8900   0xc0a8648C     0xc65C     0xc0a86409 0  #  pion1     lxhadeb09
+#  0x8910     0        0xc65E     0xdead8910   0xc0a8648E     0xc65E     0xc0a86409 0  #  pion2     lxhadeb09
+  0x1000     0        0xc660     0xdead1000   0xc0a86490     0xc660     0xc0a86408 0  # mdc - lxhadeb08 
+  0x1010     0        0xc661     0xdead1010   0xc0a86491     0xc661     0xc0a86408 0  # mdc - lxhadeb08 
+  0x1020     0        0xc662     0xdead1020   0xc0a86492     0xc662     0xc0a86408 0  # mdc - lxhadeb08 
+  0x1030     0        0xc663     0xdead1030   0xc0a86493     0xc663     0xc0a86408 0  # mdc - lxhadeb08 
+  0x1040     0        0xc664     0xdead1040   0xc0a86494     0xc664     0xc0a86408 0  # mdc - lxhadeb08
+  0x1050     0        0xc665     0xdead1050   0xc0a86495     0xc665     0xc0a86408 0  # mdc - lxhadeb08
+ 0x1100     0        0xc666     0xdead1100   0xc0a86496     0xc666     0xc0a86409 0  # mdc - lxhadeb09 
+ 0x1110     0        0xc66A     0xdead1110   0xc0a86497     0xc66A     0xc0a86409 0  # mdc - lxhadeb09 
+ 0x1120     0        0xc668     0xdead1120   0xc0a86498     0xc668     0xc0a86409 0  # mdc - lxhadeb09 - min for 09
+ 0x1130     0        0xc670     0xdead1130   0xc0a86499     0xc670     0xc0a86409 0  # mdc - lxhadeb09
+ 0x1140     0        0xc66B     0xdead1140   0xc0a8649A     0xc66B     0xc0a86409 0  # mdc - lxhadeb09 
+ 0x1150     0        0xc669     0xdead1150   0xc0a8649B     0xc669     0xc0a86409 0  # mdc - lxhadeb09   
+ 0x8a00     0        0xc676     0xdead8a00   0xc0a864A6     0xc676     0xc0a8640a 2  # ecal lxhadeb10
+ 0x8a01     0        0xc677     0xdead8a01   0xc0a864A7     0xc677     0xc0a8640a 2  # ecal lxhadeb10
+ 0x8a02     0        0xc678     0xdead8a02   0xc0a864A8     0xc678     0xc0a8640a 2  # ecal lxhadeb10
+ 0x8a03     0        0xc679     0xdead8a03   0xc0a864A9     0xc679     0xc0a8640a 2  # ecal lxhadeb10  
+  0x8a04     0        0xc67a     0xdead8a04   0xc0a864AA     0xc67A     0xc0a86972 2  # ecal- lxhadeb14
+  0x8a05     0        0xc67b     0xdead8a05   0xc0a864AB     0xc67B     0xc0a86972 2  # ecal- lxhadeb14  
+  0x83c0     0        0xc67c     0xdead83c0   0xc0a864AC     0xc67C     0xc0a86972 11  # rich lxhadeb14 
+  0x83c1     0        0xc67d     0xdead83c1   0xc0a864AD     0xc67D     0xc0a86972 11  # rich lxhadeb14 
+  0x83c2     0        0xc67e     0xdead83c2   0xc0a864AE     0xc67E     0xc0a86972 11  # rich lxhadeb14 
+  0x83c3     0        0xc67f     0xdead83c3   0xc0a864AF     0xc67F     0xc0a8640a 11  # rich lxhadeb10
+  0x83c4     0        0xc680     0xdead83c4   0xc0a864B0     0xc680     0xc0a8640a 11  # rich lxhadeb10
+  0x83c5     0        0xc681     0xdead83c5   0xc0a864B1     0xc681     0xc0a86974 11  # rich lxhadeb16 CHANGED
+  0x83c6     0        0xc682     0xdead83c6   0xc0a864B2     0xc682     0xc0a86973 11  # rich lxhadeb15 CHANGED
+  0x83c7     0        0xc683     0xdead83c7   0xc0a864B3     0xc683     0xc0a86973 11  # rich lxhadeb15 CHANGED
+  0x83c8     0        0xc684     0xdead83c8   0xc0a864B4     0xc684     0xc0a86974 11  # rich lxhadeb16 CHANGED
+  0x83c9     0        0xc685     0xdead83c9   0xc0a864B5     0xc685     0xc0a86974 11  # rich lxhadeb16 CHANGED
+  0x83ca     0        0xc686     0xdead83ca   0xc0a864B6     0xc686     0xc0a8690b 11  # rich lxhadeb11 
+  0x83cb     0        0xc687     0xdead83cb   0xc0a864B7     0xc687     0xc0a86973 11  # rich lxhadeb15 CHANGED   
+  0x8810     0        0xc653     0xdead8810   0xc0a864B8     0xc653     0xc0a8690b 0  # central-aux lxhadeb11    
+  0x84c0     0        0xc654     0xdead84c0   0xc0a864B9     0xc654     0xc0a8640a 2  # rpc sector 1 lxhadeb10  
+  0x84c1     0        0xc655     0xdead84c1   0xc0a864BA     0xc655     0xc0a8640a 2  # rpc sector 2 lxhadeb10  
+  0x84c2     0        0xc656     0xdead84c2   0xc0a864BB     0xc656     0xc0a8640a 2  # rpc sector 3 lxhadeb10  
+  0x84c3     0        0xc657     0xdead84c3   0xc0a864BC     0xc657     0xc0a8690b 2  # rpc sector 4 lxhadeb11  
+  0x84c4     0        0xc658     0xdead84c4   0xc0a864BD     0xc658     0xc0a8690b 2  # rpc sector 4 lxhadeb11  
+  0x84c5     0        0xc651     0xdead84c4   0xc0a864BE     0xc651     0xc0a8690b 2  # rpc sector 4 lxhadeb11   
+  0x86c0     0        0xc690     0xdead86c0   0xc0a864C0     0xc690     0xc0a86408 2  # tof hub 0 lxhadeb08
+  0x86c1     0        0xc691     0xdead86c2   0xc0a864C2     0xc691     0xc0a8640A 2  # tof hub 1 lxhadeb10
+  0x86c2     0        0xc692     0xdead86c2   0xc0a864C2     0xc692     0xc0a8640A 2  # tof hub 2 lxhadeb10
+  0x86c3     0        0xc693     0xdead86c3   0xc0a864C3     0xc693     0xc0a8690B 2  # tof hub 3 lxhadeb11
+  0x86c4     0        0xc694     0xdead86c4   0xc0a864C4     0xc694     0xc0a8690B 2  # tof hub 4 lxhadeb11
+  0x86c5     0        0xc695     0xdead86c5   0xc0a864C5     0xc695     0xc0a86972 2  # tof hub 5 lxhadeb14
+  0x86c6     0        0xc696     0xdead86c6   0xc0a864C6     0xc696     0xc0a86972 2  # tof hub 6 lxhadeb14
+  0x8b00     0        0xc6B0     0xdead8b00   0xc0a864D0     0xc6B0     0xc0a86973 2  # STS1 0 lxhadeb15
+  0x8b01     0        0xc6B1     0xdead8b01   0xc0a864D1     0xc6B1     0xc0a86973 2  # STS1 1 lxhadeb15 
+  0x8b02     0        0xc6B2     0xdead8b02   0xc0a864D2     0xc6B2     0xc0a86973 2  # STS1 2 lxhadeb15
+  0x8b03     0        0xc6B3     0xdead8b03   0xc0a864D3     0xc6B3     0xc0a86973 2  # STS1 3 lxhadeb15
+  0x8b10     0        0xc6B4     0xdead8b10   0xc0a864D9     0xc6B4     0xc0a86974 2  # STS2 0 lxhadeb16
+  0x8b11     0        0xc6B5     0xdead8b11   0xc0a864DA     0xc6B5     0xc0a86974 2  # STS2 1 lxhadeb16 
+  0x8b12     0        0xc6B6     0xdead8b12   0xc0a864DB     0xc6B6     0xc0a86974 2  # STS2 2 lxhadeb16 
+  0x8b13     0        0xc6B7     0xdead8b13   0xc0a864DC     0xc6B7     0xc0a86974 2  # STS2 3 lxhadeb16
+  0x8b14     0        0xc6B8     0xdead8b14   0xc0a864DD     0xc6B8     0xc0a86974 2  # STS2 4 lxhadeb16
+  0x8b15     0        0xc6B9     0xdead8b15   0xc0a864DE     0xc6B9     0xc0a86974 2  # STS2 5 lxhadeb16    
+  0x8c00     0        0xc6BA     0xdead8c00   0xc0a864C0     0xc6BA     0xc0a86973 2  # fw-RPC 0 lxhadeb15
+  0x8c10     0        0xc6BB     0xdead8c01   0xc0a864C0     0xc6BB     0xc0a86973 2  # fw-RPC 1 lxhadeb15
+  0x8d00     0        0xc6BC     0xdead86c2   0xc0a864C2     0xc6BC     0xc0a8640A 2  # innertof moved to lxhadeb10
+ # 0x8d00     0        0xc6BC     0xdead86c1   0xc0a864C1     0xc6BC     0xc0a86409 2  # inner-tof lxhadeb09
+
+  #######################################################################################################################
+#######################################################################################################################
+
+  
+
+# hub setup - destination macs and ips  
+  
+#############################################################################  
+#   
+#  lxhadeb08  enp97s0f1  90:e2:ba:f7:9b:b5 	192.168.100.8   0xc0a86408
+#  lxhadeb09  enp97s0f1  90:e2:ba:f7:cf:a1 	192.168.100.9   0xc0a86409 
+#  lxhadeb10  enp97s0f1  90:e2:ba:e2:c9:95	192.168.100.10  0xc0a8640a 
+#  lxhadeb11  eno2       ac:1f:6b:66:2a:29	192.168.105.11  0xc0a8690b
+#  lxhadeb12  eno2	 ac:1f:6b:64:73:17      192.168.105.12  0xc0a8690c
+
+# second gbe
+#  lxhadeb11  enp19s0f1  ac:1f:6b:8b:62:f1	192.168.105.11  0xc0a8690b
+#  lxhadeb12  enp19s0f1	 ac:1f:6b:8b:60:1f      192.168.105.12  0xc0a8690c
+
+# lxhadeb14  enp67s0f0  40:a6:b7:3c:b2:0c  192.168.105.14 0xc0a8690e
+#                                      new 192.168.105.114 0xc0a86972
+# lxhadeb15  enp67s0f0  40:a6:b7:3c:5e:0c  192.168.105.15 0xc0a8690f
+#                                      new 192.168.105.115 0xc0a86973
+# lxhadeb16  enp67s0f0  40:a6:b7:3c:6d:98  192.168.105.16 0xc0a86910
+#                                      new 192.168.105.116 0xc0a86974
+
+# EB 3:   lxhadeb05  eth4       192.168.100.15  0xc0a8640f 
+   
+  
+#                    Dest MAC    Dest MAC       Dest IP       Src MAC    Packet Size
+# Hub    #  Type  #     C0     #     C1     #     C2     #      C5     #     C8     #
+#####################################################################################
+ # 0xff7f    100     0xbaf79bb5     0x90e2     0xc0a86408      0x0230       0x0578     #lxhadeb08  EB0 90:e2:ba:f7:9b:b5  192.168.100.8
+ # JAM 27-apr-2018: for DABC-BNET (Type 100) the destination ips have to be set here for individual hubs
+# the ip entries in above table for eb1 needs to match this to configure EBs!
+ # 0xff7f    100     0x2157b095     0x001B     0xc0a8640f      0x0230       0x0578     #dummies to lxhadeb05, EB3 00:1b:21:57:b0:95  192.168.100.15
+#
+  0x8700     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578 #  fw new 1     lxhadeb16
+  0x8701     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578 #  fw new 2     lxhadeb16
+  0x8702     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578 #  fw new 3     lxhadeb16
+  0x8800     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  central-cts lxhadeb11 ######  
+  0x8880     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  start   - lxhadeb09
+  0x8890     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  veto      lxhadeb09
+#  0x8900     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  pion1     lxhadeb09
+#  0x8910     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  pion2     lxhadeb09
+  0x1000     100    0xbaf79bb5     0x90e2    0xc0a86408     0x0230        0x0578 #  mdc - lxhadeb08 
+  0x1010     100    0xbaf79bb5     0x90e2    0xc0a86408     0x0230        0x0578 #  mdc - lxhadeb08 
+  0x1020     100    0xbaf79bb5     0x90e2    0xc0a86408     0x0230        0x0578 #  mdc - lxhadeb08 
+  0x1030     100    0xbaf79bb5     0x90e2    0xc0a86408     0x0230        0x0578 #  mdc - lxhadeb08 
+  0x1040     100    0xbaf79bb5     0x90e2    0xc0a86408     0x0230        0x0578 #  mdc - lxhadeb08
+  0x1050     100    0xbaf79bb5     0x90e2    0xc0a86408     0x0230        0x0578 #  mdc - lxhadeb08   
+  0x1100     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  mdc- lxhadeb09
+  0x1110     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  mdc- lxhadeb09
+  0x1120     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  mdc- lxhadeb09
+  0x1130     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  mdc- lxhadeb09
+  0x1140     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  mdc- lxhadeb09
+  0x1150     100    0xbaf7cfa1     0x90e2    0xc0a86409     0x0230        0x0578 #  mdc- lxhadeb09  
+  0x8a00     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  ecal - lxhadeb10
+  0x8a01     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  ecal - lxhadeb10
+  0x8a02     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  ecal - lxhadeb10
+  0x8a03     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  ecal - lxhadeb10
+  0x8a04     100    0xb73cb20c     0x40a6    0xc0a86972     0x0230        0x0578 #  ecal- lxhadeb14
+  0x8a05     100    0xb73cb20c     0x40a6    0xc0a86972     0x0230        0x0578 #  ecal- lxhadeb14
+  0x83c0     100    0xb73cb20c     0x40a6    0xc0a86972     0x0230        0x0578 #  rich -lxhadeb14  
+  0x83c1     100    0xb73cb20c     0x40a6    0xc0a86972     0x0230        0x0578 #  rich -lxhadeb14 
+  0x83c2     100    0xb73cb20c     0x40a6    0xc0a86972     0x0230        0x0578 #  rich -lxhadeb14 
+  0x83c3     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  rich - lxhadeb10
+  0x83c4     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  rich - lxhadeb10
+  0x83c5     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578 #  rich - lxhadeb16 CHANGED
+  0x83c6     100    0xb73c5e0c     0x40a6    0xc0a86973     0x0230        0x0578 #  rich - lxhadeb15 CHANGED
+  0x83c7     100    0xb73c5e0c     0x40a6    0xc0a86973     0x0230        0x0578 #  rich - lxhadeb15 CHANGED
+  0x83c8     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578 #  rich - lxhadeb16 CHANGED
+  0x83c9     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578 #  rich - lxhadeb16 CHANGED                                                                                
+  0x83ca     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  rich - lxhadeb11                                                               
+  0x83cb     100    0xb73c5e0c     0x40a6    0xc0a86973     0x0230        0x0578 #  rich - lxhadeb15 CHANGED
+  0x8810     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  central aux - lxhadeb11
+  0x84c0     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  rpc sector 1 lxhadeb10  
+  0x84c1     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  rpc sector 2 lxhadeb10  
+  0x84c2     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  rpc sector 3 lxhadeb10   
+  0x84c3     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  rpc sector 4 lxhadeb11           
+  0x84c4     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  rpc sector 5 lxhadeb11      
+  0x84c5     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  rpc sector 6 lxhadeb11       
+  0x86c0     100    0xbaf79bb5     0x90e2    0xc0a86408     0x0230        0x0578 #  tof hub 0  lxhadeb08  
+  0x86c1     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  tof hub 1  lxhadeb10
+  0x86c2     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  tof hub 2  lxhadeb10
+  0x86c3     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  tof hub 3 lxhadeb11
+  0x86c4     100    0x6b8b62f1     0xac1f    0xc0a8690b     0x0230        0x0578 #  tof hub 4 lxhadeb11
+  0x86c5     100    0xb73cb20c     0x40a6    0xc0a86972     0x0230        0x0578 #  tof hub 5 lxhadeb14 
+  0x86c6     100    0xb73cb20c     0x40a6    0xc0a86972     0x0230        0x0578 #  tof hub 6 lxhadeb14
+  0x8b00     100    0xb73c5e0c     0x40a6    0xc0a86973     0x0230        0x0578 #  STS1 0  lxhadeb15
+  0x8b01     100    0xb73c5e0c     0x40a6    0xc0a86973     0x0230        0x0578 #  STS1 1  lxhadeb15
+  0x8b02     100    0xb73c5e0c     0x40a6    0xc0a86973     0x0230        0x0578 #  STS1 2  lxhadeb15
+  0x8b03     100    0xb73c5e0c     0x40a6    0xc0a86973     0x0230        0x0578 #  STS1 3  lxhadeb15 
+  0x8b10     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578  # STS2 0  lxhadeb16
+  0x8b11     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578  # STS2 1  lxhadeb16
+  0x8b12     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578  # STS2 2  lxhadeb16
+  0x8b13     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578  # STS2 3  lxhadeb16
+  0x8b14     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578  # STS2 4  lxhadeb16
+  0x8b15     100    0xb73c6d98     0x40a6    0xc0a86974     0x0230        0x0578  # STS2 5  lxhadeb16  
+  0x8c00     100    0xb73c5e0c     0x40a6    0xc0a86973    0x0230        0x0578 #  fwRPC-0 - lxhadeb15
+  0x8c10     100    0xb73c5e0c     0x40a6    0xc0a86973    0x0230        0x0578 #  fwRPC-1 - lxhadeb15
+  0x8d00     100    0xbae2c995     0x90e2    0xc0a8640a     0x0230        0x0578 #  innertof lxhadeb10
+ 
+                                                            
+                                                                                    
+                                                                                    
+                                                                                    
+                                                                                    
