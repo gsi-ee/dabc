@@ -44,10 +44,8 @@ void read_db(const char *fname = "file.db")
 
       if (res == 8) {
 
-         if ((mode != 0) && (mode != 2)) {
-            std::cout << line << std::endl;
-            printf("0x%04x  %d\n", id, mode);
-         }
+         if (mode > 0)
+            printf("0x%04x  %2d  |||  %s\n", id, mode, line.c_str());
 
          if (mode > 0)
             fTdcModes[id] = mode;
@@ -130,7 +128,10 @@ void first()
    //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
    //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
    //   0x80000000 in mask enables usage of temperature correction
-   hld->ConfigureCalibration("local", 0, (1 << 0xD));
+   hld->ConfigureCalibration("local", -1, 0x3fff);
+
+   // process only 0xD trigger
+   hld->SetEventTypeSelect(0xD);
 
    // only accept trigger type 0x1 when storing file
    // new hadaq::HldFilter(0x1);
