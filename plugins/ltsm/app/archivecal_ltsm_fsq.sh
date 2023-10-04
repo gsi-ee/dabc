@@ -6,6 +6,7 @@
 ### 30 nov-2020 JAM new script for feb21
 ### 23 nov-2021 JAM new script for feb22
 ### 08-nov-2022 JAM adjusted for fsqc instead ltsmc
+### 04-oct-2023 JAM adjust path and server for feb24 beamtime
 ######################################################################################
 RUN=$(echo $1 | /usr/bin/cut -d'/' -f2)
 CALIBDIR=$(echo $1 | /usr/bin/cut -d'/' -f1)
@@ -14,11 +15,11 @@ FILE=${FOLDER}.tar.gz
 DATE=$(/bin/date +"%d-%m-%Y %H:%M:%S")
 DESC="manually archived with ltsmc on ${DATE} by ${USER} from ${HOSTNAME}"
 LTSMCBIN="/home/hadaq/ltsm/install/bin/fsqc"
-BEAMTIME="may22test"
+BEAMTIME="feb24"
 FILESYS="/lustre"
 ARCHIVEPATH=${FILESYS}/hades/raw/${BEAMTIME}/cal
 DISKPATH=/home/hadaq/oper/${CALIBDIR}
-SERVER="lxfsd09"
+SERVER="lxfsq08"
 NODE="hades"
 PASS="wDhgcvFF7"
 OWNER="hadesdst"
