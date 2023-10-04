@@ -16,4 +16,5 @@ condition to recognize begin/end of block is correct.
    in TOF are configured properly. All this settings can be found in
    BnrtInputHades.xml file
 
-5. Try to run analysis.
+5. Try to run analysis - with go4 or dabc. Last is preferable, while
+   uses less memory for histograms.

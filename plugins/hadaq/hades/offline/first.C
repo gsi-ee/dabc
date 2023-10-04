@@ -78,7 +78,7 @@ void first()
    // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
-   base::ProcMgr::instance()->SetHistFilling(1);
+   base::ProcMgr::instance()->SetHistFilling(2);
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 480);
@@ -98,6 +98,9 @@ void first()
 
    // ignore any calibration messages in the file
    hadaq::TdcProcessor::SetIgnoreCalibrMsgs(true);
+
+   // use all events as 0xD trigger to allow ToT calibration
+   hadaq::TdcProcessor::SetUseAsDTrig(true);
 
    // when first argument true - TRB/TDC will be created on-the-fly
    // second parameter is function name, called after elements are created
