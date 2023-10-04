@@ -528,7 +528,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             ShootTimer("SysTimer", fInput->Read_Timeout());
             return false;
          default:
-            EOUT("Error when do buffer reading res = %d", res);
+            EOUT("Error when do buffer reading res = 0x%0x", res);
             ChangeState(inpError);
       }
    }
