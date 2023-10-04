@@ -671,9 +671,9 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    const char* hdrkind = "";
    bool with_calibr = false, bad_fine = false;
 
-   for (unsigned cnt=0;cnt<len;cnt++,ix++) {
+   for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
       unsigned msg = sub->Data(ix);
-      if (bubble_len>=0) {
+      if (bubble_len >= 0) {
          bool israw = (msg & tdckind_Mask) == tdckind_Calibr;
          if (israw) {
             channel = (msg >> 22) & 0x7F;
@@ -837,6 +837,8 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                       sbeg, ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
                       channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
             if ((channel == 0) && (ch0tm == 0)) ch0tm = tm;
+            if ((onlych >= 0) && (channel > (unsigned) onlych))
+               cnt = len; // stop processing when higher channel number seen
             break;
          default:
             if (prefix > 0) printf("%s undefined\n", sbeg);
