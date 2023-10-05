@@ -69,6 +69,7 @@ int usage(const char* errstr = nullptr)
    printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
    printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
+   printf("   -fulltime               - always print full time of timestamp (default prints relative to channel 0)\n");
    printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
    printf("   -fullid value           - printout only events with specified fullid (default all)\n");
    printf("   -rate                   - display only events and data rate\n");
@@ -172,7 +173,8 @@ struct SubevStat {
 
 double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5.;
 unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0;
-bool bubble_mode = false, only_errors = false, use_colors = true, epoch_per_channel = false, use_calibr = true, use_400mhz = false;
+bool bubble_mode = false, only_errors = false, use_colors = true,
+     epoch_per_channel = false, use_calibr = true, use_400mhz = false, print_fulltime = false;
 int onlych = -1;
 
 const char *getCol(const char *col_name)
@@ -835,7 +837,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             if ((prefix > 0) && ((onlych < 0) || ((unsigned) onlych == channel)))
                printf("%s %s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
                       sbeg, ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
-                      channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
+                      channel, isrising, coarse, sfine, print_fulltime ? tm : tm - ch0tm, sbuf);
             if ((channel == 0) && (ch0tm == 0)) ch0tm = tm;
             if ((onlych >= 0) && (channel > (unsigned) onlych))
                cnt = len; // stop processing when higher channel number seen
@@ -1113,6 +1115,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-bw") == 0) { use_colors = false; } else
       if (strcmp(argv[n],"-sub") == 0) { printsub = true; } else
       if (strcmp(argv[n],"-ignorecalibr") == 0) { use_calibr = false; } else
+      if (strcmp(argv[n],"-fulltime") == 0) { print_fulltime = true; } else
       if (strcmp(argv[n],"-340") == 0) { use_400mhz = true; coarse_tmlen = 1000./340.; fine_min = 0x5; fine_max = 0xc0; } else
       if (strcmp(argv[n],"-400") == 0) { use_400mhz = true; coarse_tmlen = 1000./400.; fine_min = 0x5; fine_max = 0xc0; } else
       if ((strcmp(argv[n],"-help") == 0) || (strcmp(argv[n],"?") == 0)) return usage(); else
