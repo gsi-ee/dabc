@@ -74,11 +74,11 @@ void first()
 {
    read_db();
 
-   base::ProcMgr::instance()->SetRawAnalysis(true);
-   // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
+   // base::ProcMgr::instance()->SetRawAnalysis(true);
+   base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
-   base::ProcMgr::instance()->SetHistFilling(2);
+   base::ProcMgr::instance()->SetHistFilling(1);
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 480);
@@ -101,6 +101,9 @@ void first()
 
    // use all events as 0xD trigger to allow ToT calibration
    hadaq::TdcProcessor::SetUseAsDTrig(true);
+
+   // use onley hits inside configured range
+   hadaq::TdcProcessor::SetTriggerDWindow(-20, 80);
 
    // when first argument true - TRB/TDC will be created on-the-fly
    // second parameter is function name, called after elements are created
@@ -182,6 +185,7 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 
          tdc->SetTotStatLimit(100);
          tdc->SetTotRMSLimit(getTotRms(trb->GetID()));
+         tdc->SetUseLastHit(true);
 
          if (mode % 10 == 1) {
             tdc->SetUseLinear();
@@ -194,6 +198,7 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
          if ((tdc->GetID() >= 0x5000) && (tdc->GetID() < 0x5008)) {
             tdc->SetPairedChannels(true);
             tdc->SetToTRange(30., 20., 65.);
+            tdc->SetModifiedFallingEdges(true);
          }
       }
    }
