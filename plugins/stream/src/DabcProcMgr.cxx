@@ -101,13 +101,17 @@ void stream::DabcProcMgr::AddErrLog(const char *msg)
 
 void stream::DabcProcMgr::PrintLog(const char *msg)
 {
-   DOUT0(msg);
+   if (fDebug >= 0)
+      DOUT0(msg);
 }
 
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
+   if (IsBlockHistCreation())
+      return nullptr;
+
    std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
-   bool reuse{false}, clear_protect{false};
+   bool reuse = false, clear_protect = false;
 
    while (options) {
       const char* separ = strchr(options,';');
@@ -177,8 +181,11 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
 
 base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
+   if (IsBlockHistCreation())
+      return nullptr;
+
    std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax, h2poly;
-   bool reuse{false}, clear_protect{false};
+   bool reuse = false, clear_protect = false;
 
    while (options != nullptr) {
       const char* separ = strchr(options,';');
