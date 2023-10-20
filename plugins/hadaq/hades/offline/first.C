@@ -80,7 +80,7 @@ void first()
    base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
-   base::ProcMgr::instance()->SetHistFilling(1);
+   base::ProcMgr::instance()->SetHistFilling(2);
 
    // no any storing
    base::ProcMgr::instance()->SetStoreKind(0);

@@ -13,10 +13,10 @@ void compare(const char *prefix = "local")
    // important - number 600 is number of bins in calibration
    hadaq::TdcProcessor::SetDefaults(600, 200, 1);
 
-   std::string dir2name = "22063/";
+   std::string dir2name = "test2/";
    double offset_error = 0.1;
    double offset_warn = 0.01;
-   int n_error = 0, n_warn = 0;
+   int n_error = 0, n_warn = 0, cnt = 0;
 
    auto mgr = new base::ProcMgr;
 
@@ -26,8 +26,6 @@ void compare(const char *prefix = "local")
    auto trb32 = new hadaq::TrbProcessor(0x8100, hld);
 
    auto dir = gSystem->OpenDirectory(".");
-
-   int cnt = 0;
 
    while (auto entry = gSystem->GetDirEntry(dir)) {
       std::string s = entry;
@@ -41,6 +39,8 @@ void compare(const char *prefix = "local")
       std::string s2 = dir2name + s;
 
       printf("Files: %s %s tdcid: 0x%x\n", s.c_str(), s2.c_str(), (unsigned) tdcid);
+
+      cnt++;
 
       auto tdc1 = hadaq::TdcProcessor::CreateFromCalibr(trb31, s);
 
@@ -72,6 +72,8 @@ void compare(const char *prefix = "local")
          } else if (offset > offset_warn) {
             out = stdout;
             n_warn++;
+         } else {
+            fprintf(stdout, "%s channel %2u ToT match %6.3f %6.3f diff %7.3f\n", tdc1->GetName(), n, tot1, tot2, offset);
          }
 
          if (out)
@@ -83,7 +85,7 @@ void compare(const char *prefix = "local")
 
    gSystem->FreeDirectory(dir);
 
-   fprintf(stdout, "Totally processed are %d files errors %d warings %d\n", cnt, n_warn, n_error);
-   fprintf(stderr, "Totally processed are %d files errors %d warings %d\n", cnt, n_warn, n_error);
+   fprintf(stdout, "Totally processed are %d files errors %d warings %d\n", cnt, n_error, n_warn);
+   fprintf(stderr, "Totally processed are %d files errors %d warings %d\n", cnt, n_error, n_warn);
 
 }
