@@ -107,8 +107,10 @@ void stream::DabcProcMgr::PrintLog(const char *msg)
 
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
-   if (IsBlockHistCreation())
+   if (IsBlockHistCreation()) {
+      DOUT0("Block H1 creation %s due to multithreading", name);
       return nullptr;
+   }
 
    std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
    bool reuse = false, clear_protect = false;
@@ -181,8 +183,10 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
 
 base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   if (IsBlockHistCreation())
+   if (IsBlockHistCreation()) {
+      DOUT0("Block H2 creation %s due to multithreading", name);
       return nullptr;
+   }
 
    std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax, h2poly;
    bool reuse = false, clear_protect = false;
@@ -265,6 +269,10 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
 
 dabc::Hierarchy stream::DabcProcMgr::FindHistogram(void *handle)
 {
+   if (IsBlockHistCreation()) {
+      DOUT0("FindHistogram when blocked due to threaing?\n");
+   }
+
    if (!handle) return nullptr;
 
    dabc::Iterator iter(fTop);
@@ -329,6 +337,9 @@ bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
 
 void stream::DabcProcMgr::ClearAllHistograms()
 {
+   if (IsBlockHistCreation())
+      DOUT0("ClearAllHistograms when blocked due to threaing?\n");
+
    ClearAllDabcHistograms(fTop);
 }
 
