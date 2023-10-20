@@ -3,20 +3,17 @@
   <Variables>
      <parallel value="0"/>
      <asf value="asf.root"/>
-     <file value="/home/linev/trb3/hades/hades_feb22/ct2206316310610.hld"/>
+     <file value="/home/linev/trb3/hades/hades_feb22/ct22063163106*.hld"/>
   </Variables>
 
   <Context host="localhost" name="Stream">
     <Run>
-      <lib value="libDabcHttp.so"/>
       <lib value="libDabcStream.so"/>
       <logfile value="stream.log"/>
       <debuglevel value="1"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
     </Run>
-
-    <HttpServer name="http" port="8090"/>
 
     <MemoryPool name="Pool">
        <BufferSize value="4000000"/>
@@ -25,6 +22,7 @@
 
     <Module name="Run" class="stream::RunModule">
        <asf value="${asf}"/>
+       <fastmode value="true"/>
        <parallel value="${parallel}"/>
        <InputPort name="Input0" url="hld://${file}"/>
        <OutputPort name="*" auto="false"/>

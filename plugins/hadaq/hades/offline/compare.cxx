@@ -14,6 +14,9 @@ void compare(const char *prefix = "local")
    hadaq::TdcProcessor::SetDefaults(600, 200, 1);
 
    std::string dir2name = "22063/";
+   double offset_error = 0.1;
+   double offset_warn = 0.01;
+   int n_error = 0, n_warn = 0;
 
    auto mgr = new base::ProcMgr;
 
@@ -60,14 +63,27 @@ void compare(const char *prefix = "local")
       for (unsigned n = 1; n < tdc1->NumChannels(); ++n) {
          double tot1 = tdc1->GetChannelTotShift(n);
          double tot2 = tdc2->GetChannelTotShift(n);
-         if (std::abs(tot1 - tot2) > 0.1)
-            fprintf(stderr, "%s channel %2u ToT mismatch %6.3f %6.3f diff %7.3f\n", tdc1->GetName(), n, tot1, tot2, std::abs(tot1 - tot2));
+         double offset = std::abs(tot1 - tot2);
+
+         FILE *out = nullptr;
+         if (offset > offset_error) {
+            out = stderr;
+            n_error++;
+         } else if (offset > offset_warn) {
+            out = stdout;
+            n_warn++;
+         }
+
+         if (out)
+            fprintf(out, "%s channel %2u ToT mismatch %6.3f %6.3f diff %7.3f\n", tdc1->GetName(), n, tot1, tot2, offset);
       }
 
-      if (cnt > 5) break;
+      // if (cnt > 5) break;
    }
 
-   printf("Totally processed are %d files\n", cnt);
-
    gSystem->FreeDirectory(dir);
+
+   fprintf(stdout, "Totally processed are %d files errors %d warings %d\n", cnt, n_warn, n_error);
+   fprintf(stderr, "Totally processed are %d files errors %d warings %d\n", cnt, n_warn, n_error);
+
 }

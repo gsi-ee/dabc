@@ -74,11 +74,16 @@ void first()
 {
    read_db();
 
+   base::ProcMgr::instance()->SetDebug(0);
+
    // base::ProcMgr::instance()->SetRawAnalysis(true);
    base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
    base::ProcMgr::instance()->SetHistFilling(1);
+
+   // no any storing
+   base::ProcMgr::instance()->SetStoreKind(0);
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 480);
@@ -109,10 +114,12 @@ void first()
    // second parameter is function name, called after elements are created
    hadaq::HldProcessor* hld = new hadaq::HldProcessor(true, "after_create");
 
+   // enable threads usage for TRB processing
+   hld->SetUseThreads(true);
 
    hld->SetCustomNumCh([](unsigned id) -> unsigned {
       if ((id & 0xfff0) == 0x8880) return 49;
-      if ((id & 0xfff0) == 0x8890) return 49;
+      if ((id & 0xfff0) == 0x8890) return 33;
       if ((id & 0xff00) == 0x8a00) return 49;
       if ((id & 0xfff0) == 0x84c0) return 49;
       if ((id & 0xfff0) == 0x8b10) return 49;
@@ -166,22 +173,24 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 
    printf("Called after all sub-components are created numTDC %d\n", hld->NumberOfTDC());
 
+   char msg[1000];
+
    for (unsigned l = 0; l < hld->NumberOfTRB(); l++) {
       hadaq::TrbProcessor* trb = hld->GetTRB(l);
       if (!trb) continue;
-      printf("Configure %s NumTDCs %u\n", trb->GetName(), trb->NumberOfTDC());
       trb->SetPrintErrors(10);
 
       int mode = fTdcModes.find(trb->GetID()) == fTdcModes.end() ? 0 : fTdcModes[trb->GetID()];
 
-      if ((trb->NumberOfTDC() > 0) && (mode == 0))
-         printf("!!!!!!!!!!!!!!! NO TDC are expected !!!!!!!!!!!!!!!!\n");
+      snprintf(msg, sizeof(msg), "Configure %s NumTDCs %u %s\n", trb->GetName(), trb->NumberOfTDC(), (trb->NumberOfTDC() > 0) && (mode == 0) ? "!!!!!!!!!! NOT TDC EXPECTED !!!!!!!!!!" : "");
+      trb->mgr()->PrintLog(msg);
 
       for (unsigned k = 0; k < trb->NumberOfTDC(); k++) {
          hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(k);
          if (!tdc) continue;
 
-         printf("   Configure %s calibr_mode %d \n", tdc->GetName(), mode);
+         snprintf(msg, sizeof(msg), "Configure %s calibr_mode %d\n", tdc->GetName(), mode);
+         tdc->mgr()->PrintLog(msg);
 
          tdc->SetTotStatLimit(100);
          tdc->SetTotRMSLimit(getTotRms(trb->GetID()));
