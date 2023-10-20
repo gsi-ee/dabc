@@ -43,6 +43,7 @@ namespace stream {
       std::string  fAsf;
       std::string  fFileUrl;  ///<! configured file URL - module used to produce output
       bool         fDidMerge{false};
+      bool         fFastMode{false}; ///<! data directly processed, no complex logic of stream
       long unsigned fTotalSize{0};
       long unsigned fTotalEvnts{0};
       long unsigned fTotalOutEvnts{0};

@@ -56,6 +56,8 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    fDefaultFill = Cfg("fillcolor", cmd).AsInt(3);
 
+   fFastMode = Cfg("fastmode", cmd).AsBool(false);
+
    // we need one input and no outputs
    EnsurePorts(1, fParallel < 0 ? 0 : fParallel);
 
@@ -430,7 +432,8 @@ void stream::RunModule::AfterModuleStop()
 
 bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 {
-   if (!fProcMgr) return false;
+   if (!fProcMgr)
+      return false;
 
    fTotalEvnts++;
 
@@ -447,7 +450,10 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
    bbuf().boardid = 0;
    bbuf().format = 0;
 
-   fProcMgr->ProvideRawData(bbuf);
+   fProcMgr->ProvideRawData(bbuf, fFastMode);
+
+   if (fFastMode)
+      return true;
 
    base::Event *outevent = nullptr;
 
@@ -477,7 +483,7 @@ bool stream::RunModule::ProcessNextBuffer()
    if (fParallel == 0) Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
-      if (fParallel<0) {
+      if (fParallel < 0) {
          std::string main = GetName();
          main.resize(main.length()-3);
          dabc::mgr.FindModule(main).Submit(dabc::Command("SlaveFinished"));
