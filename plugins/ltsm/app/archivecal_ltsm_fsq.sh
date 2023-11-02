@@ -7,6 +7,7 @@
 ### 23 nov-2021 JAM new script for feb22
 ### 08-nov-2022 JAM adjusted for fsqc instead ltsmc
 ### 04-oct-2023 JAM adjust path and server for feb24 beamtime
+### 2-nov-2023 JAM correct for changed fsqc file interface (no pipe option)
 ######################################################################################
 RUN=$(echo $1 | /usr/bin/cut -d'/' -f2)
 CALIBDIR=$(echo $1 | /usr/bin/cut -d'/' -f1)
@@ -41,7 +42,9 @@ fi
 # archive it with ltsmc pipe mode:
 #REV=$(cat "${DISKPATH}/${FILE}" | ${LTSMCBIN} --pipe -n "${NODE}" -f "${FILESYS}" -p "${PASS}" -s "${SERVER}" -o "${OWNER}" -d "'${DESC}'" "${ARCHIVEPATH}/${FILE}")
 # new change to fsqc:
-REV=$(cat "${DISKPATH}/${FILE}" | ${LTSMCBIN} --pipe -o "lustre_tsm"  -n "${NODE}" -f "${FILESYS}" -p "${PASS}" -s "${SERVER}"  -a "${ARCHIVEPATH}" -l "${FILE}")
+cd ${DISKPATH}
+REV=$( ${LTSMCBIN}  -o "lustre_tsm"  -n "${NODE}" -f "${FILESYS}" -p "${PASS}" -s "${SERVER}"  -a "${ARCHIVEPATH}"  "${FILE}"  )
+
 #echo cat "${DISKPATH}/${FILE}" 
 #echo ${LTSMCBIN} --pipe -n "${NODE}" -f "${FILESYS}" -p "${PASS}" -s "${SERVER}" -o "${OWNER}" -d "'${DESC}'" "${ARCHIVEPATH}/${FILE}"
 #REV=no
