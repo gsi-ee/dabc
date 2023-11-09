@@ -52,6 +52,7 @@ void first()
 
    // filter-out 0x9 and 0xE events
    hld->SetFilterStatusEvents(true);
+   hld->SetEventTypeSelect(0xd);
 
    // first parameter if filename  prefix for calibration files
    //     and calibration mode (empty string - no file I/O)
