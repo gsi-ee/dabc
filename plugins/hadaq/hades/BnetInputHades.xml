@@ -202,7 +202,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <Auto value="0"/>
 
        <!-- Number of counts for different kinds of calibrations -->
-       <CountLinear value="10000"/>
+       <CountLinear value="30000"/>
        <CountNormal value="200000"/>
 
        <!-- Statistic and RMS required to calibrate ToT based on 0xD trigger -->
