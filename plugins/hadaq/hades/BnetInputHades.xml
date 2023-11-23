@@ -149,6 +149,16 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
     </Module>
+    
+    
+    
+   <Module name="TRB8a02_TdcCal">
+   <!-- TDC with special config for ToT stretcher calibration -->
+    <TdcTotIds value="[0x6031, 0x6032]"/>
+    <!-- config values for SetTotRange -->
+    <TdcTotCfg value="[30., 30., 85.]"/>
+   </Module>
+    
 
     <!-- these are default parameters for TDC calibration modules -->
     <Module name="TRB*_TdcCal">
