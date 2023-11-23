@@ -57,6 +57,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fTdcMin = Cfg("TdcMin", cmd).AsUIntVect();
    fTdcMax = Cfg("TdcMax", cmd).AsUIntVect();
    fTdcPaired = Cfg("TdcPaired", cmd).AsUIntVect();
+   fTdcTotIds = Cfg("TdcTotIds", cmd).AsUIntVect();
+   fTdcTotCfg = Cfg("TdcTotCfg", cmd).AsDoubleVect();
+
    fTotStatLimit = Cfg("TotStat", cmd).AsInt(0);
    fTotRMSLimit = Cfg("TotRMS", cmd).AsDouble(0.);
 
@@ -369,11 +372,16 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
    if (fTotStatLimit > 0) tdc->SetTotStatLimit(fTotStatLimit);
    if (fTotRMSLimit > 0) tdc->SetTotRMSLimit(fTotRMSLimit);
 
-   for (unsigned n = 0; n < fTdcPaired.size(); ++n)
-      if (fTdcPaired[n] == tdc->GetID()) {
+   for (auto id : fTdcPaired)
+      if (id == tdc->GetID()) {
          tdc->SetPairedChannels(true);
          tdc->SetToTRange(30., 20., 65.);
       }
+
+   if (fTdcTotCfg.size() == 3)
+      for (auto id : fTdcTotIds)
+         if (id == tdc->GetID())
+            tdc->SetToTRange(fTdcTotCfg[0], fTdcTotCfg[1], fTdcTotCfg[2]);
 
    tdc->UseExplicitCalibration();
 

@@ -77,6 +77,8 @@ namespace stream {
       std::vector<uint64_t> fTdcMin;          ///< configured min TDC id
       std::vector<uint64_t> fTdcMax;          ///< configured max TDC id
       std::vector<uint64_t> fTdcPaired;       ///< TDC with paired channels
+      std::vector<uint64_t> fTdcTotIds;       ///< TDC ids which obtain special range
+      std::vector<double> fTdcTotCfg;         ///< 3 value to configure ToT stretcher and min/max values
       int fNumCh{33};                         ///< configured number of channel
       int fEdges{1};                          ///< configured edges
       bool fRecheckTdcs{false};               ///< check for missing tdcs, done once 5 sec
