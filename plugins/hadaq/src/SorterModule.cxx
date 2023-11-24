@@ -185,7 +185,7 @@ bool hadaq::SorterModule::retransmit()
 
    // sort current array
    if (new_data)
-      std::sort(fSubs.begin(), fSubs.end(), SubsComp(this));
+      std::sort(fSubs.begin(), fSubs.end(), SubsComp(*this));
 
    // simple case - retransmit buffer from input to output
    if ((fReadyBufIndx>0) && CanSend() && CanRecv()) {
@@ -272,7 +272,7 @@ void hadaq::SorterModule::ProcessTimerEvent(unsigned)
 
    // flush buffer if any data is accumulated
    unsigned len = fOutPtr.distance_to_ownbuf();
-   if (len>0) {
+   if (len > 0) {
       // DOUT1("Buf:%3d  Flush output counter %d subs.size %u nextbuf:%u numcanrev:%u lastret:%d", fBufCnt, fFlushCnt, fSubs.size(), fNextBufIndx, NumCanRecv(), fLastRet);
       fOutBuf.SetTotalSize(len);
       fOutPtr.reset();
@@ -289,7 +289,20 @@ void hadaq::SorterModule::ProcessTimerEvent(unsigned)
 int hadaq::SorterModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetHadaqTransportInfo")) {
-      if (SubmitCommandToTransport(InputName(0), cmd)) return dabc::cmd_postponed;
+      if (SubmitCommandToTransport(InputName(0), cmd))
+         return dabc::cmd_postponed;
+      return dabc::cmd_true;
+   }
+
+   if (cmd.IsName("ResetTransportStat")) {
+      // redirect command to real transport
+      if (SubmitCommandToTransport(InputName(), cmd))
+         return dabc::cmd_postponed;
+      return dabc::cmd_false;
+   }
+
+   if (cmd.IsName("TdcCalibrations") || cmd.IsName("CalibrRefresh")) {
+      // ignore this command
       return dabc::cmd_true;
    }
 

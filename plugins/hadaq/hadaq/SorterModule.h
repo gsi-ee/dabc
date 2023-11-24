@@ -46,10 +46,10 @@ namespace hadaq {
          };
 
          struct SubsComp {
-            SorterModule* m{nullptr};
-            SubsComp(SorterModule* _m) : m(_m) {}
+            SorterModule &m;
+            SubsComp(SorterModule &_m) : m(_m) {}
             // use in std::sort for sorting elements of std::vector<SubsRec>
-            bool operator()(const SubsRec& l, const SubsRec& r) { return m->Diff(l.trig, r.trig) > 0; }
+            bool operator()(const SubsRec &l, const SubsRec &r) { return m.Diff(l.trig, r.trig) > 0; }
          };
 
 
