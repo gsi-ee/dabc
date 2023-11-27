@@ -390,6 +390,10 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             ChangeState(inpEnd);
             break;
 
+         case di_Error:
+            ChangeState(inpError);
+            break;
+
          case di_DfltBufSize:
             ChangeState(inpNeedBuffer);
             fNextDataSize = 0;
