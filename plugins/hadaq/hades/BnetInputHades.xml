@@ -74,12 +74,12 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
     <!--  Thread name="SpecialThrd" affinity="+1"/-->
-
-    <!-- special configuration for START detector, mark TDC with paired channels -->
+   
+ <!-- special configuration for START detector, optionally mark TDC with paired channels -->
     <Module name="TRB888*_TdcCal">
        <!-- number of TDC channels -->
-       <NumChannels value="49"/>
-       <TdcPaired value="[0x5000,0x5001,0x5002,0x5003,0x5004,0x5005,0x5006,0x5007]"/>
+       <NumChannels value="9"/>
+               <!--TdcPaired value="[0x5000,0x5001,0x5002,0x5003,0x5004,0x5005,0x5006,0x5007]"/> -->
     </Module>
 
 <!-- special configuration for VETO detector -->
@@ -239,9 +239,8 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <NumOutputs value="#${bnetreceivers}"/>
        <InputPort name="Input*" queue="300" thread="${udpthreads}#"
                   url="nhadaq://host:${hadaqports}#"
-                  urlopt1="calibr=${calibflags}#&trb=${subevents}#"
-                  urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=30&reduce=0.5"/>
-
+                  urlopt1="calibr=${calibflags}#&trb=${subevents}#"                 
+                  urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=30&reduce=0.5" resort="true"/>
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
 <!--        <InputPort name="Input2" url="nhadaq://host:50002"/> -->
