@@ -803,7 +803,7 @@ void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
           int connfd = accept(Socket(), nullptr, nullptr);
 
           if (connfd < 0) {
-             EOUT("Error with accept");
+             EOUT("Error with accept in server socket %d", Socket());
              fAcceptErrors++;
              if (fAcceptErrors >= 1000) {
                 // try to recreate socket every 100 failure
@@ -819,15 +819,17 @@ void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
 
           fAcceptErrors = 0;
 
-          listen(Socket(), 10);
+          int err = listen(Socket(), 10);
+          if (err)
+             EOUT("Error %d in listen of server socket %d", err, Socket());
 
           if (!dabc::SocketThread::SetNonBlockSocket(connfd)) {
-             EOUT("Cannot set nonblocking flag for connected socket");
+             EOUT("Cannot set nonblocking flag for connected socket %d", connfd);
              close(connfd);
              return;
           }
 
-          DOUT2("We get new connection with fd: %d", connfd);
+          DOUT0("Server socket %d get connection %d", Socket(), connfd);
 
           OnClientConnected(connfd);
 
@@ -835,6 +837,7 @@ void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
        }
 
        default:
+          DOUT0("Server socket %d get event %u", Socket(), (unsigned) evnt.GetCode());
           dabc::SocketConnectAddon::ProcessEvent(evnt);
     }
 }
