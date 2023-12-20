@@ -2,6 +2,14 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
+20.12.2023
+1. Fix mbs stream server transport. Command like `socat /dev/null TCP:localhost:6002` can harm server.
+   It establish connection and then immediately close socket. In some situations server transport get
+   socket failureis before all internal connections in DABC initialized. This leads to hanging of socket thread
+   and transport is disfunctional. Therefore assign socket addon only at very end of initialization.
+   In such case any error appeared in socket will be handled in situation where all DABC components alreay initialized.
+
+
 28.07.2020
 1. Add support of standalone sub-sub-event in hld print. Such sub-sub-event
    does not have typical header and uses full data of sub-event, inheriting its ID
