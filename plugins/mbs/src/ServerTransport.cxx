@@ -437,13 +437,18 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       if (portindx<0) portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
 
-      dabc::TransportRef tr = new dabc::OutputTransport(dabc::Command(), FindPort(OutputName(portindx)), addon, true);
+      dabc::TransportRef tr = new dabc::OutputTransport(dabc::Command(), FindPort(OutputName(portindx)), addon, false);
 
       tr()->AssignToThread(thread(), true);
 
       // transport will be started automatically
 
       dabc::LocalTransport::ConnectPorts(FindPort(OutputName(portindx)), tr.InputPort(), cmd);
+
+      // IMPORTANT - assign addon when transport already running
+      // it prevents from problem if sockets fails or closed before all connections are established
+      // in such case transport will be immediately closed
+      tr()->AssignAddon(addon);
 
       DOUT3("mbs::ServerTransport create new connection at running=%s", DBOOL(isTransportRunning()));
 

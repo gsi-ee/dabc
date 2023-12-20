@@ -83,7 +83,8 @@ namespace mbs {
 
          void OnSocketError(int err, const std::string &info) override;
 
-         dabc::WorkerAddon* Write_GetAddon()  override { return this; }
+         // IMPORTANT: do not provide addon here, set it directly in server
+         dabc::WorkerAddon* Write_GetAddon()  override { return nullptr; }
 
       public:
          ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid);
