@@ -20,10 +20,7 @@
 #include <ctime>
 
 
-const char* hadaq::typeUdpDevice = "hadaq::UdpDevice";
-
 const char* hadaq::protocolHld = "hld";
-const char* hadaq::protocolHadaq = "hadaq";
 
 // Command names used in combiner module:
 //const char* hadaq::comStartServer       = "StartServer";
