@@ -13,28 +13,5 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef DOGMA_Factory
-#define DOGMA_Factory
+#include "dogma/defines.h"
 
-#ifndef DABC_Factory
-#include "dabc/Factory.h"
-#endif
-
-/** \brief Support for DOGMA  */
-
-namespace dogma {
-
-   /** \brief %Factory for HADAQ classes  */
-
-   class Factory : public dabc::Factory {
-      public:
-         Factory(const std::string &name) : dabc::Factory(name) {}
-
-         dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
-
-         dabc::Module *CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd) override;
-   };
-
-}
-
-#endif

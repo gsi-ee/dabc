@@ -13,28 +13,18 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef DOGMA_Factory
-#define DOGMA_Factory
+#include "dogma/TypeDefs.h"
 
-#ifndef DABC_Factory
-#include "dabc/Factory.h"
-#endif
+const char* dogma::protocolDogma = "dogma";
 
-/** \brief Support for DOGMA  */
 
-namespace dogma {
+// tag names for xml config file:
+const char* dogma::xmlBuildFullEvent = "HadaqBuildEvents";
 
-   /** \brief %Factory for HADAQ classes  */
-
-   class Factory : public dabc::Factory {
-      public:
-         Factory(const std::string &name) : dabc::Factory(name) {}
-
-         dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
-
-         dabc::Module *CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd) override;
-   };
-
-}
-
-#endif
+const char* dogma::xmlHadaqTrignumRange   = "TriggerNumRange";
+const char* dogma::xmlHadaqTriggerTollerance = "TriggerTollerance";
+const char* dogma::xmlHadaqDiffEventStats = "AccountLostEventDiff";
+const char* dogma::xmlEvtbuildTimeout     = "BuildDropTimeout";
+const char* dogma::xmlMaxNumBuildEvt      = "MaxNumBuildEvt";
+const char* dogma::xmlHadesTriggerType    = "HadesTriggerType";
+const char* dogma::xmlHadesTriggerHUB     = "HadesTriggerHUB";
