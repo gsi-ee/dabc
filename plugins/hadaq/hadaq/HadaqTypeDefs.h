@@ -29,10 +29,7 @@ namespace hadaq {
       mbt_HadaqStopRun = 145         // buffer just indicates stop of current run
   };
 
-   extern const char* typeUdpDevice;
-
    extern const char* protocolHld;
-   extern const char* protocolHadaq;
 
    extern const char* xmlBuildFullEvent;
 
