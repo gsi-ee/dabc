@@ -105,7 +105,7 @@ int main (int argc, char *argv[])
          theCommand.set_command(dofi::DOFI_WRITE);
          break;
        case 'r':
-         theCommand.set_command(dofi::DOFI_READ);  
+         theCommand.set_command(dofi::DOFI_READ);
          break;
        case 's':
          theCommand.set_command(dofi::DOFI_SETBIT);
@@ -113,7 +113,7 @@ int main (int argc, char *argv[])
        case 'u':
          theCommand.set_command(dofi::DOFI_CLEARBIT);
          break;
-         
+
         case 'c':
          theCommand.set_command(dofi::DOFI_CONFIGURE);
          strncpy (theCommand.filename, optarg, DOFI_MAXTEXT);
@@ -161,7 +161,7 @@ int main (int argc, char *argv[])
    }
    nodename = dabc::MakeNodeName (nodename);
 
-   
+
      // if ((theCommand.command == DOFI_READ) || (theCommand.command == DOFI_WRITE))
      theCommand.address = strtoul (cmd[1], NULL, theCommand.hexformat == 1 ? 16 : 0);
      if (cmdLen > 2)
@@ -239,9 +239,7 @@ int main (int argc, char *argv[])
    // here optional info or error message:
    std::string mess= dcmd.GetStr ("MESSAGE", "OK");
    if(mess.compare("OK")!=0)
-     {
-       DOUT0 (mess.c_str());
-     }
+       DOUT0("%s", mess.c_str());
 
   return l_status;
 }
