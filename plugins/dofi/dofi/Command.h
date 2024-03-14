@@ -54,7 +54,7 @@ typedef enum
   long repeat; /**< number of words for incremental read*/
 
   char filename[DOFI_MAXTEXT]; /**< optional name of configuration file*/
- 
+
 
   /**********************************************************************/
 
@@ -113,9 +113,9 @@ typedef enum
     if ((command == dofi::DOFI_SETBIT) && (arglen < 2))
       do_exit = 1;
     if ((command == dofi::DOFI_CLEARBIT) && (arglen < 2))
-      do_exit = 1;     
+      do_exit = 1;
      if ((command == dofi::DOFI_CONFIGURE) && (arglen < 1))
-      do_exit = 1; 
+      do_exit = 1;
     if (do_exit)
     {
       EOUT (" doficmd ERROR - number of parameters not sufficient for command %d %s\n",command, get_description());
@@ -147,7 +147,7 @@ typedef enum
            break;
           case dofi::DOFI_DISABLE_SCALER:
            snprintf (CommandDescription, DOFI_MAXTEXT, "Disable scalers");
-           break;  
+           break;
 
          case dofi::DOFI_SETBIT:
            snprintf (CommandDescription, DOFI_MAXTEXT, "Set Bitmask");
@@ -157,8 +157,8 @@ typedef enum
            break;
           case dofi::DOFI_CONFIGURE:
            snprintf (CommandDescription, DOFI_MAXTEXT, "Configure from file");
-           break; 
-           
+           break;
+
          default:
            snprintf (CommandDescription, DOFI_MAXTEXT, "Unknown command");
            break;
@@ -213,13 +213,14 @@ typedef enum
 
      void ExtractDabcCommand (dabc::Command &src)
      {
-       command = (dof_cmd_id) (src.GetInt ("COMMAND"));
-       verboselevel = src.GetInt ("VERBOSELEVEL");
-       hexformat = src.GetInt ("HEXFORMAT");
-       address = src.GetInt ("ADDRESS");
-       value = src.GetUInt ("VALUE");
-       repeat = src.GetInt ("REPEAT");
-       strncpy (filename, src.GetStr ("FILENAME").c_str (), DOFI_MAXTEXT);
+       command = (dof_cmd_id) (src.GetInt("COMMAND"));
+       verboselevel = src.GetInt("VERBOSELEVEL");
+       hexformat = src.GetInt("HEXFORMAT");
+       address = src.GetInt("ADDRESS");
+       value = src.GetUInt("VALUE");
+       repeat = src.GetInt("REPEAT");
+       strncpy(filename, src.GetStr("FILENAME").c_str (), DOFI_MAXTEXT-1);
+       filename[DOFI_MAXTEXT-1] = 0; // ensure null-terminated string
      }
    };
 }
