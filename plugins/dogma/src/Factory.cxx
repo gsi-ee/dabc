@@ -59,6 +59,7 @@ dabc::Module* dogma::Factory::CreateTransport(const dabc::Reference& port, const
    double reduce = url.GetOptionDouble("reduce", 1.);
    double lost_rate = url.GetOptionDouble("lost", 0);
    bool debug = url.HasOption("debug");
+   bool print = url.HasOption("print");
    int udp_queue = url.GetOptionInt("upd_queue", 0);
    double heartbeat = url.GetOptionDouble("heartbeat", -1.);
 
@@ -66,6 +67,6 @@ dabc::Module* dogma::Factory::CreateTransport(const dabc::Reference& port, const
 
    DOUT0("Start DOGMA UDP transport on %s", url.GetHostNameWithPort().c_str());
 
-   auto addon = new dogma::UdpAddon(fd, nport, mtu, debug, maxloop, reduce, lost_rate);
+   auto addon = new dogma::UdpAddon(fd, nport, mtu, debug, print, maxloop, reduce, lost_rate);
 	return new dogma::UdpTransport(cmd, portref, addon, flush, heartbeat);
 }

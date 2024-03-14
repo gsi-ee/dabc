@@ -32,7 +32,7 @@
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
 #define DEFAULT_MTU 0xFFF0
 
-dogma::UdpAddon::UdpAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce, double lost) :
+dogma::UdpAddon::UdpAddon(int fd, int nport, int mtu, bool debug, bool print, int maxloop, double reduce, double lost) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
@@ -45,6 +45,7 @@ dogma::UdpAddon::UdpAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    fLostRate(lost),
    fLostCnt(lost>0 ? 1 : -1),
    fDebug(debug),
+   fPrint(print),
    fRunning(false),
    fMaxProcDist(0.)
 {
@@ -192,7 +193,7 @@ bool dogma::UdpAddon::ReadUdp()
          return false;
       }
 
-      if (fDebug)
+      if (fPrint)
          DOUT0("Event addr: %lu type: %lu trignum; %lu, time: %lu paylod: %lu",
             (long unsigned) tu->GetAddr(), (long unsigned) tu->GetTrigType(), (long unsigned) tu->GetTrigNumber(), (long unsigned) tu->GetTrigTime(), (long unsigned) tu->GetPayloadLen());
 
