@@ -116,7 +116,7 @@ int main (int argc, char *argv[])
 
         case 'c':
          theCommand.set_command(dofi::DOFI_CONFIGURE);
-         strncpy (theCommand.filename, optarg, DOFI_MAXTEXT);
+         strncpy (theCommand.filename, optarg, DOFI_MAXTEXT-1);
          break;
        case 'z':
          theCommand.set_command(dofi::DOFI_RESET);
