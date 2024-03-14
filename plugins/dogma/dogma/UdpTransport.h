@@ -107,6 +107,7 @@ namespace dogma {
          double             fLostRate{0};        ///< artificial lost of received UDP packets
          int                fLostCnt{0};         ///< counter used to drop buffers
          bool               fDebug{false};       ///< when true, produce more debug output
+         bool               fPrint{false};       ///< when true, produce rudimentary event print
          bool               fRunning{false};     ///< is transport running
          dabc::TimeStamp    fLastProcTm;         ///< last time when udp reading was performed
          double             fMaxProcDist{0};     ///< maximal time between calls to BuildEvent method
@@ -122,7 +123,7 @@ namespace dogma {
          bool CloseBuffer();
 
       public:
-         UdpAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce, double lost);
+         UdpAddon(int fd, int nport, int mtu, bool debug, bool print, int maxloop, double reduce, double lost);
           ~UdpAddon() override;
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
