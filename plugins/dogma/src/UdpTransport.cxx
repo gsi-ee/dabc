@@ -192,6 +192,10 @@ bool dogma::UdpAddon::ReadUdp()
          return false;
       }
 
+      if (fDebug)
+         DOUT0("Event addr: %lu type: %lu trignum; %lu, time: %lu paylod: %lu",
+            (long unsigned) tu->GetAddr(), (long unsigned) tu->GetTrigType(), (long unsigned) tu->GetTrigNumber(), (long unsigned) tu->GetTrigTime(), (long unsigned) tu->GetPayloadLen());
+
       fTotalRecvPacket++;
       fTotalRecvBytes += res;
 

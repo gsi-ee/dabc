@@ -1,0 +1,36 @@
+<!-- This is example how raw data from HADAQ input can be dump in binary DABC file -->
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="print">
+    <Run>
+      <lib value="libDabcDogma.so"/>
+      <logfile value="Print.log"/>
+      <loglimit value="1000000"/>
+      <debuglevel value="1"/>
+    </Run>
+
+    <MemoryPool name="Pool">
+      <BufferSize value="400000"/>
+      <NumBuffers value="50"/>
+    </MemoryPool>
+
+    <Module name="Dump" class="dabc::RepeaterModule">
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+       <DataRateName value="DataRate"/>
+       <InputPort name="Input0" url="dogma://host:50000"/>
+       <InputPort name="Input1" url="dogma://host:50001"/>
+       <InputPort name="Input2" url="dogma://host:50002"/>
+       <InputPort name="Input3" url="dogma://host:50003"/>
+       <InputPort name="Input4" url="dogma://host:50004"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=50&debug"/>
+       <OutputPort name="Output0" url="bin://out0.bin"/>
+       <OutputPort name="Output1" url="bin://out1.bin"/>
+       <OutputPort name="Output2" url="bin://out2.bin"/>
+       <OutputPort name="Output3" url="bin://out3.bin"/>
+       <OutputPort name="Output4" url="bin://out4.bin"/>
+       <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="0"/>
+     </Module>
+  </Context>
+</dabc>
