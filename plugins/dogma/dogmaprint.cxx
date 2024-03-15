@@ -204,8 +204,8 @@ int main(int argc, char* argv[])
 
       printcnt++;
 
-      printf("Event addr: %lu type: %lu trignum; %lu, time: %lu paylod: %lu\n",
-            (long unsigned) evnt->GetAddr(), (long unsigned) evnt->GetTrigType(), (long unsigned) evnt->GetTrigNumber(), (long unsigned) evnt->GetTrigTime(), (long unsigned) evnt->GetPayloadLen());
+      printf("Event addr: %lu type: 0x%02x trignum; %lu, time: %lu paylod: %lu\n",
+            (long unsigned) evnt->GetAddr(), (unsigned) evnt->GetTrigType(), (long unsigned) evnt->GetTrigNumber(), (long unsigned) evnt->GetTrigTime(), (long unsigned) evnt->GetPayloadLen());
 
       if (printraw) {
          unsigned len = evnt->GetPayloadLen() / 4;
