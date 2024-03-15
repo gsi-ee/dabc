@@ -19,7 +19,7 @@
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
        <DataRateName value="DataRate"/>
-       <InputPort name="Input0" url="dogma://host:50000"/>
+       <InputPort name="Input0" url="dogma://host:60678"/>
        <InputPort name="Input1" url="dogma://host:50001"/>
        <InputPort name="Input2" url="dogma://host:50002"/>
        <InputPort name="Input3" url="dogma://host:50003"/>
