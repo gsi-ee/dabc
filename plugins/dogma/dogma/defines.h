@@ -53,7 +53,7 @@ namespace dogma {
 
          inline uint32_t GetAddr() const { return Value(&tuAddr); }
 
-         inline uint32_t GetTrigType() const { return Value(&tuTrigTypeNumber) << 24; }
+         inline uint32_t GetTrigType() const { return Value(&tuTrigTypeNumber) >> 24; }
 
          inline uint32_t GetTrigNumber() const { return Value(&tuTrigTypeNumber) & 0xffffff; }
 
