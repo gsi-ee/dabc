@@ -5,12 +5,14 @@ dabc_link_library(
           src/defines.cxx
           src/UdpTransport.cxx
           src/TypeDefs.cxx
+          src/api.cxx
   HEADERS dogma/TerminalModule.h
           dogma/Factory.h
           dogma/Iterator.h
           dogma/defines.h
           dogma/UdpTransport.h
           dogma/TypeDefs.h
+          dogma/api.h
   INCDIR dogma
   LIBRARIES DabcBase
   INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
