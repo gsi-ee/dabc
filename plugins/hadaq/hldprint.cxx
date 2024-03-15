@@ -1175,7 +1175,7 @@ int main(int argc, char* argv[])
 
    while (nagain-- >= 0) {
 
-   ref = hadaq::ReadoutHandle::Connect(src.c_str());
+   ref = hadaq::ReadoutHandle::Connect(src);
 
    if (ref.null()) return 1;
 
