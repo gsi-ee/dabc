@@ -30,6 +30,8 @@ namespace dogma {
       public:
          Factory(const std::string &name) : dabc::Factory(name) {}
 
+         dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
+
          dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
 
          dabc::Module *CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd) override;

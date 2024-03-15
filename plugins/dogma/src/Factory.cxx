@@ -17,9 +17,19 @@
 
 #include "dogma/TerminalModule.h"
 #include "dogma/UdpTransport.h"
+#include "dogma/Iterator.h"
+
 
 
 dabc::FactoryPlugin dogmafactory(new dogma::Factory("dogma"));
+
+dabc::Reference dogma::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
+{
+   if (classname == "dogma_iter")
+      return new dogma::RawIterator(objname);
+
+   return dabc::Factory::CreateObject(classname, objname, cmd);
+}
 
 dabc::Module* dogma::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
