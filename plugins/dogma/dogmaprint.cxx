@@ -42,6 +42,8 @@ int usage(const char* errstr = nullptr)
    printf("   -num number             - number of events to print, 0 - all events (default 10)\n");
    printf("   -all                    - print all events (equivalent to -num 0)\n");
    printf("   -skip number            - number of events to skip before start printing\n");
+   printf("   -raw                    - printout of raw data (default false)\n");
+   printf("   -rate                   - display only events and data rate\n");
 
    return errstr ? 1 : 0;
 }
@@ -63,6 +65,9 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n], "-num") == 0) && (n + 1 < argc)) {
          dabc::str_to_lint(argv[++n], &number);
       } else if (strcmp(argv[n], "-all") == 0) {
+         number = 0;
+      } else if (strcmp(argv[n], "-rate") == 0) {
+         showrate = true;
          number = 0;
       } else if ((strcmp(argv[n], "-skip") == 0) && (n + 1 < argc)) {
          dabc::str_to_lint(argv[++n], &skip);
@@ -195,6 +200,15 @@ int main(int argc, char* argv[])
 
       printf("Event addr: %lu type: %lu trignum; %lu, time: %lu paylod: %lu\n",
             (long unsigned) evnt->GetAddr(), (long unsigned) evnt->GetTrigType(), (long unsigned) evnt->GetTrigNumber(), (long unsigned) evnt->GetTrigTime(), (long unsigned) evnt->GetPayloadLen());
+
+      if (printraw) {
+         unsigned len = evnt->GetPayloadLen() / 4;
+         for (unsigned i = 0; i < len; ++i) {
+            printf("   %08x", (unsigned) evnt->GetPayload(i));
+            if ((i == len - 1) || ((i % 8 == 0) && (i > 0)))
+               printf("\n");
+         }
+      }
 
       if ((number > 0) && (printcnt >= number)) break;
    }
