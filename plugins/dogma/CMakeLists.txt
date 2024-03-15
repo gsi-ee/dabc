@@ -7,6 +7,7 @@ dabc_link_library(
           src/TypeDefs.cxx
   HEADERS dogma/TerminalModule.h
           dogma/Factory.h
+          dogma/Iterator.h
           dogma/defines.h
           dogma/UdpTransport.h
           dogma/TypeDefs.h
