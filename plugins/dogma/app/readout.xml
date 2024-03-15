@@ -2,13 +2,12 @@
 
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="readout">
+  <Context name="dogma">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcDogma.so"/>
       <logfile value="Readout.log"/>
       <loglimit value="1000000"/>
-      <debuglevel value="1"/>
     </Run>
 
     <MemoryPool name="Pool">
@@ -29,7 +28,7 @@
        <!--  this is DABC binary file, not necessary for the moment -->
        <OutputPort name="Output1" url="bin://readout.bin"/>
 
-       <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="1"/>
+       <DataRate width="5" prec="3" low="0" up="50" debug="1"/>
      </Module>
   </Context>
 </dabc>

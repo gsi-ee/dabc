@@ -31,7 +31,7 @@
        <OutputPort name="Output2" url="bin://out2.bin"/>
        <OutputPort name="Output3" url="bin://out3.bin"/>
        <OutputPort name="Output4" url="bin://out4.bin"/>
-       <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="0"/>
+       <DataRate width="5" prec="3" low="0" up="50" debug="0"/>
      </Module>
   </Context>
 </dabc>
