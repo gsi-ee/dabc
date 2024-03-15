@@ -90,8 +90,14 @@ int main(int argc, char* argv[])
    if (tmout < 0) tmout = 5.;
 
    bool isfile = false;
-
    std::string src = argv[1];
+
+   if ((src.find(".bin") != std::string::npos) && (src.find("bin://") != 0)) {
+      src = std::string("bin://") + src;
+      isfile = true;
+   } else if ((src.find("bin://") == 0) || (src.find(".bin") != std::string::npos)) {
+      isfile = true;
+   }
 
    if (!isfile) {
 
