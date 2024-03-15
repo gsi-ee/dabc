@@ -4,6 +4,7 @@
 <dabc version="2">
   <Context name="print">
     <Run>
+      <lib value="libDabcMbs.so"/>
       <lib value="libDabcDogma.so"/>
       <logfile value="Print.log"/>
       <loglimit value="1000000"/>
