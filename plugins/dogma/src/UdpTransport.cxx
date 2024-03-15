@@ -169,7 +169,7 @@ bool dogma::UdpAddon::ReadUdp()
       }
 
       auto tu = (DogmaTu *) tgt;
-      auto msgsize = tu->GetMessageSize(); // trb sender adds a 32 byte control trailer identical to event header
+      auto msgsize = tu->GetSize(); // trb sender adds a 32 byte control trailer identical to event header
 
       std::string errmsg;
 
