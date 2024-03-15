@@ -84,7 +84,7 @@ dogma::DogmaTu *dogma::ReadoutHandle::GetTu()
    if (mbssub && (mbssub->FullSize() == mbsev->SubEventsSize())) {
       auto tu = (dogma::DogmaTu *) mbssub->RawData();
 
-      if (tu && (tu->GetMessageSize() == mbssub->RawDataSize()))
+      if (tu && (tu->GetSize() == mbssub->RawDataSize()))
          return tu;
    }
 

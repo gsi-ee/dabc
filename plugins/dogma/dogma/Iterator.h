@@ -79,7 +79,7 @@ namespace dogma {
          dabc::BufferSize_t EventSize() override
          {
             auto tu = (DogmaTu *) Event();
-            return tu ? tu->GetMessageSize() : 0;
+            return tu ? tu->GetSize() : 0;
          }
    };
 

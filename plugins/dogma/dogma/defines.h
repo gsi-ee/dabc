@@ -61,7 +61,8 @@ namespace dogma {
 
          inline uint32_t GetPayloadLen() const { return Value(&tuLenPayload) & 0xffff; }
 
-         inline uint32_t GetMessageSize() const { return 20 + GetPayloadLen(); }
+         inline uint32_t GetSize() const { return 20 + GetPayloadLen(); }
+
    };
 
 }
