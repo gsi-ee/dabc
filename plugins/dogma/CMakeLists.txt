@@ -22,6 +22,11 @@ dabc_executable(
   SOURCES dogmacmd.cxx
   LIBRARIES DabcBase)
 
+dabc_executable(
+  dogmaprint
+  SOURCES dogmaprint.cxx
+  LIBRARIES DabcBase DabcMbs DabcDogma)
+
 dabc_install_plugin_data(
   DabcDogma
   DIRECTORIES app
