@@ -29,7 +29,7 @@
        <!--  this is DABC binary file, not necessary for the moment -->
        <OutputPort name="Output1" url="bin://readout.bin"/>
 
-       <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="0"/>
+       <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="1"/>
      </Module>
   </Context>
 </dabc>
