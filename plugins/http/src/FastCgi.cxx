@@ -141,7 +141,11 @@ void http::FastCgi::OnThreadAssigned()
 void* http::FastCgi::RunFunc(void* args)
 {
 
-#ifndef DABC_WITHOUT_FASTCGI
+#ifdef DABC_WITHOUT_FASTCGI
+
+   (void) args; // suppress compiler warnings
+
+#else
 
    http::FastCgi* server = (http::FastCgi*) args;
 
