@@ -2,6 +2,7 @@
 <dabc version="2">
   <Context name="Main" port="12345">
     <Run>
+      <lib value="libDabcMbs.so"/>
       <lib value="libDabcDogma.so"/>
       <logfile value="master.log"/>
       <loglimit value="1000000"/>
