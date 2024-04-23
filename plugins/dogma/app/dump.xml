@@ -1,0 +1,35 @@
+<!-- This is example how raw data from HADAQ input can be dump in binary DABC file -->
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="dogma">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcDogma.so"/>
+      <logfile value="dump.log"/>
+      <loglimit value="1000000"/>
+    </Run>
+
+    <MemoryPool name="Pool">
+      <BufferSize value="400000"/>
+      <NumBuffers value="50"/>
+    </MemoryPool>
+
+    <Module name="Readout" class="dabc::RepeaterModule">
+       <NumInputs value="2"/>
+       <NumOutputs value="2"/>
+       <DataRateName value="DataRate"/>
+
+       <!--  these are inputs -->
+       <InputPort name="Input0" url="dogma://host:60678"/>
+       <InputPort name="Input1" url="dogma://host:60679"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=50"/>
+
+       <!--  these are DABC binary files -->
+       <OutputPort name="Output0" url="bin://out0.bin"/>
+       <OutputPort name="Output1" url="bin://out1.bin"/>
+
+       <DataRate width="5" prec="3" low="0" up="50" debug="1"/>
+     </Module>
+  </Context>
+</dabc>
