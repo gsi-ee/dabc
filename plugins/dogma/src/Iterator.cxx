@@ -166,6 +166,30 @@ bool dogma::ReadIterator::NextSubeventsBlock()
    return false;
 }
 
+void *dogma::ReadIterator::block() const
+{
+   if (fBufType == mbt_DogmaTransportUnit)
+      return tu();
+
+   if (fBufType == mbt_DogmaEvents)
+      return evnt();
+
+   return nullptr;
+}
+
+unsigned dogma::ReadIterator::blocksize() const
+{
+   if (fBufType == mbt_DogmaTransportUnit)
+      return tusize();
+
+   if (fBufType == mbt_DogmaEvents)
+      return evntsize();
+
+   return 0;
+
+}
+
+
 
 bool dogma::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
 {
