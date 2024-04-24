@@ -14,7 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Release]
-        compiler: [ { cpp: g++-11, c: gcc-11 }, { cpp: g++-12, c: gcc-12 }, { cpp: g++-13, c: gcc-13 }, { cpp: clang++-16, c: clang-16 }, { cpp: clang++-17, c: clang-17 }, { cpp: clang++-18, c: clang-18 } ]
+        compiler: [ { name: g++-11, cpp: g++-11, c: gcc-11 },
+                    { name: g++-12, cpp: g++-12, c: gcc-12 },
+                    { name: g++-13, cpp: g++-13, c: gcc-13 },
+                    { name: clang-14, cpp: clang++-14, c: clang-14 } ]
 
     steps:
       - name: Checkout repository
@@ -22,11 +25,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set up C++ compiler (Ubuntu)
+      - name: Set up C++ compiler ${{ matrix.compiler.name }} on Ubuntu
         run: |
           sudo rm -f /etc/apt/sources.list.d/archive_uri-*
           sudo apt-get update || true
-          sudo apt-get install -y ${{ matrix.compiler.cpp }}
+          sudo apt-get install -y ${{ matrix.compiler.name }}
 
       - name: Use compiler
         shell: bash
