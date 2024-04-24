@@ -38,7 +38,130 @@
 
 namespace dogma {
 
-   class RawIterator : public dabc::EventsIterator {
+   /** \brief Read iterator for HADAQ events/subevents */
+
+   class ReadIterator {
+      protected:
+         bool           fFirstEvent = false;
+         dabc::Pointer  fEvPtr;
+         dabc::Pointer  fSubPtr;
+         dabc::Pointer  fRawPtr;
+         unsigned       fBufType = dabc::mbt_Null;
+
+      public:
+         ReadIterator() {}
+
+         ReadIterator(const dabc::Buffer& buf) { Reset(buf); }
+
+         ReadIterator(dogma::DogmaEvent *evnt)
+         {
+            fFirstEvent = false;
+            fBufType = mbt_DogmaEvents;
+            fEvPtr.reset(evnt, evnt->GetEventLen());
+         }
+
+         ReadIterator(const ReadIterator& src);
+
+         ReadIterator& operator=(const ReadIterator& src);
+
+         ~ReadIterator() { Close(); }
+
+         /** Initialize iterator on the beginning of the buffer, buffer instance should exists until
+          * end of iterator usage */
+         bool Reset(const dabc::Buffer& buf);
+
+         /** Reset iterator - forget pointer on buffer */
+         bool Reset() { Close(); return true; }
+
+         void Close();
+
+         bool IsData() const { return !fEvPtr.null(); }
+
+         /** Used for raw data from TRBs */
+         bool NextTu();
+
+         /** Used for ready HLD events */
+         bool NextEvent();
+
+         /** Depending from buffer type calls NextHadTu() or NextEvent() */
+         bool NextSubeventsBlock();
+
+         /** Used for sub-events iteration inside current block */
+         bool NextSubEvent();
+
+         dogma::DogmaEvent* evnt() const { return (dogma::DogmaEvent*) fEvPtr(); }
+         unsigned evntsize() const { return evnt() ? evnt()->GetEventLen() : 0; }
+
+         /** Returns size used by current event plus rest */
+         unsigned remained_size() const { return fEvPtr.fullsize(); }
+
+         dogma::DogmaTu* tu() const { return (dogma::DogmaTu*) fEvPtr(); }
+
+         bool AssignEventPointer(dabc::Pointer& ptr);
+         dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr(); }
+         void* rawdata() const { return fRawPtr(); }
+         uint32_t rawdatasize() const { return fRawPtr.fullsize(); }
+
+         /** Try to define maximal length for the raw data */
+         unsigned rawdata_maxsize() const;
+
+         static unsigned NumEvents(const dabc::Buffer& buf);
+   };
+
+
+   // _____________________________________________________________________
+
+   /** \brief Write iterator for DOGMA events/subevents */
+
+   class WriteIterator {
+      public:
+         WriteIterator();
+         WriteIterator(const dabc::Buffer& buf);
+         ~WriteIterator();
+
+         bool Reset(const dabc::Buffer& buf);
+
+         bool IsBuffer() const { return !fBuffer.null(); }
+         bool IsEmpty() const { return fFullSize == 0; }
+         bool IsPlaceForEvent(uint32_t subeventsize);
+         bool NewEvent(uint32_t type_number = 0, uint32_t minsubeventssize = 0);
+         bool NewSubevent(uint32_t minrawsize = 0, uint32_t type_number = 0);
+         bool FinishSubEvent(uint32_t rawdatasz);
+
+         bool AddSubevent(const dabc::Pointer &source);
+         bool AddSubevent(const void *ptr, unsigned len);
+         bool AddSubevent(dogma::DogmaTu* sub)
+         {
+            return AddSubevent(sub, sizeof(dogma::DogmaTu) + sub->GetPayloadLen());
+         }
+         bool AddAllSubevents(dogma::DogmaEvent *evnt)
+         {
+            return AddSubevent(evnt->FirstSubevent(), evnt->GetPayloadLen());
+         }
+
+         bool CopyEvent(const ReadIterator &iter);
+
+         bool FinishEvent();
+
+         dabc::Buffer Close();
+
+         dogma::DogmaEvent* evnt() const { return (dogma::DogmaEvent*) fEvPtr(); }
+         dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr(); }
+         void* rawdata() const { return subevnt() ? subevnt()->RawData() : nullptr; }
+         uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(dogma::DogmaTu); }
+
+      protected:
+         dabc::Buffer   fBuffer; // here we keep buffer - mean ownership is delivered to iterator
+         dabc::Pointer  fEvPtr;
+         dabc::Pointer  fSubPtr;
+         dabc::BufferSize_t fFullSize;
+         bool fWasStarted{false};  // indicates if events writing was started after buffer assign
+         bool fHasSubevents{false};  // indicates if any subevent was provided
+   };
+
+   // _______________________________________________________________________________________________
+
+      class RawIterator : public dabc::EventsIterator {
       protected:
          dabc::Pointer  fRawPtr;
 
@@ -82,7 +205,6 @@ namespace dogma {
             return tu ? tu->GetSize() : 0;
          }
    };
-
 
 }
 

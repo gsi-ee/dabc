@@ -2,6 +2,7 @@ dabc_link_library(
   DabcDogma
   SOURCES src/TerminalModule.cxx
           src/Factory.cxx
+          src/Iterator.cxx
           src/defines.cxx
           src/UdpTransport.cxx
           src/TypeDefs.cxx
