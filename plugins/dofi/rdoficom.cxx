@@ -19,6 +19,7 @@
 #include <string>
 #include <unistd.h>
 #include <stdlib.h>
+#include <libgen.h>
 
 #include "dabc/Manager.h"
 
