@@ -131,36 +131,36 @@ typedef enum
        switch (command)
        {
          case dofi::DOFI_RESET:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Reset dofi SPI connection");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Reset dofi SPI connection");
            break;
          case dofi::DOFI_READ:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Read value");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Read value");
            break;
          case dofi::DOFI_WRITE:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Write value");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Write value");
            break;
          case dofi::DOFI_RESET_SCALER:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Reset scalers");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Reset scalers");
            break;
          case dofi::DOFI_ENABLE_SCALER:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Enable scalers");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Enable scalers");
            break;
           case dofi::DOFI_DISABLE_SCALER:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Disable scalers");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Disable scalers");
            break;
 
          case dofi::DOFI_SETBIT:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Set Bitmask");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Set Bitmask");
            break;
          case dofi::DOFI_CLEARBIT:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Clear Bitmask");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Clear Bitmask");
            break;
           case dofi::DOFI_CONFIGURE:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Configure from file");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Configure from file");
            break;
 
          default:
-           snprintf (CommandDescription, DOFI_MAXTEXT, "Unknown command");
+           snprintf(CommandDescription, DOFI_MAXTEXT, "Unknown command");
            break;
        };
        return CommandDescription;
@@ -171,7 +171,7 @@ typedef enum
 		 //printm (" doficmd dump: \n");
 		 hexformat == 1 ? DOUT0 (" Command  :0x%x (%s)", command, get_description ()) :
 		 DOUT0 (" Command: %d (%s)", command, get_description ());
-		 if ((command == DOFI_CONFIGURE)) // || (command == DOFI_VERIFY))
+		 if (command == DOFI_CONFIGURE) // || (command == DOFI_VERIFY))
 		 {
 			DOUT0 (" \t config file    :%s \n", filename);
 		 }
