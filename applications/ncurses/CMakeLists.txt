@@ -5,8 +5,9 @@ if(NOT PROJECT_NAME STREQUAL DABC)
 endif()
 
 find_package(PkgConfig)
+
 if(PkgConfig_FOUND)
-  pkg_check_modules(ncurses ncurses menu IMPORTED_TARGET)
+  pkg_check_modules(ncurses ncurses menu QUIET IMPORTED_TARGET)
 
   if(ncurses_FOUND)
     add_executable(dabc_shell dabc_shell.cxx)
