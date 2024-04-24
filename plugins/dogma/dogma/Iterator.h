@@ -80,22 +80,28 @@ namespace dogma {
          /** Used for raw data from TRBs */
          bool NextTu();
 
+         dogma::DogmaTu* tu() const { return (dogma::DogmaTu*) fEvPtr(); }
+         unsigned tusize() const { return tu() ? tu()->GetTuLen() : 0; }
+
          /** Used for ready HLD events */
          bool NextEvent();
-
-         /** Depending from buffer type calls NextHadTu() or NextEvent() */
-         bool NextSubeventsBlock();
-
-         /** Used for sub-events iteration inside current block */
-         bool NextSubEvent();
 
          dogma::DogmaEvent* evnt() const { return (dogma::DogmaEvent*) fEvPtr(); }
          unsigned evntsize() const { return evnt() ? evnt()->GetEventLen() : 0; }
 
+         /** Depending from buffer type calls NextHadTu() or NextEvent() */
+         bool NextSubeventsBlock();
+
+         void *block() const;
+         unsigned blocksize() const;
+
+         /** Used for sub-events iteration inside current block */
+         bool NextSubEvent();
+
+
          /** Returns size used by current event plus rest */
          unsigned remained_size() const { return fEvPtr.fullsize(); }
 
-         dogma::DogmaTu* tu() const { return (dogma::DogmaTu*) fEvPtr(); }
 
          bool AssignEventPointer(dabc::Pointer& ptr);
          dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr(); }
@@ -163,47 +169,18 @@ namespace dogma {
 
       class RawIterator : public dabc::EventsIterator {
       protected:
-         dabc::Pointer  fRawPtr;
+         ReadIterator fIter;
 
       public:
          RawIterator(const std::string &name) : dabc::EventsIterator(name) {}
          ~RawIterator() override {}
 
-         bool Assign(const dabc::Buffer& buf) override
-         {
-            Close();
-            if (buf.null() || (buf.GetTypeId() != mbt_DogmaTransportUnit))
-               return false;
+         bool Assign(const dabc::Buffer& buf) override { return fIter.Reset(buf); }
+         void Close() override { return fIter.Close(); }
 
-            fRawPtr = buf;
-            return true;
-         }
-         void Close() override { return fRawPtr.reset(); }
-
-         bool NextEvent() override
-         {
-            auto sz = EventSize();
-            if (sz >= fRawPtr.fullsize()) {
-               fRawPtr.reset();
-               return false;
-            }
-            fRawPtr.shift(sz);
-            return !fRawPtr.null();
-         };
-
-         void *Event() override
-         {
-            if (fRawPtr.fullsize() < sizeof(DogmaTu))
-               fRawPtr.reset();
-
-            return fRawPtr();
-         }
-
-         dabc::BufferSize_t EventSize() override
-         {
-            auto tu = (DogmaTu *) Event();
-            return tu ? tu->GetSize() : 0;
-         }
+         bool NextEvent() override { return fIter.NextSubeventsBlock(); }
+         void *Event() override { return fIter.block(); }
+         dabc::BufferSize_t EventSize() override { return fIter.blocksize(); }
    };
 
 }
