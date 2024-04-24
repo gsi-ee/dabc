@@ -1,0 +1,56 @@
+name: DABC CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+        compiler: [ { cpp: g++-11, c: gcc-11 }, { cpp: g++-12, c: gcc-12 }, { cpp: g++-13, c: gcc-13 } ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          submodules: recursive
+
+      - name: Set up C++ compiler (Ubuntu)
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/archive_uri-*
+          sudo apt-get update || true
+          sudo apt-get install -y ${{ matrix.compiler.cpp }}
+
+      - name: Use compiler
+        shell: bash
+        env:
+          CC: ${{ matrix.compiler.c }}
+          CXX: ${{ matrix.compiler.cpp }}
+        run: |
+          $CC --version
+          $CXX --version
+
+      - name: Configure
+        shell: bash
+        run: |
+          cmake --version
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir \
+            -DDABC_DIR=build
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Install
+        shell: bash
+        run: cmake --build build --target install
