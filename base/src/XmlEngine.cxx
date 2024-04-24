@@ -477,7 +477,7 @@ dabc::XMLAttrPointer_t dabc::Xml::NewIntAttr(XMLNodePointer_t xmlnode,
    // create node attribute with integer value
 
    char sbuf[30];
-   sprintf(sbuf,"%d",value);
+   snprintf(sbuf, sizeof(sbuf), "%d", value);
    return NewAttr(xmlnode, nullptr, name, sbuf);
 }
 

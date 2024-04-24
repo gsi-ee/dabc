@@ -1204,7 +1204,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
       hints.ai_socktype = SOCK_STREAM;
 
       char service[100];
-      sprintf(service, "%d", serviceid);
+      snprintf(service, sizeof(service), "%d", serviceid);
 
       int n = getaddrinfo(hostname, service, &hints, &info);
 
@@ -1254,7 +1254,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
 int dabc::SocketThread::StartClient(const std::string &host, int nport, bool nonblocking)
 {
    char service[100];
-   sprintf(service, "%d", nport);
+   snprintf(service, sizeof(service), "%d", nport);
 
    struct addrinfo hints, *info = nullptr;
    memset(&hints, 0, sizeof(hints));
