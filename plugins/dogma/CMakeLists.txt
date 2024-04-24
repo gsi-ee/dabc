@@ -14,7 +14,7 @@ dabc_link_library(
           dogma/TypeDefs.h
           dogma/api.h
   INCDIR dogma
-  LIBRARIES DabcBase
+  LIBRARIES dabc::DabcBase dabc::DabcMbs
   INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
 
 dabc_executable(
