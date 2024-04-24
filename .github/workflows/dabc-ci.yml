@@ -7,6 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
+
   build-ubuntu:
     runs-on: ubuntu-latest
     strategy:
@@ -26,6 +27,48 @@ jobs:
           sudo rm -f /etc/apt/sources.list.d/archive_uri-*
           sudo apt-get update || true
           sudo apt-get install -y ${{ matrix.compiler.cpp }}
+
+      - name: Use compiler
+        shell: bash
+        env:
+          CC: ${{ matrix.compiler.c }}
+          CXX: ${{ matrix.compiler.cpp }}
+        run: |
+          $CC --version
+          $CXX --version
+
+      - name: Configure
+        shell: bash
+        run: |
+          cmake --version
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir \
+            -DDABC_DIR=build
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Install
+        shell: bash
+        run: cmake --build build --target install
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+        compiler: [ { cpp: clang++, c: clang } ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          submodules: recursive
 
       - name: Use compiler
         shell: bash
