@@ -385,7 +385,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
             fCurrentEvents += item.GetField("build_events").AsUInt();
             fCurrentData += item.GetField("build_data").AsUInt();
 
-            if (!fTotalData) DOUT0("FIRST TIME GET DATA %d %lu", fCtrlCnt, item.GetField("build_data").AsUInt());
+            if (!fTotalData) DOUT0("FIRST TIME GET DATA %d %lu", fCtrlCnt, (long unsigned) item.GetField("build_data").AsUInt());
 
             // check maximal size of the run
             if (fNewRunTm.Expired() && (fCtrlSzLimit > 0) && (fMaxRunSize > 0) && (item.GetField("runsize").AsUInt() > fMaxRunSize*1e6))
