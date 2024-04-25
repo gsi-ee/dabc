@@ -48,9 +48,6 @@ namespace hadaq {
          bool CloseFile();
          bool StartNewFile();
 
-         /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
-         char* Unit(unsigned long v);
-
       public:
 
          HldOutput(const dabc::Url& url);

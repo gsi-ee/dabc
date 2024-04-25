@@ -1540,7 +1540,7 @@ void hadaq::CombinerModule::ResetInfoCounters()
       }
 }
 
-char* hadaq::CombinerModule::Unit(unsigned long v)
+const char *hadaq::CombinerModule::Unit(unsigned long v)
 {
   // JAM stolen from old hadaq eventbuilders to keep precisely same format
    static char retVal[32];
