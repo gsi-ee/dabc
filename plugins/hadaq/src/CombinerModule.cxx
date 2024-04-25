@@ -1481,7 +1481,7 @@ void hadaq::CombinerModule::StoreRunInfoStart()
    char ltime[20];            /* local time */
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
-   std::string filename=GenerateFileName(fRunNumber); // new run number defines filename
+   std::string filename = GenerateFileName(fRunNumber); // new run number defines filename
    FILE *fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
    if (fp) {
       fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
@@ -1542,7 +1542,6 @@ void hadaq::CombinerModule::ResetInfoCounters()
 
 char* hadaq::CombinerModule::Unit(unsigned long v)
 {
-
   // JAM stolen from old hadaq eventbuilders to keep precisely same format
    static char retVal[32];
    static char u[] = " kM";
@@ -1558,7 +1557,7 @@ char* hadaq::CombinerModule::Unit(unsigned long v)
 std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 {
    (void) runid;
-   return fPrefix + hadaq::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
+   return fPrefix + hadaq::FormatFilename(fRunNumber, fEBId) + std::string(".hld");
 }
 
 bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
