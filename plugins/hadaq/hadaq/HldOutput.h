@@ -43,8 +43,6 @@ namespace hadaq {
          std::string         fUrlOptions;            ///< remember URL options, may be used for RFIO file open
          std::string         fLastPrefix;            ///< last prefix submitted from BNet master
 
-         std::string         fRunInfoToOraFilename;
-
          hadaq::HldFile      fFile;
 
          bool CloseFile();
