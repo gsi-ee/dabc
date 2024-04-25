@@ -340,7 +340,7 @@ bool dogma::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
 }
 
 
-bool dogma::WriteIterator::NewEvent(uint32_t type_number, uint32_t minsubeventssize)
+bool dogma::WriteIterator::NewEvent(uint32_t seqid, uint32_t trig_type, uint32_t trig_number, uint32_t minsubeventssize)
 {
    // TODO: add arguments to set other event header fields
    if (fBuffer.null()) return false;
@@ -359,7 +359,7 @@ bool dogma::WriteIterator::NewEvent(uint32_t type_number, uint32_t minsubeventss
       return false;
    }
 
-   evnt()->Init(type_number);
+   evnt()->Init(seqid, trig_type, trig_number);
 
    fHasSubevents = false;
 

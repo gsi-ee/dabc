@@ -30,16 +30,6 @@ namespace dogma {
   };
 
    extern const char* protocolDogma;
-
-   extern const char* xmlBuildFullEvent;
-
-   extern const char* xmlHadaqTrignumRange;
-   extern const char* xmlHadaqTriggerTollerance;
-   extern const char* xmlHadaqDiffEventStats;
-   extern const char* xmlEvtbuildTimeout;
-   extern const char* xmlMaxNumBuildEvt;
-   extern const char* xmlHadesTriggerType;
-   extern const char* xmlHadesTriggerHUB;
 }
 
 #endif

@@ -64,6 +64,8 @@ namespace dogma {
 
          inline uint32_t GetTrigNumber() const { return Value(&tuTrigTypeNumber) & 0xffffff; }
 
+         inline uint32_t GetTrigTypeNumber() const { return Value(&tuTrigTypeNumber); }
+
          inline uint32_t GetTrigTime() const { return Value(&tuTrigTime); }
 
          inline uint32_t GetPayloadLen() const { return Value(&tuLenPayload) & 0xffff; }
@@ -78,19 +80,25 @@ namespace dogma {
 
          void *RawData() const { return (char *) this + sizeof(DogmaTu); }
 
+         void SetTrigTypeNumber(uint32_t type_number)
+         {
+            SetValue(&tuTrigTypeNumber, type_number);
+         }
+
          void Init(uint32_t type_number)
          {
             tuMagic = SWAP32(DOGMA_MAGIC);
             tuAddr = 0;
-            tuTrigTypeNumber = 0;
-            tuTrigTypeNumber = SWAP32(type_number);
+            SetTrigTypeNumber(type_number);
             tuLenPayload = 0;
          }
+
    };
 
    struct DogmaEvent {
       protected:
          uint32_t tuMagic = 0;
+         uint32_t tuSeqId = 0;
          uint32_t tuTrigTypeNumber = 0;
          uint32_t tuLenPayload = 0;
 
@@ -109,13 +117,15 @@ namespace dogma {
          inline bool IsSwapped() const  { return tuMagic != DOGMA_MAGIC; }
          inline bool IsMagic() const { return Value(&tuMagic) == DOGMA_MAGIC; }
 
+         inline uint32_t GetSeqId() const { return Value(&tuSeqId); }
          inline uint32_t GetTrigType() const { return Value(&tuTrigTypeNumber) >> 24; }
          inline uint32_t GetTrigNumber() const { return Value(&tuTrigTypeNumber) & 0xffffff; }
 
-         void Init(uint32_t type_number)
+         void Init(uint32_t seqid, uint32_t trig_type, uint32_t trig_number)
          {
             tuMagic = SWAP32(DOGMA_MAGIC);
-            SetValue(&tuTrigTypeNumber, type_number);
+            SetValue(&tuSeqId, seqid);
+            SetValue(&tuTrigTypeNumber, (trig_type << 24) | (trig_number & 0xffffff));
             tuLenPayload = 0;
          }
 
@@ -123,7 +133,6 @@ namespace dogma {
          inline void SetPayloadLen(uint32_t len) { SetValue(&tuLenPayload, len); }
 
          inline uint32_t GetEventLen() const { return sizeof(DogmaEvent) + GetPayloadLen(); }
-
 
          DogmaTu *FirstSubevent() const { return (DogmaTu *)((char *) this + sizeof(DogmaEvent)); }
 

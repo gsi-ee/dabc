@@ -315,7 +315,7 @@ int dogma::UdpTransport::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    }
 
-   if (cmd.IsName("GetHadaqTransportInfo")) {
+   if (cmd.IsName("GetDogmaTransportInfo")) {
       TransportInfo *info = (TransportInfo *) (dynamic_cast<UdpAddon*> (fAddon()));
       cmd.SetPtr("Info", info);
       cmd.SetUInt("UdpPort", info ? info->fNPort : 0);
