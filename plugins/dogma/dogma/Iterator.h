@@ -130,7 +130,7 @@ namespace dogma {
          bool IsBuffer() const { return !fBuffer.null(); }
          bool IsEmpty() const { return fFullSize == 0; }
          bool IsPlaceForEvent(uint32_t subeventsize);
-         bool NewEvent(uint32_t type_number = 0, uint32_t minsubeventssize = 0);
+         bool NewEvent(uint32_t seqid = 0, uint32_t trig_type = 0, uint32_t trig_number = 0, uint32_t minsubeventssize = 0);
          bool NewSubevent(uint32_t minrawsize = 0, uint32_t type_number = 0);
          bool FinishSubEvent(uint32_t rawdatasz);
 
@@ -138,7 +138,7 @@ namespace dogma {
          bool AddSubevent(const void *ptr, unsigned len);
          bool AddSubevent(dogma::DogmaTu* sub)
          {
-            return AddSubevent(sub, sizeof(dogma::DogmaTu) + sub->GetPayloadLen());
+            return AddSubevent(sub, sub->GetTuLen());
          }
          bool AddAllSubevents(dogma::DogmaEvent *evnt)
          {

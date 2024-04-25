@@ -1,6 +1,7 @@
 dabc_link_library(
   DabcDogma
   SOURCES src/TerminalModule.cxx
+          src/CombinerModule.cxx
           src/Factory.cxx
           src/Iterator.cxx
           src/defines.cxx
@@ -8,6 +9,7 @@ dabc_link_library(
           src/TypeDefs.cxx
           src/api.cxx
   HEADERS dogma/TerminalModule.h
+          dogma/CombinerModule.h
           dogma/Factory.h
           dogma/Iterator.h
           dogma/defines.h

@@ -16,15 +16,3 @@
 #include "dogma/TypeDefs.h"
 
 const char* dogma::protocolDogma = "dogma";
-
-
-// tag names for xml config file:
-const char* dogma::xmlBuildFullEvent = "HadaqBuildEvents";
-
-const char* dogma::xmlHadaqTrignumRange   = "TriggerNumRange";
-const char* dogma::xmlHadaqTriggerTollerance = "TriggerTollerance";
-const char* dogma::xmlHadaqDiffEventStats = "AccountLostEventDiff";
-const char* dogma::xmlEvtbuildTimeout     = "BuildDropTimeout";
-const char* dogma::xmlMaxNumBuildEvt      = "MaxNumBuildEvt";
-const char* dogma::xmlHadesTriggerType    = "HadesTriggerType";
-const char* dogma::xmlHadesTriggerHUB     = "HadesTriggerHUB";
