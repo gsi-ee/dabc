@@ -60,11 +60,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fAllFullDrops = 0;
    fMaxProcDist = 0;
 
-   for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
-      fEventIdCount[i] = 0;
-
    fEBId = Cfg("NodeId", cmd).AsInt(-1);
-   if (fEBId<0) fEBId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
+   if (fEBId < 0) fEBId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
    fBNETsend = Cfg("BNETsend", cmd).AsBool(false);
    fBNETrecv = Cfg("BNETrecv", cmd).AsBool(false);
@@ -1167,9 +1164,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       // here event id, always from "cts master channel" 0
       unsigned currentid = trigtyp | (2 << 12); // DAQVERSION=2 for dabc
-      //fEventIdCount[currentid & (HADAQ_NEVTIDS - 1)]++;
-      fEventIdCount[currentid & 0xF]++; // JAM: problem with spill bit?
-      fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));
+      fOut.evnt()->SetId(currentid);
 
       grd.Next("main");
 
@@ -1543,9 +1538,6 @@ void hadaq::CombinerModule::ResetInfoCounters()
 
          fCfg[n].fLastEvtBuildTrigId = 0;
       }
-
-   for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
-      fEventIdCount[i] = 0;
 }
 
 char* hadaq::CombinerModule::Unit(unsigned long v)
