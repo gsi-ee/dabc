@@ -294,7 +294,7 @@ namespace hadaq {
          void ResetInfoCounters();
 
          /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
-         char* Unit(unsigned long v);
+         const char *Unit(unsigned long v);
 
          /* we synthetise old and new filenames ourselves, since all communication to hldoutput is faulty,
              because of timeshift between getting new runid and open/close of actual files*/
