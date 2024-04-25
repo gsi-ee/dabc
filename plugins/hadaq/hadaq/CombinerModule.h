@@ -32,8 +32,6 @@
 #include "hadaq/Iterator.h"
 #endif
 
-#define HADAQ_NEVTIDS 64UL             /* must be 2^n */
-#define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
 #define HADAQ_RINGSIZE 100
 
 namespace hadaq {
@@ -222,8 +220,6 @@ namespace hadaq {
          uint64_t           fAllDiscEvents;
          uint64_t           fAllDroppedData;
          uint64_t           fAllFullDrops;         ///< number of complete drops
-
-         unsigned           fEventIdCount[HADAQ_NEVTIDS];
 
          std::string        fRunInfoToOraFilename;
          std::string        fPrefix;
