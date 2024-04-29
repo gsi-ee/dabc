@@ -1120,6 +1120,9 @@ bool dogma::CombinerModule::BuildEvent()
       grd.Next("compl");
 
       fOut.NewEvent(sequencenumber, buildtype, buildevid);
+
+      DOUT0("Building event seq:%u typ:%u id %u", sequencenumber, buildtype, buildevid);
+
       fRunBuildEvents++;
       fAllBuildEvents++;
 
@@ -1128,6 +1131,7 @@ bool dogma::CombinerModule::BuildEvent()
       if (tagError) fRunTagErrors++;
 
       grd.Next("main");
+
 
       // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
