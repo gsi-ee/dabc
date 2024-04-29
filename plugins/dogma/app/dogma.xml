@@ -10,7 +10,7 @@
       <!--runtime value="100"/-->
     </Run>
 
-    <Module name="dogma" class="dogma::TerminalModule">
+    <Module name="dogma" class="dogma::CommandModule">
     </Module>
 
   </Context>
