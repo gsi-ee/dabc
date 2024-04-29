@@ -34,6 +34,10 @@ namespace dogma {
 
          dabc::Module *CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd) override;
 
+         dabc::DataInput *CreateDataInput(const std::string &typ) override;
+
+         dabc::DataOutput *CreateDataOutput(const std::string &typ) override;
+
          dabc::Module *CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd) override;
    };
 
