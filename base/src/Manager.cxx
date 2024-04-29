@@ -193,7 +193,7 @@ dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string &t
 dabc::DataInput* dabc::StdManagerFactory::CreateDataInput(const std::string &typ)
 {
    dabc::Url url(typ);
-   if (url.GetProtocol()=="bin") {
+   if (url.GetProtocol() == "bin") {
       return new dabc::BinaryFileInput(url);
    }
 

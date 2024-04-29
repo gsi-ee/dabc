@@ -15,9 +15,10 @@
 
 #include "dogma/Factory.h"
 
-#include "dogma/CommandModule.h"
 #include "dogma/UdpTransport.h"
 #include "dogma/Iterator.h"
+#include "dogma/CommandModule.h"
+#include "dogma/CombinerModule.h"
 #include "dogma/api.h"
 
 dabc::FactoryPlugin dogmafactory(new dogma::Factory("dogma"));
@@ -34,6 +35,9 @@ dabc::Module* dogma::Factory::CreateModule(const std::string &classname, const s
 {
    if (classname == "dogma::CommandModule")
       return new dogma::CommandModule(modulename, cmd);
+
+   if (classname == "dogma::CombinerModule")
+      return new dogma::CombinerModule(modulename, cmd);
 
   if (classname == "dogma::ReadoutModule")
       return new dogma::ReadoutModule(modulename, cmd);
