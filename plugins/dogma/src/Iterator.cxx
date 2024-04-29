@@ -69,12 +69,13 @@ void dogma::ReadIterator::Close()
 
 bool dogma::ReadIterator::NextTu()
 {
-   if (fBufType != mbt_DogmaTransportUnit ) {
+   if (fBufType != mbt_DogmaTransportUnit) {
       EOUT("NextTu only allowed for buffer type mbt_DogmaTransportUnit. Check your code!");
       return false;
    }
 
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null())
+      return false;
 
    if (fFirstEvent)
       fFirstEvent = false;
@@ -212,7 +213,7 @@ bool dogma::ReadIterator::NextSubEvent()
          headsize = sizeof(dogma::DogmaEvent);
          containersize = evnt()->GetEventLen();
       } else if (fBufType == mbt_DogmaTransportUnit) {
-         headsize = sizeof(dogma::DogmaTu);
+         headsize = 0;
          containersize = tu()->GetTuLen();
       } else if (fBufType == mbt_DogmaSubevents) {
          headsize = 0;
@@ -222,7 +223,8 @@ bool dogma::ReadIterator::NextSubEvent()
          return false;
       }
 
-      if (containersize == 0) return false; // typical problem of artifical generated events
+      if (containersize == 0)
+         return false; // typical problem of artifical generated events
 
       if (containersize < headsize) {
          EOUT("DOGMA format error - tu container fullsize %u too small", (unsigned) containersize);
@@ -240,7 +242,7 @@ bool dogma::ReadIterator::NextSubEvent()
    }
 
    if (subevnt()->GetTuLen() < sizeof(dogma::DogmaTu)) {
-      EOUT("Hadaq format error - subevent fullsize %u too small", subevnt()->GetTuLen());
+      EOUT("Dogma format error - subevent fullsize %u too small", subevnt()->GetTuLen());
       //char* ptr = (char*) subevnt();
       //for(int i=0; i<20; ++i)
       //   printf("sub(%d)=0x%02x\n", i, (unsigned) *ptr++);
