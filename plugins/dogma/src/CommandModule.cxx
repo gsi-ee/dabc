@@ -13,16 +13,16 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dogma/TerminalModule.h"
+#include "dogma/CommandModule.h"
 
 #include "dabc/Manager.h"
 
-dogma::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd) :
+dogma::CommandModule::CommandModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
 }
 
-int dogma::TerminalModule::ExecuteCommand(dabc::Command cmd)
+int dogma::CommandModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GenericRead")) {
       DOUT5("Read at %x", cmd.GetInt("Addr"));
@@ -37,11 +37,11 @@ int dogma::TerminalModule::ExecuteCommand(dabc::Command cmd)
    return dabc::cmd_false;
 }
 
-void dogma::TerminalModule::BeforeModuleStart()
+void dogma::CommandModule::BeforeModuleStart()
 {
    DOUT0("Starting DOGMA module");
 }
 
-void dogma::TerminalModule::ProcessTimerEvent(unsigned)
+void dogma::CommandModule::ProcessTimerEvent(unsigned)
 {
 }

@@ -13,8 +13,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef DOGMA_TerminalModule
-#define DOGMA_TerminalModule
+#ifndef DOGMA_CommandModule
+#define DOGMA_CommandModule
 
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
@@ -22,19 +22,19 @@
 
 namespace dogma {
 
-   /** \brief Abstract DOGMA terminal module
+   /** \brief Abstract DOGMA command module
     *
     * Just executes commands
     */
 
-   class TerminalModule : public dabc::ModuleAsync {
+   class CommandModule : public dabc::ModuleAsync {
       protected:
 
          int ExecuteCommand(dabc::Command cmd) override;
 
       public:
 
-         TerminalModule(const std::string &name, dabc::Command cmd = nullptr);
+         CommandModule(const std::string &name, dabc::Command cmd = nullptr);
 
          void BeforeModuleStart() override;
 

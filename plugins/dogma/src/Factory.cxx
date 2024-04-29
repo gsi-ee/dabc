@@ -15,7 +15,7 @@
 
 #include "dogma/Factory.h"
 
-#include "dogma/TerminalModule.h"
+#include "dogma/CommandModule.h"
 #include "dogma/UdpTransport.h"
 #include "dogma/Iterator.h"
 #include "dogma/api.h"
@@ -32,8 +32,8 @@ dabc::Reference dogma::Factory::CreateObject(const std::string &classname, const
 
 dabc::Module* dogma::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
-   if (classname == "dogma::TerminalModule")
-      return new dogma::TerminalModule(modulename, cmd);
+   if (classname == "dogma::CommandModule")
+      return new dogma::CommandModule(modulename, cmd);
 
   if (classname == "dogma::ReadoutModule")
       return new dogma::ReadoutModule(modulename, cmd);
