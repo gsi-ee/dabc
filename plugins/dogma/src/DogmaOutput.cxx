@@ -27,7 +27,7 @@
 
 
 dogma::DogmaOutput::DogmaOutput(const dabc::Url& url) :
-   dabc::FileOutput(url, ".dogma")
+   dabc::FileOutput(url, ".dld")
 {
    fEBNumber = url.GetOptionInt("ebnumber",0); // default is single eventbuilder
    fUseDaqDisk = url.GetOptionInt("diskdemon", 0); // if specified, use number of /data partition from daq_disk demon
@@ -100,12 +100,12 @@ bool dogma::DogmaOutput::StartNewFile()
    // change file names according hades style:
    std::string fname = fFileName;
 
-   size_t pos = fname.rfind(".dogma");
+   size_t pos = fname.rfind(".dld");
    if (pos == std::string::npos)
-      pos = fname.rfind(".DOGMA");
+      pos = fname.rfind(".DLD");
 
    if (pos == std::string::npos)
-      fname += ".dogma";
+      fname += ".dld";
 
    fCurrentFileName = fname;
 

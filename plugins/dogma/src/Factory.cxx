@@ -17,6 +17,8 @@
 
 #include "dogma/UdpTransport.h"
 #include "dogma/Iterator.h"
+#include "dogma/DogmaInput.h"
+#include "dogma/DogmaOutput.h"
 #include "dogma/CommandModule.h"
 #include "dogma/CombinerModule.h"
 #include "dogma/api.h"
@@ -43,6 +45,29 @@ dabc::Module* dogma::Factory::CreateModule(const std::string &classname, const s
       return new dogma::ReadoutModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
+}
+
+dabc::DataInput* dogma::Factory::CreateDataInput(const std::string &typ)
+{
+   dabc::Url url(typ);
+   if (url.GetProtocol() == "dld") {
+      DOUT1("DOGMA input file name %s", url.GetFullName().c_str());
+
+      return new dogma::DogmaInput(url);
+   }
+
+   return nullptr;
+}
+
+dabc::DataOutput* dogma::Factory::CreateDataOutput(const std::string &typ)
+{
+   dabc::Url url(typ);
+   if (url.GetProtocol() == "dld") {
+      DOUT1("DOGMA output file name %s", url.GetFullName().c_str());
+      return new dogma::DogmaOutput(url);
+   }
+
+   return nullptr;
 }
 
 dabc::Module* dogma::Factory::CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd)
