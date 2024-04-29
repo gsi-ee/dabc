@@ -563,8 +563,6 @@ void dogma::CombinerModule::UpdateBnetInfo()
 
 bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 {
-   DOUT5("CombinerModule::ShiftToNextBuffer %d ", ninp);
-
    auto &cfg = fCfg[ninp];
 
    ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
@@ -590,7 +588,15 @@ bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
       return false;
    }
 
-   return iter.Reset(buf);
+   DOUT0("CombinerModule::ShiftToNextBuffer %d type %u size %u", ninp, buf.GetTypeId(), buf.GetTotalSize());
+
+   bool res = iter.Reset(buf);
+
+   DOUT0("CombinerModule::ShiftToNextBuffer %d type %u res %s", ninp, buf.GetTypeId(), DBOOL(res));
+
+   return res;
+
+
 }
 
 bool dogma::CombinerModule::ShiftToNextTu(unsigned ninp)
@@ -604,7 +610,10 @@ bool dogma::CombinerModule::ShiftToNextTu(unsigned ninp)
       if (iter.IsData())
          res = iter.NextSubeventsBlock();
 
-      if (res && iter.IsData()) return true;
+      if (res && iter.IsData()) {
+         // DOUT0("CombinerModule::ShiftToNextTu %u OK", ninp);
+         return true;
+      }
 
       if(!ShiftToNextBuffer(ninp)) return false;
 
@@ -628,7 +637,7 @@ bool dogma::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 {
    // function used to shift to next event - used in BNET builder mode
 
-   InputCfg& cfg = fCfg[ninp];
+   InputCfg &cfg = fCfg[ninp];
 
    if (dropped && cfg.has_data) cfg.fDroppedTrig++;
 
@@ -673,7 +682,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 {
    if (fBNETrecv) return ShiftToNextEvent(ninp, fast, dropped);
 
-   DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
+   // DOUT0("CombinerModule::ShiftToNextSubEvent %d ", ninp);
 
    auto &cfg = fCfg[ninp];
 
@@ -691,14 +700,20 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    cfg.Reset(fast);
 
+   static int cnt = 0;
+
    // if (fast) DOUT0("FAST DROP on inp %d", ninp);
 
    while (!foundevent) {
-      ReadIterator &iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
+      auto &iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
 
       bool res = true;
       if (doshift) res = iter.NextSubEvent();
       doshift = true;
+
+      // DOUT0("CombinerModule::ShiftToNextSubEvent %d res %s", ninp, DBOOL(res));
+
+      if (!res && ++cnt > 100) exit(7);
 
       if (!res || !iter.subevnt()) {
          DOUT5("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp);
@@ -750,6 +765,8 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fTrigType = cfg.subevnt->GetTrigType();
       cfg.fHubId = cfg.subevnt->GetAddr();
       cfg.fTrigTag = 0;
+
+      DOUT0("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
 
       cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
       cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
