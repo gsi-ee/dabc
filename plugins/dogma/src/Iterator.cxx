@@ -187,9 +187,7 @@ unsigned dogma::ReadIterator::blocksize() const
       return evntsize();
 
    return 0;
-
 }
-
 
 
 bool dogma::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
@@ -441,7 +439,8 @@ bool dogma::WriteIterator::AddSubevent(const void *ptr, unsigned len)
 
 bool dogma::WriteIterator::FinishEvent()
 {
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null())
+      return false;
 
    dabc::BufferSize_t dist = sizeof(dogma::DogmaEvent);
    if (!fSubPtr.null())
