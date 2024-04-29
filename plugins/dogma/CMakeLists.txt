@@ -5,6 +5,7 @@ dabc_link_library(
           src/Factory.cxx
           src/DogmaFile.cxx
           src/DogmaOutput.cxx
+          src/DogmaInput.cxx
           src/Iterator.cxx
           src/defines.cxx
           src/UdpTransport.cxx
@@ -15,6 +16,7 @@ dabc_link_library(
           dogma/Factory.h
           dogma/DogmaFile.h
           dogma/DogmaOutput.h
+          dogma/DogmaInput.h
           dogma/Iterator.h
           dogma/defines.h
           dogma/UdpTransport.h
