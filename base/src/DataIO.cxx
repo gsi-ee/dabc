@@ -100,6 +100,7 @@ dabc::FileInput::FileInput(const dabc::Url& url) :
    fIO(nullptr),
    fCurrentName(),
    fLoop(url.HasOption("loop")),
+   fCloseOnError(url.HasOption("close_on_error")),
    fReduce(url.GetOptionDouble("reduce",1.))
 {
    if (fReduce > 1.)
