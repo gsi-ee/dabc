@@ -52,6 +52,33 @@ bool printraw = false, printsub = false, showrate = false, reconnect = false, do
 unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 
 
+void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
+{
+   printf("%stu addr: %lu type: 0x%02x trignum; %lu, time: %lu paylod: %lu\n", prefix, (long unsigned)tu->GetAddr(),
+          (unsigned)tu->GetTrigType(), (long unsigned)tu->GetTrigNumber(), (long unsigned)tu->GetTrigTime(),
+          (long unsigned)tu->GetPayloadLen());
+
+   if (printraw) {
+      unsigned len = tu->GetPayloadLen() / 4;
+      for (unsigned i = 0; i < len; ++i) {
+         printf("   %08x", (unsigned) tu->GetPayload(i));
+         if ((i == len - 1) || ((i % 8 == 0) && (i > 0)))
+            printf("\n");
+      }
+   }
+}
+
+void print_evnt(dogma::DogmaEvent *evnt)
+{
+   printf("Event seqid: %lu\n", (long unsigned) evnt->GetSeqId());
+   auto tu = evnt->FirstSubevent();
+
+   while(tu) {
+      print_tu(tu, "   ");
+      tu = evnt->NextSubevent(tu);
+   }
+}
+
 int main(int argc, char* argv[])
 {
    if ((argc < 2) || !strcmp(argv[1], "-help") || !strcmp(argv[1], "?"))
@@ -145,7 +172,7 @@ int main(int argc, char* argv[])
 
    while (!dabc::CtrlCPressed()) {
 
-      bool data_kind = ref.NextPortion(maxage > 0 ? maxage/2. : 1., maxage);
+      unsigned data_kind = ref.NextPortion(maxage > 0 ? maxage/2. : 1., maxage);
 
       tu = nullptr;
       evnt = nullptr;
@@ -161,40 +188,47 @@ int main(int argc, char* argv[])
 
       dabc::TimeStamp curr = dabc::Now();
 
-      if (tu) {
+      uint32_t sz = 0, trignr = 0;
 
+      if (tu) {
          // ignore events which are not match with specified id
          if ((fullid != 0) && (tu->GetAddr() != fullid)) continue;
+         sz = tu->GetSize();
+         trignr = tu->GetTrigNumber();
+      } else if (evnt) {
+         sz = evnt->GetEventLen();
+         trignr = evnt->GetTrigNumber();
 
-         if (dominsz) {
-            if (tu->GetSize() < minsz) {
-               minsz = tu->GetSize();
-               mintrignr = tu->GetTrigNumber();
-               mincnt = cnt;
-               numminsz = 1;
-            } else if (tu->GetSize() == minsz) {
-               numminsz++;
-            }
-         }
-
-         if (domaxsz) {
-            if (tu->GetSize() > maxsz) {
-               maxsz = tu->GetSize();
-               maxtrignr = tu->GetTrigNumber();
-               maxcnt = cnt;
-               nummaxsz = 1;
-            } else if (tu->GetSize() == maxsz) {
-               nummaxsz++;
-            }
-         }
-
-         cnt++;
-         currsz += tu->GetSize();
-         lastevtm = curr;
       } else if (curr - lastevtm > tmout) {
          /*printf("TIMEOUT %ld\n", cnt0);*/
          break;
       }
+
+      if (dominsz) {
+         if (sz < minsz) {
+            minsz = sz;
+            mintrignr = trignr;
+            mincnt = cnt;
+            numminsz = 1;
+         } else if (sz == minsz) {
+            numminsz++;
+         }
+      }
+
+      if (domaxsz) {
+         if (sz > maxsz) {
+            maxsz = sz;
+            maxtrignr = trignr;
+            maxcnt = cnt;
+            nummaxsz = 1;
+         } else if (sz == maxsz) {
+            nummaxsz++;
+         }
+      }
+
+      cnt++;
+      currsz += sz;
+      lastevtm = curr;
 
       if (showrate) {
 
@@ -212,23 +246,16 @@ int main(int argc, char* argv[])
          if (!dostat) continue;
       }
 
-      if (!tu) continue;
+      if (!tu && !evnt) continue;
 
       if (skip > 0) { skip--; continue; }
 
       printcnt++;
 
-      printf("Event addr: %lu type: 0x%02x trignum; %lu, time: %lu paylod: %lu\n",
-            (long unsigned) tu->GetAddr(), (unsigned) tu->GetTrigType(), (long unsigned) tu->GetTrigNumber(), (long unsigned) tu->GetTrigTime(), (long unsigned) tu->GetPayloadLen());
-
-      if (printraw) {
-         unsigned len = tu->GetPayloadLen() / 4;
-         for (unsigned i = 0; i < len; ++i) {
-            printf("   %08x", (unsigned) tu->GetPayload(i));
-            if ((i == len - 1) || ((i % 8 == 0) && (i > 0)))
-               printf("\n");
-         }
-      }
+      if (tu)
+         print_tu(tu);
+      else if (evnt)
+         print_evnt(evnt);
 
       if ((number > 0) && (printcnt >= number)) break;
    }
