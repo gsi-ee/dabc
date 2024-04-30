@@ -136,7 +136,14 @@ namespace dogma {
 
          DogmaTu *FirstSubevent() const { return (DogmaTu *)((char *) this + sizeof(DogmaEvent)); }
 
+         DogmaTu *NextSubevent(DogmaTu *prev) const
+         {
+            if (!prev)
+               return FirstSubevent();
+            char *next = (char *) prev + prev->GetSize();
 
+            return (next >= (char *) this + GetEventLen()) ? nullptr : (DogmaTu *) next;
+         }
    };
 
 }
