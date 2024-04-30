@@ -82,7 +82,7 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fEpicsRunNumber = 0;
 
    fLastTrigNr = 0xffffffff;
-   fMaxHadaqTrigger = 0;
+   fMaxDogmaTrigger = 0;
    fTriggerRangeMask = 0;
 
    if (fBNETrecv || fBNETsend)
@@ -90,13 +90,13 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    else
       fRunNumber = 1; // runid from configuration time.
 
-   fMaxHadaqTrigger = Cfg("TriggerNumRange", cmd).AsUInt(0x1000000);
-   fTriggerRangeMask = fMaxHadaqTrigger-1;
-   DOUT1("DOGMA %s module using maxtrigger 0x%x, rangemask:0x%x", GetName(), fMaxHadaqTrigger, fTriggerRangeMask);
+   fMaxDogmaTrigger = Cfg("TriggerNumRange", cmd).AsUInt(0x1000000);
+   fTriggerRangeMask = fMaxDogmaTrigger-1;
+   DOUT1("DOGMA %s module using maxtrigger 0x%x, rangemask:0x%x", GetName(), fMaxDogmaTrigger, fTriggerRangeMask);
    fEvnumDiffStatistics = Cfg("AccountLostEventDiff", cmd).AsBool(true);
 
    fTriggerNrTolerance = Cfg("TriggerTollerance", cmd).AsInt(-1);
-   if (fTriggerNrTolerance == -1) fTriggerNrTolerance = fMaxHadaqTrigger / 4;
+   if (fTriggerNrTolerance == -1) fTriggerNrTolerance = fMaxDogmaTrigger / 4;
    fEventBuildTimeout = Cfg("BuildDropTimeout", cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
    fAllBuildEventsLimit = Cfg("MaxNumBuildEvt", cmd).AsUInt(0);
    fHadesTriggerType = Cfg("HadesTriggerType", cmd).AsBool(false);
@@ -287,7 +287,7 @@ void dogma::CombinerModule::ProcessUserEvent(unsigned item)
 void dogma::CombinerModule::BeforeModuleStart()
 {
    std::string info = dabc::format(
-         "HADAQ %s starts. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
+         "DOGMA %s starts. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
          GetName(), (int) fRunNumber, NumInputs(), NumOutputs(), fFlushTimeout);
 
    SetInfo(info, true);
@@ -620,10 +620,10 @@ bool dogma::CombinerModule::ShiftToNextTu(unsigned ninp)
 int dogma::CombinerModule::CalcTrigNumDiff(const uint32_t &prev, const uint32_t &next)
 {
    int res = (int)next - prev;
-   if (res > (int)fMaxHadaqTrigger / 2)
-      res -= fMaxHadaqTrigger;
-   else if (res < (int)fMaxHadaqTrigger / -2)
-      res += fMaxHadaqTrigger;
+   if (res > (int)fMaxDogmaTrigger / 2)
+      res -= fMaxDogmaTrigger;
+   else if (res < (int)fMaxDogmaTrigger / -2)
+      res += fMaxDogmaTrigger;
    return res;
 }
 
@@ -1442,7 +1442,7 @@ void dogma::CombinerModule::ResetInfoCounters()
 
 bool dogma::CombinerModule::ReplyCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("GetHadaqTransportInfo")) {
+   if (cmd.IsName("GetDogmaTransportInfo")) {
       unsigned id = cmd.GetUInt("id");
       if (id < fCfg.size()) {
          fCfg[id].fInfo = cmd.GetPtr("Info");

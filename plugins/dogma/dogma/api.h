@@ -56,11 +56,17 @@ namespace dogma {
       /** Disconnect from MBS server */
       bool Disconnect() { return mbs::ReadoutHandle::Disconnect(); }
 
-      /** Retrieve next event from the server */
-      DogmaTu *NextTu(double tm = 1.0, double maxage = -1.);
+      unsigned NextPortion(double tm = 1.0, double maxage = -1.);
+
+      unsigned GetKind(bool onlymbs = false);
+
+      bool IsData() { return GetKind() != 0; };
+
+      /** Get current raw data pointer */
+      DogmaTu *GetTu();
 
       /** Get current event pointer */
-      DogmaTu *GetTu();
+      DogmaEvent *GetEvent();
    };
 
 }
