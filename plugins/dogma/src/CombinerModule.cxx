@@ -588,15 +588,9 @@ bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
       return false;
    }
 
-   DOUT0("CombinerModule::ShiftToNextBuffer %d type %u size %u", ninp, buf.GetTypeId(), buf.GetTotalSize());
+   DOUT5("CombinerModule::ShiftToNextBuffer %d type %u size %u", ninp, buf.GetTypeId(), buf.GetTotalSize());
 
-   bool res = iter.Reset(buf);
-
-   DOUT0("CombinerModule::ShiftToNextBuffer %d type %u res %s", ninp, buf.GetTypeId(), DBOOL(res));
-
-   return res;
-
-
+   return iter.Reset(buf);
 }
 
 bool dogma::CombinerModule::ShiftToNextTu(unsigned ninp)
@@ -700,8 +694,6 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    cfg.Reset(fast);
 
-   static int cnt = 0;
-
    // if (fast) DOUT0("FAST DROP on inp %d", ninp);
 
    while (!foundevent) {
@@ -712,8 +704,6 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       doshift = true;
 
       // DOUT0("CombinerModule::ShiftToNextSubEvent %d res %s", ninp, DBOOL(res));
-
-      if (!res && ++cnt > 100) exit(7);
 
       if (!res || !iter.subevnt()) {
          DOUT5("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp);
@@ -766,7 +756,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fHubId = cfg.subevnt->GetAddr();
       cfg.fTrigTag = 0;
 
-      DOUT0("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
+      DOUT5("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
 
       cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
       cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
@@ -1121,7 +1111,7 @@ bool dogma::CombinerModule::BuildEvent()
 
       fOut.NewEvent(sequencenumber, buildtype, buildevid);
 
-      DOUT0("Building event seq:%u typ:%u id %u", sequencenumber, buildtype, buildevid);
+      DOUT5("Building event seq:%u typ:%u id %u", sequencenumber, buildtype, buildevid);
 
       fRunBuildEvents++;
       fAllBuildEvents++;
