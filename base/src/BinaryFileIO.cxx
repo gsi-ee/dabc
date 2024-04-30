@@ -30,7 +30,8 @@ dabc::BinaryFileInput::~BinaryFileInput()
 
 bool dabc::BinaryFileInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   if (!dabc::FileInput::Read_Init(wrk, cmd)) return false;
+   if (!dabc::FileInput::Read_Init(wrk, cmd))
+      return false;
 
    return OpenNextFile();
 }
@@ -61,7 +62,8 @@ bool dabc::BinaryFileInput::CloseFile()
 
 unsigned dabc::BinaryFileInput::Read_Size()
 {
-   if (!fFile.isReading()) return di_Error;
+   if (!fFile.isReading())
+      return di_Error;
 
    fCurrentBufSize = 0;
    fCurrentBufType = 0;
@@ -70,8 +72,8 @@ unsigned dabc::BinaryFileInput::Read_Size()
       return di_EndOfStream;
 
    if (!fFile.ReadBufHeader(&fCurrentBufSize, &fCurrentBufType)) {
-      DOUT1("Error reading file %s", CurrentFileName().c_str());
-      return di_Error;
+      DOUT1("Error reading buffer header from file %s", CurrentFileName().c_str());
+      return fCloseOnError ? di_EndOfStream : di_Error;
    }
 
    return fCurrentBufSize;
@@ -79,7 +81,8 @@ unsigned dabc::BinaryFileInput::Read_Size()
 
 unsigned dabc::BinaryFileInput::Read_Complete(Buffer& buf)
 {
-   if (!fFile.isReading()) return di_Error;
+   if (!fFile.isReading())
+      return di_Error;
 
    if (buf.GetTotalSize() < fCurrentBufSize) {
       EOUT("Not enough space in buffer, required is %u", (unsigned) fCurrentBufSize);
@@ -91,7 +94,8 @@ unsigned dabc::BinaryFileInput::Read_Complete(Buffer& buf)
       return di_Error;
    }
 
-   if (!fFile.ReadBufPayload(buf.SegmentPtr(), fCurrentBufSize)) return di_Error;
+   if (!fFile.ReadBufPayload(buf.SegmentPtr(), fCurrentBufSize))
+      return fCloseOnError ? di_EndOfStream : di_Error;
 
    buf.SetTotalSize(fCurrentBufSize);
    buf.SetTypeId(fCurrentBufType);
@@ -115,7 +119,8 @@ dabc::BinaryFileOutput::~BinaryFileOutput()
 
 bool dabc::BinaryFileOutput::Write_Init()
 {
-   if (!dabc::FileOutput::Write_Init()) return false;
+   if (!dabc::FileOutput::Write_Init())
+      return false;
 
    fFile.SetIO(fIO, false);
 
@@ -151,7 +156,8 @@ bool dabc::BinaryFileOutput::CloseFile()
 
 unsigned dabc::BinaryFileOutput::Write_Buffer(Buffer& buf)
 {
-   if (!fFile.isWriting() || buf.null()) return do_Error;
+   if (!fFile.isWriting() || buf.null())
+      return do_Error;
 
    BufferSize_t fullsz = buf.GetTotalSize();
 
@@ -161,10 +167,12 @@ unsigned dabc::BinaryFileOutput::Write_Buffer(Buffer& buf)
          return do_Error;
       }
 
-   if (!fFile.WriteBufHeader(fullsz, buf.GetTypeId())) return do_Error;
+   if (!fFile.WriteBufHeader(fullsz, buf.GetTypeId()))
+      return do_Error;
 
-   for (unsigned n=0;n<buf.NumSegments();n++)
-      if (!fFile.WriteBufPayload(buf.SegmentPtr(n), buf.SegmentSize(n))) return do_Error;
+   for (unsigned n = 0; n < buf.NumSegments(); n++)
+      if (!fFile.WriteBufPayload(buf.SegmentPtr(n), buf.SegmentSize(n)))
+         return do_Error;
 
    AccountBuffer(fullsz);
 

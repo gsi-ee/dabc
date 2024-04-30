@@ -251,6 +251,7 @@ namespace dabc {
          dabc::FileInterface *fIO{nullptr};
          std::string          fCurrentName;
          bool                 fLoop{false}; //!< read file(s) in endless loop
+         bool                 fCloseOnError{false}; //!< normally close file in case of read error
          double               fReduce{0.};  //!< factor to reduce buffer size when reading
 
          bool InitFilesList();
