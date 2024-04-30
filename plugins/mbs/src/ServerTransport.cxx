@@ -100,6 +100,8 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          if (evsize % 2) evsize++;
 
          fSubHdr.InitFull(fSubevId);
+         unsigned kind = iter->EventKind();
+         if (kind > 1) fSubHdr.iControl = kind - 1;
          fSubHdr.SetRawDataSize(evsize);
 
          fEvHdr.Init(fEvCounter++);
