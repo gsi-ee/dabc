@@ -92,7 +92,12 @@ int main(int argc, char* argv[])
    bool isfile = false;
    std::string src = argv[1];
 
-   if ((src.find(".bin") != std::string::npos) && (src.find("bin://") != 0)) {
+   if ((src.find(".dld") != std::string::npos) && (src.find("dld://") != 0)) {
+      src = std::string("dld://") + src;
+      isfile = true;
+   } else if (src.find("dld://") == 0) {
+      isfile = 0;
+   } else if ((src.find(".bin") != std::string::npos) && (src.find("bin://") != 0)) {
       src = std::string("bin://") + src;
       isfile = true;
    } else if ((src.find("bin://") == 0) || (src.find(".bin") != std::string::npos)) {
@@ -116,7 +121,8 @@ int main(int argc, char* argv[])
       }
    }
 
-   dogma::DogmaTu *evnt = nullptr;
+   dogma::DogmaTu *tu = nullptr;
+   dogma::DogmaEvent *evnt = nullptr;
 
    long cnt = 0, cnt0 = 0, lastcnt = 0, printcnt = 0, mincnt = -1, maxcnt = -1;
    uint32_t mintrignr = 0, maxtrignr = 0;
@@ -139,7 +145,15 @@ int main(int argc, char* argv[])
 
    while (!dabc::CtrlCPressed()) {
 
-      evnt = ref.NextTu(maxage > 0 ? maxage/2. : 1., maxage);
+      bool data_kind = ref.NextPortion(maxage > 0 ? maxage/2. : 1., maxage);
+
+      tu = nullptr;
+      evnt = nullptr;
+
+      if (data_kind == 1)
+         tu = ref.GetTu();
+      else if (data_kind == 2)
+         evnt = ref.GetEvent();
 
       cnt0++;
 
@@ -147,35 +161,35 @@ int main(int argc, char* argv[])
 
       dabc::TimeStamp curr = dabc::Now();
 
-      if (evnt) {
+      if (tu) {
 
          // ignore events which are not match with specified id
-         if ((fullid != 0) && (evnt->GetAddr() != fullid)) continue;
+         if ((fullid != 0) && (tu->GetAddr() != fullid)) continue;
 
          if (dominsz) {
-            if (evnt->GetSize() < minsz) {
-               minsz = evnt->GetSize();
-               mintrignr = evnt->GetTrigNumber();
+            if (tu->GetSize() < minsz) {
+               minsz = tu->GetSize();
+               mintrignr = tu->GetTrigNumber();
                mincnt = cnt;
                numminsz = 1;
-            } else if (evnt->GetSize() == minsz) {
+            } else if (tu->GetSize() == minsz) {
                numminsz++;
             }
          }
 
          if (domaxsz) {
-            if (evnt->GetSize() > maxsz) {
-               maxsz = evnt->GetSize();
-               maxtrignr = evnt->GetTrigNumber();
+            if (tu->GetSize() > maxsz) {
+               maxsz = tu->GetSize();
+               maxtrignr = tu->GetTrigNumber();
                maxcnt = cnt;
                nummaxsz = 1;
-            } else if (evnt->GetSize() == maxsz) {
+            } else if (tu->GetSize() == maxsz) {
                nummaxsz++;
             }
          }
 
          cnt++;
-         currsz += evnt->GetSize();
+         currsz += tu->GetSize();
          lastevtm = curr;
       } else if (curr - lastevtm > tmout) {
          /*printf("TIMEOUT %ld\n", cnt0);*/
@@ -198,19 +212,19 @@ int main(int argc, char* argv[])
          if (!dostat) continue;
       }
 
-      if (!evnt) continue;
+      if (!tu) continue;
 
       if (skip > 0) { skip--; continue; }
 
       printcnt++;
 
       printf("Event addr: %lu type: 0x%02x trignum; %lu, time: %lu paylod: %lu\n",
-            (long unsigned) evnt->GetAddr(), (unsigned) evnt->GetTrigType(), (long unsigned) evnt->GetTrigNumber(), (long unsigned) evnt->GetTrigTime(), (long unsigned) evnt->GetPayloadLen());
+            (long unsigned) tu->GetAddr(), (unsigned) tu->GetTrigType(), (long unsigned) tu->GetTrigNumber(), (long unsigned) tu->GetTrigTime(), (long unsigned) tu->GetPayloadLen());
 
       if (printraw) {
-         unsigned len = evnt->GetPayloadLen() / 4;
+         unsigned len = tu->GetPayloadLen() / 4;
          for (unsigned i = 0; i < len; ++i) {
-            printf("   %08x", (unsigned) evnt->GetPayload(i));
+            printf("   %08x", (unsigned) tu->GetPayload(i));
             if ((i == len - 1) || ((i % 8 == 0) && (i > 0)))
                printf("\n");
          }

@@ -229,7 +229,7 @@ namespace dogma {
          uint32_t           fEpicsRunNumber;
 
          /** Defines trigger sequence number range for overflow*/
-         uint32_t           fMaxHadaqTrigger;
+         uint32_t           fMaxDogmaTrigger;
          uint32_t           fTriggerRangeMask;
 
          /** if true, account difference of subsequent build event numbers as lost events

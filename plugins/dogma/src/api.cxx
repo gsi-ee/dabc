@@ -43,28 +43,45 @@ dogma::ReadoutHandle dogma::ReadoutHandle::Connect(const std::string &src)
    return DoConnect(newurl, "dogma::ReadoutModule");
 }
 
-
-dogma::DogmaTu *dogma::ReadoutHandle::NextTu(double tmout, double maxage)
+unsigned dogma::ReadoutHandle::NextPortion(double tmout, double maxage)
 {
-   if (null()) return nullptr;
+   if (null())
+      return 0;
 
    bool intime = GetObject()->GetEventInTime(maxage);
 
    // check that DOGMA event can be produced
    // while dogma events can be read only from file, ignore maxage parameter here
    if (intime && GetObject()->fIter2.NextEvent())
-      return (dogma::DogmaTu *) GetObject()->fIter2.Event();
+      return GetObject()->fIter2.EventKind();
 
-   // this is a case, when hadaq event packed into MBS event
+   // this is a case, when dogma event packed into MBS event
    if (mbs::ReadoutHandle::NextEvent(tmout, maxage))
-      return dogma::ReadoutHandle::GetTu();
+      return GetKind(true);
 
    // check again that DOGMA event can be produced
    if (GetObject()->fIter2.NextEvent())
-      return (dogma::DogmaTu *) GetObject()->fIter2.Event();
+      return GetObject()->fIter2.EventKind();
 
-   return nullptr;
+   return 0;
 }
+
+unsigned dogma::ReadoutHandle::GetKind(bool onlymbs)
+{
+   if (null())
+      return 0;
+
+   if (!onlymbs && GetObject()->fIter2.Event())
+      return GetObject()->fIter2.EventKind();
+
+   auto mbsev = mbs::ReadoutHandle::GetEvent();
+   if (!mbsev)
+      return 0;
+
+   auto mbssub = mbsev->NextSubEvent(nullptr);
+   return mbssub ? mbssub->Control() + 1 : 0;
+}
+
 
 dogma::DogmaTu *dogma::ReadoutHandle::GetTu()
 {
@@ -73,7 +90,32 @@ dogma::DogmaTu *dogma::ReadoutHandle::GetTu()
 
    auto direct = GetObject()->fIter2.Event();
    if (direct)
-      return (dogma::DogmaTu *) direct;
+      return (GetObject()->fIter2.EventKind() == 1) ? (dogma::DogmaTu *) direct : nullptr;
+
+   auto mbsev = mbs::ReadoutHandle::GetEvent();
+   if (!mbsev)
+      return nullptr;
+
+   auto mbssub = mbsev->NextSubEvent(nullptr);
+
+   if (mbssub && (mbssub->FullSize() == mbsev->SubEventsSize()) && (mbssub->Control() == 0)) {
+      auto tu = (dogma::DogmaTu *) mbssub->RawData();
+
+      if (tu && (tu->GetSize() == mbssub->RawDataSize()))
+         return tu;
+   }
+
+   return nullptr;
+}
+
+dogma::DogmaEvent *dogma::ReadoutHandle::GetEvent()
+{
+   if (null())
+      return nullptr;
+
+   auto direct = GetObject()->fIter2.Event();
+   if (direct)
+      return (GetObject()->fIter2.EventKind() == 2) ? (dogma::DogmaEvent *) direct : nullptr;
 
    mbs::EventHeader *mbsev = mbs::ReadoutHandle::GetEvent();
    if (!mbsev)
@@ -81,11 +123,11 @@ dogma::DogmaTu *dogma::ReadoutHandle::GetTu()
 
    auto mbssub = mbsev->NextSubEvent(nullptr);
 
-   if (mbssub && (mbssub->FullSize() == mbsev->SubEventsSize())) {
-      auto tu = (dogma::DogmaTu *) mbssub->RawData();
+   if (mbssub && (mbssub->FullSize() == mbsev->SubEventsSize()) && (mbssub->Control() == 1)) {
+      auto evnt = (dogma::DogmaEvent *) mbssub->RawData();
 
-      if (tu && (tu->GetSize() == mbssub->RawDataSize()))
-         return tu;
+      if (evnt && (evnt->GetEventLen() == mbssub->RawDataSize()))
+         return evnt;
    }
 
    return nullptr;

@@ -77,6 +77,8 @@ namespace dogma {
 
          bool IsData() const { return !fEvPtr.null(); }
 
+         bool IsTu() const;
+
          /** Used for raw data from TRBs */
          bool NextTu();
 
@@ -85,6 +87,8 @@ namespace dogma {
 
          /** Used for ready HLD events */
          bool NextEvent();
+
+         bool IsEvent() const;
 
          dogma::DogmaEvent* evnt() const { return (dogma::DogmaEvent*) fEvPtr(); }
          unsigned evntsize() const { return evnt() ? evnt()->GetEventLen() : 0; }
@@ -98,10 +102,8 @@ namespace dogma {
          /** Used for sub-events iteration inside current block */
          bool NextSubEvent();
 
-
          /** Returns size used by current event plus rest */
          unsigned remained_size() const { return fEvPtr.fullsize(); }
-
 
          bool AssignEventPointer(dabc::Pointer& ptr);
          dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr(); }
@@ -181,6 +183,7 @@ namespace dogma {
          bool NextEvent() override { return fIter.NextSubeventsBlock(); }
          void *Event() override { return fIter.block(); }
          dabc::BufferSize_t EventSize() override { return fIter.blocksize(); }
+         unsigned EventKind() const override { return fIter.IsTu() ? 1 : (fIter.IsEvent() ? 2 : 0); }
    };
 
 }
