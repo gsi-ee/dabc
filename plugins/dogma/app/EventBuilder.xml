@@ -62,10 +62,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
     <Module name="Combiner" class="dogma::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="2"/>
-       <NumOutputs value="1"/>
+       <NumOutputs value="2"/>
 
-       <InputPort name="Input0" url="bin:///d/hadaq/out0_0000.bin"/>
-       <InputPort name="Input1" url="bin:///d/hadaq/out1_0000.bin"/>
+       <InputPort name="Input0" url="bin:///d/hadaq/out0_0000.bin?close_on_error"/>
+       <InputPort name="Input1" url="bin:///d/hadaq/out1_0000.bin?close_on_error"/>
 
        <!--InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=50" resort="false"/-->
 
