@@ -31,6 +31,11 @@ if(stream)
   add_subdirectory(stream)
 endif()
 
+
+if(elder)
+  add_subdirectory(elder)
+endif()
+
 if(aqua)
   add_subdirectory(aqua)
 endif()
@@ -69,6 +74,10 @@ endif()
 
 if(saft)
   add_subdirectory(saft)
+endif()
+
+if(olmd)
+  add_subdirectory(olmd)
 endif()
 
 add_subdirectory(user)

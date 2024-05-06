@@ -81,10 +81,14 @@ namespace mbs {
                return true;
             }
 
+            /////// JAM24
+            /*
             fprintf(stderr, "%s is original LMD file, which is not supported by DABC\n", fname);
             Close();
             return false;
-/*
+   */
+            /////// end JAM24
+
             if ((fFileHdr.FullSize() > 0x8000) || (fFileHdr.FullSize() < sizeof(fFileHdr))) {
                fprintf(stderr, "File header %u too large in file %s\n", (unsigned) fFileHdr.FullSize(), fname);
                Close();
@@ -99,7 +103,7 @@ namespace mbs {
             fReadingMode = true;
             // fMbsFormat = true;
             return true;
-*/
+
          }
 
          bool OpenWriting(const char* fname, const char* opt = nullptr)
@@ -175,12 +179,12 @@ namespace mbs {
 
             uint64_t maxsz = *sz; *sz = 0;
 
-            // printf("start buffer reading maxsz = %u\n", (unsigned) maxsz);
+             printf("start buffer reading maxsz = %u\n", (unsigned) maxsz);
 
             // any data in LMD should be written with 4-byte wrapping
             size_t readsz = io->fread(ptr, 1, maxsz, fd);
 
-            // printf("readsz = %u\n", (unsigned) readsz);
+             printf("readsz = %u\n", (unsigned) readsz);
 
             if (readsz == 0) return false;
 
