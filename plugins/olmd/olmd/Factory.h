@@ -31,7 +31,7 @@ namespace olmd {
          Factory(const std::string& name) : dabc::Factory(name) {}
 
 
-         virtual dabc::DataInput* CreateDataInput(const std::string& typ);
+         virtual dabc::DataInput* CreateDataInput(const std::string& typ) override;
 
 
       protected:

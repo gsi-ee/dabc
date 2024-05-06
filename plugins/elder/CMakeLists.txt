@@ -1,4 +1,4 @@
-find_package(ELDER)
+find_package(ELDER QUIET)
 
 if(ELDER_FOUND)
   dabc_link_library(

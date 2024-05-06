@@ -693,14 +693,14 @@ bool elderdabc::VisConDabc::ExecuteHCommand(dabc::Command cmd)
          SaveAllHistograms(fTop);
          res = "true";
 ///////////////////////////////////////
-//      } else if (item.IsName("Start")) {
-//         DOUT0("Call START");
-//         fWorkingFlag = true;
-//         res = "true";
-//      } else if (item.IsName("Stop")) {
-//         DOUT0("Call STOP");
-//         fWorkingFlag = false;
-//         res = "true";
+      } else if (item.IsName("Start")) {
+         DOUT0("Call START");
+         //fWorkingFlag = true;
+         res = "true";
+      } else if (item.IsName("Stop")) {
+         DOUT0("Call STOP");
+         //fWorkingFlag = false;
+         res = "true";
 ///////////////////////////////////////
       }else {
          res = "false";
@@ -751,8 +751,7 @@ bool elderdabc::VisConDabc::ExecuteHCommand(dabc::Command cmd)
    }
 
    cmd.SetStrRawData(res);
-
-   return true;
+   return res=="true"? true: false;
 }
 
 //typedef void StreamCallFunc(void*);

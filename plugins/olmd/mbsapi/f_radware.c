@@ -48,7 +48,7 @@ if (i32_fd < 0)
     return(1);
 }
 //write file
-strncpy(c_str,pc_name, sizeof(c_str));
+strncpy(c_str,pc_name, sizeof(c_str)-1);
 strncat(c_str,"        ", sizeof(c_str)-1);
 l_head[0]=24;
 l_head[1]=1;

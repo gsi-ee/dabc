@@ -384,7 +384,7 @@ INTS4 f_evt_type(s_bufhe *ps_bufhe,s_evhe *ps_evhe, INTS4 l_subid,INTS4 l_long,I
          for(l=0;l<ps_evhe->l_dlen/2;l++)
          {
             sprintf(c_line,"%08x ",*pl_data);
-            strncat(c_full, c_line, sizeof(c_full)-1);
+            strncat(c_full, c_line, sizeof(c_line)-1);
             pl_data++;
             if(l%8 == 7) {
                printf("%s\n",c_full);
@@ -434,7 +434,7 @@ INTS4 f_evt_type(s_bufhe *ps_bufhe,s_evhe *ps_evhe, INTS4 l_subid,INTS4 l_long,I
                   {
                      if(l_hex != 0) sprintf(c_line,"%04x.%04x ",(*pl_data>>16)&0xffff,*pl_data&0xffff);
                      else           sprintf(c_line,"%8d ",*pl_data);
-                     strncat(c_full, c_line, sizeof(c_full)-1);
+                     strncat(c_full, c_line, sizeof(c_line)-1);
                      pl_data++;
                      if(l%8 == 7)
                      {
@@ -450,7 +450,7 @@ INTS4 f_evt_type(s_bufhe *ps_bufhe,s_evhe *ps_evhe, INTS4 l_subid,INTS4 l_long,I
                   for(l=0;l<ll;l++)
                   {
                      sprintf(c_line,"%8d%8d",*pl_data&0xffff,(*pl_data>>16)&0xffff);
-                     strncat(c_full, c_line, sizeof(c_full)-1);
+                     strncat(c_full, c_line, sizeof(c_line)-1);
                      pl_data++;
                      if(l%4 == 3)
                      {
@@ -1259,8 +1259,8 @@ INTS4 f_evt_put_open(CHARS *pc_file, INTS4 l_size, INTS4 l_stream,
             ps_file_head->filhe_stime[1] = (INTS4) s_timespec.tv_nsec/1000000;
             ps_file_head->filhe_free[0] = 1;
             ps_file_head->filhe_file_l = (INTS2) strlen(c_file);/* not include \0 */
-            strncpy(ps_file_head->filhe_file, c_file, sizeof(ps_file_head->filhe_file));
-            strncpy(ps_file_head->filhe_user, getenv("USER"), sizeof(ps_file_head->filhe_user)); /* user name */
+            strncpy(ps_file_head->filhe_file, c_file, sizeof(ps_file_head->filhe_file)-1);
+            strncpy(ps_file_head->filhe_user, getenv("USER"), sizeof(ps_file_head->filhe_user)-1); /* user name */
             ps_file_head->filhe_user_l = (INTS2) strlen(ps_file_head->filhe_user);
             time(&s_timet);/* get calendar time */
             strncpy(c_mode, ctime(&s_timet), sizeof(c_mode));

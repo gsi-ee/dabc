@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cstdint>
 
 #include "dabc/Manager.h"
 

@@ -28,7 +28,7 @@
 
 INTS4 l_gl_tcp_chan;
 
-int l_status,l;
+//int l_status,l;
 
 #define VERSION__DAQST  2
 #define VERSION__SETUP  1
@@ -52,7 +52,7 @@ int l_status,l;
 INTS4 f_mbs_status(CHARS *c_node, s_daqst *ps_daqst)
 {
   struct s_tcpcomm *ps_tcpcomm;
-
+  int l_status;
   ps_tcpcomm = (struct s_tcpcomm *) malloc (sizeof( struct s_tcpcomm));
   l_status = f_stc_connectserver (c_node,PORT__STAT_SERV,&l_gl_tcp_chan,ps_tcpcomm);
   if (l_status != STC__SUCCESS)
@@ -85,7 +85,7 @@ INTS4 f_mbs_setup(CHARS *c_node, s_setup *ps_setup)
 {
   s_daqst *ps_daqst;
   struct s_tcpcomm *ps_tcpcomm;
-
+  int l_status;
   ps_tcpcomm = (struct s_tcpcomm *) malloc (sizeof( struct s_tcpcomm));
   l_status = f_stc_connectserver (c_node,PORT__STAT_SERV,&l_gl_tcp_chan,ps_tcpcomm);
   if (l_status != STC__SUCCESS)
@@ -130,7 +130,7 @@ INTS4 f_mbs_ml_setup(CHARS *c_node, s_set_ml *ps_set_ml)
 {
   s_daqst *ps_daqst;
   struct s_tcpcomm *ps_tcpcomm;
-
+  int l_status;
   ps_tcpcomm = (struct s_tcpcomm *) malloc (sizeof( struct s_tcpcomm));
   l_status = f_stc_connectserver (c_node,PORT__STAT_SERV,&l_gl_tcp_chan,ps_tcpcomm);
   if (l_status != STC__SUCCESS)
@@ -173,7 +173,7 @@ INTS4 f_mbs_mo_setup(CHARS *c_node, s_set_mo *ps_set_mo)
 {
   s_daqst *ps_daqst;
   struct s_tcpcomm *ps_tcpcomm;
-
+  int l_status;
   ps_tcpcomm = (struct s_tcpcomm *) malloc (sizeof( struct s_tcpcomm));
   l_status = f_stc_connectserver (c_node,PORT__STAT_SERV,&l_gl_tcp_chan,ps_tcpcomm);
   if (l_status != STC__SUCCESS)

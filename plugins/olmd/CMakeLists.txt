@@ -1,3 +1,11 @@
+if(APPLE)
+set(_platform Darwin)
+else()
+set(_platform Linux)
+endif()
+
+
+
 dabc_link_library(
   DabcOlmd
   SOURCES   mbsapibase/f_his_hist.c
@@ -81,7 +89,7 @@ dabc_link_library(
   INCDIR olmd 
   LIBRARIES dabc::DabcBase dabc::DabcMbs
   INCLUDES mbsapi mbsapibase
-  DEFINITIONS Linux _LARGEFILE64_SOURCE
+  DEFINITIONS ${_platform} _LARGEFILE64_SOURCE
   COPY_HEADERS)
 
 dabc_install_plugin_data(

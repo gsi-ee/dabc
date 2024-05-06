@@ -45,7 +45,7 @@ dabc::DataInput* olmd::Factory::CreateDataInput(const std::string& typ)
       return new olmd::OlmdInput(url);
    }
 
-   return 0;
+   return nullptr;
 }
 
 

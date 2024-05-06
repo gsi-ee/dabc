@@ -111,6 +111,7 @@ elderdabc::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    double interval = Cfg("AutosaveInterval", cmd).AsDouble(0);
    if (interval > 1) CreateTimer("AutoSave", interval);
+   fViscon->AddRunLog("elderdabc::RunModule::RunModule is created.");
 }
 
 elderdabc::RunModule::~RunModule()
@@ -142,10 +143,15 @@ void elderdabc::RunModule::OnThreadAssigned()
 
 int elderdabc::RunModule::ExecuteCommand(dabc::Command cmd)
 {
+   fViscon->AddRunLog(  dabc::format("elderdabc::RunModule::ExecuteCommand is called for %s",cmd.GetName()).c_str());
+
+   // TODO: unified handling of commands in one function? JAM
    if (fViscon && fViscon->ExecuteHCommand(cmd)) {
       //if (fProcMgr->IsWorking()) ActivateInput(); // when working set, just ensure that module reads input
       return dabc::cmd_true;
    }
+
+
 
    if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
       std::string cmdpath = cmd.GetStr("Item");
@@ -175,23 +181,45 @@ int elderdabc::RunModule::ExecuteCommand(dabc::Command cmd)
 
          return dabc::cmd_true;
 
-      } else
-            if (cmdpath == "Control/Start") {
-               DOUT0("Command Control/Start");
-               fViscon->AddRunLog("Executing Application Start command...");
-               return dabc::ModuleAsync::ExecuteCommand(dabc::Command("DoStart")); //dabc::Application::stcmdDoStart()
-               //return dabc::cmd_true;
-            } else
-               if (cmdpath == "Control/Stop") {
-                  DOUT0("Command Control/Stop");
-                  fViscon->AddRunLog("Executing Application Stop command...");
-                  return dabc::ModuleAsync::ExecuteCommand(dabc::Command("DoStop")); //dabc::Application::stcmdDoStop()
-                     //  return dabc::cmd_true;
+      }
+//      else
+//            if (cmdpath == "Control/Start") {
+//               DOUT0("Command Control/Start");
+//               fViscon->AddRunLog("Executing Application Start command...");
+//               return dabc::ModuleAsync::ExecuteCommand(dabc::Command("DoStart")); //dabc::Application::stcmdDoStart()
+//               //return dabc::cmd_true;
+//            } else
+//               if (cmdpath == "Control/Stop") {
+//                  DOUT0("Command Control/Stop");
+//                  fViscon->AddRunLog("Executing Application Stop command...");
+//                  return dabc::ModuleAsync::ExecuteCommand(dabc::Command("DoStop")); //dabc::Application::stcmdDoStop()
+//                     //  return dabc::cmd_true;
+//
+//
+//      }
 
-
-      } else
+      else
+      {
+         DOUT0("Want to execute %s, but not available", cmdpath.c_str());
          return dabc::cmd_false;
-   }
+      }
+      }
+
+
+   // do we get commands here?
+//   dabc::Hierarchy item = cmd.GetRef("item");
+//   if (item.null()) return false;
+//
+//   if (item.IsName("Start")) {
+//      DOUT0("Command Control/Start");
+//      fViscon->AddRunLog("Executing Application Start command...");
+//      return dabc::ModuleAsync::ExecuteCommand(dabc::Command("DoStart")); //dabc::Application::stcmdDoStart()
+//      //return dabc::cmd_true;
+//   } else if (item.IsName("Stop")) {
+//      DOUT0("Command Control/Stop");
+//      fViscon->AddRunLog("Executing Application Stop command...");
+//      return dabc::ModuleAsync::ExecuteCommand(dabc::Command("DoStop")); //dabc::Application::stcmdDoStop()
+//   }
 
 
    if (cmd.IsName("GetHierarchy")) {

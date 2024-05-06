@@ -20,6 +20,7 @@
 
 #include <string>
 #include <stddef.h>
+#include <cstdint>
 
 extern "C" {
    #include "mbsapi/f_evt.h"
