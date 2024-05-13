@@ -28,9 +28,6 @@
 elderdabc::VisConDabc::VisConDabc() :
    elderpt::viscon::Interface(),
    fTop(),
-   //fWorkingFlag(true),
-   fStore(),
-   fStoreInfo("no store created"),
    fSortOrder(true),
    fDefaultFill(3)
 {
@@ -51,36 +48,36 @@ void elderdabc::VisConDabc::SetTop(dabc::Hierarchy& top, bool withcmds)
 
    if (!withcmds) return;
 
-   dabc::Hierarchy h = fTop.CreateHChild("Control/Clear");
-   h.SetField("_kind","Command");
-   h.SetField("_title", "Clear all histograms in the server");
-   h.SetField("_icon", "dabcsys/plugins/elder/icons/clear.png");
-   h.SetField("_fastcmd", "true");
-   h.SetField("_numargs", "0");
+//   dabc::Hierarchy h = fTop.CreateHChild("Control/Clear");
+//   h.SetField("_kind","Command");
+//   h.SetField("_title", "Clear all histograms in the server");
+//   h.SetField("_icon", "dabcsys/plugins/elder/icons/clear.png");
+//   h.SetField("_fastcmd", "true");
+//   h.SetField("_numargs", "0");
+//
+//   h = fTop.CreateHChild("Control/Save");
+//   h.SetField("_kind","Command");
+//   h.SetField("_title", "Save all histograms in the dabc.root file");
+//   h.SetField("_icon", "dabcsys/plugins/elder/icons/save.png");
+//   h.SetField("_fastcmd", "true");
+//   h.SetField("_numargs", "0");
 
-   h = fTop.CreateHChild("Control/Save");
-   h.SetField("_kind","Command");
-   h.SetField("_title", "Save all histograms in the dabc.root file");
-   h.SetField("_icon", "dabcsys/plugins/elder/icons/save.png");
-   h.SetField("_fastcmd", "true");
-   h.SetField("_numargs", "0");
-
-   h = fTop.CreateHChild("Control/Start");
-   h.SetField("_kind","Command");
-   h.SetField("_title", "Start processing of data");
-   h.SetField("_icon", "dabcsys/plugins/elder/icons/start.png");
-   h.SetField("_fastcmd", "true");
-   h.SetField("_numargs", "0");
-
-   h = fTop.CreateHChild("Control/Stop");
-   h.SetField("_kind","Command");
-   h.SetField("_title", "Stop processing of data");
-   h.SetField("_icon", "dabcsys/plugins/elder/icons/stop.png");
-   h.SetField("_fastcmd", "true");
-   h.SetField("_numargs", "0");
+//   h = fTop.CreateHChild("Control/Start");
+//   h.SetField("_kind","Command");
+//   h.SetField("_title", "Start processing of data");
+//   h.SetField("_icon", "dabcsys/plugins/elder/icons/start.png");
+//   h.SetField("_fastcmd", "true");
+//   h.SetField("_numargs", "0");
+//
+//   h = fTop.CreateHChild("Control/Stop");
+//   h.SetField("_kind","Command");
+//   h.SetField("_title", "Stop processing of data");
+//   h.SetField("_icon", "dabcsys/plugins/elder/icons/stop.png");
+//   h.SetField("_fastcmd", "true");
+//   h.SetField("_numargs", "0");
 
 
-   h = fTop.CreateHChild("Control/RunLog");
+   dabc::Hierarchy h = fTop.CreateHChild("Control/RunLog");
    h.SetField(dabc::prop_kind, "log");
    h.EnableHistory(1000);
 
@@ -302,11 +299,6 @@ void elderdabc::VisConDabc::cond1d_get(::elderpt::viscon::Interface::Condition1D
 //////////////////////////////////////////// JAM below old from stream interface
 elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
-//   if (IsBlockHistCreation()) {
-//      DOUT0("Block H1 creation %s due to multithreading", name);
-//      return nullptr;
-//   }
-
    std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
    bool reuse = false, clear_protect = false;
 
@@ -378,11 +370,6 @@ elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char* name, const char* 
 
 elderdabc::H2handle elderdabc::VisConDabc::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-//   if (IsBlockHistCreation()) {
-//      DOUT0("Block H2 creation %s due to multithreading", name);
-//      return nullptr;
-//   }
-
    std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax, h2poly;
    bool reuse = false, clear_protect = false;
 
@@ -616,13 +603,7 @@ bool elderdabc::VisConDabc::ClearHistogram(dabc::Hierarchy &item)
    return true;
 }
 
-void elderdabc::VisConDabc::ClearAllHistograms()
-{
-//   if (IsBlockHistCreation())
-//      DOUT0("ClearAllHistograms when blocked due to threading?\n");
 
-   ClearAllDabcHistograms(fTop);
-}
 
 bool elderdabc::VisConDabc::ClearAllDabcHistograms(dabc::Hierarchy &folder)
 {
@@ -635,7 +616,9 @@ bool elderdabc::VisConDabc::ClearAllDabcHistograms(dabc::Hierarchy &folder)
    return isany;
 }
 
-bool elderdabc::VisConDabc::SaveAllHistograms(dabc::Hierarchy &folder)
+
+
+bool elderdabc::VisConDabc::SaveAllDabcHistograms(dabc::Hierarchy &folder)
 {
    dabc::Buffer buf = folder.SaveToBuffer();
 
@@ -673,170 +656,87 @@ bool elderdabc::VisConDabc::SaveAllHistograms(dabc::Hierarchy &folder)
    return res == 0;
 }
 
-bool elderdabc::VisConDabc::ExecuteHCommand(dabc::Command cmd)
-{
-   std::string name = cmd.GetName();
-
-   if ((name.find("HCMD_") != 0) && (name != "ROOTCMD")) return false;
-
-   dabc::Hierarchy item = cmd.GetRef("item");
-   if (item.null()) return false;
-   std::string res = "null";
-
-   if (name == "ROOTCMD") {
-      if (item.IsName("Clear")) {
-         DOUT0("Call CLEAR");
-         ClearAllDabcHistograms(fTop);
-         res = "true";
-      } else if (item.IsName("Save")) {
-         DOUT0("Call SAVE");
-         SaveAllHistograms(fTop);
-         res = "true";
-///////////////////////////////////////
-      } else if (item.IsName("Start")) {
-         DOUT0("Call START");
-         //fWorkingFlag = true;
-         res = "true";
-      } else if (item.IsName("Stop")) {
-         DOUT0("Call STOP");
-         //fWorkingFlag = false;
-         res = "true";
-///////////////////////////////////////
-      }else {
-         res = "false";
-      }
-
-   } else if (name == "HCMD_ClearHistos") {
-
-      res = ClearAllDabcHistograms(item) ? "true" : "false";
-
-   } else {
-      std::string kind = item.GetField("_kind").AsStr();
-      if ((kind != "ROOT.TH2D") && (kind != "ROOT.TH1D")) return false;
-
-      double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
-      if (!bins) return false;
-
-      name.erase(0,5); // remove HCMD_ prefix
-
-      if ((name == "GetMean") || (name=="GetRMS") || (name=="GetEntries")) {
-         if (kind != "ROOT.TH1D") return false;
-         int nbins = item.GetField("nbins").AsInt();
-         double left = item.GetField("left").AsDouble();
-         double right = item.GetField("right").AsDouble();
-
-         double sum0 = 0, sum1 = 0, sum2 = 0;
-
-         for (int n=0;n<nbins;n++) {
-            double x = left + (right-left)/nbins*(n+0.5);
-            sum0 += bins[n+4];
-            sum1 += x*bins[n+4];
-            sum2 += x*x*bins[n+4];
-         }
-         double mean = 0, rms = 0;
-         if (sum0>0) {
-            mean = sum1/sum0;
-            rms = sqrt(sum2/sum0 - mean*mean);
-         }
-         if (name == "GetEntries") res = dabc::format("%14.7g",sum0);
-         else if (name == "GetMean") res = dabc::format("%8.6g",mean);
-         else res = dabc::format("%8.6g",rms);
-
-      } else
-      if (name=="Clear") {
-         res = ClearHistogram(item) ? "true" : "false";
-      } else {
-         return false;
-      }
-   }
-
-   cmd.SetStrRawData(res);
-   return res=="true"? true: false;
-}
+//bool elderdabc::VisConDabc::ExecuteHCommand(dabc::Command cmd)
+//{
+//   std::string name = cmd.GetName();
+//
+//   if ((name.find("HCMD_") != 0) && (name != "ROOTCMD")) return false;
+//
+//   dabc::Hierarchy item = cmd.GetRef("item");
+//   if (item.null()) return false;
+//   std::string res = "null";
+//
+//   if (name == "ROOTCMD") {
+//      if (item.IsName("Clear")) {
+//         DOUT0("Call CLEAR");
+//         ClearAllDabcHistograms(fTop);
+//         res = "true";
+//      } else if (item.IsName("Save")) {
+//         DOUT0("Call SAVE");
+//         SaveAllHistograms(fTop);
+//         res = "true";
+/////////////////////////////////////////
+////      } else if (item.IsName("Start")) {
+////         DOUT0("Call START");
+////         //fWorkingFlag = true;
+////         res = "true";
+////      } else if (item.IsName("Stop")) {
+////         DOUT0("Call STOP");
+////         //fWorkingFlag = false;
+////         res = "true";
+/////////////////////////////////////////
+//      }else {
+//         res = "false";
+//      }
+//
+//   }
+////   else if (name == "HCMD_ClearHistos") {
+////
+////      res = ClearAllDabcHistograms(item) ? "true" : "false";
+////
+////   } else {
+////      std::string kind = item.GetField("_kind").AsStr();
+////      if ((kind != "ROOT.TH2D") && (kind != "ROOT.TH1D")) return false;
+////
+////      double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
+////      if (!bins) return false;
+////
+////      name.erase(0,5); // remove HCMD_ prefix
+////
+////      if ((name == "GetMean") || (name=="GetRMS") || (name=="GetEntries")) {
+////         if (kind != "ROOT.TH1D") return false;
+////         int nbins = item.GetField("nbins").AsInt();
+////         double left = item.GetField("left").AsDouble();
+////         double right = item.GetField("right").AsDouble();
+////
+////         double sum0 = 0, sum1 = 0, sum2 = 0;
+////
+////         for (int n=0;n<nbins;n++) {
+////            double x = left + (right-left)/nbins*(n+0.5);
+////            sum0 += bins[n+4];
+////            sum1 += x*bins[n+4];
+////            sum2 += x*x*bins[n+4];
+////         }
+////         double mean = 0, rms = 0;
+////         if (sum0>0) {
+////            mean = sum1/sum0;
+////            rms = sqrt(sum2/sum0 - mean*mean);
+////         }
+////         if (name == "GetEntries") res = dabc::format("%14.7g",sum0);
+////         else if (name == "GetMean") res = dabc::format("%8.6g",mean);
+////         else res = dabc::format("%8.6g",rms);
+////
+////      } else
+////      if (name=="Clear") {
+////         res = ClearHistogram(item) ? "true" : "false";
+////      } else {
+////         return false;
+////      }
+////   }
+//
+//   cmd.SetStrRawData(res);
+//   return res=="true"? true: false;
+//}
 
 //typedef void StreamCallFunc(void*);
 
-//bool elderdabc::VisConDabc::CallFunc(const char* funcname, void* arg)
-//{
-//   if (!funcname) return false;
-//
-//   void* symbol = dabc::Factory::FindSymbol(funcname);
-//   if (!symbol) return false;
-//
-//   StreamCallFunc* func = (StreamCallFunc*) symbol;
-//
-//   func(arg);
-//
-//   return true;
-//}
-//
-//
-//bool elderdabc::VisConDabc::CreateStore(const char* storename)
-//{
-//   fStore = dabc::mgr.CreateObject("root::TreeStore","elderdabc_store");
-//   if (fStore.null()) {
-//      fStoreInfo = "Fail to create root::TreeStore, check libDabcRoot plugin";
-//      return false;
-//   }
-//
-//   dabc::Command cmd("Create");
-//   cmd.SetStr("fname", storename);
-//   cmd.SetStr("ftitle", "File with stored elderdabc data");
-//   cmd.SetStr("tname", "T");
-//   cmd.SetStr("ttitle", "Tree with elderdabc data");
-//
-//   if (!fStore.Execute(cmd)) {
-//      fStoreInfo = dabc::format("Fail to create ROOT file %s", storename);
-//      return false;
-//   }
-//
-//   // set pointer to inform base class that storage exists
-//   fTree = (TTree*) cmd.GetPtr("tree_ptr");
-//
-//   fStoreInfo = dabc::format("Create ROOT file %s", storename);
-//
-//   return true;
-//}
-//
-//bool elderdabc::VisConDabc::CloseStore()
-//{
-//   fTree = nullptr;
-//   fStore.Execute("Close");
-//   fStore.Release();
-//   fStoreInfo = "ROOT store closed";
-//   return true;
-//}
-//
-//bool elderdabc::VisConDabc::CreateBranch(const char* name, const char* class_name, void** obj)
-//{
-//   DOUT3("Create Branch1 %s", name);
-//
-//   dabc::Command cmd("CreateBranch");
-//   cmd.SetStr("name", name);
-//   cmd.SetStr("class_name", class_name);
-//   cmd.SetPtr("obj", (void*) obj);
-//   return fStore.Execute(cmd);
-//}
-//
-//bool elderdabc::VisConDabc::CreateBranch(const char* name, void* member, const char* kind)
-//{
-//   DOUT3("Create Branch2 %s", name);
-//
-//   dabc::Command cmd("CreateBranch");
-//   cmd.SetStr("name", name);
-//   cmd.SetPtr("member", member);
-//   cmd.SetStr("kind", kind);
-//   return fStore.Execute(cmd);
-//}
-//
-//bool elderdabc::VisConDabc::StoreEvent()
-//{
-//   if (fStore.null()) return false;
-//
-//   dabc::Command cmd("Fill");
-//   if (!fStore.Execute(cmd)) return false;
-//
-//   fStoreInfo = cmd.GetStr("StoreInfo");
-//
-//   return true;
-//}

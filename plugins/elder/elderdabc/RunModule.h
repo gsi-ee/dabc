@@ -40,11 +40,6 @@ namespace elderdabc {
    class RunModule : public dabc::ModuleAsync {
 
    protected:
-      //int          fParallel{0}; /// how many parallel processes to start
-      //void        *fInitFunc{nullptr}; /// init function
-      //int          fStopMode{0}; /// for central module waiting that others finish
-
-
       elderdabc::VisConDabc* fViscon; // visualization interface
       ::elderpt::control::Controller* fAnalysis; //handle to elder analysis framework
       ::elderpt::control::Event* fEvent; // the current event to be processed
@@ -54,25 +49,20 @@ namespace elderdabc {
       long unsigned fTotalSize{0};
       long unsigned fTotalEvnts{0};
       long unsigned fTotalOutEvnts{0};
-      //int           fDefaultFill{0};   ///<! default fill color for 1-D histograms
+      int           fDefaultFill{0};   ///<! default fill color for 1-D histograms
 
       int ExecuteCommand(dabc::Command cmd) override;
 
       void OnThreadAssigned() override;
 
-      //bool ProcessNextEvent(void* evnt, unsigned evntsize);
       bool ProcessNextEvent(mbs::ReadIterator& iter);
 
 
       bool ProcessNextBuffer();
 
-      //bool RedistributeBuffers();
-
-      //void ProduceMergedHierarchy();
 
       void SaveHierarchy(dabc::Buffer buf);
 
-      //void GenerateEOF(dabc::Buffer buf);
 
    public:
       RunModule(const std::string &name, dabc::Command cmd = nullptr);

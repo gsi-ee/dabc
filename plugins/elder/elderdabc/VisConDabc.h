@@ -16,7 +16,6 @@
 #ifndef ELDER_VisConDabc
 #define ELDER_VisConDabc
 
-//#include "base/ProcMgr.h"
 #include <elderpt.hpp>
 
 #include "dabc/Hierarchy.h"
@@ -52,7 +51,6 @@ class VisConDabc : public ::elderpt::viscon::Interface
       protected:
 
          dabc::Hierarchy fTop;
-         //bool fWorkingFlag{false};
 
          dabc::LocalWorkerRef fStore;
          std::string fStoreInfo;   ///<! last info about storage
@@ -64,7 +62,7 @@ class VisConDabc : public ::elderpt::viscon::Interface
          dabc::Hierarchy FindHistogram(double* handle);
 
          bool ClearAllDabcHistograms(dabc::Hierarchy &folder);
-         bool SaveAllHistograms(dabc::Hierarchy &folder);
+         bool SaveAllDabcHistograms(dabc::Hierarchy &folder);
 
          // JAM 28-02-24: use old implementations from stream with modified handle:
 
@@ -87,7 +85,7 @@ class VisConDabc : public ::elderpt::viscon::Interface
          void SetH2Title(elderdabc::H2handle h2, const char* title) ;
          void TagH2Time(elderdabc::H2handle h2);
          //
-         void ClearAllHistograms();
+
 
 
 
@@ -99,9 +97,7 @@ class VisConDabc : public ::elderpt::viscon::Interface
 
          void SetTop(dabc::Hierarchy& top, bool withcmds = false);
 
-         //void SetDefaultFill(int fillcol = 3) { fDefaultFill = fillcol; }
-
-         //bool IsWorking() const { return fWorkingFlag; }
+         void SetDefaultFill(int fillcol = 3) { fDefaultFill = fillcol; }
 
 
 
@@ -176,41 +172,20 @@ class VisConDabc : public ::elderpt::viscon::Interface
 
 
 
-         // JAM from stream: redefine only make procedure, fill and clear should work
-//         base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = nullptr) override;
-//
-//         base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr) override;
-//
-//         void SetH1Title(base::H1handle h1, const char* title) override;
-//         void TagH1Time(base::H1handle h1) override;
-//
-//         void SetH2Title(base::H2handle h2, const char* title) override;
-//         void TagH2Time(base::H2handle h2) override;
-//
-//         void ClearAllHistograms() override;
+
 
         void SetSortedOrder(bool on = true)   { fSortOrder = on; }
         bool IsSortedOrder()  { return fSortOrder; }
 
          void AddRunLog(const char *msg);// override;
          void AddErrLog(const char *msg);// override;
-//         bool DoLog()  override { return true; }
 
-     //    void PrintLog(const char *msg);// override;
+ //        bool ExecuteHCommand(dabc::Command cmd);
 
-//         bool CallFunc(const char* funcname, void* arg) override;
-//
-//         bool CreateStore(const char* storename) override;
-//         bool CloseStore() override;
-//
-//         bool CreateBranch(const char* name, const char* class_name, void** obj) override;
-//         bool CreateBranch(const char* name, void* member, const char* kind) override;
-//
-//         bool StoreEvent() override;
 
-         bool ExecuteHCommand(dabc::Command cmd);
+         bool SaveAllHistograms() { return SaveAllDabcHistograms(fTop); }
 
-         bool SaveAllHistograms() { return SaveAllHistograms(fTop); }
+         bool ClearAllHistograms() { return ClearAllDabcHistograms(fTop); }
 
          std::string GetStoreInfo() const { return fStoreInfo; }
    };

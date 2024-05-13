@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <dabc version="2">
   <Variables>
-     <file value="/data.local2/adamczew/lmd/elder_tamex/tamex_internal_calibration_pulser.lmd"/>  
+<!--      <file value="/data.local2/adamczew/lmd/elder_tamex/tamex_internal_calibration_pulser.lmd"/>   -->
+      <file value="/data.local2/adamczew/lmd/elder_tamex/run_0211.lmd"/>
 <!--      <file value="${LMD}"/> 
     call dabc_exe LMD=myfile.lmd Elder.xml for file name argument on command line-->
      <config value="./twinpeaks.config"/>
@@ -40,6 +41,7 @@
        <ElderConfig value="${config}"/>
        <AutosaveFile value="${asf}"/>
        <AutosaveInterval value="0"/>
+       <FillColor value="6"/>
        <InputPort name="Input0" url="olmd://${file}"/> 
 <!--        <InputPort name="Input0" url="mbss://x86l-59"/>  -->
 <!--        <InputPort name="Input0" url="mbss://x86l-132"/> -->

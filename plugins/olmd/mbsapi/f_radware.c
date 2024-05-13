@@ -39,7 +39,9 @@ int f_radware_out1d(char *pc_file, char *pc_name, float *pr_data, int l_chan, in
 {
   strcpy(c_str,"rm ");
   strncat(c_str, pc_file, sizeof(c_str)-1);
-  system(c_str);
+  l_status=system(c_str);
+  /* JAM 7-5-2024: supress unused  result warnings**/
+  if(l_status == -1)  printf("Error calling rm old file \n");
 }
 i32_fd = open(pc_file, O_WRONLY | O_CREAT | O_EXCL, HIS__BASPERM);
 if (i32_fd < 0)
@@ -96,7 +98,10 @@ if(l_over)
 {
   strcpy(c_str,"rm ");
   strncat(c_str,pc_file, sizeof(c_str)-1);
-  system(c_str);
+  l_status=system(c_str);
+  /* JAM 7-5-2024: supress unused  result warnings**/
+  if(l_status == -1)  printf("Error calling rm old file \n");
+
 }
 i32_fd = open(pc_file, O_WRONLY | O_CREAT | O_EXCL, HIS__BASPERM);
 if (i32_fd < 0)

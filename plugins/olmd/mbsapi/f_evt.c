@@ -176,6 +176,24 @@ static struct s_tcpcomm s_tcpcomm_st_evt;
 static CHARS c_temp[MAX_BUF_LGTH];
 static int l_gl_source_port = 0;
 
+
+
+
+/* JAM 07-05-2024: try to make this more safe?*/
+
+#define SAFE_CAT(X,Y) \
+           do {\
+           srclen=strlen(Y);\
+           catlen=sizeof(X) - strlen(X) -1; \
+           if(catlen > srclen)   catlen=srclen; \
+           strncat(X, Y, catlen);}\
+           while(0)
+
+          /* end safe cat*/
+
+
+
+
 /*1+ C Procedure *************+****************************************/
 /*                                                                    */
 /*+ Module      : f_evt__example                                  */
@@ -303,8 +321,9 @@ INTS4 f_evt_type(s_bufhe *ps_bufhe,s_evhe *ps_evhe, INTS4 l_subid,INTS4 l_long,I
    INTS4 *pl_data;
    INTS4 l_s;
    INTS4 l, ll, l_status, l_ldata, l_used;
+   INTS4 srclen, catlen;
    CHARS c_line[132];
-   CHARS c_full[132];
+   CHARS c_full[1024];
    CHARS c_time[32];
 
    strcpy(c_full,"  ");
@@ -384,7 +403,7 @@ INTS4 f_evt_type(s_bufhe *ps_bufhe,s_evhe *ps_evhe, INTS4 l_subid,INTS4 l_long,I
          for(l=0;l<ps_evhe->l_dlen/2;l++)
          {
             sprintf(c_line,"%08x ",*pl_data);
-            strncat(c_full, c_line, sizeof(c_line)-1);
+            SAFE_CAT(c_full,c_line);
             pl_data++;
             if(l%8 == 7) {
                printf("%s\n",c_full);
@@ -434,7 +453,8 @@ INTS4 f_evt_type(s_bufhe *ps_bufhe,s_evhe *ps_evhe, INTS4 l_subid,INTS4 l_long,I
                   {
                      if(l_hex != 0) sprintf(c_line,"%04x.%04x ",(*pl_data>>16)&0xffff,*pl_data&0xffff);
                      else           sprintf(c_line,"%8d ",*pl_data);
-                     strncat(c_full, c_line, sizeof(c_line)-1);
+                     SAFE_CAT(c_full,c_line);
+                     //strncat(c_full, c_line, sizeof(c_line)-1);
                      pl_data++;
                      if(l%8 == 7)
                      {
@@ -450,7 +470,8 @@ INTS4 f_evt_type(s_bufhe *ps_bufhe,s_evhe *ps_evhe, INTS4 l_subid,INTS4 l_long,I
                   for(l=0;l<ll;l++)
                   {
                      sprintf(c_line,"%8d%8d",*pl_data&0xffff,(*pl_data>>16)&0xffff);
-                     strncat(c_full, c_line, sizeof(c_line)-1);
+                     SAFE_CAT(c_full,c_line);
+                     //strncat(c_full, c_line, sizeof(c_line)-1);
                      pl_data++;
                      if(l%4 == 3)
                      {
@@ -557,7 +578,7 @@ INTS4 f_evt_get_open(INTS4 l_mode, CHARS *pc_server, s_evt_channel *ps_chan,
    CHARS c_file[256], *pc_temp;
    s_filhe *ps_filhe;
    INTS4 l_status;
-
+   INTS4 srclen, catlen;
    ps_chan->cb_polling = NULL;
 
    l_port = l_gl_source_port;
@@ -585,11 +606,16 @@ INTS4 f_evt_get_open(INTS4 l_mode, CHARS *pc_server, s_evt_channel *ps_chan,
    switch(l_mode) {
      case GETEVT__FILE :
        strcpy(c_file,pc_server);
-       if(strlen(c_file) < 5) strncat(c_file, ".lmd", sizeof(c_file)-1);
+       if(strlen(c_file) < 5){
+          SAFE_CAT(c_file, ".lmd");
+          //strncat(c_file, ".lmd", sizeof(c_file)-1);
+       }
        else {
           pc_temp = (CHARS *) &c_file[strlen(c_file)-4];
           if((strcmp(pc_temp,".LMD") != 0) &&
-             (strcmp(pc_temp,".lmd") != 0)) strncat(c_file, ".lmd", sizeof(c_file)-1);
+             (strcmp(pc_temp,".lmd") != 0))
+             SAFE_CAT(c_file, ".lmd");
+             //strncat(c_file, ".lmd", sizeof(c_file)-1);
        }
 
        if((ps_chan->l_channel_no=open(c_file,GET__OPEN_FLAG))== -1)
@@ -1199,7 +1225,7 @@ INTS4 f_evt_put_open(CHARS *pc_file, INTS4 l_size, INTS4 l_stream,
    struct timespec s_timespec;
    CHARS c_mode[80];
    CHARS c_file[256], *pc_temp;
-
+   INTS4 srclen, catlen;
 // DABC
    ps_chan->pLmd=NULL;
    if(l_stream == 0) {
@@ -1224,13 +1250,20 @@ INTS4 f_evt_put_open(CHARS *pc_file, INTS4 l_size, INTS4 l_stream,
    }
 
   strcpy(c_file,pc_file);
-  if(strlen(c_file) < 5) strncat(c_file,".lmd", sizeof(c_file)-1);
+  if(strlen(c_file) < 5){
+     SAFE_CAT(c_file, ".lmd");
+     //strncat(c_file,".lmd", sizeof(c_file)-1);
+     }
   else
   {
     pc_temp = (CHARS *) &c_file[strlen(c_file)-4];
     if((strcmp(pc_temp,".LMD") != 0) &&
-      (strcmp(pc_temp,".lmd") != 0)) strncat(c_file, ".lmd", sizeof(c_file)-1);
-  }
+      (strcmp(pc_temp,".lmd") != 0))
+       {
+       SAFE_CAT(c_file, ".lmd");
+       //strncat(c_file, ".lmd", sizeof(c_file)-1);
+       }
+   }
    if((ps_chan->l_channel_no=open(c_file,PUT__OPEN_APD_FLAG) )!= -1) {
       return(PUTEVT__FILE_EXIST);
    } else
@@ -2277,7 +2310,16 @@ INTS4 f_evt_cre_tagfile(CHARS *pc_lmd, CHARS *pc_tag,INTS4 (*e_filter)(s_ve10_1 
 
   /* Open and create tag file */
   if((l_out=open(pc_tag,PUT__CRT_FLAG,DEF_FILE_ACCE))== -1)  return(GETEVT__NOFILE);
-  write(l_out,(CHARS *)&s_taghe,sizeof(s_taghe));
+  l_dummy=write(l_out,(CHARS *)&s_taghe,sizeof(s_taghe));
+  /* JAM07-05-2024: supress some warnings by such handling*/
+  if(l_dummy!=sizeof(s_taghe))
+     {
+        close(l_chan);
+        close(l_out);
+        return(GETEVT__TAGWRERR);
+     }
+
+
 
   /* Initialize filter function */
   if(e_filter != NULL) ii=(*e_filter)(NULL);
