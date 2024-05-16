@@ -1,7 +1,9 @@
 # Find ELDER library and includes
  message(STATUS "Looking for ELDER...")
 set(ELDER_FOUND 0)
-set(ELDERHOME /u/adamczew/go4work/go4-app/elder/installation)
+
+#set(ELDERHOME /u/adamczew/go4work/go4-app/elder/installation)
+set(ELDERHOME $ENV{ELDERSYS})
 find_library(ELDER_LIBRARY NAMES libelderpt-0.1.so  PATHS ${ELDERHOME}/lib DOC "Searching ELDER library")
 find_library(ELDER-STD_LIBRARY NAMES libelderptstd.so  PATHS ${ELDERHOME}/lib DOC "Searching ELDER-STD library")
 find_library(ELDER-GSI_LIBRARY NAMES libelderptgsi_gs.so  PATHS ${ELDERHOME}/lib DOC "Searching ELDER-GSI library")
