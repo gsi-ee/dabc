@@ -16,7 +16,7 @@ jobs:
         build_type: [Release]
         compiler: [ { name: g++-11, cpp: g++-11, c: gcc-11 },
                     { name: g++-12, cpp: g++-12, c: gcc-12 },
-                    { name: g++-13, cpp: g++-13, c: gcc },
+                    { name: clang-13, cpp: clang++-13, c: clang-13 },
                     { name: clang-14, cpp: clang++-14, c: clang-14 } ]
 
     steps:
@@ -31,7 +31,6 @@ jobs:
           sudo apt-get update || true
           sudo apt-get install -y ${{ matrix.compiler.name }}
           sudo apt-get install -y libncurses-dev
-          sudo apt-cache search clang
 
       - name: Use compiler
         shell: bash
