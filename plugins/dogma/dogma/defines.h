@@ -20,11 +20,11 @@
 #include <iostream>
 #include <cstring>
 
-#include <byteswap.h>
-
 #pragma pack(push, 1)
 
 #define DOGMA_MAGIC 0xecc1701d
+
+#define SWAP32(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
 namespace dogma {
 
@@ -45,12 +45,12 @@ namespace dogma {
 
          inline uint32_t Value(const uint32_t *member) const
          {
-            return IsSwapped() ? bswap_32(*member) : *member;
+            return IsSwapped() ? SWAP32(*member) : *member;
          }
 
          inline void SetValue(uint32_t *member, uint32_t value)
          {
-            *member = IsSwapped() ? bswap_32(value) : value;
+            *member = IsSwapped() ? SWAP32(value) : value;
          }
 
       public:
@@ -94,7 +94,7 @@ namespace dogma {
 
          void Init(uint32_t type_number)
          {
-            tuMagic = bswap_32(DOGMA_MAGIC);
+            tuMagic = SWAP32(DOGMA_MAGIC);
             tuAddr = 0;
             SetTrigTypeNumber(type_number);
             tuTrigTime = 0;
@@ -113,12 +113,12 @@ namespace dogma {
 
          inline uint32_t Value(const uint32_t *member) const
          {
-            return IsSwapped() ? bswap_32(*member) : *member;
+            return IsSwapped() ? SWAP32(*member) : *member;
          }
 
          inline void SetValue(uint32_t *member, uint32_t value)
          {
-            *member = IsSwapped() ? bswap_32(value) : value;
+            *member = IsSwapped() ? SWAP32(value) : value;
          }
 
       public:
@@ -132,7 +132,7 @@ namespace dogma {
 
          void Init(uint32_t seqid, uint32_t trig_type, uint32_t trig_number)
          {
-            tuMagic = bswap_32(DOGMA_MAGIC);
+            tuMagic = SWAP32(DOGMA_MAGIC);
             SetValue(&tuSeqId, seqid);
             SetValue(&tuTrigTypeNumber, (trig_type << 24) | (trig_number & 0xffffff));
             tuLenPayload = 0;
