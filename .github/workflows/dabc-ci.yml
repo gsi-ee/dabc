@@ -16,7 +16,7 @@ jobs:
         build_type: [Release]
         compiler: [ { name: g++-11, cpp: g++-11, c: gcc-11 },
                     { name: g++-12, cpp: g++-12, c: gcc-12 },
-                    { name: g++-13, cpp: g++-13, c: gcc-13 },
+                    { name: gcc-13, cpp: g++-13, c: gcc-13 },
                     { name: clang-14, cpp: clang++-14, c: clang-14 } ]
 
     steps:
