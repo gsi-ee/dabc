@@ -29,8 +29,9 @@ jobs:
         run: |
           sudo rm -f /etc/apt/sources.list.d/archive_uri-*
           sudo apt-get update || true
-          sudo apt-get install -y ${{ matrix.compiler.name }} ${{ matrix.compiler.c }}
+          sudo apt-get install -y ${{ matrix.compiler.name }}
           sudo apt-get install -y libncurses-dev
+          sudo apt-get search gcc
 
       - name: Use compiler
         shell: bash
