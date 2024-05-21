@@ -16,7 +16,7 @@ jobs:
         build_type: [Release]
         compiler: [ { name: g++-11, cpp: g++-11, c: gcc-11 },
                     { name: g++-12, cpp: g++-12, c: gcc-12 },
-                    { name: gcc-13, cpp: g++-13, c: gcc-13 },
+                    { name: g++-13, cpp: g++-13, c: gcc-13 },
                     { name: clang-14, cpp: clang++-14, c: clang-14 } ]
 
     steps:
@@ -29,7 +29,7 @@ jobs:
         run: |
           sudo rm -f /etc/apt/sources.list.d/archive_uri-*
           sudo apt-get update || true
-          sudo apt-get install -y ${{ matrix.compiler.name }}
+          sudo apt-get install -y ${{ matrix.compiler.name }} ${{ matrix.compiler.c }}
           sudo apt-get install -y libncurses-dev
 
       - name: Use compiler
