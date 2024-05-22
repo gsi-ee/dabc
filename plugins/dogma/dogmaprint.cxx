@@ -59,7 +59,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
           (long unsigned)tu->GetPayloadLen());
 
    if (printraw) {
-      unsigned len = tu->GetPayloadLen() / 4;
+      unsigned len = tu->GetPayloadLen();
       for (unsigned i = 0; i < len; ++i) {
          printf("   %08x", (unsigned) tu->GetPayload(i));
          if ((i == len - 1) || ((i % 8 == 0) && (i > 0)))

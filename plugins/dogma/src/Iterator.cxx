@@ -399,7 +399,7 @@ bool dogma::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
    if (rawdatasz > maxrawdatasize())
       return false;
 
-   subevnt()->SetPayloadLen(rawdatasz);
+   subevnt()->SetPayloadLen(rawdatasz/4);
 
    fSubPtr.shift(subevnt()->GetTuLen());
 
