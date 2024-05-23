@@ -85,7 +85,7 @@ bool dogma::ReadIterator::NextTu()
    if (fFirstEvent)
       fFirstEvent = false;
    else
-      fEvPtr.shift(tu()->GetTuLen());
+      fEvPtr.shift(tu()->GetSize());
 
    if (fEvPtr.fullsize() < sizeof(dogma::DogmaTu)) {
       fEvPtr.reset();
@@ -98,9 +98,9 @@ bool dogma::ReadIterator::NextTu()
       return false;
    }
 
-   if (fEvPtr.fullsize() < tu()->GetTuLen()) {
+   if (fEvPtr.fullsize() < tu()->GetSize()) {
       EOUT("Error in DOGMA format - declared event size %u smaller than actual portion in buffer %u",
-            (unsigned) tu()->GetTuLen(), (unsigned) fEvPtr.fullsize());
+            (unsigned) tu()->GetSize(), (unsigned) fEvPtr.fullsize());
       fEvPtr.reset();
       return false;
    }
@@ -221,7 +221,7 @@ bool dogma::ReadIterator::NextSubEvent()
          containersize = evnt()->GetEventLen();
       } else if (fBufType == mbt_DogmaTransportUnit) {
          headsize = 0;
-         containersize = tu()->GetTuLen();
+         containersize = tu()->GetSize();
       } else if (fBufType == mbt_DogmaSubevents) {
          headsize = 0;
          containersize = fEvPtr.fullsize();
@@ -240,7 +240,7 @@ bool dogma::ReadIterator::NextSubEvent()
       fSubPtr.reset(fEvPtr, 0, containersize);
       fSubPtr.shift(headsize);
    } else {
-      fSubPtr.shift(subevnt()->GetTuLen());
+      fSubPtr.shift(subevnt()->GetSize());
    }
 
    if (fSubPtr.fullsize() < sizeof(dogma::DogmaTu)) {
@@ -248,17 +248,13 @@ bool dogma::ReadIterator::NextSubEvent()
       return false;
    }
 
-   if (subevnt()->GetTuLen() < sizeof(dogma::DogmaTu)) {
-      EOUT("Dogma format error - subevent fullsize %u too small", subevnt()->GetTuLen());
-      //char* ptr = (char*) subevnt();
-      //for(int i=0; i<20; ++i)
-      //   printf("sub(%d)=0x%02x\n", i, (unsigned) *ptr++);
-
+   if (subevnt()->GetSize() < sizeof(dogma::DogmaTu)) {
+      EOUT("Dogma format error - subevent fullsize %u too small", subevnt()->GetSize());
       fSubPtr.reset();
       return false;
    }
 
-   fRawPtr.reset(fSubPtr, 0, subevnt()->GetTuLen());
+   fRawPtr.reset(fSubPtr, 0, subevnt()->GetSize());
    fRawPtr.shift(sizeof(dogma::DogmaTu));
 
    return true;
@@ -402,9 +398,9 @@ bool dogma::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
    if (rawdatasz % 4 != 0)
       EOUT("Failure to set payload length 0x%x", (unsigned) rawdatasz);
 
-   subevnt()->SetPayloadLen(rawdatasz/4);
+   subevnt()->SetPayloadLen(rawdatasz / 4);
 
-   fSubPtr.shift(subevnt()->GetTuLen());
+   fSubPtr.shift(subevnt()->GetSize());
 
    fHasSubevents = true;
 

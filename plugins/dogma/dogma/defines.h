@@ -77,8 +77,6 @@ namespace dogma {
 
          inline uint32_t GetFrameBits() const { return (Value(&tuLenPayload) >> 16) & 0xff; }
 
-         inline uint32_t GetTuLen() const { return sizeof(DogmaTu) + GetPayloadLen()*4; }
-
          inline void SetPayloadLen(uint32_t len) { SetValue(&tuLenPayload, (len & 0xffff) | (Value(&tuLenPayload) & 0xffff0000)); }
 
          inline uint32_t GetSize() const { return sizeof(DogmaTu) + GetPayloadLen()*4; }

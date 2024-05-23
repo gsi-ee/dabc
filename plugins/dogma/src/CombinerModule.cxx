@@ -749,7 +749,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       // this is selected subevent
       cfg.subevnt = iter.subevnt();
       cfg.has_data = true;
-      cfg.data_size = cfg.subevnt->GetTuLen();
+      cfg.data_size = cfg.subevnt->GetSize();
 
       cfg.fTrigNr = cfg.subevnt->GetTrigNumber() & fTriggerRangeMask;
       cfg.fTrigType = cfg.subevnt->GetTrigType();
