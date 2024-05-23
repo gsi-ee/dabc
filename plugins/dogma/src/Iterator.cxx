@@ -399,6 +399,9 @@ bool dogma::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
    if (rawdatasz > maxrawdatasize())
       return false;
 
+   if (rawdatasz % 4 != 0)
+      EOUT("Failure to set payload length 0x%x", (unsigned) rawdatasz);
+
    subevnt()->SetPayloadLen(rawdatasz/4);
 
    fSubPtr.shift(subevnt()->GetTuLen());
