@@ -181,8 +181,6 @@ int main(int argc, char* argv[])
 
    printf("Try to open %s\n", argv[1]);
 
-   if (tmout < 0) tmout = 5.;
-
    bool isfile = false;
    std::string src = argv[1];
 
@@ -190,13 +188,15 @@ int main(int argc, char* argv[])
       src = std::string("dld://") + src;
       isfile = true;
    } else if (src.find("dld://") == 0) {
-      isfile = 0;
+      isfile = false;
    } else if ((src.find(".bin") != std::string::npos) && (src.find("bin://") != 0)) {
       src = std::string("bin://") + src;
       isfile = true;
    } else if ((src.find("bin://") == 0) || (src.find(".bin") != std::string::npos)) {
       isfile = true;
    }
+
+   if (tmout < 0) tmout = isfile ? 0.1 : 5.;
 
    if (!isfile) {
 
@@ -267,7 +267,6 @@ int main(int argc, char* argv[])
          trignr = evnt->GetTrigNumber();
 
       } else if (curr - lastevtm > tmout) {
-         /*printf("TIMEOUT %ld\n", cnt0);*/
          break;
       }
 
@@ -293,9 +292,11 @@ int main(int argc, char* argv[])
          }
       }
 
-      cnt++;
-      currsz += sz;
-      lastevtm = curr;
+      if (tu || evnt) {
+         cnt++;
+         currsz += sz;
+         lastevtm = curr;
+      }
 
       if (showrate) {
 
