@@ -3,7 +3,7 @@
 
 unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0, onlytdc = 0;
 double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5.;
-bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false, use_colors = true;
+bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false, use_colors = true, bubble_mode = false;
 int onlych = -1;
 
 enum TdcMessageKind {
@@ -92,6 +92,198 @@ enum {
    newkind_Mask7    = 0xFE000000,
    newkind_TMDR     = 0x5E000000
 };
+
+void PrintBubble(unsigned* bubble, unsigned len = 0)
+{
+   // print in original order, time from right to left
+   // for (unsigned d=BUBBLE_SIZE;d>0;d--) printf("%04x",bubble[d-1]);
+
+   if (len == 0) len = BUBBLE_SIZE;
+   // print in reverse order, time from left to right
+   for (unsigned d=0;d<len;d++) {
+      unsigned origin = bubble[d], swap = 0;
+      for (unsigned dd = 0;dd<16;++dd) {
+         swap = (swap << 1) | (origin & 1);
+         origin = origin >> 1;
+      }
+      printf("%04x",swap);
+   }
+}
+
+
+
+unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
+   p1 = 0; p2 = 0;
+
+   unsigned pos = 0, last = 1, nflip = 0;
+
+   int b1 = 0, b2 = 0;
+
+   std::vector<unsigned> fliparr(BUBBLE_SIZE*16);
+
+   for (unsigned n=0;n<BUBBLE_SIZE; n++) {
+      unsigned data = bubble[n] & 0xFFFF;
+      if (n < BUBBLE_SIZE-1) data = data | ((bubble[n+1] & 0xFFFF) << 16); // use word to recognize bubble
+
+      // this is error - first bit always 1
+      if ((n == 0) && ((data & 1) == 0)) { return -1; }
+
+      for (unsigned b = 0; b < 16; b++) {
+         if ((data & 1) != last) {
+            if (last == 1) {
+               if (p1 == 0) p1 = pos; // take first change from 1 to 0
+            } else {
+               p2 = pos; // use last change from 0 to 1
+            }
+            nflip++;
+         }
+
+         fliparr[pos] = nflip; // remember flip counts to analyze them later
+
+         // check for simple bubble at the beginning 1101000 or 0x0B in swapped order
+         // set position on last 1 ? Expecting following sequence
+         //  1110000 - here pos=4
+         //     ^
+         //  1110100 - here pos=5
+         //      ^
+         //  1111100 - here pos=6
+         //       ^
+         if ((data & 0xFF) == 0x0B) b1 = pos+3;
+
+         // check for simple bubble at the end 00001011 or 0xD0 in swapped order
+         // set position of 0 in bubble, expecting such sequence
+         //  0001111 - here pos=4
+         //     ^
+         //  0001011 - here pos=5
+         //      ^
+         //  0000011 - here pos=6
+         //       ^
+         if ((data & 0xFF) == 0xD0) b2 = pos+5;
+
+         // simple bubble at very end 00000101 or 0xA0 in swapped order
+         // here not enough space for two bits
+         if (((pos == BUBBLE_SIZE*16 - 8)) && (b2 == 0) && ((data & 0xFF) == 0xA0))
+            b2 = pos + 6;
+
+
+         last = (data & 1);
+         data = data >> 1;
+         pos++;
+      }
+   }
+
+   if (nflip == 2) return 0; // both are ok
+
+   if ((nflip == 4) && (b1 > 0) && (b2 == 0)) { p1 = b1; return 0x10; } // bubble in the begin
+
+   if ((nflip == 4) && (b1 == 0) && (b2 > 0)) { p2 = b2; return 0x01; } // bubble at the end
+
+   if ((nflip == 6) && (b1 > 0) && (b2 > 0)) { p1 = b1; p2 = b2; return 0x11; } // bubble on both side
+
+   // up to here was simple errors, now we should do more complex analysis
+
+   if (p1 < p2 - 8) {
+      // take flip count at the middle and check how many transitions was in between
+      int mid = (p2+p1)/2;
+      // hard error in the beginning
+      if (fliparr[mid] + 1 == fliparr[p2]) return 0x20;
+      // hard error in begin, bubble at the end
+      if ((fliparr[mid] + 3 == fliparr[p2]) && (b2>0)) { p2 = b2; return 0x21; }
+
+      // hard error at the end
+      if (fliparr[p1] == fliparr[mid]) return 0x02;
+      // hard error at the end, bubble at the begin
+      if ((fliparr[p1] + 2 == fliparr[mid]) && (b1>0)) { p1 = b1; return 0x12; }
+   }
+
+   return 0x22; // mark both as errors, should analyze better
+}
+
+void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
+   if (p1<0) p1 = 0;
+   if (p2<=p1) p2 = BUBBLE_SIZE*16;
+
+   int pos = 0;
+   char sbuf[1000];
+   char* ptr  = sbuf;
+
+   for (unsigned d=0;d<BUBBLE_SIZE;d++) {
+      unsigned origin = bubble[d];
+      for (unsigned dd = 0;dd<16;++dd) {
+         if ((pos>=p1) && (pos<=p2))
+            *ptr++ = (origin & 0x1) ? '1' : '0';
+         origin = origin >> 1;
+         pos++;
+      }
+   }
+
+   *ptr++ = 0;
+   printf("%s", sbuf);
+}
+
+
+bool PrintBubbleData(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix)
+{
+   if (data.size() == 0)
+      return false;
+
+   if (prefix == 0) return false;
+
+   unsigned lastch = 0xFFFF;
+   unsigned bubble[190];
+   unsigned bcnt = 0, msg = 0, chid = 0;
+   int p1 = 0, p2 = 0;
+
+   for (unsigned cnt = 0; cnt <= data.size(); cnt++, ix++) {
+      chid = 0xFFFF;
+      msg = 0;
+      if (cnt < data.size()) {
+         msg = data[cnt];
+         if ((msg & tdckind_Mask) != tdckind_Hit) continue;
+         chid = (msg >> 22) & 0x7F;
+      }
+
+      if (chid != lastch) {
+         if (lastch != 0xFFFF) {
+            printf("%*s ch%02u: ", prefix, "", lastch);
+            if (bcnt==BUBBLE_SIZE) {
+
+               PrintBubble(bubble);
+
+               int chk = BubbleCheck(bubble, p1, p2);
+               int left = p1-2;
+               int right = p2+1;
+               if ((chk & 0xF0) == 0x10) left--;
+               if ((chk & 0x0F) == 0x01) right++;
+
+               if (chk == 0)
+                  printf(" norm");
+               else if (chk == 0x22) {
+                  printf(" corr ");
+                  PrintBubbleBinary(bubble, left, right);
+               } else if (((chk & 0xF0) < 0x20) && ((chk & 0x0F) < 0x02)) {
+                  printf(" bubb ");
+                  PrintBubbleBinary(bubble, left, right);
+               } else {
+                  printf(" mixe ");
+                  PrintBubbleBinary(bubble, left, right);
+               }
+
+            } else {
+               printf("bubble data error length = %u, expected %u", bcnt, BUBBLE_SIZE);
+            }
+
+            printf("\n");
+         }
+         lastch = chid; bcnt = 0;
+      }
+
+      bubble[bcnt++] = msg & 0xFFFF;
+      // printf("here\n");
+   }
+
+   return true;
+}
 
 unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix)
 {
@@ -289,26 +481,15 @@ const char* debug_name[32] = {
 };
 
 
-void PrintBubble(unsigned* bubble, unsigned len = 0) {
-   // print in original order, time from right to left
-   // for (unsigned d=BUBBLE_SIZE;d>0;d--) printf("%04x",bubble[d-1]);
-
-   if (len == 0) len = BUBBLE_SIZE;
-   // print in reverse order, time from left to right
-   for (unsigned d=0;d<len;d++) {
-      unsigned origin = bubble[d], swap = 0;
-      for (unsigned dd = 0;dd<16;++dd) {
-         swap = (swap << 1) | (origin & 1);
-         origin = origin >> 1;
-      }
-      printf("%04x",swap);
-   }
-}
-
 unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask)
 {
    unsigned len = data.size();
    errmask = 0;
+
+   if (bubble_mode) {
+      PrintBubbleData(ix, data, prefix);
+      return 0;
+   }
 
    unsigned msg0 = data[0];
    if (((msg0 & tdckind_Mask) == tdckind_Header) && (((msg0 >> 24) & 0xF) == 0x4))
