@@ -31,7 +31,8 @@ enum TdcErrorsKind {
    tdcerr_ToT         = 0x0020
 };
 
-const char* TdcErrName(int cnt) {
+const char* TdcErrName(int cnt)
+{
    switch (cnt) {
       case 0: return "header";
       case 1: return "ch0";
@@ -93,6 +94,83 @@ enum {
    newkind_TMDR     = 0x5E000000
 };
 
+void print_tdc_arguments()
+{
+   printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
+   printf("   -onlych chid            - print only specified TDC channel (default off)\n");
+   printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
+   printf("   -fulltime               - always print full time of timestamp (default prints relative to channel 0)\n");
+   printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
+   printf("   -mhz value              - new design with arbitrary MHz, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
+   printf("   -400                    - new 400 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
+   printf("   -340                    - new 340 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
+   printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31)\n");
+   printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491)\n");
+   printf("   -fine-min4 value        - minimal fine counter value TDC v4, used for liner time calibration (default 28)\n");
+   printf("   -fine-max4 value        - maximal fine counter value TDC v4, used for liner time calibration (default 350)\n");
+   printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
+   printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
+   printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n");
+   printf("   -bw                     - disable colors\n");
+}
+
+bool scan_tdc_arguments(int &n, int argc, char* argv[])
+{
+   if ((strcmp(argv[n], "-onlytdc") == 0) && (n + 1 < argc)) {
+      dabc::str_to_uint(argv[++n], &onlytdc);
+   } else if ((strcmp(argv[n], "-onlych") == 0) && (n + 1 < argc)) {
+      dabc::str_to_int(argv[++n], &onlych);
+   } else if ((strcmp(argv[n], "-skipintdc") == 0) && (n + 1 < argc)) {
+      dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc);
+   } else if (strcmp(argv[n], "-ignorecalibr") == 0) {
+      use_calibr = false;
+   } else if (strcmp(argv[n], "-fulltime") == 0) {
+      print_fulltime = true;
+   } else if ((strcmp(argv[n], "-mhz") == 0) && (n + 1 < argc)) {
+      double mhz = 200.;
+      dabc::str_to_double(argv[++n], &mhz);
+      use_400mhz = true;
+      coarse_tmlen = 1000. / mhz;
+      fine_min = 0x5;
+      fine_max = 0xc0;
+   } else if (strcmp(argv[n], "-340") == 0) {
+      use_400mhz = true;
+      coarse_tmlen = 1000. / 340.;
+      fine_min = 0x5;
+      fine_max = 0xc0;
+   } else if (strcmp(argv[n], "-400") == 0) {
+      use_400mhz = true;
+      coarse_tmlen = 1000. / 400.;
+      fine_min = 0x5;
+      fine_max = 0xc0;
+   } else if ((strcmp(argv[n], "-tot") == 0) && (n + 1 < argc)) {
+      dabc::str_to_double(argv[++n], &tot_limit);
+   } else if ((strcmp(argv[n], "-stretcher") == 0) && (n + 1 < argc)) {
+      dabc::str_to_double(argv[++n], &tot_shift);
+   } else if ((strcmp(argv[n], "-fine-min") == 0) && (n + 1 < argc)) {
+      dabc::str_to_uint(argv[++n], &fine_min);
+   } else if ((strcmp(argv[n], "-fine-max") == 0) && (n + 1 < argc)) {
+      dabc::str_to_uint(argv[++n], &fine_max);
+   } else if ((strcmp(argv[n], "-fine-min4") == 0) && (n + 1 < argc)) {
+      dabc::str_to_uint(argv[++n], &fine_min4);
+   } else if ((strcmp(argv[n], "-fine-max4") == 0) && (n + 1 < argc)) {
+      dabc::str_to_uint(argv[++n], &fine_max4);
+   } else if (strcmp(argv[n], "-bubble") == 0) {
+      bubble_mode = true;
+   } else if (strcmp(argv[n], "-bubb18") == 0) {
+      bubble_mode = true;
+      BUBBLE_SIZE = 18;
+   } else if (strcmp(argv[n], "-bubb19") == 0) {
+      bubble_mode = true;
+      BUBBLE_SIZE = 19;
+   } else if (strcmp(argv[n], "-bw") == 0) {
+      use_colors = false;
+   } else
+      return false;
+   return true;
+}
+
+
 void PrintBubble(unsigned* bubble, unsigned len = 0)
 {
    // print in original order, time from right to left
@@ -109,8 +187,6 @@ void PrintBubble(unsigned* bubble, unsigned len = 0)
       printf("%04x",swap);
    }
 }
-
-
 
 unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
    p1 = 0; p2 = 0;

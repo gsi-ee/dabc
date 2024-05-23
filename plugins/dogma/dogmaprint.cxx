@@ -25,6 +25,10 @@
 #include "dabc/Url.h"
 #include "dabc/api.h"
 
+#include "../hadaq/tdc_print_code.cxx"
+
+
+
 int usage(const char* errstr = nullptr)
 {
    if (errstr)
@@ -45,20 +49,8 @@ int usage(const char* errstr = nullptr)
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -rate                   - display only events and data rate\n");
    printf("   -stat                   - count statistics\n");
-   printf("   -bw                     - disable colors\n");
    printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
-   printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
-   printf("   -fulltime               - always print full time of timestamp (default prints relative to channel 0)\n");
-   printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
-   printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
-   printf("   -onlych chid            - print only specified TDC channel (default off)\n");
-   printf("   -mhz value              - new design with arbitrary MHz, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
-   printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31)\n");
-   printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491)\n");
-   printf("   -fine-min4 value        - minimal fine counter value TDC v4, used for liner time calibration (default 28)\n");
-   printf("   -fine-max4 value        - maximal fine counter value TDC v4, used for liner time calibration (default 350)\n");
-   printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
-   printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
+   print_tdc_arguments();
    return errstr ? 1 : 0;
 }
 
@@ -92,8 +84,6 @@ bool is_tdc(unsigned id)
 std::map<uint32_t, TuStat> tu_stats;
 uint32_t ref_addr = 0;
 
-
-#include "../hadaq/tdc_print_code.cxx"
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
@@ -191,7 +181,7 @@ int main(int argc, char* argv[])
       return usage();
 
    long number = 10, skip = 0, nagain = 0;
-   double tmout = -1., maxage = -1., mhz = 200.;
+   double tmout = -1., maxage = -1.;
    unsigned tdcmask = 0;
 
    int n = 1;
@@ -215,42 +205,10 @@ int main(int argc, char* argv[])
          printsub = true;
       } else if (strcmp(argv[n], "-stat") == 0) {
          dostat = true;
-      } else if (strcmp(argv[n], "-bw") == 0) {
-         use_colors = false;
-      } else if (strcmp(argv[n], "-ignorecalibr") == 0) {
-         use_calibr = false;
-      } else if (strcmp(argv[n], "-fulltime") == 0) {
-         print_fulltime = true;
       } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &tdcmask);
          tdcs.emplace_back(tdcmask);
-      } else if ((strcmp(argv[n], "-onlytdc") == 0) && (n + 1 < argc)) {
-         dabc::str_to_uint(argv[++n], &onlytdc);
-      } else if ((strcmp(argv[n], "-onlych") == 0) && (n + 1 < argc)) {
-         dabc::str_to_int(argv[++n], &onlych);
-      } else if ((strcmp(argv[n], "-skipintdc") == 0) && (n + 1 < argc)) {
-         dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc);
-      } else if ((strcmp(argv[n], "-mhz") == 0) && (n + 1 < argc)) {
-         dabc::str_to_double(argv[++n], &mhz);
-         use_400mhz = true;
-         coarse_tmlen = 1000. / mhz;
-         fine_min = 0x5;
-         fine_max = 0xc0;
-      } else if (strcmp(argv[n], "-340") == 0) {
-         use_400mhz = true;
-         coarse_tmlen = 1000. / 340.;
-         fine_min = 0x5;
-         fine_max = 0xc0;
-      } else if (strcmp(argv[n], "-400") == 0) {
-         use_400mhz = true;
-         coarse_tmlen = 1000. / 400.;
-         fine_min = 0x5;
-         fine_max = 0xc0;
-      } else if ((strcmp(argv[n], "-tot") == 0) && (n + 1 < argc)) {
-         dabc::str_to_double(argv[++n], &tot_limit);
-      } else if ((strcmp(argv[n], "-stretcher") == 0) && (n + 1 < argc)) {
-         dabc::str_to_double(argv[++n], &tot_shift);
-      } else
+      } else if (!scan_tdc_arguments(n, argc, argv))
          return usage("Unknown option");
    }
 

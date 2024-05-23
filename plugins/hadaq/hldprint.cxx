@@ -25,6 +25,9 @@
 #include "dabc/Url.h"
 #include "dabc/api.h"
 
+#include "./tdc_print_code.cxx"
+
+
 int usage(const char* errstr = nullptr)
 {
    if (errstr)
@@ -62,27 +65,12 @@ int usage(const char* errstr = nullptr)
    printf("   -auto                   - automatically assign ID for TDCs (0x0zzz or 0x1zzz) and HUBs (0x8zzz) (default false)\n");
    printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff)\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
-   printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
-   printf("   -onlych chid            - print only specified TDC channel (default off)\n");
    printf("   -onlynew subsubid       - printout raw data only for specified TDC4 subsubevent\n");
    printf("   -onlymonitor id         - printout only event/subevent created by hadaq::Monitor module (default off) \n");
-   printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
-   printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
-   printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
-   printf("   -fulltime               - always print full time of timestamp (default prints relative to channel 0)\n");
-   printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
    printf("   -fullid value           - printout only events with specified fullid (default all)\n");
    printf("   -rate                   - display only events and data rate\n");
-   printf("   -bw                     - disable colors\n");
    printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
-   printf("   -400                    - new 400 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
-   printf("   -340                    - new 340 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
-   printf("   -mhz value              - new design with arbitrary MHz, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
-   printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31)\n");
-   printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491)\n");
-   printf("   -fine-min4 value        - minimal fine counter value TDC v4, used for liner time calibration (default 28)\n");
-   printf("   -fine-max4 value        - maximal fine counter value TDC v4, used for liner time calibration (default 350)\n");
-   printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n");
+   print_tdc_arguments();
    printf("   -again [N=1]            - repeat same printout N times, only for debug purposes\n\n");
    printf("Example - display only data from TDC 0x1226:\n\n");
    printf("   hldprint localhost:6789 -num 1 -auto -onlytdc 0x1226\n\n");
@@ -91,9 +79,6 @@ int usage(const char* errstr = nullptr)
 
    return errstr ? 1 : 0;
 }
-
-
-#include "./tdc_print_code.cxx"
 
 enum TrbDecodeKind {
    decode_SingleSubev = 0x8       // subevent contains single sub-sub event
@@ -150,7 +135,6 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
 void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, SubevStat *substat = nullptr)
 {
    if (len == 0) return;
-
 
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
    if (ix >= sz) return;
@@ -356,7 +340,6 @@ bool is_newtdc(unsigned id)
    return false;
 }
 
-
 bool is_adc(unsigned id)
 {
    return ((adcmask != 0) && ((id & idrange) <= (adcmask & idrange)) && ((id & ~idrange) == (adcmask & ~idrange)));
@@ -364,69 +347,86 @@ bool is_adc(unsigned id)
 
 int main(int argc, char* argv[])
 {
-   if ((argc<2) || !strcmp(argv[1],"-help") || !strcmp(argv[1],"?")) return usage();
+   if ((argc < 2) || !strcmp(argv[1], "-help") || !strcmp(argv[1], "?"))
+      return usage();
 
    long number = 10, skip = 0, nagain = 0;
    unsigned find_trigid = 0, find_eventid = 0;
-   double tmout = -1., maxage = -1., debug_delay = -1, mhz = 400.;
+   double tmout = -1., maxage = -1., debug_delay = -1;
    bool dofind = false;
    unsigned tdcmask = 0, ctsid = 0;
 
    int n = 1;
    while (++n < argc) {
-      if ((strcmp(argv[n],"-num") == 0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
-      if (strcmp(argv[n],"-all") == 0) { number = 0; } else
-      if ((strcmp(argv[n],"-skip") == 0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
-      if ((strcmp(argv[n],"-event") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_eventid); dofind = true; } else
-      if ((strcmp(argv[n],"-find") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &find_trigid); dofind = true; } else
-      if ((strcmp(argv[n],"-cts") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.emplace_back(ctsid); } else
-      if ((strcmp(argv[n],"-tdc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.emplace_back(tdcmask); } else
-      if ((strcmp(argv[n],"-new") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); newtdcs.emplace_back(tdcmask); } else
-      if ((strcmp(argv[n],"-range") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
-      if ((strcmp(argv[n],"-onlytdc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
-      if ((strcmp(argv[n],"-onlych") == 0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &onlych); } else
-      if ((strcmp(argv[n],"-onlynew") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlynew); } else
-      if ((strcmp(argv[n],"-skipintdc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc); } else
-      if ((strcmp(argv[n],"-fine-min") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
-      if ((strcmp(argv[n],"-fine-max") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
-      if ((strcmp(argv[n],"-fine-min4") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min4); } else
-      if ((strcmp(argv[n],"-fine-max4") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max4); } else
-      if ((strcmp(argv[n],"-tot") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
-      if ((strcmp(argv[n],"-stretcher") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_shift); } else
-      if ((strcmp(argv[n],"-onlyraw") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
-      if ((strcmp(argv[n],"-adc") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
-      if ((strcmp(argv[n],"-fullid") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
-      if ((strcmp(argv[n],"-hub") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.emplace_back(hubmask); } else
-      if ((strcmp(argv[n],"-onlymonitor") == 0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlymonitor); } else
-      if ((strcmp(argv[n],"-tmout") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
-      if ((strcmp(argv[n],"-maxage") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
-      if ((strcmp(argv[n],"-delay") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
-      if ((strcmp(argv[n],"-mhz") == 0) && (n+1<argc)) {
-         dabc::str_to_double(argv[++n], &mhz);
-         use_400mhz = true; coarse_tmlen = 1000./mhz; fine_min = 0x5; fine_max = 0xc0;
-      } else
-      if (strcmp(argv[n],"-bubble") == 0) { bubble_mode = true; } else
-      if (strcmp(argv[n],"-bubb18") == 0) { bubble_mode = true; BUBBLE_SIZE = 18; } else
-      if (strcmp(argv[n],"-bubb19") == 0) { bubble_mode = true; BUBBLE_SIZE = 19; } else
-      if (strcmp(argv[n],"-onlyerr") == 0) { only_errors = true; } else
-      if (strcmp(argv[n],"-raw") == 0) { printraw = true; } else
-      if (strcmp(argv[n],"-sub") == 0) { printsub = true; } else
-      if (strcmp(argv[n],"-auto") == 0) { autoid = true; printsub = true; } else
-      if (strcmp(argv[n],"-stat") == 0) { dostat = true; } else
-      if (strcmp(argv[n],"-minsz") == 0) { dominsz = true; } else
-      if (strcmp(argv[n],"-maxsz") == 0) { domaxsz = true; } else
-      if (strcmp(argv[n],"-rate") == 0) { showrate = true; reconnect = true; } else
-      if (strcmp(argv[n],"-bw") == 0) { use_colors = false; } else
-      if (strcmp(argv[n],"-ignorecalibr") == 0) { use_calibr = false; } else
-      if (strcmp(argv[n],"-fulltime") == 0) { print_fulltime = true; } else
-      if (strcmp(argv[n],"-340") == 0) { use_400mhz = true; coarse_tmlen = 1000./340.; fine_min = 0x5; fine_max = 0xc0; } else
-      if (strcmp(argv[n],"-400") == 0) { use_400mhz = true; coarse_tmlen = 1000./400.; fine_min = 0x5; fine_max = 0xc0; } else
-      if ((strcmp(argv[n],"-help") == 0) || (strcmp(argv[n],"?") == 0)) return usage(); else
-      if (strcmp(argv[n],"-again") == 0) {
-         if ((n+1 < argc) && (argv[n+1][0] != '-')) dabc::str_to_lint(argv[++n], &nagain);
-                                               else nagain++;
-      } else
-      return usage("Unknown option");
+      if ((strcmp(argv[n], "-num") == 0) && (n + 1 < argc)) {
+         dabc::str_to_lint(argv[++n], &number);
+      } else if (strcmp(argv[n], "-all") == 0) {
+         number = 0;
+      } else if ((strcmp(argv[n], "-skip") == 0) && (n + 1 < argc)) {
+         dabc::str_to_lint(argv[++n], &skip);
+      } else if ((strcmp(argv[n], "-event") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &find_eventid);
+         dofind = true;
+      } else if ((strcmp(argv[n], "-find") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &find_trigid);
+         dofind = true;
+      } else if ((strcmp(argv[n], "-cts") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &ctsid);
+         ctsids.emplace_back(ctsid);
+      } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &tdcmask);
+         tdcs.emplace_back(tdcmask);
+      } else if ((strcmp(argv[n], "-new") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &tdcmask);
+         newtdcs.emplace_back(tdcmask);
+      } else if ((strcmp(argv[n], "-range") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &idrange);
+      } else if ((strcmp(argv[n], "-onlynew") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &onlynew);
+      } else if ((strcmp(argv[n], "-onlyraw") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &onlyraw);
+      } else if ((strcmp(argv[n], "-adc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &adcmask);
+      } else if ((strcmp(argv[n], "-fullid") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &fullid);
+      } else if ((strcmp(argv[n], "-hub") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &hubmask);
+         hubs.emplace_back(hubmask);
+      } else if ((strcmp(argv[n], "-onlymonitor") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &onlymonitor);
+      } else if ((strcmp(argv[n], "-tmout") == 0) && (n + 1 < argc)) {
+         dabc::str_to_double(argv[++n], &tmout);
+      } else if ((strcmp(argv[n], "-maxage") == 0) && (n + 1 < argc)) {
+         dabc::str_to_double(argv[++n], &maxage);
+      } else if ((strcmp(argv[n], "-delay") == 0) && (n + 1 < argc)) {
+         dabc::str_to_double(argv[++n], &debug_delay);
+      } else if (strcmp(argv[n], "-onlyerr") == 0) {
+         only_errors = true;
+      } else if (strcmp(argv[n], "-raw") == 0) {
+         printraw = true;
+      } else if (strcmp(argv[n], "-sub") == 0) {
+         printsub = true;
+      } else if (strcmp(argv[n], "-auto") == 0) {
+         autoid = true;
+         printsub = true;
+      } else if (strcmp(argv[n], "-stat") == 0) {
+         dostat = true;
+      } else if (strcmp(argv[n], "-minsz") == 0) {
+         dominsz = true;
+      } else if (strcmp(argv[n], "-maxsz") == 0) {
+         domaxsz = true;
+      } else if (strcmp(argv[n], "-rate") == 0) {
+         showrate = true;
+         reconnect = true;
+      } else if ((strcmp(argv[n], "-help") == 0) || (strcmp(argv[n], "?") == 0))
+         return usage();
+      else if (strcmp(argv[n], "-again") == 0) {
+         if ((n + 1 < argc) && (argv[n + 1][0] != '-'))
+            dabc::str_to_lint(argv[++n], &nagain);
+         else
+            nagain++;
+      } else if (!scan_tdc_arguments(n, argc, argv))
+         return usage("Unknown option");
    }
 
    if ((adcmask != 0) || !tdcs.empty() || (onlytdc != 0) || (onlynew != 0) || (onlyraw != 0)) { printsub = true; }
