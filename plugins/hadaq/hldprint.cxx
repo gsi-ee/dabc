@@ -621,7 +621,6 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       return;
    }
 
-
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
    if (ix>=sz) return;
 
@@ -1113,7 +1112,6 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-maxsz") == 0) { domaxsz = true; } else
       if (strcmp(argv[n],"-rate") == 0) { showrate = true; reconnect = true; } else
       if (strcmp(argv[n],"-bw") == 0) { use_colors = false; } else
-      if (strcmp(argv[n],"-sub") == 0) { printsub = true; } else
       if (strcmp(argv[n],"-ignorecalibr") == 0) { use_calibr = false; } else
       if (strcmp(argv[n],"-fulltime") == 0) { print_fulltime = true; } else
       if (strcmp(argv[n],"-340") == 0) { use_400mhz = true; coarse_tmlen = 1000./340.; fine_min = 0x5; fine_max = 0xc0; } else
