@@ -70,7 +70,7 @@ struct TuStat {
    dogma::DogmaTu *tu{nullptr}; // current tu
 };
 
-bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false, use_colors = true;
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
 unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 
 std::vector<unsigned> tdcs;
@@ -91,21 +91,6 @@ bool is_tdc(unsigned id)
 
 std::map<uint32_t, TuStat> tu_stats;
 uint32_t ref_addr = 0;
-
-const char *col_RESET   = "\033[0m";
-const char *col_BLACK   = "\033[30m";      /* Black */
-const char *col_RED     = "\033[31m";      /* Red */
-const char *col_GREEN   = "\033[32m";      /* Green */
-const char *col_YELLOW  = "\033[33m";      /* Yellow */
-const char *col_BLUE    = "\033[34m";      /* Blue */
-const char *col_MAGENTA = "\033[35m";      /* Magenta */
-const char *col_CYAN    = "\033[36m";      /* Cyan */
-const char *col_WHITE   = "\033[37m";      /* White */
-
-const char *getCol(const char *col_name)
-{
-   return use_colors ? col_name : "";
-}
 
 
 #include "../hadaq/tdc_print_code.cxx"

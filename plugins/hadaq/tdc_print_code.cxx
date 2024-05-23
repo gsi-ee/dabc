@@ -3,7 +3,7 @@
 
 unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0, onlytdc = 0;
 double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5.;
-bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false;
+bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false, use_colors = true;
 int onlych = -1;
 
 enum TdcMessageKind {
@@ -43,6 +43,20 @@ const char* TdcErrName(int cnt) {
    return "unknown";
 }
 
+const char *col_RESET   = "\033[0m";
+const char *col_BLACK   = "\033[30m";      /* Black */
+const char *col_RED     = "\033[31m";      /* Red */
+const char *col_GREEN   = "\033[32m";      /* Green */
+const char *col_YELLOW  = "\033[33m";      /* Yellow */
+const char *col_BLUE    = "\033[34m";      /* Blue */
+const char *col_MAGENTA = "\033[35m";      /* Magenta */
+const char *col_CYAN    = "\033[36m";      /* Cyan */
+const char *col_WHITE   = "\033[37m";      /* White */
+
+const char *getCol(const char *col_name)
+{
+   return use_colors ? col_name : "";
+}
 
 enum {
    // with mask 1
