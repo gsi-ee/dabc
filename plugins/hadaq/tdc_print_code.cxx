@@ -20,6 +20,8 @@ enum TdcMessageKind {
 
 enum { NumTdcErr = 6 };
 
+unsigned BUBBLE_SIZE = 19;
+
 enum TdcErrorsKind {
    tdcerr_MissHeader  = 0x0001,
    tdcerr_MissCh0     = 0x0002,
@@ -28,6 +30,18 @@ enum TdcErrorsKind {
    tdcerr_Sequence    = 0x0010,
    tdcerr_ToT         = 0x0020
 };
+
+const char* TdcErrName(int cnt) {
+   switch (cnt) {
+      case 0: return "header";
+      case 1: return "ch0";
+      case 2: return "epoch";
+      case 3: return "nodata";
+      case 4: return "seq";
+      case 5: return "tot";
+   }
+   return "unknown";
+}
 
 
 enum {
@@ -65,7 +79,7 @@ enum {
    newkind_TMDR     = 0x5E000000
 };
 
-unsigned PrintTdc4Data(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix)
+unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix)
 {
    unsigned len = data.size();
 
@@ -277,14 +291,14 @@ void PrintBubble(unsigned* bubble, unsigned len = 0) {
    }
 }
 
-unsigned PrintTdcData(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask)
+unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask)
 {
    unsigned len = data.size();
    errmask = 0;
 
    unsigned msg0 = data[0];
    if (((msg0 & tdckind_Mask) == tdckind_Header) && (((msg0 >> 24) & 0xF) == 0x4))
-      return PrintTdc4Data(ix, data, prefix);
+      return PrintTdc4DataPlain(ix, data, prefix);
 
    unsigned wlen = len > 999 ? 4 : (len > 99 ? 3 : 2);
 

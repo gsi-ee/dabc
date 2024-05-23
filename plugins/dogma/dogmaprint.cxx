@@ -102,20 +102,6 @@ const char *col_MAGENTA = "\033[35m";      /* Magenta */
 const char *col_CYAN    = "\033[36m";      /* Cyan */
 const char *col_WHITE   = "\033[37m";      /* White */
 
-unsigned BUBBLE_SIZE = 19;
-
-const char* TdcErrName(int cnt) {
-   switch (cnt) {
-      case 0: return "header";
-      case 1: return "ch0";
-      case 2: return "epoch";
-      case 3: return "nodata";
-      case 4: return "seq";
-      case 5: return "tot";
-   }
-   return "unknown";
-}
-
 const char *getCol(const char *col_name)
 {
    return use_colors ? col_name : "";
@@ -145,7 +131,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       for (unsigned i = 0; i < len; ++i)
          data[i] = tu->GetPayload(i);
       unsigned errmask = 0;
-      PrintTdcData(0, data, strlen(prefix) + 3, errmask);
+      PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask);
    }
 }
 
