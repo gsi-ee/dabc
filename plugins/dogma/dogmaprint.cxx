@@ -44,12 +44,24 @@ int usage(const char* errstr = nullptr)
    printf("   -skip number            - number of events to skip before start printing\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -rate                   - display only events and data rate\n");
+   printf("   -stat                   - count statistics\n");
 
    return errstr ? 1 : 0;
 }
 
+struct TuStat {
+   int cnt{0}; // number of stats
+   int64_t min_diff{0}; // minimal time diff
+   int64_t max_diff{0}; // maximal time diff
+
+   dogma::DogmaTu *tu{nullptr}; // current tu
+};
+
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
 unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
+
+std::map<uint32_t, TuStat> tu_stats;
+uint32_t ref_addr = 0;
 
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
@@ -78,6 +90,60 @@ void print_evnt(dogma::DogmaEvent *evnt)
       print_tu(tu, "   ");
       tu = evnt->NextSubevent(tu);
    }
+}
+
+void stat_evnt(dogma::DogmaEvent *evnt)
+{
+   if (!evnt)
+      return;
+
+   for (auto &pairs : tu_stats)
+      pairs.second.tu = nullptr;
+
+   auto tu = evnt->FirstSubevent();
+   dogma::DogmaTu *ref = nullptr;
+   while(tu) {
+      auto &entry = tu_stats[tu->GetAddr()];
+      entry.tu = tu;
+      if (!ref_addr) ref_addr = tu->GetAddr();
+
+      if (ref_addr == tu->GetAddr())
+         ref = tu;
+
+      tu = evnt->NextSubevent(tu);
+   }
+
+   for (auto &pairs : tu_stats) {
+
+      auto &entry = pairs.second;
+      if (!entry.tu) continue;
+
+      entry.cnt++;
+
+      if (!ref || (pairs.first == ref_addr))
+         continue;
+
+      int64_t diff = entry.tu->GetTrigTime();
+      diff -= ref->GetTrigTime();
+
+      if (entry.cnt == 1) {
+         entry.min_diff = diff;
+         entry.max_diff = diff;
+      } else {
+         if (entry.min_diff < diff)
+            entry.min_diff = diff;
+         if (entry.max_diff > diff)
+            entry.max_diff = diff;
+      }
+   }
+}
+
+void print_stat()
+{
+   for (auto &pairs : tu_stats) {
+      printf("  addr:%04x cnt:%d min_diff:%ld max_diff:%ld\n", (unsigned) pairs.first, pairs.second.cnt, (long) pairs.second.min_diff, (long) pairs.second.max_diff);
+   }
+
 }
 
 int main(int argc, char* argv[])
@@ -253,7 +319,9 @@ int main(int argc, char* argv[])
 
       printcnt++;
 
-      if (tu)
+      if (dostat) {
+         stat_evnt(evnt);
+      } else if (tu)
          print_tu(tu);
       else if (evnt)
          print_evnt(evnt);
@@ -270,6 +338,7 @@ int main(int argc, char* argv[])
 
    if (dostat) {
       printf("Statistic: %ld events analyzed\n", printcnt);
+      print_stat();
    }
 
    if (dominsz && mincnt >= 0)
