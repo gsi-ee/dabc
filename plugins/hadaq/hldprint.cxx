@@ -113,26 +113,7 @@ struct SubevStat {
 
 };
 
-
-void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
-{
-   if (len == 0) return;
-
-   unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
-
-   if (ix >= sz) return;
-   // here when len was 0 - rest of subevent was printed
-   if ((len == 0) || (ix + len > sz)) len = sz - ix;
-
-   std::vector<uint32_t> data(len, 0);
-   for (unsigned i = 0; i < len; ++i)
-      data[i] = sub->Data(i + ix);
-
-   PrintTdc4DataPlain(ix, data, prefix);
-}
-
-
-void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, SubevStat *substat = nullptr)
+void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, SubevStat *substat = nullptr, bool as_ver4 = false)
 {
    if (len == 0) return;
 
@@ -143,7 +124,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    for (unsigned i = 0; i < len; ++i)
       data[i] = sub->Data(i + ix);
 
-   unsigned maxch = PrintTdcDataPlain(ix, data, prefix, errmask);
+   unsigned maxch = PrintTdcDataPlain(ix, data, prefix, errmask, as_ver4);
 
    if (substat) {
       if (substat->maxch < maxch)
@@ -747,7 +728,7 @@ int main(int argc, char* argv[])
                if (as_tdc)
                   PrintTdcData(sub, ix, datalen, prefix, errmask);
                else if (as_new)
-                  PrintTdc4Data(sub, ix, datalen, prefix);
+                  PrintTdcData(sub, ix, datalen, prefix, errmask, nullptr, true);
                else if (as_adc)
                   PrintAdcData(sub, ix, datalen, prefix);
                else if (as_cts)

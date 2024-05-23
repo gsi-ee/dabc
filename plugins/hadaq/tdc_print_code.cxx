@@ -188,7 +188,8 @@ void PrintBubble(unsigned* bubble, unsigned len = 0)
    }
 }
 
-unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
+unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2)
+{
    p1 = 0; p2 = 0;
 
    unsigned pos = 0, last = 1, nflip = 0;
@@ -275,7 +276,8 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
    return 0x22; // mark both as errors, should analyze better
 }
 
-void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
+void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1)
+{
    if (p1<0) p1 = 0;
    if (p2<=p1) p2 = BUBBLE_SIZE*16;
 
@@ -557,18 +559,26 @@ const char* debug_name[32] = {
 };
 
 
-unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask)
+unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask, bool as_ver4 = false)
 {
    unsigned len = data.size();
    errmask = 0;
+
+   if (len == 0)
+      return 0;
 
    if (bubble_mode) {
       PrintBubbleData(ix, data, prefix);
       return 0;
    }
 
-   unsigned msg0 = data[0];
-   if (((msg0 & tdckind_Mask) == tdckind_Header) && (((msg0 >> 24) & 0xF) == 0x4))
+   if (!as_ver4) {
+      unsigned msg0 = data[0];
+      if (((msg0 & tdckind_Mask) == tdckind_Header) && (((msg0 >> 24) & 0xF) == 0x4))
+         as_ver4 = true;
+   }
+
+   if (as_ver4)
       return PrintTdc4DataPlain(ix, data, prefix);
 
    unsigned wlen = len > 999 ? 4 : (len > 99 ? 3 : 2);
