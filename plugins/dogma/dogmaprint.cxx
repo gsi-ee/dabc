@@ -54,9 +54,9 @@ unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, ful
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
-   printf("%stu addr: %lu type: 0x%02x trignum; %lu, time: %lu paylod: %lu\n", prefix, (long unsigned)tu->GetAddr(),
-          (unsigned)tu->GetTrigType(), (long unsigned)tu->GetTrigNumber(), (long unsigned)tu->GetTrigTime(),
-          (long unsigned)tu->GetPayloadLen());
+   printf("%stu addr: 0x%04x type: 0x%02x trignum: 0x%08x time: 0x%08x local: 0x%08x paylod: %3u\n", prefix, (unsigned)tu->GetAddr(),
+          (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(), (unsigned)tu->GetTrigTime(), (unsigned)tu->GetLocalTrigTime(),
+          (unsigned)tu->GetPayloadLen() * 4);
 
    if (printraw) {
       unsigned len = tu->GetPayloadLen();
