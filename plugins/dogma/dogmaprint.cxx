@@ -151,6 +151,201 @@ const char *getCol(const char *col_name)
    return use_colors ? col_name : "";
 }
 
+enum {
+   // with mask 1
+   newkind_TMDT     = 0x80000000,
+   // with mask 3
+   newkind_Mask3    = 0xE0000000,
+   newkind_HDR      = 0x20000000,
+   newkind_TRL      = 0x00000000,
+   newkind_EPOC     = 0x60000000,
+   // with mask 4
+   newkind_Mask4    = 0xF0000000,
+   newkind_TMDS     = 0x40000000,
+   // with mask 6
+   newkind_Mask6    = 0xFC000000,
+   newkind_TBD      = 0x50000000,
+   // with mask 8
+   newkind_Mask8    = 0xFF000000,
+   newkind_HSTM     = 0x54000000,
+   newkind_HSTL     = 0x55000000,
+   newkind_HSDA     = 0x56000000,
+   newkind_HSDB     = 0x57000000,
+   newkind_CTA      = 0x58000000,
+   newkind_CTB      = 0x59000000,
+   newkind_TEMP     = 0x5A000000,
+   newkind_BAD      = 0x5B000000,
+   // with mask 9
+   newkind_Mask9    = 0xFF800000,
+   newkind_TTRM     = 0x5C000000,
+   newkind_TTRL     = 0x5C800000,
+   newkind_TTCM     = 0x5D000000,
+   newkind_TTCL     = 0x5D800000,
+   // with mask 7
+   newkind_Mask7    = 0xFE000000,
+   newkind_TMDR     = 0x5E000000
+};
+
+
+
+
+void PrintTdc4Data(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix)
+{
+   unsigned len = data.size();
+
+   unsigned wlen = len > 999 ? 4 : (len > 99 ? 3 : 2);
+
+   unsigned ttype = 0;
+   uint64_t lastepoch = 0;
+   double coarse_unit = 1./2.8e8;
+   double localtm0 = 0.;
+
+   char sbeg[1000], sdata[1000];
+
+   for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
+      unsigned msg = data[cnt];
+
+      const char *kind = "unckn";
+
+      sdata[0] = 0;
+
+      if (prefix > 0)
+         snprintf(sbeg, sizeof(sbeg), "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
+      if ((msg & newkind_TMDT) == newkind_TMDT) {
+         kind = "TMDT";
+         unsigned mode = (msg >> 27) & 0xF;
+         unsigned channel = (msg >> 21) & 0x3F;
+         unsigned coarse = (msg >> 9) & 0xFFF;
+         unsigned fine = msg & 0x1FF;
+
+         if ((onlych >= 0) && (channel != (unsigned) onlych)) continue;
+
+         double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
+         if (fine > fine_max4)
+            localtm -= coarse_unit;
+         else if (fine > fine_min4)
+            localtm -= (fine - fine_min4) / (0. + fine_max4 - fine_min4) * coarse_unit;
+
+         snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u tm0:%6.3fns", mode, channel, coarse, fine, (localtm - localtm0)*1e9);
+      } else {
+         unsigned hdr3 = msg & newkind_Mask3;
+         unsigned hdr4 = msg & newkind_Mask4;
+         unsigned hdr6 = msg & newkind_Mask6;
+         unsigned hdr7 = msg & newkind_Mask7;
+         unsigned hdr8 = msg & newkind_Mask8;
+         unsigned hdr9 = msg & newkind_Mask9;
+         if (hdr3 == newkind_HDR) {
+            kind = "HDR";
+            unsigned major = (msg >> 24) & 0xF;
+            unsigned minor = (msg >> 20) & 0xF;
+            ttype = (msg >> 16) & 0xF;
+            unsigned trigger = msg & 0xFFFF;
+            snprintf(sdata, sizeof(sdata), "version:%u.%u typ:0x%x  trigger:%u", major, minor, ttype, trigger);
+         } else
+         if (hdr3 == newkind_TRL) {
+
+            switch (ttype) {
+               case 0x4:
+               case 0x6:
+               case 0x7:
+               case 0x8:
+               case 0x9:
+               case 0xE: {
+                  kind = "TRLB";
+                  unsigned eflags = (msg >> 24) & 0xF;
+                  unsigned maxdc = (msg >> 20) & 0xF;
+                  unsigned tptime = (msg >> 16) & 0xF;
+                  unsigned freq = msg & 0xFFFF;
+                  snprintf(sdata, sizeof(sdata), "eflags:0x%x maxdc:%u tptime:%u freq:%u", eflags, maxdc, tptime, freq);
+                  break;
+               }
+               case 0xC: {
+                  kind = "TRLC";
+                  unsigned cpc = (msg >> 24) & 0x7;
+                  unsigned ccs = (msg >> 20) & 0xF;
+                  unsigned ccdiv = (msg >> 16) & 0xF;
+                  unsigned freq = msg & 0xFFFF;
+                  snprintf(sdata, sizeof(sdata), "cpc:0x%x ccs:0x%x ccdiv:%u freq:%5.3fMHz", cpc, ccs, ccdiv, freq*1e-2);
+                  break;
+               }
+               case 0x0:
+               case 0x1:
+               case 0x2:
+               case 0xf:
+               default: {
+                  kind = "TRLA";
+                  unsigned platformid = (msg >> 20) & 0xff;
+                  unsigned major = (msg >> 16) & 0xf;
+                  unsigned minor = (msg >> 12) & 0xf;
+                  unsigned sub2 = (msg >> 8) & 0xf;
+                  unsigned numch = (msg & 0x7F) + 1;
+                  snprintf(sdata, sizeof(sdata), "platform:0x%x version:%u.%u.%u numch:%u", platformid, major, minor, sub2, numch);
+               }
+            }
+
+         } else
+         if (hdr3 == newkind_EPOC) {
+            kind = "EPOC";
+            unsigned epoch = msg & 0xFFFFFFF;
+            bool err = (msg & 0x10000000) != 0;
+            snprintf(sdata, sizeof(sdata), "0x%07x%s", epoch, (err ? " errflag" : ""));
+            lastepoch = epoch;
+         } else
+         if (hdr4 == newkind_TMDS) {
+            kind = "TMDS";
+            unsigned channel = (msg >> 21) & 0x7F;
+            unsigned coarse = (msg >> 9) & 0xFFF;
+            unsigned pattern = msg & 0x1FF;
+
+            double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
+            unsigned mask = 0x100, cnt2 = 8;
+            while (((pattern & mask) == 0) && (cnt2 > 0)) {
+               mask = mask >> 1;
+               cnt2--;
+            }
+            localtm -= coarse_unit/8*cnt2;
+
+            snprintf(sdata, sizeof(sdata), "ch:%u coarse:%u pattern:0x%03x tm0:%5.1f", channel, coarse, pattern, (localtm - localtm0)*1e9);
+         } else
+         if (hdr6 == newkind_TBD) kind = "TBD"; else
+         if (hdr8 == newkind_HSTM) kind = "HSTM"; else
+         if (hdr8 == newkind_HSTL) kind = "HSTL"; else
+         if (hdr8 == newkind_HSDA) kind = "HSDA"; else
+         if (hdr8 == newkind_HSDB) kind = "HSDB"; else
+         if (hdr8 == newkind_CTA) kind = "CTA"; else
+         if (hdr8 == newkind_CTB) kind = "CTB"; else
+         if (hdr8 == newkind_TEMP) kind = "TEMP"; else
+         if (hdr8 == newkind_BAD) kind = "BAD"; else
+         if (hdr9 == newkind_TTRM) kind = "TTRM"; else
+         if (hdr9 == newkind_TTRL) kind = "TTRL"; else
+         if (hdr9 == newkind_TTCM) kind = "TTCM"; else
+         if (hdr9 == newkind_TTCL) kind = "TTCL"; else
+         if (hdr7 == newkind_TMDR) {
+            kind = "TMDR";
+            unsigned mode = (msg >> 21) & 0xF;
+            unsigned coarse = (msg >> 9) & 0xFFF;
+            unsigned fine = msg & 0x1FF;
+            bool isrising = (mode == 0) || (mode == 2);
+
+            double localtm = ((lastepoch << 12) | coarse) * coarse_unit;
+            if (fine > fine_max4)
+               localtm -= coarse_unit;
+            else if (fine > fine_min4)
+               localtm -= (fine - fine_min4) / (0. + fine_max4 - fine_min4) * coarse_unit;
+
+            if (isrising) localtm0 = localtm;
+
+            if (onlych > 0) continue;
+
+            snprintf(sdata, sizeof(sdata), "mode:0x%x coarse:%u fine:%u tm:%6.3fns", mode, coarse, fine, isrising ? localtm*1e9 : (localtm - localtm0)*1e9);
+         }
+      }
+
+      if (prefix > 0) printf("%s%s %s\n", sbeg, kind, sdata);
+   }
+}
+
+
 const char* debug_name[32] = {
       "Number of valid triggers",
       "Number of release signals send",
@@ -203,17 +398,15 @@ void PrintBubble(unsigned* bubble, unsigned len = 0) {
    }
 }
 
-void PrintTdcData(dogma::DogmaTu *tu, unsigned prefix, unsigned& errmask)
+void PrintTdcData(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask)
 {
-   unsigned ix = 0;
+   unsigned len = data.size();
 
-   unsigned len = tu->GetPayloadLen();
-
-   //unsigned msg0 = tu->GetPayload(ix);
-   //if (((msg0 & tdckind_Mask) == tdckind_Header) && (((msg0 >> 24) & 0xF) == 0x4)) {
-   //   PrintTdc4Data(tu, prefix);
-   //   return;
-   //}
+   unsigned msg0 = data[0];
+   if (((msg0 & tdckind_Mask) == tdckind_Header) && (((msg0 >> 24) & 0xF) == 0x4)) {
+      PrintTdc4Data(ix, data, prefix);
+      return;
+   }
 
    unsigned wlen = len > 999 ? 4 : (len > 99 ? 3 : 2);
 
@@ -252,7 +445,7 @@ void PrintTdcData(dogma::DogmaTu *tu, unsigned prefix, unsigned& errmask)
    bool with_calibr = false, bad_fine = false;
 
    for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
-      unsigned msg = tu->GetPayload(ix);
+      auto msg = data[cnt];
       if (bubble_len >= 0) {
          bool israw = (msg & tdckind_Mask) == tdckind_Calibr;
          if (israw) {
@@ -260,7 +453,7 @@ void PrintTdcData(dogma::DogmaTu *tu, unsigned prefix, unsigned& errmask)
             if (bubble_len == 0) { bubble_eix = bubble_ix = ix; bubble_ch = channel; }
             if (bubble_ch == channel) { bubble[bubble_len++] = msg & 0xFFFF; bubble_eix = ix; }
          }
-         if ((bubble_len >= 100) || (cnt==len-1) || (channel!=bubble_ch) || (!israw && (bubble_len > 0))) {
+         if ((bubble_len >= 100) || (cnt == len-1) || (channel!=bubble_ch) || (!israw && (bubble_len > 0))) {
             if (prefix>0) {
                printf("%*s[%*u..%*u] Ch:%02x bubble: ",  prefix, "", wlen, bubble_ix, wlen, bubble_eix, bubble_ch);
                PrintBubble(bubble, (unsigned) bubble_len);
@@ -449,8 +642,9 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
           (unsigned)tu->GetTrigTime(), (unsigned)tu->GetLocalTrigTime(),
           (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
 
+   unsigned len = tu->GetPayloadLen();
+
    if (printraw) {
-      unsigned len = tu->GetPayloadLen();
       printf("%s", prefix);
       for (unsigned i = 0; i < len; ++i) {
          printf("  %08x", (unsigned) tu->GetPayload(i));
@@ -458,8 +652,11 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
             printf("\n%s", i < len-1 ? prefix : "");
       }
    } else if (is_tdc(tu->GetAddr())) {
+      std::vector<uint32_t> data(len, 0);
+      for (unsigned i = 0; i < len; ++i)
+         data[i] = tu->GetPayload(i);
       unsigned errmask = 0;
-      PrintTdcData(tu, strlen(prefix) + 3, errmask);
+      PrintTdcData(0, data, strlen(prefix) + 3, errmask);
    }
 }
 

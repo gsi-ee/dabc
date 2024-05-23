@@ -458,9 +458,7 @@ void PrintTdc4Data(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
    // here when len was 0 - rest of subevent was printed
    if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
-   unsigned wlen = 2;
-   if (sz>99) wlen = 3; else
-   if (sz>999) wlen = 4;
+   unsigned wlen = sz > 999 ? 4 : (sz > 99 ? 3 : 2);
 
    unsigned ttype = 0;
    uint64_t lastepoch = 0;
@@ -630,13 +628,10 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       return;
    }
 
-
    // here when len was 0 - rest of subevent was printed
    if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
-   unsigned wlen = 2;
-   if (sz>99) wlen = 3; else
-   if (sz>999) wlen = 4;
+   unsigned wlen = sz > 999 ? 4 : (sz > 99 ? 3 : 2);
 
    unsigned long long epoch = 0;
    double tm, ch0tm = 0;
