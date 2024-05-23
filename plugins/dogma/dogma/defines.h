@@ -41,7 +41,7 @@ namespace dogma {
          uint32_t tuAddr = 0;
          uint32_t tuTrigTime = 0;
          uint32_t tuLocalTrigTime = 0;
-         uint32_t tuLenPayload = 0;
+         uint32_t tuLenPayload = 0; // number of 4bytes words
 
          inline uint32_t Value(const uint32_t *member) const
          {
@@ -107,7 +107,7 @@ namespace dogma {
          uint32_t tuMagic = 0;
          uint32_t tuSeqId = 0;
          uint32_t tuTrigTypeNumber = 0;
-         uint32_t tuLenPayload = 0;
+         uint32_t tuLenPayload = 0; // paylod len in 4bytes words
 
          inline uint32_t Value(const uint32_t *member) const
          {
@@ -139,7 +139,7 @@ namespace dogma {
          inline uint32_t GetPayloadLen() const { return Value(&tuLenPayload) & 0xffff; }
          inline void SetPayloadLen(uint32_t len) { SetValue(&tuLenPayload, len); }
 
-         inline uint32_t GetEventLen() const { return sizeof(DogmaEvent) + GetPayloadLen(); }
+         inline uint32_t GetEventLen() const { return sizeof(DogmaEvent) + GetPayloadLen() * 4; }
 
          DogmaTu *FirstSubevent() const { return (DogmaTu *)((char *) this + sizeof(DogmaEvent)); }
 

@@ -455,7 +455,18 @@ bool dogma::WriteIterator::FinishEvent()
       dist = fEvPtr.distance_to(fSubPtr);
    else if (fHasSubevents)
       dist = fEvPtr.fullsize(); // special case when exactly buffer was matched
-   evnt()->SetPayloadLen(dist - sizeof(dogma::DogmaEvent));
+
+   if (dist < sizeof(dogma::DogmaEvent)) {
+      EOUT("DOGMA event size too small %u", dist);
+      dist = sizeof(dogma::DogmaEvent);
+   }
+
+   dist -= sizeof(dogma::DogmaEvent);
+
+   if (dist % 4 != 0)
+      EOUT("DOGMA event paylod 0x%x is not 4 bytes aligned", (unsigned) dist);
+
+   evnt()->SetPayloadLen(dist / 4);
 
    dabc::BufferSize_t paddeddist = evnt()->GetEventLen();
    fFullSize += paddeddist;
