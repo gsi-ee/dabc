@@ -45,7 +45,20 @@ int usage(const char* errstr = nullptr)
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -rate                   - display only events and data rate\n");
    printf("   -stat                   - count statistics\n");
-
+   printf("   -bw                     - disable colors\n");
+   printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
+   printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
+   printf("   -fulltime               - always print full time of timestamp (default prints relative to channel 0)\n");
+   printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
+   printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
+   printf("   -onlych chid            - print only specified TDC channel (default off)\n");
+   printf("   -mhz value              - new design with arbitrary MHz, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
+   printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31)\n");
+   printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491)\n");
+   printf("   -fine-min4 value        - minimal fine counter value TDC v4, used for liner time calibration (default 28)\n");
+   printf("   -fine-max4 value        - maximal fine counter value TDC v4, used for liner time calibration (default 350)\n");
+   printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
+   printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns)\n");
    return errstr ? 1 : 0;
 }
 
@@ -57,27 +70,396 @@ struct TuStat {
    dogma::DogmaTu *tu{nullptr}; // current tu
 };
 
-bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
-unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false, use_colors = true;
+unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
+
+// related to TDC print
+
+unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0, onlytdc = 0;
+double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5.;
+bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false;
+int onlych = -1;
+
+std::vector<unsigned> tdcs;
+
+
+bool is_tdc(unsigned id)
+{
+   if (std::find(tdcs.begin(), tdcs.end(), id) != tdcs.end())
+      return true;
+
+   for (unsigned n = 0; n < tdcs.size(); n++)
+      if (((id & idrange) <= (tdcs[n] & idrange)) && ((id & ~idrange) == (tdcs[n] & ~idrange)))
+         return true;
+
+   return false;
+}
+
 
 std::map<uint32_t, TuStat> tu_stats;
 uint32_t ref_addr = 0;
 
+enum TdcMessageKind {
+   tdckind_Reserved = 0x00000000,
+   tdckind_Header   = 0x20000000,
+   tdckind_Debug    = 0x40000000,
+   tdckind_Epoch    = 0x60000000,
+   tdckind_Mask     = 0xe0000000,
+   tdckind_Hit      = 0x80000000, // normal hit message
+   tdckind_Hit1     = 0xa0000000, // hardware- corrected hit message, instead of 0x3ff
+   tdckind_Hit2     = 0xc0000000, // special hit message with regular fine time
+   tdckind_Calibr   = 0xe0000000  // extra calibration message for hits
+};
+
+enum { NumTdcErr = 6 };
+
+enum TdcErrorsKind {
+   tdcerr_MissHeader  = 0x0001,
+   tdcerr_MissCh0     = 0x0002,
+   tdcerr_MissEpoch   = 0x0004,
+   tdcerr_NoData      = 0x0008,
+   tdcerr_Sequence    = 0x0010,
+   tdcerr_ToT         = 0x0020
+};
+
+const char *col_RESET   = "\033[0m";
+const char *col_BLACK   = "\033[30m";      /* Black */
+const char *col_RED     = "\033[31m";      /* Red */
+const char *col_GREEN   = "\033[32m";      /* Green */
+const char *col_YELLOW  = "\033[33m";      /* Yellow */
+const char *col_BLUE    = "\033[34m";      /* Blue */
+const char *col_MAGENTA = "\033[35m";      /* Magenta */
+const char *col_CYAN    = "\033[36m";      /* Cyan */
+const char *col_WHITE   = "\033[37m";      /* White */
+
+unsigned BUBBLE_SIZE = 19;
+
+const char* TdcErrName(int cnt) {
+   switch (cnt) {
+      case 0: return "header";
+      case 1: return "ch0";
+      case 2: return "epoch";
+      case 3: return "nodata";
+      case 4: return "seq";
+      case 5: return "tot";
+   }
+   return "unknown";
+}
+
+const char *getCol(const char *col_name)
+{
+   return use_colors ? col_name : "";
+}
+
+const char* debug_name[32] = {
+      "Number of valid triggers",
+      "Number of release signals send",
+      "Number of valid timing triggers received",
+      "Valid NOtiming trigger number",
+      "Invalid trigger number",
+      "Multi timing trigger number",
+      "Spurious trigger number",
+      "Wrong readout number",
+      "Spike number",
+      "Idle time",
+      "Wait time",
+      "Total empty channels",
+      "Readout time",
+      "Timeout number",
+      "Temperature",
+      "RESERVED",
+      "Compile time 1",
+      "Compile time 2",
+      "debug 0x10010",
+      "debug 0x10011",
+      "debug 0x10100",
+      "debug 0x10101",
+      "debug 0x10110",
+      "debug 0x10111",
+      "debug 0x11000",
+      "debug 0x11001",
+      "debug 0x11010",
+      "debug 0x11011",
+      "debug 0x11100",
+      "debug 0x11101",
+      "debug 0x11110",
+      "debug 0x11111"
+};
+
+
+void PrintBubble(unsigned* bubble, unsigned len = 0) {
+   // print in original order, time from right to left
+   // for (unsigned d=BUBBLE_SIZE;d>0;d--) printf("%04x",bubble[d-1]);
+
+   if (len == 0) len = BUBBLE_SIZE;
+   // print in reverse order, time from left to right
+   for (unsigned d=0;d<len;d++) {
+      unsigned origin = bubble[d], swap = 0;
+      for (unsigned dd = 0;dd<16;++dd) {
+         swap = (swap << 1) | (origin & 1);
+         origin = origin >> 1;
+      }
+      printf("%04x",swap);
+   }
+}
+
+void PrintTdcData(dogma::DogmaTu *tu, unsigned prefix, unsigned& errmask)
+{
+   unsigned ix = 0;
+
+   unsigned len = tu->GetPayloadLen();
+
+   //unsigned msg0 = tu->GetPayload(ix);
+   //if (((msg0 & tdckind_Mask) == tdckind_Header) && (((msg0 >> 24) & 0xF) == 0x4)) {
+   //   PrintTdc4Data(tu, prefix);
+   //   return;
+   //}
+
+   unsigned wlen = len > 999 ? 4 : (len > 99 ? 3 : 2);
+
+   unsigned long long epoch = 0;
+   double tm, ch0tm = 0;
+
+   errmask = 0;
+
+   bool haschannel0 = false;
+   unsigned channel = 0, maxch = 0, coarse = 0, fine = 0, ndebug = 0, nheader = 0, isrising = 0, dkind = 0, dvalue = 0, rawtime = 0;
+   int epoch_channel = -11; // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
+
+   static unsigned NumCh = 66;
+
+   double last_rising[NumCh], last_falling[NumCh];
+   int leading_trailing[NumCh], num_leading[NumCh], num_trailing[NumCh];
+   bool seq_err[NumCh];
+   for (unsigned n=0;n<NumCh;n++) {
+      last_rising[n] = 0;
+      last_falling[n] = 0;
+      leading_trailing[n] = 0;
+      num_leading[n] = 0;
+      num_trailing[n] = 0;
+      seq_err[n] = false;
+   }
+
+   unsigned bubble[100];
+   int bubble_len = -1, nbubble = 0;
+   unsigned bubble_ix = 0, bubble_ch = 0, bubble_eix = 0;
+
+   char sbuf[100], sfine[100], sbeg[100];
+   unsigned calibr[2] = { 0xffff, 0xffff };
+   unsigned skip = skip_msgs_in_tdc;
+   int ncalibr = 2;
+   const char* hdrkind = "";
+   bool with_calibr = false, bad_fine = false;
+
+   for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
+      unsigned msg = tu->GetPayload(ix);
+      if (bubble_len >= 0) {
+         bool israw = (msg & tdckind_Mask) == tdckind_Calibr;
+         if (israw) {
+            channel = (msg >> 22) & 0x7F;
+            if (bubble_len == 0) { bubble_eix = bubble_ix = ix; bubble_ch = channel; }
+            if (bubble_ch == channel) { bubble[bubble_len++] = msg & 0xFFFF; bubble_eix = ix; }
+         }
+         if ((bubble_len >= 100) || (cnt==len-1) || (channel!=bubble_ch) || (!israw && (bubble_len > 0))) {
+            if (prefix>0) {
+               printf("%*s[%*u..%*u] Ch:%02x bubble: ",  prefix, "", wlen, bubble_ix, wlen, bubble_eix, bubble_ch);
+               PrintBubble(bubble, (unsigned) bubble_len);
+               printf("\n");
+               nbubble++;
+            }
+            bubble_len = 0; bubble_eix = bubble_ix = ix;
+            if (bubble_ch != channel) {
+               bubble_ch = channel;
+               bubble[bubble_len++] = msg & 0xFFFF;
+            }
+         }
+         if (israw) continue;
+         bubble_len = -1; // no bubbles
+      }
+
+      if (prefix > 0)
+         snprintf(sbeg, sizeof(sbeg), "%*s[%*u] %08x ",  prefix, "", wlen, ix, msg);
+
+      if (skip > 0) {
+         skip--;
+         continue;
+      }
+
+      if ((cnt==skip_msgs_in_tdc) && ((msg & tdckind_Mask) != tdckind_Header)) errmask |= tdcerr_MissHeader;
+
+      switch (msg & tdckind_Mask) {
+         case tdckind_Reserved:
+            if (prefix>0) printf("%s tdc trailer ttyp:0x%01x rnd:0x%02x err:0x%04x\n", sbeg, (msg >> 24) & 0xF,  (msg >> 16) & 0xFF, msg & 0xFFFF);
+            break;
+         case tdckind_Header:
+            nheader++;
+            switch ((msg >> 24) & 0x0F) {
+               case 0x01: hdrkind = "double edges"; break;
+               case 0x0F: hdrkind = "bubbles"; bubble_len = 0; break;
+               default: hdrkind = "normal"; break;
+            }
+
+            if (prefix > 0)
+               printf("%s tdc header fmt:0x01%x hwtyp:0x%02x %s\n", sbeg, ((msg >> 24) & 0x0F), ((msg >> 8) & 0xFF), hdrkind);
+            break;
+         case tdckind_Debug:
+            ndebug++;
+            dkind = (msg >> 24) & 0x1F;
+            dvalue = msg & 0xFFFFFF;
+            sbuf[0] = 0;
+            if (dkind == 0x10) rawtime = dvalue; else
+            if (dkind == 0x11) {
+               rawtime += (dvalue << 16);
+               time_t t = (time_t) rawtime;
+               snprintf(sbuf, sizeof(sbuf), "  design 0x%08x %s", rawtime, ctime(&t));
+               int len2 = strlen(sbuf);
+               if (sbuf[len2-1] == 10) sbuf[len2-1] = 0;
+            } else if (dkind == 0xE)
+               snprintf(sbuf, sizeof(sbuf), " %3.1fC", dvalue/16.);
+
+            if (prefix > 0)
+               printf("%s tdc debug 0x%02x: 0x%06x %s%s\n", sbeg, dkind, dvalue, debug_name[dkind], sbuf);
+            break;
+         case tdckind_Epoch:
+            epoch = msg & 0xFFFFFFF;
+            tm = (epoch << 11) *5.;
+            epoch_channel = -1; // indicate that we have new epoch
+            if (prefix > 0) printf("%s epoch %u tm %6.3f ns\n", sbeg, msg & 0xFFFFFFF, tm);
+            break;
+         case tdckind_Calibr:
+            calibr[0] = msg & 0x3fff;
+            calibr[1] = (msg >> 14) & 0x3fff;
+            if (use_calibr) ncalibr = 0;
+            if ((prefix > 0) && (onlych < 0))
+               printf("%s tdc calibr v1 0x%04x v2 0x%04x\n", sbeg, calibr[0], calibr[1]);
+            break;
+         case tdckind_Hit:
+         case tdckind_Hit1:
+         case tdckind_Hit2:
+            channel = (msg >> 22) & 0x7F;
+            if (channel == 0) haschannel0 = true;
+            if (epoch_channel == -1) epoch_channel = channel;
+            isrising = (msg >> 11) & 0x1;
+            if (maxch<channel) maxch = channel;
+            if (channel < NumCh) {
+               if (isrising) {
+                  num_leading[channel]++;
+                  if (++leading_trailing[channel] > 1) seq_err[channel] = true;
+               } else {
+                  if (--leading_trailing[channel] < 0) seq_err[channel] = true;
+                  num_trailing[channel]++;
+                  leading_trailing[channel] = 0;
+               }
+            }
+
+            if ((epoch_channel == -11) || (epoch_per_channel && (epoch_channel != (int) channel))) errmask |= tdcerr_MissEpoch;
+
+            bad_fine = false;
+
+            coarse = (msg & 0x7FF);
+            fine = (msg >> 12) & 0x3FF;
+
+            if (use_400mhz) {
+               coarse = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
+               fine = fine & 0x1FF;
+               bad_fine = (fine == 0x1ff);
+               tm = ((epoch << 12) | coarse) * coarse_tmlen; // coarse time
+            } else {
+               bad_fine = (fine == 0x3ff);
+               tm = ((epoch << 11) | coarse) * coarse_tmlen; // coarse time
+            }
+
+            with_calibr = false;
+            if (!bad_fine) {
+               if ((msg & tdckind_Mask) == tdckind_Hit2) {
+                  if (isrising) {
+                     tm -= fine*5e-3; // calibrated time, 5 ps/bin
+                  } else {
+                     tm -= (fine & 0x1FF)*10e-3; // for falling edge 10 ps binning is used
+                     if (fine & 0x200) tm -= 0x800 * 5.; // in rare case time correction leads to epoch overflow
+                  }
+                  with_calibr = true;
+               } else if (ncalibr < 2) {
+                  // calibrated time, 5 ns correspond to value 0x3ffe or about 0.30521 ps/bin
+                  unsigned raw_corr = calibr[ncalibr++];
+                  if (raw_corr != 0x3fff) {
+                     double corr = raw_corr*5./0x3ffe;
+                     if (!isrising) corr*=10.; // for falling edge correction 50 ns range is used
+                     tm -= corr;
+                     with_calibr = true;
+                  }
+               } else {
+                  tm -= coarse_tmlen * (fine > fine_min ? fine - fine_min : 0) / (0. + fine_max - fine_min); // simple approx of fine time from range 31-491
+               }
+            }
+
+            sbuf[0] = 0;
+            if (isrising) {
+               last_rising[channel] = tm;
+            } else {
+               last_falling[channel] = tm;
+               if (last_rising[channel] > 0) {
+                  double tot = last_falling[channel] - last_rising[channel];
+                  bool cond = with_calibr ? ((tot >= 0) && (tot < tot_limit)) : ((tot >= tot_shift) && (tot < tot_shift + tot_limit));
+                  if (!cond) errmask |= tdcerr_ToT;
+                  snprintf(sbuf, sizeof(sbuf), " tot:%s%6.3f ns%s", getCol(cond ? col_GREEN : col_RED), tot, getCol(col_RESET));
+                  last_rising[channel] = 0;
+               }
+            }
+
+            if ((fine >= 600) && (fine != 0x3ff))
+               snprintf(sfine, sizeof(sfine), "%s0x%03x%s", getCol(col_RED), fine, getCol(col_RESET));
+            else
+               snprintf(sfine, sizeof(sfine), "0x%03x", fine);
+
+            if ((prefix > 0) && ((onlych < 0) || ((unsigned) onlych == channel)))
+               printf("%s %s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
+                      sbeg, ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
+                      channel, isrising, coarse, sfine, print_fulltime ? tm : tm - ch0tm, sbuf);
+            if ((channel == 0) && (ch0tm == 0)) ch0tm = tm;
+            if ((onlych >= 0) && (channel > (unsigned) onlych))
+               cnt = len; // stop processing when higher channel number seen
+            break;
+         default:
+            if (prefix > 0) printf("%s undefined\n", sbeg);
+            break;
+      }
+   }
+
+   if (len < 2) {
+      if (nheader != 1)
+         errmask |= tdcerr_NoData;
+   } else if (!haschannel0 && (ndebug == 0) && (nbubble == 0))
+      errmask |= tdcerr_MissCh0;
+
+   for (unsigned n = 1; n < NumCh; n++)
+      if ((num_leading[n] > 0) && (num_trailing[n] > 0))
+         if (seq_err[n] || (num_leading[n] != num_trailing[n]))
+            errmask |= tdcerr_Sequence;
+
+   //if (substat) {
+   //   if (substat->maxch < maxch) substat->maxch = maxch;
+   //}
+}
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
-   printf("%stu addr: %04x type: %02x trignum: %06x time: %08x local: %08x err: %02x frame: %02x paylod: %04x size: %u\n", prefix,
+   printf("%stu addr:%04x type:%02x trignum:%06x time:%08x local:%08x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
           (unsigned)tu->GetAddr(), (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
           (unsigned)tu->GetTrigTime(), (unsigned)tu->GetLocalTrigTime(),
           (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
 
    if (printraw) {
       unsigned len = tu->GetPayloadLen();
+      printf("%s", prefix);
       for (unsigned i = 0; i < len; ++i) {
-         printf("   %08x", (unsigned) tu->GetPayload(i));
-         if ((i == len - 1) || ((i % 8 == 0) && (i > 0)))
-            printf("\n");
+         printf("  %08x", (unsigned) tu->GetPayload(i));
+         if ((i == len - 1) || (i % 8 == 7))
+            printf("\n%s", i < len-1 ? prefix : "");
       }
+   } else if (is_tdc(tu->GetAddr())) {
+      unsigned errmask = 0;
+      PrintTdcData(tu, strlen(prefix) + 3, errmask);
    }
 }
 
@@ -152,7 +534,8 @@ int main(int argc, char* argv[])
       return usage();
 
    long number = 10, skip = 0, nagain = 0;
-   double tmout = -1., maxage = -1.;
+   double tmout = -1., maxage = -1., mhz = 200.;
+   unsigned tdcmask = 0;
 
    int n = 1;
    while (++n < argc) {
@@ -175,6 +558,41 @@ int main(int argc, char* argv[])
          printsub = true;
       } else if (strcmp(argv[n], "-stat") == 0) {
          dostat = true;
+      } else if (strcmp(argv[n], "-bw") == 0) {
+         use_colors = false;
+      } else if (strcmp(argv[n], "-ignorecalibr") == 0) {
+         use_calibr = false;
+      } else if (strcmp(argv[n], "-fulltime") == 0) {
+         print_fulltime = true;
+      } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &tdcmask);
+         tdcs.emplace_back(tdcmask);
+      } else if ((strcmp(argv[n], "-onlytdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &onlytdc);
+      } else if ((strcmp(argv[n], "-onlych") == 0) && (n + 1 < argc)) {
+         dabc::str_to_int(argv[++n], &onlych);
+      } else if ((strcmp(argv[n], "-skipintdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc);
+      } else if ((strcmp(argv[n], "-mhz") == 0) && (n + 1 < argc)) {
+         dabc::str_to_double(argv[++n], &mhz);
+         use_400mhz = true;
+         coarse_tmlen = 1000. / mhz;
+         fine_min = 0x5;
+         fine_max = 0xc0;
+      } else if (strcmp(argv[n], "-340") == 0) {
+         use_400mhz = true;
+         coarse_tmlen = 1000. / 340.;
+         fine_min = 0x5;
+         fine_max = 0xc0;
+      } else if (strcmp(argv[n], "-400") == 0) {
+         use_400mhz = true;
+         coarse_tmlen = 1000. / 400.;
+         fine_min = 0x5;
+         fine_max = 0xc0;
+      } else if ((strcmp(argv[n], "-tot") == 0) && (n + 1 < argc)) {
+         dabc::str_to_double(argv[++n], &tot_limit);
+      } else if ((strcmp(argv[n], "-stretcher") == 0) && (n + 1 < argc)) {
+         dabc::str_to_double(argv[++n], &tot_shift);
       } else
          return usage("Unknown option");
    }
