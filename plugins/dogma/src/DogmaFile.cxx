@@ -110,13 +110,13 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 
       // printf("Expect next event of size %u\n", (unsigned) hdr->GetPaddedSize());
 
-      readsz = io->fread((char *) ptr + sizeof(dogma::DogmaEvent), 1, hdr->GetPayloadLen(), fd);
+      readsz = io->fread((char *) ptr + sizeof(dogma::DogmaEvent), 1, hdr->GetPayloadLen()*4, fd);
 
       // printf("Read size %u expects %u \n", (unsigned) readsz, (unsigned) (hdr->GetPaddedSize() - sizeof(hadaq::HadTu)));
 
       // not possible to read event completely
-      if (readsz != hdr->GetPayloadLen()) {
-         fprintf(stderr, "Reading problem\n");
+      if (readsz != hdr->GetPayloadLen()*4) {
+         fprintf(stderr, "DOGMA reading problem\n");
          fEOF = true;
          return false;
       }

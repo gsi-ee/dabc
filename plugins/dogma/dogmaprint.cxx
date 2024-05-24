@@ -112,7 +112,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 
 void print_evnt(dogma::DogmaEvent *evnt)
 {
-   printf("Event seqid: %lu\n", (long unsigned) evnt->GetSeqId());
+   printf("Event seqid:%lu size:%lu\n", (long unsigned) evnt->GetSeqId(), (long unsigned) evnt->GetEventLen());
    auto tu = evnt->FirstSubevent();
 
    while(tu) {
