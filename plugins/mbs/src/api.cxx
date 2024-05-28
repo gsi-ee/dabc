@@ -141,7 +141,7 @@ mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const c
    }
 
    if (dabc::mgr.FindPool(dabc::xmlWorkPool).null()) {
-      if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, 4*1024*1024, 40)) {
+      if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, 8*1024*1024, 40)) {
          return nullptr;
       }
    }
