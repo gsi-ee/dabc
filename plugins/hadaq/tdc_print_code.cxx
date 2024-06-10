@@ -2,7 +2,7 @@
 // related to TDC print
 
 unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0, onlytdc = 0;
-double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5., coarse_tmlen4 = 1000./280.;
+double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5., coarse_tmlen4 = 1000./300.;
 bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false, use_colors = true, bubble_mode = false;
 int onlych = -1;
 
@@ -106,6 +106,7 @@ void print_tdc_arguments()
    printf("   -340                    - new 340 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31)\n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491)\n");
+   printf("   -mhz4 value             - running frequency of TDC v4 (default 300)\n");
    printf("   -fine-min4 value        - minimal fine counter value TDC v4, used for liner time calibration (default 28)\n");
    printf("   -fine-max4 value        - maximal fine counter value TDC v4, used for liner time calibration (default 350)\n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns)\n");
@@ -151,6 +152,10 @@ bool scan_tdc_arguments(int &n, int argc, char* argv[])
       dabc::str_to_uint(argv[++n], &fine_min);
    } else if ((strcmp(argv[n], "-fine-max") == 0) && (n + 1 < argc)) {
       dabc::str_to_uint(argv[++n], &fine_max);
+   } else if ((strcmp(argv[n], "-mhz4") == 0) && (n + 1 < argc)) {
+      double mhz4 = 200.;
+      dabc::str_to_double(argv[++n], &mhz4);
+      coarse_tmlen4 = 1000. / mhz4;
    } else if ((strcmp(argv[n], "-fine-min4") == 0) && (n + 1 < argc)) {
       dabc::str_to_uint(argv[++n], &fine_min4);
    } else if ((strcmp(argv[n], "-fine-max4") == 0) && (n + 1 < argc)) {
