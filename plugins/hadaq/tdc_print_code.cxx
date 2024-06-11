@@ -1,7 +1,7 @@
 
 // related to TDC print
 
-unsigned fine_min = 31, fine_max = 491, fine_min4 = 28, fine_max4 = 350, skip_msgs_in_tdc = 0, onlytdc = 0;
+unsigned fine_min = 31, fine_max = 491, fine_min4 = 40, fine_max4 = 357, skip_msgs_in_tdc = 0, onlytdc = 0;
 double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5., coarse_tmlen4 = 1000./300.;
 bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false, use_colors = true, bubble_mode = false;
 int onlych = -1;
@@ -379,7 +379,11 @@ unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsi
    double localtm0 = 0.;
    unsigned maxch = 0;
 
-   char sbeg[1000], sdata[1000];
+   static unsigned NumCh = 66;
+
+   std::vector<double> last_rising(NumCh, 0.);
+
+   char sbeg[1000], sdata[1000], stot[100];
 
    for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
       unsigned msg = data[cnt];
@@ -397,6 +401,8 @@ unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsi
          unsigned coarse = (msg >> 9) & 0xFFF;
          unsigned fine = msg & 0x1FF;
 
+         bool isrising = (mode == 0) || (mode == 2);
+
          if ((onlych >= 0) && (channel != (unsigned) onlych)) continue;
 
          double localtm = ((lastepoch << 12) | coarse) * coarse_tmlen4;
@@ -405,7 +411,15 @@ unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsi
          else if (fine > fine_min4)
             localtm -= (fine - fine_min4) / (0. + fine_max4 - fine_min4) * coarse_tmlen4;
 
-         snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u tm0:%6.3fns", mode, channel, coarse, fine, localtm - localtm0);
+         if (isrising)
+            last_rising[channel] = localtm;
+
+         if (isrising || last_rising[channel] == 0.)
+            stot[0] = 0;
+         else
+            snprintf(stot, sizeof(stot), " tot:%6.3fns", localtm - last_rising[channel]);
+
+         snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u tm0:%6.3fns%s", mode, channel, coarse, fine, localtm - localtm0, stot);
       } else {
          unsigned hdr3 = msg & newkind_Mask3;
          unsigned hdr4 = msg & newkind_Mask4;
@@ -462,15 +476,13 @@ unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsi
                }
             }
 
-         } else
-         if (hdr3 == newkind_EPOC) {
+         } else if (hdr3 == newkind_EPOC) {
             kind = "EPOC";
             unsigned epoch = msg & 0xFFFFFFF;
             bool err = (msg & 0x10000000) != 0;
             snprintf(sdata, sizeof(sdata), "0x%07x%s", epoch, (err ? " errflag" : ""));
             lastepoch = epoch;
-         } else
-         if (hdr4 == newkind_TMDS) {
+         } else if (hdr4 == newkind_TMDS) {
             kind = "TMDS";
             unsigned channel = (msg >> 21) & 0x7F;
             unsigned coarse = (msg >> 9) & 0xFFF;
