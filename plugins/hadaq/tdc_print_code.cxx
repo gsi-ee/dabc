@@ -781,6 +781,8 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
             sbuf[0] = 0;
             if (isrising) {
                last_rising[channel] = tm;
+               if ((ref_channel > 0) && (ref_channel != (int) channel) && (last_rising[ref_channel] != 0.))
+                  snprintf(sbuf, sizeof(sbuf), " refch:%6.3fns", tm - last_rising[ref_channel]);
             } else {
                last_falling[channel] = tm;
                if (last_rising[channel] > 0) {
