@@ -4,7 +4,7 @@
 unsigned fine_min = 31, fine_max = 491, fine_min4 = 40, fine_max4 = 357, skip_msgs_in_tdc = 0, onlytdc = 0;
 double tot_limit = 20., tot_shift = 20., coarse_tmlen = 5., coarse_tmlen4 = 1000./300.;
 bool use_calibr = true, epoch_per_channel = false, use_400mhz = false, print_fulltime = false, use_colors = true, bubble_mode = false;
-int onlych = -1;
+int onlych = -1, ref_channel = -1;
 
 enum TdcMessageKind {
    tdckind_Reserved = 0x00000000,
@@ -98,6 +98,7 @@ void print_tdc_arguments()
 {
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
    printf("   -onlych chid            - print only specified TDC channel (default off)\n");
+   printf("   -refch chid             - print time diff to that channel (default off)\n");
    printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n");
    printf("   -fulltime               - always print full time of timestamp (default prints relative to channel 0)\n");
    printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
@@ -121,6 +122,8 @@ bool scan_tdc_arguments(int &n, int argc, char* argv[])
       dabc::str_to_uint(argv[++n], &onlytdc);
    } else if ((strcmp(argv[n], "-onlych") == 0) && (n + 1 < argc)) {
       dabc::str_to_int(argv[++n], &onlych);
+   } else if ((strcmp(argv[n], "-refch") == 0) && (n + 1 < argc)) {
+      dabc::str_to_int(argv[++n], &ref_channel);
    } else if ((strcmp(argv[n], "-skipintdc") == 0) && (n + 1 < argc)) {
       dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc);
    } else if (strcmp(argv[n], "-ignorecalibr") == 0) {
@@ -414,10 +417,12 @@ unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsi
          if (isrising)
             last_rising[channel] = localtm;
 
-         if (isrising || last_rising[channel] == 0.)
-            stot[0] = 0;
+         if (!isrising && (last_rising[channel] != 0.))
+            snprintf(stot, sizeof(stot), " tot:%5.3fns", localtm - last_rising[channel]);
+         else if (isrising && (ref_channel > 0) && ((int) channel != ref_channel) && (last_rising[ref_channel] != 0.))
+            snprintf(stot, sizeof(stot), " refch:%5.3fns", localtm - last_rising[ref_channel]);
          else
-            snprintf(stot, sizeof(stot), " tot:%6.3fns", localtm - last_rising[channel]);
+            stot[0] = 0;
 
          snprintf(sdata, sizeof(sdata), "mode:0x%x ch:%u coarse:%u fine:%u tm0:%6.3fns%s", mode, channel, coarse, fine, localtm - localtm0, stot);
       } else {
