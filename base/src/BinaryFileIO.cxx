@@ -40,7 +40,8 @@ bool dabc::BinaryFileInput::OpenNextFile()
 {
    CloseFile();
 
-   if (!TakeNextFileName()) return false;
+   if (!TakeNextFileName())
+      return false;
 
    if (!fFile.OpenReading(CurrentFileName().c_str())) {
       EOUT("Cannot open file %s for reading", CurrentFileName().c_str());
@@ -69,10 +70,11 @@ unsigned dabc::BinaryFileInput::Read_Size()
    fCurrentBufType = 0;
 
    if (fFile.eof())
-      return di_EndOfStream;
+      if (!OpenNextFile())
+         return dabc::di_EndOfStream;
 
    if (!fFile.ReadBufHeader(&fCurrentBufSize, &fCurrentBufType)) {
-      DOUT1("Error reading buffer header from file %s", CurrentFileName().c_str());
+      DOUT1("Error reading buffer header from file %s close_on_error %s", CurrentFileName().c_str(), DBOOL(fCloseOnError));
       return fCloseOnError ? di_EndOfStream : di_Error;
    }
 
@@ -152,7 +154,6 @@ bool dabc::BinaryFileOutput::CloseFile()
    }
    return true;
 }
-
 
 unsigned dabc::BinaryFileOutput::Write_Buffer(Buffer& buf)
 {
