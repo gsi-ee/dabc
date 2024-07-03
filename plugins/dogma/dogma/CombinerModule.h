@@ -50,6 +50,7 @@ namespace dogma {
       protected:
 
       struct InputCfg {
+         unsigned ninp{0};          ///< input number
          dogma::DogmaTu *subevnt{nullptr}; ///< actual subevent
          dogma::DogmaEvent  *evnt{nullptr}; ///< actual event
          bool     has_data{false};      ///< when true, input has data (subevent or bunch of sub events)
@@ -85,6 +86,7 @@ namespace dogma {
          uint64_t    fHubLastSize{0}; ///< last size
          uint64_t    fHubPrevSize{0}; ///< last size
          int         fHubSizeTmCnt{0}; ///< count how many time data was the same
+         dabc::TimeStamp fLastDataTm; ///< time when subevent was used from the input
 
          InputCfg()
          {
@@ -110,6 +112,7 @@ namespace dogma {
                fLastTrigNr = 0xffffffff;
                fUdpPort = 0;
             }
+            fLastDataTm.GetNow();
          }
 
          void Close()
