@@ -262,6 +262,10 @@ namespace dabc {
    inline TimeStamp Now() { return TimeStamp::Now(); }
 
    void Sleep(double tm);
+
+   extern std::string HadaqFileSuffix(uint32_t runid, uint16_t ebid = 0);
+
+   extern uint32_t CreateHadaqRunId();
 }
 
 #endif

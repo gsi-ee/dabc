@@ -19,6 +19,7 @@
 #include <cmath>
 #include <unistd.h>
 #include <cstring>
+#include <sys/time.h>
 
 bool dabc::TimeStamp::gFast = false;
 
@@ -344,3 +345,27 @@ double dabc::DateTime::DistanceTo(const DateTime& pnt) const
 
    return res;
 }
+
+const int HADAQ_TIMEOFFSET = 1200000000; /* needed to reconstruct time from runId */
+
+uint32_t dabc::CreateHadaqRunId()
+{
+   struct timeval tv;
+   gettimeofday(&tv, nullptr);
+   return tv.tv_sec - HADAQ_TIMEOFFSET;
+}
+
+/** \brief Format a HADES-convention filename string
+   * from a given run id and optional eventbuilder id */
+std::string dabc::HadaqFileSuffix(uint32_t runid, uint16_t ebid)
+{
+   // same
+   char buf[128];
+   time_t iocTime = runid + HADAQ_TIMEOFFSET;
+   struct tm tm_res;
+   size_t off = strftime(buf, 128, "%y%j%H%M%S", localtime_r(&iocTime, &tm_res));
+   if(ebid != 0) snprintf(buf+off, 128-off, "%02d", ebid);
+   return std::string(buf);
+}
+
+
