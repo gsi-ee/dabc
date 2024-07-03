@@ -59,27 +59,28 @@ namespace dogma {
          uint32_t fTrigTag{0};      ///< keeps current trigger tag
          uint32_t fTrigType{0};     ///< current subevent trigger type
          unsigned fErrorBitsCnt{0}; ///< number of subevents with non-zero error bits
-         unsigned fHubId{0};     ///< subevent id from given input
-         unsigned fUdpPort{0};    ///< if configured, port id
-         float fQueueLevel{0.};      ///<  current input queue fill level
+         unsigned fHubId{0};        ///< subevent id from given input
+         unsigned fUdpPort{0};      ///< if configured, port id
+         float fQueueLevel{0.};     ///<  current input queue fill level
          uint32_t fLastEvtBuildTrigId{0}; ///< remember id of last build event
-         bool fDataError{false};        ///< indicates if subevent has data error bit set in header id
-         bool fEmpty{true};            ///< indicates if input has empty data
-         void *fInfo{nullptr};            ///< Direct pointer on transport info, used only for debugging
+         bool fDataError{false};    ///< indicates if subevent has data error bit set in header id
+         bool fEmpty{true};         ///< indicates if input has empty data
+         void *fInfo{nullptr};      ///< Direct pointer on transport info, used only for debugging
          int fQueueCapacity{0};     ///< capacity of input queue
          int fNumCanRecv{0};        ///< Number buffers can be received
          unsigned fLostTrig{0};     ///< number of lost triggers (never received by the combiner)
          unsigned fDroppedTrig{0};  ///< number of dropped triggers (received but dropped by the combiner)
          uint32_t  fTrigNumRing[DOGMA_RINGSIZE]; ///< values of last seen TU ID
          unsigned  fRingCnt{0};     ///< where next value will be written
-         bool  fResort{false};       ///< enables resorting of events
-         ReadIterator fIter;      ///< main iterator
-         ReadIterator fResortIter; ///< additional iterator to check resort
+         bool  fResort{false};      ///< enables resorting of events
+         bool fOptional{false};     ///< input is optional and can miss in data
+         ReadIterator fIter;        ///< main iterator
+         ReadIterator fResortIter;  ///< additional iterator to check resort
          int          fResortIndx{-1};  ///< index of buffer in the queue used for resort iterator (-1 - off)
-         std::string fCalibr;      ///< name of calibration module, used only in terminal
+         std::string fCalibr;       ///< name of calibration module, used only in terminal
          bool        fCalibrReq{false};   ///< when true, request was send
          int         fCalibrProgr{0}; ///< calibration progress
-         std::string fCalibrState; ///< calibration state
+         std::string fCalibrState;  ///< calibration state
          double      fCalibrQuality{0.}; ///< calibration quality
          uint64_t    fHubLastSize{0}; ///< last size
          uint64_t    fHubPrevSize{0}; ///< last size

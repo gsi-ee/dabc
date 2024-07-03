@@ -106,7 +106,9 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       fCfg.emplace_back();
       fCfg[n].Reset(true);
       fCfg[n].fResort = FindPort(InputName(n)).Cfg("resort").AsBool(false);
-      if (fCfg[n].fResort) DOUT0("Do resort on input %u",n);
+      fCfg[n].fOptional = FindPort(InputName(n)).Cfg("optional").AsBool(false);
+      if (fCfg[n].fResort || fCfg[n].fOptional)
+         DOUT0("%s resort %s isoptional %s", InputName(n).c_str(), DBOOL(fCfg[n].fResort), DBOOL(fCfg[n].fOptional));
    }
 
    fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
