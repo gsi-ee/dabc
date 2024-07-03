@@ -76,7 +76,11 @@ bool dogma::DogmaOutput::StartNewFile()
 {
    CloseFile();
 
-   if(fUseDaqDisk) {
+   fCurrentFileSize = 0;
+
+   if (fPlainName) {
+      fCurrentFileName = fFileName;
+   } else if(fUseDaqDisk) {
       dabc::Parameter fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild-diskNum");
       if(!fDiskNumberPar.null()) {
          std::string prefix;
@@ -87,27 +91,22 @@ bool dogma::DogmaOutput::StartNewFile()
             prefix = fFileName.substr(prepos+1);
 
          unsigned disknumber = fDiskNumberPar.Value().AsUInt();
-         fFileName = dabc::format("/data%02d/data/%s",disknumber,prefix.c_str());
+         fCurrentFileName = dabc::format("/data%02d/data/%s",disknumber,prefix.c_str());
          DOUT1("Set filename from daq_disks to %s, disknumber was %d, prefix=%s",
-               fFileName.c_str(), disknumber, prefix.c_str());
+               fCurrentFileName.c_str(), disknumber, prefix.c_str());
 
          dabc::CmdSetParameter cmd("Evtbuild-diskNumEB", disknumber);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
       } else {
          EOUT("Could not find daq_disk parameter although disk demon mode is on!");
       }
+   } else if (fRfio || fLtsm) {
+      auto runid = dabc::CreateHadaqRunId();
+      std::string suffix = dabc::HadaqFileSuffix(runid, fEBNumber);
+      ProduceFileName(suffix);
+   } else  {
+      ProduceNewFileName();
    }
-   // change file names according hades style:
-   std::string fname = fFileName;
-
-   size_t pos = fname.rfind(".dld");
-   if (pos == std::string::npos)
-      pos = fname.rfind(".DLD");
-
-   if (pos == std::string::npos)
-      fname += ".dld";
-
-   fCurrentFileName = fname;
 
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fUrlOptions.c_str())) {
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
