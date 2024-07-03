@@ -181,7 +181,7 @@ namespace dogma {
          bool               fSpecialFired;  ///< if user event was already fired
          double             fLastEventRate; ///< last event rate
 
-         bool               fCheckTag;
+         bool               fCheckTag = true;
 
          bool               fBNETsend;  ///< indicate that combiner used as BNET sender
          bool               fBNETrecv;  ///< indicate that second-level event building is performed
@@ -208,7 +208,7 @@ namespace dogma {
          uint64_t           fDataRateCnt;
          uint64_t           fDataDroppedRateCnt;
          uint64_t           fEventRateCnt;
-         uint64_t           fLostEventRateCnt;
+         double             fLostEventRateCnt;
 
          uint64_t           fRunRecvBytes;
          uint64_t           fRunBuildEvents;   ///< number of build events
@@ -294,6 +294,8 @@ namespace dogma {
          void UpdateBnetInfo();
 
          void StartEventsBuilding();
+
+         void AccountDroppedData(unsigned sz, bool lost_full_event = false);
 
       public:
          CombinerModule(const std::string &name, dabc::Command cmd = nullptr);

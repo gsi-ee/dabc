@@ -36,7 +36,6 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fFlushCounter(0),
    fIsTerminating(false),
    fRunToOracle(false),
-   fCheckTag(true),
    fFlushTimeout(0.),
    fBnetFileCmd(),
    fEvnumDiffStatistics(true)
@@ -145,7 +144,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    CreatePar(fLostEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
    CreatePar(fDataDroppedRateName).SetRatemeter(false, 3.).SetUnits("MB");
 
-   fDataRateCnt = fEventRateCnt = fLostEventRateCnt = fDataDroppedRateCnt = 0;
+   fDataRateCnt = fEventRateCnt = fDataDroppedRateCnt = 0;
+   fLostEventRateCnt = 0.;
 
    if (fBNETrecv) {
       CreatePar("RunFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
@@ -249,7 +249,8 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
    Par(fLostEventRateName).SetValue(fLostEventRateCnt);
    Par(fDataDroppedRateName).SetValue(fDataDroppedRateCnt/1024./1024.);
 
-   fDataRateCnt = fEventRateCnt = fLostEventRateCnt = fDataDroppedRateCnt = 0;
+   fDataRateCnt = fEventRateCnt = fDataDroppedRateCnt = 0;
+   fLostEventRateCnt = 0.;
 
    fLastEventRate = Par(fEventRateName).Value().AsDouble();
 
@@ -261,6 +262,15 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
       fAllBuildEventsLimit = 0; // invoke only once
       dabc::mgr.StopApplication();
    }
+}
+
+void dogma::CombinerModule::AccountDroppedData(unsigned sz, bool lost_full_event)
+{
+   fDataDroppedRateCnt += sz;
+   fRunDroppedData += sz;
+   fAllDroppedData += sz;
+
+   fLostEventRateCnt += lost_full_event ? 1. : 1./fCfg.size();
 }
 
 void dogma::CombinerModule::StartEventsBuilding()
@@ -897,9 +907,11 @@ bool dogma::CombinerModule::BuildEvent()
 
       // skip data in optional inputs if they arrived AFTER event was already build with such id
       if (!miss_data && cfg.fOptional && (fLastTrigNr != kNoTrigger)) {
-         while (cfg.has_data && (CalcTrigNumDiff(fLastTrigNr, cfg.fTrigNr) <= 0))
+         while (cfg.has_data && (CalcTrigNumDiff(fLastTrigNr, cfg.fTrigNr) <= 0)) {
+            AccountDroppedData(cfg.data_size);
             if (!ShiftToNextSubEvent(cfg.ninp))
                miss_data = true;
+         }
       }
 
       if (miss_data) {
@@ -1051,12 +1063,12 @@ bool dogma::CombinerModule::BuildEvent()
             break;
          }
 
-         fDataDroppedRateCnt += cfg.data_size;
+         AccountDroppedData(cfg.data_size);
 
-         fRunDroppedData += cfg.data_size;
-         fAllDroppedData += cfg.data_size;
+         if (!cfg.fOptional)
+            EOUT("Skip data in must_have channel %u", cfg.ninp);
 
-            // try with next subevt until reaching buildevid
+         // try with next subevt until reaching buildevid
          ShiftToNextSubEvent(cfg.ninp, false, true);
       } // while (cfg.has_data)
 
@@ -1131,6 +1143,8 @@ bool dogma::CombinerModule::BuildEvent()
       }
    }
 
+   int buildevid_diff = 0;
+
    // now we should be able to build event
    if (canBuildEvent) {
       // EVENT BUILDING STARTS HERE
@@ -1176,32 +1190,32 @@ bool dogma::CombinerModule::BuildEvent()
 
       fOut.FinishEvent();
 
-      int diff = 1;
+      buildevid_diff = 1;
       if (fLastTrigNr != kNoTrigger)
-         diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+         buildevid_diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
 
-      //if (fBNETsend && (diff != 1))
-      //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);
+      //if (fBNETsend && (buildevid_diff != 1))
+      //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, buildevid_diff);
       // if (fBNETsend) DOUT0("%s trig %x size %u", GetName(), buildevid, subeventssize);
 
-      if (fBNETrecv && fEvnumDiffStatistics && (fBNETNumRecv > 1) && (diff > fBNETbunch)) {
+      if (fBNETrecv && fEvnumDiffStatistics && (fBNETNumRecv > 1) && (buildevid_diff > fBNETbunch)) {
          // check if we really lost these events
          // int diff0 = diff;
 
-         long ncycles = diff / (fBNETbunch * fBNETNumRecv);
+         long ncycles = buildevid_diff / (fBNETbunch * fBNETNumRecv);
 
          // substract big cycles
-         diff -= ncycles * (fBNETbunch * fBNETNumRecv);
+         buildevid_diff -= ncycles * (fBNETbunch * fBNETNumRecv);
 
          // substract expected gap to previous cycle
-         diff -= fBNETbunch * (fBNETNumRecv - 1);
-         if (diff <= 0) diff = 1;
+         buildevid_diff -= fBNETbunch * (fBNETNumRecv - 1);
+         if (buildevid_diff <= 0) buildevid_diff = 1;
 
          // add lost events from big cycles
-         diff += ncycles * fBNETbunch;
+         buildevid_diff += ncycles * fBNETbunch;
 
-         // if (diff != 1) {
-         //   DOUT0("Large EVENT difference %d bunch %ld ncycles %ld final %d", diff0, fBNETbunch, ncycles, diff);
+         // if (buildevid_diff != 1) {
+         //   DOUT0("Large EVENT difference %d bunch %ld ncycles %ld final %d", diff0, fBNETbunch, ncycles, buildevid_diff);
          //}
       }
 
@@ -1210,17 +1224,17 @@ bool dogma::CombinerModule::BuildEvent()
       fEventRateCnt++;
       // Par(fEventRateName).SetValue(1);
 
-      if (fEvnumDiffStatistics && (diff > 1)) {
+      if (fEvnumDiffStatistics && (buildevid_diff > 1)) {
 
          if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
-            DOUT1("Events gap %d", diff-1);
+            DOUT1("Events gap %d", buildevid_diff-1);
             fLastDebugTm = currTm;
          }
 
-         fLostEventRateCnt += (diff-1);
+         fLostEventRateCnt += (buildevid_diff-1);
          //Par(fLostEventRateName).SetValue(diff-1);
-         fRunDiscEvents += (diff-1);
-         fAllDiscEvents += (diff-1);
+         fRunDiscEvents += (buildevid_diff-1);
+         fAllDiscEvents += (buildevid_diff-1);
       }
 
       // if (subeventssize == 0) EOUT("ZERO EVENT");
@@ -1251,9 +1265,11 @@ bool dogma::CombinerModule::BuildEvent()
 
    // grd.Next("shift", 15);
 
+   // bool fatal = !fCfg[1].has_data || (fCfg[1].fTrigNr != buildevid);
+
    // FINAL loop: proceed to next subevents
    for (auto &cfg : fCfg)
-      if (cfg.fTrigNr == buildevid) {
+      if (cfg.has_data && (cfg.fTrigNr == buildevid)) {
          debugmask[cfg.ninp] = 'o';
          ShiftToNextSubEvent(cfg.ninp, false, !canBuildEvent);
       } else {
@@ -1267,6 +1283,15 @@ bool dogma::CombinerModule::BuildEvent()
       // put here update of tid
       // fPID= syscall(SYS_gettid);
    }
+
+   //if (fatal) {
+   //   printf("Event %6u diff %2d mask %s %s\n", buildevid, buildevid_diff, debugmask.c_str(), buildevid_diff == 1 && (debugmask == "oo")  ? "" : "?????????");
+   //   printf("MISMATCH!!!!\n");
+   //   dabc::mgr.StopApplication();
+   //}
+
+   // if (debug++ > 20000)
+   //    dabc::mgr.StopApplication();
 
    // return true means that method can be called again immediately
    // in all places one requires while loop
