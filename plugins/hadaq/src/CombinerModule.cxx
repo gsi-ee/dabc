@@ -36,7 +36,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fFlushCounter(0),
    fIsTerminating(false),
    fRunToOracle(false),
-   fCheckTag(true),
    fFlushTimeout(0.),
    fBnetFileCmd(),
    fEvnumDiffStatistics(true)
