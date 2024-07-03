@@ -107,7 +107,7 @@ bool hadaq::HldOutput::StartNewFile()
          return false;
       }
 
-      fRunNumber = hadaq::CreateRunId();
+      fRunNumber = dabc::CreateHadaqRunId();
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
       ShowInfo(0, dabc::format("HldOutput Generates New Runid %d (0x%x)", fRunNumber, fRunNumber));
    }
@@ -134,7 +134,7 @@ bool hadaq::HldOutput::StartNewFile()
       }
    }
    // change file names according hades style:
-   std::string extens = hadaq::FormatFilename(fRunNumber, fEBNumber);
+   std::string extens = dabc::HadaqFileSuffix(fRunNumber, fEBNumber);
    std::string fname = fFileName;
 
    if (!fLastPrefix.empty() && fRunSlave) {

@@ -87,7 +87,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    if (fBNETrecv || fBNETsend)
       fRunNumber = 0; // ignore data without valid run id at beginning!
    else
-      fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
+      fRunNumber = dabc::CreateHadaqRunId(); // runid from configuration time.
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask = fMaxHadaqTrigger-1;
@@ -1399,7 +1399,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       if ((cmd.GetStr("mode") != "start") && !fBNETCalibrDir.empty() && (runid != 0)) {
          rundir = fBNETCalibrDir;
          rundir.append("/");
-         rundir.append(hadaq::FormatFilename(runid));
+         rundir.append(dabc::HadaqFileSuffix(runid));
          std::string mkdir = "mkdir -p ";
          mkdir.append(rundir);
          auto res = std::system(mkdir.c_str());
@@ -1554,10 +1554,9 @@ const char *hadaq::CombinerModule::Unit(unsigned long v)
    return retVal;
 }
 
-std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
+std::string hadaq::CombinerModule::GenerateFileName(unsigned /* runid */)
 {
-   (void) runid;
-   return fPrefix + hadaq::FormatFilename(fRunNumber, fEBId) + std::string(".hld");
+   return fPrefix + dabc::HadaqFileSuffix(fRunNumber, fEBId) + std::string(".hld");
 }
 
 bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)

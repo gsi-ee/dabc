@@ -1351,7 +1351,7 @@ int dogma::CombinerModule::ExecuteCommand(dabc::Command cmd)
       if ((cmd.GetStr("mode") != "start") && !fBNETCalibrDir.empty() && (runid != 0)) {
          rundir = fBNETCalibrDir;
          rundir.append("/");
-         rundir.append(dabc::format("run%u", (unsigned) runid)); // hadaq::FormatFilename(runid)
+         rundir.append(dabc::HadaqFileSuffix(runid));
          std::string mkdir = "mkdir -p ";
          mkdir.append(rundir);
          auto res = std::system(mkdir.c_str());
