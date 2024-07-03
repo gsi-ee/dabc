@@ -29,26 +29,18 @@ namespace hadaq {
       mbt_HadaqStopRun = 145         // buffer just indicates stop of current run
   };
 
-   extern const char* protocolHld;
+   extern const char *protocolHld;
 
-   extern const char* xmlBuildFullEvent;
+   extern const char *xmlBuildFullEvent;
 
-   extern const char* xmlHadaqTrignumRange;
-   extern const char* xmlHadaqTriggerTollerance;
-   extern const char* xmlHadaqDiffEventStats;
-   extern const char* xmlEvtbuildTimeout;
-   extern const char* xmlMaxNumBuildEvt;
-   extern const char* xmlHadesTriggerType;
-   extern const char* xmlHadesTriggerHUB;
+   extern const char *xmlHadaqTrignumRange;
+   extern const char *xmlHadaqTriggerTollerance;
+   extern const char *xmlHadaqDiffEventStats;
+   extern const char *xmlEvtbuildTimeout;
+   extern const char *xmlMaxNumBuildEvt;
+   extern const char *xmlHadesTriggerType;
+   extern const char *xmlHadesTriggerHUB;
 
-   /*
-    * Format a HADES-convention filename string
-    * from a given run id and optional eventbuilder id
-    */
-   extern std::string FormatFilename (uint32_t runid, uint16_t ebid = 0);
-
-   extern uint32_t CreateRunId();
-
-}
+} // namespace hadaq
 
 #endif

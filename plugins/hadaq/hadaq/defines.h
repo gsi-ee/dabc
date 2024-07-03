@@ -111,10 +111,6 @@
 
 namespace hadaq {
 
-   enum {
-      HADAQ_TIMEOFFSET       = 1200000000 /* needed to reconstruct time from runId */
-   };
-
    enum EvtId {
       EvtId_data     = 0x00000001,
       EvtId_DABC     = 0x00002001,      // hades DAQVERSION=2 (same as evtbuild.c uses DAQVERSION=2)
