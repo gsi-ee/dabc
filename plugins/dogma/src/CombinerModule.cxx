@@ -592,18 +592,29 @@ bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
    if (cfg.fResortIndx < 0) {
       // normal way to take next buffer
-      if(!CanRecv(ninp)) return false;
+      if(!CanRecv(ninp))
+         return false;
       buf = Recv(ninp);
       fNumReadBuffers++;
    } else {
       // do not try to look further than one more buffer
-      if (cfg.fResortIndx>1) return false;
+      if (cfg.fResortIndx > 1)
+         return false;
       // when doing resort, try to access buffers from the input queue
       buf = RecvQueueItem(ninp, cfg.fResortIndx++);
    }
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
-      // Stop();
+      printf("SEE EOF %u\n", ninp);
+      cfg.has_eof = (cfg.fResortIndx < 0);
+
+      bool all_eof = true;
+      for (auto &cc : fCfg)
+         if (!cc.has_eof)
+            all_eof = false;
+
+      if (all_eof)
+         Stop();
       return false;
    }
 
@@ -628,10 +639,9 @@ bool dogma::CombinerModule::ShiftToNextTu(unsigned ninp)
          return true;
       }
 
-      if(!ShiftToNextBuffer(ninp)) return false;
-
-      // DOUT0("Inp%u next buffer distance %u", ninp, iter.OnlyDebug());
-   } //  while (!foundhadtu)
+      if(!ShiftToNextBuffer(ninp))
+         return false;
+   }
 
    return false;
 }

@@ -53,7 +53,8 @@ namespace dogma {
          unsigned ninp{0};          ///< input number
          dogma::DogmaTu *subevnt{nullptr}; ///< actual subevent
          dogma::DogmaEvent  *evnt{nullptr}; ///< actual event
-         bool     has_data{false};      ///< when true, input has data (subevent or bunch of sub events)
+         bool     has_data{false};  ///< when true, input has data (subevent or bunch of sub events)
+         bool     has_eof{false};   ///< true when seen EOF buffer
          uint32_t data_size{0};     ///< padded size of current subevent, required in output buffer
          uint32_t fTrigNr{0};       ///< keeps current trigger sequence number
          uint32_t fLastTrigNr{0};   ///< keeps previous trigger sequence number - used to control data lost
