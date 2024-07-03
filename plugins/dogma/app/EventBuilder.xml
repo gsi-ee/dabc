@@ -39,10 +39,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcDogma.so"/>
       <lib value="libDabcHttp.so"/>
-      <logfile value="hadaqevtbuild.log"/>
+      <logfile value="dogmabuild.log"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
-      <control value="true"/>
+      <control value="false"/>
       <threads_layout value="balanced"/>
     </Run>
 
@@ -64,8 +64,8 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <NumInputs value="2"/>
        <NumOutputs value="2"/>
 
-       <InputPort name="Input0" url="dogma://host:60678"/>
-       <InputPort name="Input1" url="dogma://host:60679"/>
+       <InputPort name="Input0" url="dogma://host:60678" optional="false"/>
+       <InputPort name="Input1" url="dogma://host:60679" optional="false"/>
        <InputPort name="Input*" queue="20" urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=50" resort="false"/>
 
        <!--  this is stream server for online monitoring, normally always on,  0x25 is DOGMA identifier -->
