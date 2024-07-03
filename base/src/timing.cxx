@@ -346,7 +346,12 @@ double dabc::DateTime::DistanceTo(const DateTime& pnt) const
    return res;
 }
 
-const int HADAQ_TIMEOFFSET = 1200000000; /* needed to reconstruct time from runId */
+const uint32_t HADAQ_TIMEOFFSET = 1200000000; /* needed to reconstruct time from runId */
+
+uint32_t dabc::GetHadaqTimeOffset()
+{
+   return HADAQ_TIMEOFFSET;
+}
 
 uint32_t dabc::CreateHadaqRunId()
 {

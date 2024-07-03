@@ -1477,7 +1477,7 @@ void hadaq::CombinerModule::StoreRunInfoStart()
       where "start" is a key word which defines START RUN info. -S.Y.
     */
    if(!fRunToOracle || fRunNumber == 0) return;
-   time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
+   time_t t = fRunNumber + dabc::GetHadaqTimeOffset(); // new run number defines start time
    char ltime[20];            /* local time */
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
@@ -1507,7 +1507,7 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
    if(onexit || (newrunid == 0))
       t = time(nullptr);
    else
-      t = newrunid + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
+      t = newrunid + dabc::GetHadaqTimeOffset(); // new run number defines stop time
    char ltime[20];            /* local time */
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));

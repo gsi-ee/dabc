@@ -263,9 +263,12 @@ namespace dabc {
 
    void Sleep(double tm);
 
-   extern std::string HadaqFileSuffix(uint32_t runid, uint16_t ebid = 0);
+   extern uint32_t GetHadaqTimeOffset();
 
    extern uint32_t CreateHadaqRunId();
+
+   extern std::string HadaqFileSuffix(uint32_t runid, uint16_t ebid = 0);
+
 }
 
 #endif
