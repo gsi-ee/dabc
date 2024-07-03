@@ -26,6 +26,8 @@
 
 #include "dogma/UdpTransport.h"
 
+const unsigned kNoTrigger = 0xffffffff;
+
 
 dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -81,7 +83,7 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fEpicsRunNumber = 0;
 
-   fLastTrigNr = 0xffffffff;
+   fLastTrigNr = kNoTrigger;
    fMaxDogmaTrigger = 0;
    fTriggerRangeMask = 0;
 
@@ -686,7 +688,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    if (cfg.fResortIndx >= 0) {
       doshift = false; // do not shift event in main iterator
-      if (cfg.subevnt) cfg.subevnt->SetTrigTypeNumber(0xffffffff); // mark subevent as used
+      if (cfg.subevnt) cfg.subevnt->SetTrigTypeNumber(kNoTrigger); // mark subevent as used
       cfg.fResortIndx = -1;
       cfg.fResortIter.Close();
    } else {
@@ -730,9 +732,9 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       // no need to analyze data
       if (fast) return true;
 
-      if (tryresort && (cfg.fLastTrigNr != 0xffffffff)) {
+      if (tryresort && (cfg.fLastTrigNr != kNoTrigger)) {
          uint32_t trignr = iter.subevnt()->GetTrigNumber();
-         if (trignr == 0xffffffff) continue; // this is processed trigger, exclude it
+         if (trignr == kNoTrigger) continue; // this is processed trigger, exclude it
 
          int diff = CalcTrigNumDiff(cfg.fLastTrigNr, trignr & fTriggerRangeMask);
 
@@ -772,7 +774,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          cfg.fErrorBitsCnt++;
 
       int diff = 1;
-      if (cfg.fLastTrigNr != 0xffffffff)
+      if (cfg.fLastTrigNr != kNoTrigger)
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
       cfg.fLastTrigNr = cfg.fTrigNr;
 
@@ -833,7 +835,7 @@ int dogma::CombinerModule::DestinationPort(uint32_t trignr)
 
 bool dogma::CombinerModule::CheckDestination(uint32_t trignr)
 {
-   if (!fBNETsend || (fLastTrigNr == 0xffffffff)) return true;
+   if (!fBNETsend || (fLastTrigNr == kNoTrigger)) return true;
 
    return DestinationPort(fLastTrigNr) == DestinationPort(trignr);
 }
@@ -850,8 +852,7 @@ bool dogma::CombinerModule::BuildEvent()
    // here loop over all channels: skip subevts with too old eventnumbers
    // if event is not complete, discard this and try next master channel index
 
-    // adjust run number that might have changed by file output
-   //fRunNumber=GetEvtbuildParValue("runId"); // PERFORMANCE?
+   // adjust run number that might have changed by file output
    // note: file outout will overwrite this number in event header to be consistent with file name
    // for online monitor, we could live with different run numbers
 
@@ -1141,7 +1142,8 @@ bool dogma::CombinerModule::BuildEvent()
       fOut.FinishEvent();
 
       int diff = 1;
-      if (fLastTrigNr != 0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+      if (fLastTrigNr != kNoTrigger)
+         diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
 
       //if (fBNETsend && (diff != 1))
       //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);
