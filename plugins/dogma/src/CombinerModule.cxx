@@ -1075,8 +1075,8 @@ bool dogma::CombinerModule::BuildEvent()
 
          AccountDroppedData(cfg.data_size);
 
-         if (!cfg.fOptional)
-            EOUT("Skip data in must_have channel %u", cfg.ninp);
+         //if (!cfg.fOptional)
+         //   EOUT("Skip data in must_have channel %u", cfg.ninp);
 
          // try with next subevt until reaching buildevid
          ShiftToNextSubEvent(cfg.ninp, false, true);
