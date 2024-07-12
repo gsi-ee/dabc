@@ -193,7 +193,7 @@ namespace dogma {
          std::string        fBNETCalibrPackScript;  ///< name of script to pack calibration files
          dabc::Command      fBnetCalibrCmd;  ///< current running bnet calibration command
 
-         double             fFlushTimeout;
+         double             fFlushTimeout = 1.;
          dabc::Command      fBnetFileCmd;  ///< current running bnet file command
          dabc::Command      fBnetRefreshCmd; ///< current running refresh command
 

@@ -36,7 +36,7 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fFlushCounter(0),
    fIsTerminating(false),
    fRunToOracle(false),
-   fFlushTimeout(0.),
+   fFlushTimeout(1.),
    fBnetFileCmd(),
    fEvnumDiffStatistics(true)
 {
@@ -934,7 +934,7 @@ bool dogma::CombinerModule::BuildEvent()
          }
 
          // data incomplete when input must be there or optional input did not provide data for long time
-         if (!cfg.fOptional || !cfg.fLastDataTm.Expired(currTm, 0.5)) {
+         if (!cfg.fOptional || !cfg.fLastDataTm.Expired(currTm, fFlushTimeout > 0 ? fFlushTimeout : 0.5)) {
             missing_inp = cfg.ninp;
             incomplete_data = true;
          }
