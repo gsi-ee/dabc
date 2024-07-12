@@ -92,7 +92,7 @@ namespace dogma {
          InputCfg()
          {
             for (int i=0;i<DOGMA_RINGSIZE;i++)
-               fTrigNumRing[i]=0;
+               fTrigNumRing[i] = 0;
          }
 
          void Reset(bool complete = false)
@@ -112,8 +112,8 @@ namespace dogma {
             if (complete) {
                fLastTrigNr = 0xffffffff;
                fUdpPort = 0;
+               fLastDataTm.GetNow();
             }
-            fLastDataTm.GetNow();
          }
 
          void Close()

@@ -1019,9 +1019,9 @@ bool dogma::CombinerModule::BuildEvent()
 
         DropAllInputBuffers();
 
-        if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+        if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
            DOUT1("Drop all buffers");
-           fLastDebugTm.GetNow();
+           fLastDebugTm = currTm;
         }
 
         return false; // retry on next set of buffers
@@ -1029,8 +1029,15 @@ bool dogma::CombinerModule::BuildEvent()
 
    // grd.Next("chkcomp");
 
-   if (incomplete_data)
+   if (incomplete_data || !any_data) {
+      if (fExtraDebug && fLastDebugTm.Expired(currTm, 0.5)) {
+         DOUT1("Do not build - %s data", !any_data ? "no any" : "incomplete");
+         for (auto &cfg : fCfg)
+            DOUT1("   ninp %u optional %s has_data %s Last data tm expired %s", cfg.ninp, DBOOL(cfg.fOptional), DBOOL(cfg.has_data), DBOOL(cfg.fLastDataTm.Expired(currTm, 0.5)));
+         fLastDebugTm = currTm;
+      }
       return false;
+   }
 
    // which channel is definitely in the data
    unsigned masterchannel = must_have_data ? mast_have_max_inp : min_inp;
