@@ -298,6 +298,10 @@ namespace dogma {
 
          void AccountDroppedData(unsigned sz, bool lost_full_event = false);
 
+         void ProcessConnectEvent(const std::string &name, bool on) override;
+
+         void ProcessEOF(unsigned ninp);
+
       public:
          CombinerModule(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~CombinerModule();

@@ -576,6 +576,38 @@ void dogma::CombinerModule::UpdateBnetInfo()
    fBldCalls = fInpCalls = fOutCalls = fBufCalls = fTimerCalls = 0;
 }
 
+
+void dogma::CombinerModule::ProcessConnectEvent(const std::string &name, bool on)
+{
+   printf("ProcessConnectEvent %s ninp %u on %s\n", name.c_str(), NumInputs(), DBOOL(on));
+
+   if (on) return;
+
+   for (unsigned n = 0; n < NumInputs(); ++n)
+      if (InputName(n) == name) {
+         ProcessEOF(n);
+         return;
+      }
+}
+
+
+void dogma::CombinerModule::ProcessEOF(unsigned ninp)
+{
+   if (ninp >= fCfg.size())
+      return;
+
+   fCfg[ninp].has_eof = true;
+
+   bool all_eof = true;
+   for (auto &cc : fCfg)
+      if (!cc.has_eof)
+         all_eof = false;
+
+   if (all_eof)
+      Stop();
+}
+
+
 ///////////////////////////////////////////////////////////////
 //////// INPUT BUFFER METHODS:
 
@@ -606,15 +638,8 @@ bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
       printf("SEE EOF %u\n", ninp);
-      cfg.has_eof = (cfg.fResortIndx < 0);
-
-      bool all_eof = true;
-      for (auto &cc : fCfg)
-         if (!cc.has_eof)
-            all_eof = false;
-
-      if (all_eof)
-         Stop();
+      if (cfg.fResortIndx < 0)
+         ProcessEOF(ninp);
       return false;
    }
 
