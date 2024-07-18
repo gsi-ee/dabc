@@ -83,7 +83,7 @@ namespace dogma {
          bool NextTu();
 
          dogma::DogmaTu* tu() const { return (dogma::DogmaTu*) fEvPtr(); }
-         unsigned tusize() const { return tu() ? tu()->GetTuLen() : 0; }
+         unsigned tusize() const { return tu() ? tu()->GetSize() : 0; }
 
          /** Used for ready HLD events */
          bool NextEvent();
@@ -140,7 +140,7 @@ namespace dogma {
          bool AddSubevent(const void *ptr, unsigned len);
          bool AddSubevent(dogma::DogmaTu* sub)
          {
-            return AddSubevent(sub, sub->GetTuLen());
+            return AddSubevent(sub, sub->GetSize());
          }
          bool AddAllSubevents(dogma::DogmaEvent *evnt)
          {

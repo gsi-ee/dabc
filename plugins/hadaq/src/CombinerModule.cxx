@@ -26,6 +26,9 @@
 
 #include "hadaq/UdpTransport.h"
 
+const unsigned kNoTrigger = 0xffffffff;
+
+
 hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fCfg(),
@@ -33,7 +36,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fFlushCounter(0),
    fIsTerminating(false),
    fRunToOracle(false),
-   fCheckTag(true),
    fFlushTimeout(0.),
    fBnetFileCmd(),
    fEvnumDiffStatistics(true)
@@ -80,14 +82,14 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fEpicsRunNumber = 0;
 
-   fLastTrigNr = 0xffffffff;
+   fLastTrigNr = kNoTrigger;
    fMaxHadaqTrigger = 0;
    fTriggerRangeMask = 0;
 
    if (fBNETrecv || fBNETsend)
       fRunNumber = 0; // ignore data without valid run id at beginning!
    else
-      fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
+      fRunNumber = dabc::CreateHadaqRunId(); // runid from configuration time.
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask = fMaxHadaqTrigger-1;
@@ -689,7 +691,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    if (cfg.fResortIndx >= 0) {
       doshift = false; // do not shift event in main iterator
-      if (cfg.subevnt) cfg.subevnt->SetTrigNr(0xffffffff); // mark subevent as used
+      if (cfg.subevnt) cfg.subevnt->SetTrigNr(kNoTrigger); // mark subevent as used
       cfg.fResortIndx = -1;
       cfg.fResortIter.Close();
    } else {
@@ -731,9 +733,9 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       // no need to analyze data
       if (fast) return true;
 
-      if (tryresort && (cfg.fLastTrigNr != 0xffffffff)) {
+      if (tryresort && (cfg.fLastTrigNr != kNoTrigger)) {
          uint32_t trignr = iter.subevnt()->GetTrigNr();
-         if (trignr == 0xffffffff) continue; // this is processed trigger, exclude it
+         if (trignr == kNoTrigger) continue; // this is processed trigger, exclude it
 
          int diff = CalcTrigNumDiff(cfg.fLastTrigNr, (trignr >> 8) & fTriggerRangeMask);
 
@@ -763,7 +765,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       if (((cfg.fTrigNr & 0xffff) == 0) &&       // lower two bytes in trigger id are 0 (from 0x2b0000)
            (fTriggerRangeMask > 0x100000) &&     // more than 4+16 bits used in trigger mask
            (cfg.fResortIndx < 0) &&              // do not try to resort data, normally enabled for very special cases
-           (cfg.fLastTrigNr != 0xffffffff) &&    // last trigger is not dummy
+           (cfg.fLastTrigNr != kNoTrigger) &&    // last trigger is not dummy
            ((cfg.fLastTrigNr & 0xffff) == 0xffff) &&  // lower byte of last trigger is 0xffff (from 0x2bffff)
            ((cfg.fTrigNr & 0xffff0000) == (cfg.fLastTrigNr & 0xffff0000))) // high bytes are same in last and now (0x2b == 0x2b)
          cfg.fTrigNr = (cfg.fLastTrigNr + 1) & fTriggerRangeMask;
@@ -802,7 +804,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          cfg.fErrorBitsCnt++;
 
       int diff = 1;
-      if (cfg.fLastTrigNr != 0xffffffff)
+      if (cfg.fLastTrigNr != kNoTrigger)
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
       cfg.fLastTrigNr = cfg.fTrigNr;
 
@@ -862,7 +864,7 @@ int hadaq::CombinerModule::DestinationPort(uint32_t trignr)
 
 bool hadaq::CombinerModule::CheckDestination(uint32_t trignr)
 {
-   if (!fBNETsend || (fLastTrigNr == 0xffffffff)) return true;
+   if (!fBNETsend || (fLastTrigNr == kNoTrigger)) return true;
 
    return DestinationPort(fLastTrigNr) == DestinationPort(trignr);
 }
@@ -1184,7 +1186,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fOut.FinishEvent();
 
       int diff = 1;
-      if (fLastTrigNr != 0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+      if (fLastTrigNr != kNoTrigger) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
 
       //if (fBNETsend && (diff != 1))
       //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);
@@ -1399,7 +1401,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       if ((cmd.GetStr("mode") != "start") && !fBNETCalibrDir.empty() && (runid != 0)) {
          rundir = fBNETCalibrDir;
          rundir.append("/");
-         rundir.append(hadaq::FormatFilename(runid));
+         rundir.append(dabc::HadaqFileSuffix(runid));
          std::string mkdir = "mkdir -p ";
          mkdir.append(rundir);
          auto res = std::system(mkdir.c_str());
@@ -1477,7 +1479,7 @@ void hadaq::CombinerModule::StoreRunInfoStart()
       where "start" is a key word which defines START RUN info. -S.Y.
     */
    if(!fRunToOracle || fRunNumber == 0) return;
-   time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
+   time_t t = fRunNumber + dabc::GetHadaqTimeOffset(); // new run number defines start time
    char ltime[20];            /* local time */
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
@@ -1507,7 +1509,7 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
    if(onexit || (newrunid == 0))
       t = time(nullptr);
    else
-      t = newrunid + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
+      t = newrunid + dabc::GetHadaqTimeOffset(); // new run number defines stop time
    char ltime[20];            /* local time */
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
@@ -1554,10 +1556,9 @@ const char *hadaq::CombinerModule::Unit(unsigned long v)
    return retVal;
 }
 
-std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
+std::string hadaq::CombinerModule::GenerateFileName(unsigned /* runid */)
 {
-   (void) runid;
-   return fPrefix + hadaq::FormatFilename(fRunNumber, fEBId) + std::string(".hld");
+   return fPrefix + dabc::HadaqFileSuffix(fRunNumber, fEBId) + std::string(".hld");
 }
 
 bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)

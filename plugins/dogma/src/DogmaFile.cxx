@@ -14,7 +14,6 @@
  ************************************************************/
 
 #include "dogma/DogmaFile.h"
-#include "dabc/logging.h"
 
 bool dogma::DogmaFile::OpenWrite(const char* fname, const char* opt)
 {
@@ -65,8 +64,6 @@ bool dogma::DogmaFile::OpenRead(const char* fname, const char* opt)
 
 void dogma::DogmaFile::Close()
 {
-   DOUT3("dogma::DogmaFile::Close()... ");
-
    CloseBasicFile();
 
    fEOF = true;
@@ -79,7 +76,7 @@ bool dogma::DogmaFile::WriteBuffer(void* buf, uint32_t bufsize)
    if (!isWriting() || !buf || (bufsize == 0)) return false;
 
    if (io->fwrite(buf, bufsize, 1, fd) != 1) {
-      EOUT("fail to write buffer payload of size %u", (unsigned) bufsize);
+      fprintf(stderr, "fail to write dogma buffer payload of size %u", (unsigned) bufsize);
       CloseBasicFile();
       return false;
    }
@@ -94,8 +91,6 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
    uint64_t maxsz = *sz; *sz = 0;
 
    size_t readsz = io->fread(ptr, 1, (onlyevent ? sizeof(dogma::DogmaEvent) : maxsz), fd);
-
-   //printf("Read HLD portion of data %u max %u\n", (unsigned) readsz, (unsigned) maxsz);
 
    if (readsz < sizeof(dogma::DogmaEvent)) {
       if (!io->feof(fd)) fprintf(stderr, "Fail to read next portion but no EOF detected\n");
@@ -115,13 +110,13 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 
       // printf("Expect next event of size %u\n", (unsigned) hdr->GetPaddedSize());
 
-      readsz = io->fread((char *) ptr + sizeof(dogma::DogmaEvent), 1, hdr->GetPayloadLen(), fd);
+      readsz = io->fread((char *) ptr + sizeof(dogma::DogmaEvent), 1, hdr->GetPayloadLen()*4, fd);
 
       // printf("Read size %u expects %u \n", (unsigned) readsz, (unsigned) (hdr->GetPaddedSize() - sizeof(hadaq::HadTu)));
 
       // not possible to read event completely
-      if (readsz != hdr->GetPayloadLen()) {
-         fprintf(stderr, "Reading problem\n");
+      if (readsz != hdr->GetPayloadLen()*4) {
+         fprintf(stderr, "DOGMA reading problem\n");
          fEOF = true;
          return false;
       }

@@ -147,10 +147,7 @@ namespace dabc {
 
    };
 
-
-
    // ===============================================================================
-
 
    /** \brief Binary file header structure */
    struct BinaryFileHeader {
@@ -317,7 +314,8 @@ namespace dabc {
 
          bool ReadBufHeader(uint64_t* size, uint64_t* typ = nullptr)
          {
-            if (!isReading()) return false;
+            if (!isReading())
+               return false;
 
             if (fBufHdr.datalength != 0) {
                fprintf(stderr, "reading of previous buffer was not completed, remained %u bytes\n", (unsigned) fBufHdr.datalength);

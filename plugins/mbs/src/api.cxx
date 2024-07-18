@@ -133,7 +133,7 @@ bool mbs::ReadoutModule::GetEventInTime(double maxage)
 
 // ===================================================================================
 
-mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const char* classname)
+mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const char* classname, int bufsz_mb)
 {
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(-1);
@@ -141,7 +141,9 @@ mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const c
    }
 
    if (dabc::mgr.FindPool(dabc::xmlWorkPool).null()) {
-      if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, 4*1024*1024, 40)) {
+      if (bufsz_mb < 1)
+         bufsz_mb = 1;
+      if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, bufsz_mb*1024*1024, 40)) {
          return nullptr;
       }
    }

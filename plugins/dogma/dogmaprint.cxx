@@ -25,6 +25,10 @@
 #include "dabc/Url.h"
 #include "dabc/api.h"
 
+#include "../hadaq/tdc_print_code.cxx"
+
+
+
 int usage(const char* errstr = nullptr)
 {
    if (errstr)
@@ -44,39 +48,131 @@ int usage(const char* errstr = nullptr)
    printf("   -skip number            - number of events to skip before start printing\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -rate                   - display only events and data rate\n");
-
+   printf("   -stat                   - count statistics\n");
+   printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
+   print_tdc_arguments();
    return errstr ? 1 : 0;
 }
 
+struct TuStat {
+   int cnt{0}; // number of stats
+   int64_t min_diff{0}; // minimal time diff
+   int64_t max_diff{0}; // maximal time diff
+
+   dogma::DogmaTu *tu{nullptr}; // current tu
+};
+
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
-unsigned idrange = 0xff, onlytdc = 0, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
+unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
+
+std::vector<unsigned> tdcs;
+
+
+bool is_tdc(unsigned id)
+{
+   if (std::find(tdcs.begin(), tdcs.end(), id) != tdcs.end())
+      return true;
+
+   for (unsigned n = 0; n < tdcs.size(); n++)
+      if (((id & idrange) <= (tdcs[n] & idrange)) && ((id & ~idrange) == (tdcs[n] & ~idrange)))
+         return true;
+
+   return false;
+}
+
+
+std::map<uint32_t, TuStat> tu_stats;
+uint32_t ref_addr = 0;
 
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
-   printf("%stu addr: %lu type: 0x%02x trignum; %lu, time: %lu paylod: %lu\n", prefix, (long unsigned)tu->GetAddr(),
-          (unsigned)tu->GetTrigType(), (long unsigned)tu->GetTrigNumber(), (long unsigned)tu->GetTrigTime(),
-          (long unsigned)tu->GetPayloadLen());
+   printf("%sTu addr:%04x type:%02x trignum:%06x time:%08x local:%08x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
+          (unsigned)tu->GetAddr(), (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
+          (unsigned)tu->GetTrigTime(), (unsigned)tu->GetLocalTrigTime(),
+          (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
+
+   unsigned len = tu->GetPayloadLen();
 
    if (printraw) {
-      unsigned len = tu->GetPayloadLen() / 4;
+      printf("%s", prefix);
       for (unsigned i = 0; i < len; ++i) {
-         printf("   %08x", (unsigned) tu->GetPayload(i));
-         if ((i == len - 1) || ((i % 8 == 0) && (i > 0)))
-            printf("\n");
+         printf("  %08x", (unsigned) tu->GetPayload(i));
+         if ((i == len - 1) || (i % 8 == 7))
+            printf("\n%s", i < len-1 ? prefix : "");
       }
+   } else if (is_tdc(tu->GetAddr())) {
+      std::vector<uint32_t> data(len, 0);
+      for (unsigned i = 0; i < len; ++i)
+         data[i] = tu->GetPayload(i);
+      unsigned errmask = 0;
+      PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask);
    }
 }
 
 void print_evnt(dogma::DogmaEvent *evnt)
 {
-   printf("Event seqid: %lu\n", (long unsigned) evnt->GetSeqId());
+   printf("Event seqid:%lu size:%lu\n", (long unsigned) evnt->GetSeqId(), (long unsigned) evnt->GetEventLen());
    auto tu = evnt->FirstSubevent();
 
    while(tu) {
       print_tu(tu, "   ");
       tu = evnt->NextSubevent(tu);
    }
+}
+
+void stat_evnt(dogma::DogmaEvent *evnt)
+{
+   if (!evnt)
+      return;
+
+   for (auto &pairs : tu_stats)
+      pairs.second.tu = nullptr;
+
+   auto tu = evnt->FirstSubevent();
+   dogma::DogmaTu *ref = nullptr;
+   while(tu) {
+      auto &entry = tu_stats[tu->GetAddr()];
+      entry.tu = tu;
+      if (!ref_addr) ref_addr = tu->GetAddr();
+
+      if (ref_addr == tu->GetAddr())
+         ref = tu;
+
+      tu = evnt->NextSubevent(tu);
+   }
+
+   for (auto &pairs : tu_stats) {
+
+      auto &entry = pairs.second;
+      if (!entry.tu) continue;
+
+      entry.cnt++;
+
+      if (!ref || (pairs.first == ref_addr))
+         continue;
+
+      int64_t diff = entry.tu->GetTrigTime();
+      diff -= ref->GetTrigTime();
+
+      if (entry.cnt == 1) {
+         entry.min_diff = diff;
+         entry.max_diff = diff;
+      } else {
+         if (entry.min_diff < diff)
+            entry.min_diff = diff;
+         if (entry.max_diff > diff)
+            entry.max_diff = diff;
+      }
+   }
+}
+
+void print_stat()
+{
+   for (auto &pairs : tu_stats) {
+      printf("  addr:%04x cnt:%d min_diff:%ld max_diff:%ld\n", (unsigned) pairs.first, pairs.second.cnt, (long) pairs.second.min_diff, (long) pairs.second.max_diff);
+   }
+
 }
 
 int main(int argc, char* argv[])
@@ -86,6 +182,7 @@ int main(int argc, char* argv[])
 
    long number = 10, skip = 0, nagain = 0;
    double tmout = -1., maxage = -1.;
+   unsigned tdcmask = 0;
 
    int n = 1;
    while (++n < argc) {
@@ -108,13 +205,14 @@ int main(int argc, char* argv[])
          printsub = true;
       } else if (strcmp(argv[n], "-stat") == 0) {
          dostat = true;
-      } else
+      } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &tdcmask);
+         tdcs.emplace_back(tdcmask);
+      } else if (!scan_tdc_arguments(n, argc, argv))
          return usage("Unknown option");
    }
 
    printf("Try to open %s\n", argv[1]);
-
-   if (tmout < 0) tmout = 5.;
 
    bool isfile = false;
    std::string src = argv[1];
@@ -123,13 +221,15 @@ int main(int argc, char* argv[])
       src = std::string("dld://") + src;
       isfile = true;
    } else if (src.find("dld://") == 0) {
-      isfile = 0;
+      isfile = false;
    } else if ((src.find(".bin") != std::string::npos) && (src.find("bin://") != 0)) {
       src = std::string("bin://") + src;
       isfile = true;
    } else if ((src.find("bin://") == 0) || (src.find(".bin") != std::string::npos)) {
       isfile = true;
    }
+
+   if (tmout < 0) tmout = isfile ? 0.1 : 5.;
 
    if (!isfile) {
 
@@ -200,7 +300,6 @@ int main(int argc, char* argv[])
          trignr = evnt->GetTrigNumber();
 
       } else if (curr - lastevtm > tmout) {
-         /*printf("TIMEOUT %ld\n", cnt0);*/
          break;
       }
 
@@ -226,9 +325,11 @@ int main(int argc, char* argv[])
          }
       }
 
-      cnt++;
-      currsz += sz;
-      lastevtm = curr;
+      if (tu || evnt) {
+         cnt++;
+         currsz += sz;
+         lastevtm = curr;
+      }
 
       if (showrate) {
 
@@ -252,7 +353,9 @@ int main(int argc, char* argv[])
 
       printcnt++;
 
-      if (tu)
+      if (dostat) {
+         stat_evnt(evnt);
+      } else if (tu)
          print_tu(tu);
       else if (evnt)
          print_evnt(evnt);
@@ -269,6 +372,7 @@ int main(int argc, char* argv[])
 
    if (dostat) {
       printf("Statistic: %ld events analyzed\n", printcnt);
+      print_stat();
    }
 
    if (dominsz && mincnt >= 0)

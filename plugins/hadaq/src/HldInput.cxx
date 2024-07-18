@@ -71,10 +71,12 @@ bool hadaq::HldInput::CloseFile()
 
 unsigned hadaq::HldInput::Read_Size()
 {
-   if (!fFile.isReading()) return dabc::di_Error;
+   if (!fFile.isReading())
+      return dabc::di_Error;
 
    if (fFile.eof())
-      if (!OpenNextFile()) return dabc::di_EndOfStream;
+      if (!OpenNextFile())
+         return dabc::di_EndOfStream;
 
    return dabc::di_DfltBufSize;
 }

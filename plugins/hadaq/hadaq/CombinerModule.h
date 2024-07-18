@@ -178,7 +178,7 @@ namespace hadaq {
          bool               fSpecialFired;  ///< if user event was already fired
          double             fLastEventRate; ///< last event rate
 
-         bool               fCheckTag;
+         bool               fCheckTag = true;
 
          bool               fBNETsend;  ///< indicate that combiner used as BNET sender
          bool               fBNETrecv;  ///< indicate that second-level event building is performed

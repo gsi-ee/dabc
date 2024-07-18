@@ -56,7 +56,7 @@ bool dogma::DogmaInput::OpenNextFile()
       return false;
    }
 
-   DOUT1("Open hld file %s for reading", CurrentFileName().c_str());
+   DOUT1("Open dogma file %s for reading", CurrentFileName().c_str());
 
    return true;
 }
@@ -74,9 +74,8 @@ unsigned dogma::DogmaInput::Read_Size()
    if (!fFile.isReading())
       return dabc::di_Error;
 
-   if (fFile.eof())
-      if (!OpenNextFile())
-         return dabc::di_EndOfStream;
+   if (fFile.eof() && !OpenNextFile())
+       return dabc::di_EndOfStream;
 
    return dabc::di_DfltBufSize;
 }
@@ -93,7 +92,8 @@ unsigned dogma::DogmaInput::Read_Complete(dabc::Buffer& buf)
 
    if (!fFile.ReadBuffer(buf.SegmentPtr(0), &bufsize)) {
       // if by chance reading of buffer leads to eof, skip buffer and let switch file on the next turn
-      if (fFile.eof()) return dabc::di_SkipBuffer;
+      if (fFile.eof())
+         return dabc::di_SkipBuffer;
       CloseFile();
       return dabc::di_Error;
    }

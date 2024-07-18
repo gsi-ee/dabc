@@ -40,7 +40,7 @@ dogma::ReadoutHandle dogma::ReadoutHandle::Connect(const std::string &src)
    //      (newurl.find("hld://") == std::string::npos))
    //   newurl = std::string("hld://") + src;
 
-   return DoConnect(newurl, "dogma::ReadoutModule");
+   return DoConnect(newurl, "dogma::ReadoutModule", 16);
 }
 
 unsigned dogma::ReadoutHandle::NextPortion(double tmout, double maxage)

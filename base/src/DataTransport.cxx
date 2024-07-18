@@ -353,7 +353,8 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       unsigned size_res = fInput->Read_Size();
 
-      if (size_res != di_CallBack) fInpState = inpInit;
+      if (size_res != di_CallBack)
+         fInpState = inpInit;
 
       // this is case when input want to repeat operation
       // when we return true, we say that we want to continue processing

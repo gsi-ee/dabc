@@ -37,10 +37,12 @@ namespace dogma {
    struct DogmaTu {
       protected:
          uint32_t tuMagic = 0;
-         uint32_t tuAddr = 0;
          uint32_t tuTrigTypeNumber = 0;
+         uint32_t tuAddr = 0;
          uint32_t tuTrigTime = 0;
-         uint32_t tuLenPayload = 0;
+         uint32_t tuLocalTrigTime = 0;
+         uint32_t tuLenPayload = 0; // number of 4bytes words
+
          inline uint32_t Value(const uint32_t *member) const
          {
             return IsSwapped() ? SWAP32(*member) : *member;
@@ -50,7 +52,6 @@ namespace dogma {
          {
             *member = IsSwapped() ? SWAP32(value) : value;
          }
-
 
       public:
 
@@ -68,13 +69,17 @@ namespace dogma {
 
          inline uint32_t GetTrigTime() const { return Value(&tuTrigTime); }
 
+         inline uint32_t GetLocalTrigTime() const { return Value(&tuLocalTrigTime); }
+
          inline uint32_t GetPayloadLen() const { return Value(&tuLenPayload) & 0xffff; }
 
-         inline uint32_t GetTuLen() const { return sizeof(DogmaTu) + GetPayloadLen(); }
+         inline uint32_t GetErrorBits() const { return Value(&tuLenPayload) >> 24; }
 
-         inline void SetPayloadLen(uint32_t len) { SetValue(&tuLenPayload, len); }
+         inline uint32_t GetFrameBits() const { return (Value(&tuLenPayload) >> 16) & 0xff; }
 
-         inline uint32_t GetSize() const { return sizeof(DogmaTu) + GetPayloadLen(); }
+         inline void SetPayloadLen(uint32_t len) { SetValue(&tuLenPayload, (len & 0xffff) | (Value(&tuLenPayload) & 0xffff0000)); }
+
+         inline uint32_t GetSize() const { return sizeof(DogmaTu) + GetPayloadLen()*4; }
 
          inline uint32_t GetPayload(uint32_t indx) const { return Value(&tuLenPayload + 1 + indx); }
 
@@ -90,6 +95,8 @@ namespace dogma {
             tuMagic = SWAP32(DOGMA_MAGIC);
             tuAddr = 0;
             SetTrigTypeNumber(type_number);
+            tuTrigTime = 0;
+            tuLocalTrigTime = 0;
             tuLenPayload = 0;
          }
 
@@ -100,7 +107,7 @@ namespace dogma {
          uint32_t tuMagic = 0;
          uint32_t tuSeqId = 0;
          uint32_t tuTrigTypeNumber = 0;
-         uint32_t tuLenPayload = 0;
+         uint32_t tuLenPayload = 0; // paylod len in 4bytes words
 
          inline uint32_t Value(const uint32_t *member) const
          {
@@ -132,7 +139,7 @@ namespace dogma {
          inline uint32_t GetPayloadLen() const { return Value(&tuLenPayload) & 0xffff; }
          inline void SetPayloadLen(uint32_t len) { SetValue(&tuLenPayload, len); }
 
-         inline uint32_t GetEventLen() const { return sizeof(DogmaEvent) + GetPayloadLen(); }
+         inline uint32_t GetEventLen() const { return sizeof(DogmaEvent) + GetPayloadLen() * 4; }
 
          DogmaTu *FirstSubevent() const { return (DogmaTu *)((char *) this + sizeof(DogmaEvent)); }
 

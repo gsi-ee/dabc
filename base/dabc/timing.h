@@ -108,13 +108,13 @@ namespace dabc {
 
          TimeStamp& operator=(const TimeStamp& src) { fValue = src.fValue; return *this; }
 
-         TimeStamp& operator+=(double _add) { fValue+=_add; return *this; }
+         TimeStamp& operator+=(double _add) { fValue += _add; return *this; }
 
-         TimeStamp& operator-=(double _sub) { fValue-=_sub; return *this; }
+         TimeStamp& operator-=(double _sub) { fValue -= _sub; return *this; }
 
-         TimeStamp operator+(double _add) const { return TimeStamp(fValue+_add); }
+         TimeStamp operator+(double _add) const { return TimeStamp(fValue + _add); }
 
-         TimeStamp operator-(double _sub) const { return TimeStamp(fValue-_sub); }
+         TimeStamp operator-(double _sub) const { return TimeStamp(fValue - _sub); }
 
          double operator()() const { return fValue; }
 
@@ -170,7 +170,7 @@ namespace dabc {
           * \param[in] curr      current time
           * \param[in] interval  time which should expire
           * \returns             true if specified time interval had expired  */
-         inline bool Expired(const TimeStamp& curr, double interval) const { return curr.AsDouble() > AsDouble() + interval; }
+         inline bool Expired(const TimeStamp &curr, double interval) const { return curr.AsDouble() > AsDouble() + interval; }
 
          /** \brief Method returns TimeStamp instance with current time stamp value, measured
           * either by fast TSC (if it is detected and working correctly), otherwise slow getclock() method
@@ -262,6 +262,13 @@ namespace dabc {
    inline TimeStamp Now() { return TimeStamp::Now(); }
 
    void Sleep(double tm);
+
+   extern uint32_t GetHadaqTimeOffset();
+
+   extern uint32_t CreateHadaqRunId();
+
+   extern std::string HadaqFileSuffix(uint32_t runid, uint16_t ebid = 0);
+
 }
 
 #endif

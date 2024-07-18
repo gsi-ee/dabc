@@ -171,7 +171,7 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, 
    }
    fclose(f);
 
-   std::string info = dabc::format("%s quality = %5.2f run = %s", tm.AsString(0,true).c_str(), quality, hadaq::FormatFilename(runid,0).c_str());
+   std::string info = dabc::format("%s quality = %5.2f run = %s", tm.AsString(0,true).c_str(), quality, dabc::HadaqFileSuffix(runid).c_str());
 
    DOUT0("CALIBR INFO %s", info.c_str());
 
@@ -454,7 +454,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          SetParValue("State", fCtrlStateName);
          SetParValue("Quality", fCtrlStateQuality);
          SetParValue("RunId", fCtrlRunId);
-         SetParValue("RunIdStr", fCtrlRunId ? hadaq::FormatFilename(fCtrlRunId,0) : std::string("0"));
+         SetParValue("RunIdStr", fCtrlRunId ? dabc::HadaqFileSuffix(fCtrlRunId) : std::string("0"));
          SetParValue("RunPrefix", fCtrlRunPrefix);
 
          fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", fCtrlRunPrefix);
@@ -582,7 +582,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       if (isstart) {
          runid = cmd.GetUInt("runid");
          if (runid == 0)
-            runid = hadaq::CreateRunId();
+            runid = dabc::CreateHadaqRunId();
          query = dabc::format("mode=start&runid=%u", runid);
          if (!prefix.empty()) {
             query.append("&prefix=");

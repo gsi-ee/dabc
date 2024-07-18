@@ -41,10 +41,9 @@ namespace dabc {
          uint64_t            fCurrentBufType{0};
 
          bool OpenNextFile();
-
          bool CloseFile();
-
       public:
+
          BinaryFileInput(const dabc::Url &url);
          virtual ~BinaryFileInput();
 
@@ -52,7 +51,6 @@ namespace dabc {
 
          unsigned Read_Size() override;
          unsigned Read_Complete(Buffer& buf) override;
-
   };
 
    // _________________________________________________________________
@@ -70,19 +68,16 @@ namespace dabc {
          BinaryFile          fFile;
 
          bool CloseFile();
-
          bool StartNewFile();
-
       public:
+      
          BinaryFileOutput(const dabc::Url& url);
          virtual ~BinaryFileOutput();
 
          bool Write_Init() override;
-
          unsigned Write_Buffer(Buffer& buf) override;
    };
 
 }
-
 
 #endif

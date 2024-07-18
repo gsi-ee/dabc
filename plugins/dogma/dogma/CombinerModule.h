@@ -50,45 +50,49 @@ namespace dogma {
       protected:
 
       struct InputCfg {
+         unsigned ninp{0};          ///< input number
          dogma::DogmaTu *subevnt{nullptr}; ///< actual subevent
          dogma::DogmaEvent  *evnt{nullptr}; ///< actual event
-         bool     has_data{false};      ///< when true, input has data (subevent or bunch of sub events)
+         bool     has_data{false};  ///< when true, input has data (subevent or bunch of sub events)
+         bool     has_eof{false};   ///< true when seen EOF buffer
          uint32_t data_size{0};     ///< padded size of current subevent, required in output buffer
          uint32_t fTrigNr{0};       ///< keeps current trigger sequence number
          uint32_t fLastTrigNr{0};   ///< keeps previous trigger sequence number - used to control data lost
          uint32_t fTrigTag{0};      ///< keeps current trigger tag
          uint32_t fTrigType{0};     ///< current subevent trigger type
          unsigned fErrorBitsCnt{0}; ///< number of subevents with non-zero error bits
-         unsigned fHubId{0};     ///< subevent id from given input
-         unsigned fUdpPort{0};    ///< if configured, port id
-         float fQueueLevel{0.};      ///<  current input queue fill level
+         unsigned fHubId{0};        ///< subevent id from given input
+         unsigned fUdpPort{0};      ///< if configured, port id
+         float fQueueLevel{0.};     ///<  current input queue fill level
          uint32_t fLastEvtBuildTrigId{0}; ///< remember id of last build event
-         bool fDataError{false};        ///< indicates if subevent has data error bit set in header id
-         bool fEmpty{true};            ///< indicates if input has empty data
-         void *fInfo{nullptr};            ///< Direct pointer on transport info, used only for debugging
+         bool fDataError{false};    ///< indicates if subevent has data error bit set in header id
+         bool fEmpty{true};         ///< indicates if input has empty data
+         void *fInfo{nullptr};      ///< Direct pointer on transport info, used only for debugging
          int fQueueCapacity{0};     ///< capacity of input queue
          int fNumCanRecv{0};        ///< Number buffers can be received
          unsigned fLostTrig{0};     ///< number of lost triggers (never received by the combiner)
          unsigned fDroppedTrig{0};  ///< number of dropped triggers (received but dropped by the combiner)
          uint32_t  fTrigNumRing[DOGMA_RINGSIZE]; ///< values of last seen TU ID
          unsigned  fRingCnt{0};     ///< where next value will be written
-         bool  fResort{false};       ///< enables resorting of events
-         ReadIterator fIter;      ///< main iterator
-         ReadIterator fResortIter; ///< additional iterator to check resort
+         bool  fResort{false};      ///< enables resorting of events
+         bool fOptional{false};     ///< input is optional and can miss in data
+         ReadIterator fIter;        ///< main iterator
+         ReadIterator fResortIter;  ///< additional iterator to check resort
          int          fResortIndx{-1};  ///< index of buffer in the queue used for resort iterator (-1 - off)
-         std::string fCalibr;      ///< name of calibration module, used only in terminal
+         std::string fCalibr;       ///< name of calibration module, used only in terminal
          bool        fCalibrReq{false};   ///< when true, request was send
          int         fCalibrProgr{0}; ///< calibration progress
-         std::string fCalibrState; ///< calibration state
+         std::string fCalibrState;  ///< calibration state
          double      fCalibrQuality{0.}; ///< calibration quality
          uint64_t    fHubLastSize{0}; ///< last size
          uint64_t    fHubPrevSize{0}; ///< last size
          int         fHubSizeTmCnt{0}; ///< count how many time data was the same
+         dabc::TimeStamp fLastDataTm; ///< time when subevent was used from the input
 
          InputCfg()
          {
             for (int i=0;i<DOGMA_RINGSIZE;i++)
-               fTrigNumRing[i]=0;
+               fTrigNumRing[i] = 0;
          }
 
          void Reset(bool complete = false)
@@ -108,6 +112,7 @@ namespace dogma {
             if (complete) {
                fLastTrigNr = 0xffffffff;
                fUdpPort = 0;
+               fLastDataTm.GetNow();
             }
          }
 
@@ -177,7 +182,7 @@ namespace dogma {
          bool               fSpecialFired;  ///< if user event was already fired
          double             fLastEventRate; ///< last event rate
 
-         bool               fCheckTag;
+         bool               fCheckTag = true;
 
          bool               fBNETsend;  ///< indicate that combiner used as BNET sender
          bool               fBNETrecv;  ///< indicate that second-level event building is performed
@@ -188,7 +193,7 @@ namespace dogma {
          std::string        fBNETCalibrPackScript;  ///< name of script to pack calibration files
          dabc::Command      fBnetCalibrCmd;  ///< current running bnet calibration command
 
-         double             fFlushTimeout;
+         double             fFlushTimeout = 1.;
          dabc::Command      fBnetFileCmd;  ///< current running bnet file command
          dabc::Command      fBnetRefreshCmd; ///< current running refresh command
 
@@ -204,7 +209,7 @@ namespace dogma {
          uint64_t           fDataRateCnt;
          uint64_t           fDataDroppedRateCnt;
          uint64_t           fEventRateCnt;
-         uint64_t           fLostEventRateCnt;
+         double             fLostEventRateCnt;
 
          uint64_t           fRunRecvBytes;
          uint64_t           fRunBuildEvents;   ///< number of build events
@@ -290,6 +295,8 @@ namespace dogma {
          void UpdateBnetInfo();
 
          void StartEventsBuilding();
+
+         void AccountDroppedData(unsigned sz, bool lost_full_event = false);
 
       public:
          CombinerModule(const std::string &name, dabc::Command cmd = nullptr);

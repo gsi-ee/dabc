@@ -39,10 +39,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcDogma.so"/>
       <lib value="libDabcHttp.so"/>
-      <logfile value="dogmabuild.log"/>
+      <logfile value="hadaqevtbuild.log"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
-      <control value="false"/>
+      <control value="true"/>
       <threads_layout value="balanced"/>
     </Run>
 
@@ -56,7 +56,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
     <MemoryPool name="Pool">
        <BufferSize value="2000000"/>
-       <NumBuffers value="100"/>
+       <NumBuffers value="1000"/>
     </MemoryPool>
 
     <Module name="Combiner" class="dogma::CombinerModule">
@@ -64,14 +64,15 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <NumInputs value="2"/>
        <NumOutputs value="2"/>
 
-       <InputPort name="Input0" url="dogma://host:60678" optional="false"/>
-       <InputPort name="Input1" url="dogma://host:60679" optional="false"/>
-       <InputPort name="Input*" queue="20" urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=50" resort="false"/>
+       <InputPort name="Input0" url="bin://out0_0000.bin?close_on_error"/>
+       <InputPort name="Input1" url="bin://out1_0000.bin?close_on_error"/>
 
-       <!--  this is stream server for online monitoring, normally always on,  0x25 is DOGMA identifier -->
+       <!--InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=50" resort="false"/-->
+
+       <!--  this is stream server for online monitoring, normally always on, 0x25 identifies DOGMA events -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=dogma_iter&subid=0x25"/>
 
-       <!--  this is example of DLD file storage - local, set NumOutputs=2 -->
+       <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
        <OutputPort name="Output1" url="dld://debug.dld?maxsize=2000"/>
 
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
