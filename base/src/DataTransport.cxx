@@ -400,6 +400,15 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             fNextDataSize = 0;
             break;
 
+
+         // JAM 19-07-2024: added here for MBS with "enable dabc" keep alive buffers
+         case di_SkipBuffer:
+            fCurrentBuf.Release();
+            DOUT4("Skip input buffer from inpCheckSize");
+            ChangeState(inpInit);
+            break;
+         /////////////////////
+
          default:
             if (fNextDataSize <= di_ValidSize) {
                ChangeState(inpNeedBuffer);
@@ -518,7 +527,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             return true;
          case di_SkipBuffer:
             fCurrentBuf.Release();
-            // DOUT4("Skip input buffer");
+            DOUT4("Skip input buffer from inpCompleting");
             ChangeState(inpInit);
             break;
          case di_EndOfStream:

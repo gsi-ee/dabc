@@ -81,7 +81,7 @@ void mbs::ClientTransport::OnSendCompleted()
 
 void mbs::ClientTransport::OnRecvCompleted()
 {
-//   DOUT0("mbs::ClientTransport::OnRecvCompleted() state = %d", fState);
+   //DOUT0("mbs::ClientTransport::OnRecvCompleted() state = %d", fState);
 
    switch (fState) {
       case ioRecvInfo:
@@ -132,9 +132,11 @@ void mbs::ClientTransport::OnRecvCompleted()
             MakeCallback(dabc::di_Error);
          } else
          if (ReadBufferSize() == 0) {
+
+            DOUT4("Keep alive buffer from MBS side");
             fState = ioReady;
-            DOUT0("Keep alive buffer from MBS side");
             MakeCallback(dabc::di_SkipBuffer);
+            // JAM 19-07-2024: this was not working, needed to add this in handling section in dabc::InputTransport::ProcessSend
          } else {
             fState = ioWaitBuffer;
 
@@ -160,7 +162,7 @@ void mbs::ClientTransport::OnRecvCompleted()
             fState = ioError;
             MakeCallback(dabc::di_Error);
          } else {
-            DOUT1("Keep alive buffer from MBS");
+            DOUT4("Keep alive buffer from MBS");
             fState = ioReady;
             MakeCallback(dabc::di_SkipBuffer);
          }
@@ -239,7 +241,7 @@ void mbs::ClientTransport::MakeCallback(unsigned arg)
       fState = ioError;
       SubmitWorkerCmd(dabc::Command("CloseTransport"));
    } else {
-      // DOUT0("Activate CallBack with arg %u", arg);
+       DOUT4("Activate CallBack with arg %u", arg);
       tr->Read_CallBack(arg);
    }
 }
@@ -264,7 +266,7 @@ unsigned mbs::ClientTransport::Read_Size()
 
 unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
 {
-//   DOUT0("mbs::ClientTransport::Read_Start");
+   //DOUT0("mbs::ClientTransport::Read_Start");
 
    DOUT4("BUFFER_START %u USED %u h_beg %u h_end %u", ReadBufferSize(), fHeader.UsedBufferSize(), fHeader.h_begin, fHeader.h_end);
 
@@ -313,12 +315,19 @@ unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
 
 unsigned mbs::ClientTransport::Read_Complete(dabc::Buffer& buf)
 {
-//   DOUT0("mbs::ClientTransport::Read_Complete");
+   //DOUT0("mbs::ClientTransport::Read_Complete");
 
-   if (fState!=ioComplBuffer) {
-      EOUT("Reading complete at strange place!!!");
-      return dabc::di_Error;
+   // JAM 18.07.2024: in this case callback wants to skip buffer, forward it:
+   if (fState==ioReady) {
+      DOUT4("Read complete with ready state %d, skip buffer !!!", fState);
+      return dabc::di_SkipBuffer;
    }
+
+   //  JAM 18.07.2024 all other behaviour are real errors like before:
+   if (fState!=ioComplBuffer) {
+         EOUT("Read complete begins with strange state %d !!!", fState);
+         return dabc::di_Error;
+      }
 
    unsigned read_shift = 0;
    if (!fSpanBuffer.null()) read_shift = fSpanBuffer.GetTotalSize() - sizeof(mbs::Header);
