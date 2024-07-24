@@ -27,10 +27,24 @@
 
 namespace elderdabc {
 
+   /** keep reference to hierarchy objects together with unique name */
+   struct ObjectHandle
+      {
+         std::string name;
+         double* data;
+         int size;
+      };
 
-     typedef double* H1handle;
-     typedef double* H2handle;
-     typedef void* C1handle;
+
+     typedef struct ObjectHandle H1handle;
+
+     typedef struct ObjectHandle H2handle;
+
+
+     typedef struct ObjectHandle C1handle;
+     typedef struct ObjectHandle C2handle;
+
+     static const struct ObjectHandle NullHandle= {"",nullptr,0};
 
 
 class VisConDabc : public ::elderpt::viscon::Interface
@@ -43,6 +57,9 @@ class VisConDabc : public ::elderpt::viscon::Interface
          std::vector<elderdabc::H1handle> fvHistograms1d; // keep pointers to 1d histograms in hierarchy. index in vector used as handle for elder
          std::vector<elderdabc::H2handle> fvHistograms2d; // keep pointers to 2d histograms in hierarchy. index in vector used as handle for elder
 
+         std::vector<elderdabc::C1handle> fvConditions1d; // keep pointers to 1d conditions hierarchy. index in vector used as handle for elder
+         std::vector<elderdabc::C2handle> fvConditions2d; // keep pointers to 2d conditions in hierarchy. index in vector used as handle for elder
+
          // TODO: condition painter in dabc?
 //               std::vector<TGo4WinCond*> conditions1d_;
 //               std::vector<TGo4WinCond*> conditions2d_;
@@ -51,6 +68,8 @@ class VisConDabc : public ::elderpt::viscon::Interface
       protected:
 
          dabc::Hierarchy fTop;
+         dabc::Hierarchy fHistFolder;
+         dabc::Hierarchy fCondFolder;
 
          dabc::LocalWorkerRef fStore;
          std::string fStoreInfo;   ///<! last info about storage
@@ -59,7 +78,9 @@ class VisConDabc : public ::elderpt::viscon::Interface
 
          bool ClearHistogram(dabc::Hierarchy& item);
 
-         dabc::Hierarchy FindHistogram(double* handle);
+         dabc::Hierarchy FindHistogram(double* handle); // access the actual object in the dabc hierarchy via the data field handle
+
+     //    dabc::Hierarchy FindCondition(double* handle);  // access the actual object in the dabc hierarchy via the data field handle
 
          bool ClearAllDabcHistograms(dabc::Hierarchy &folder);
          bool SaveAllDabcHistograms(dabc::Hierarchy &folder);
@@ -70,7 +91,7 @@ class VisConDabc : public ::elderpt::viscon::Interface
 
          elderdabc::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = nullptr); ///<! returns handle to histogram object in hierarchy
          //
-         elderdabc::H1handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr);///<! returns handle to histogram object
+         elderdabc::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr);///<! returns handle to histogram object
          //
 
          void FillH1(elderdabc::H1handle h1, double x, double weight); // implementation stolen from stream framework
@@ -86,9 +107,25 @@ class VisConDabc : public ::elderpt::viscon::Interface
          void TagH2Time(elderdabc::H2handle h2);
          //
 
+         elderdabc::C1handle MakeC1(const char *name,
+                                 double left,
+                                 double right,
+                                 const char *histogram_name=nullptr);
+
+         elderdabc::C2handle MakeC2Win(const char *name,
+                                         double xmin, double xmax, double ymin, double ymax,
+                                         const char *histogram_name=nullptr);
 
 
+         elderdabc::C2handle MakeC2Poly(const char *name,
+                                 const std::vector<double> &points,
+                                 const char *histogram_name=nullptr);
 
+         void GetLimitsC1(elderdabc::C1handle h, double &left, double &right);
+
+         void GetLimitsC2Poly(elderdabc::C2handle h, double** points, int &numpoints);
+
+         void GetLimitsC2Win(elderdabc::C2handle h,  double &xmin, double &xmax, double &ymin, double &ymax);
 
 
       public:

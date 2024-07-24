@@ -53,11 +53,99 @@ const char* mbs::xmlTextCharBuffer    = "MbsCharBuffer";
 
 
 const char* mbs::xmlCombineCompleteOnly   = "BuildCompleteEvents";
+const char* mbs::xmlCombineTimestamps     = "WhiteRabbitMergedEvents";
+
 const char* mbs::xmlCheckSubeventIds      = "CheckSubIds";
 const char* mbs::xmlEvidMask              = "EventIdMask";
 const char* mbs::xmlEvidTolerance         = "MaxDeltaEventId";
 const char* mbs::xmlSpecialTriggerLimit   = "SpecialTriggerLimit";
 const char* mbs::xmlCombinerRatesPrefix   = "CombinerRatesPrefix";
+const char* mbs::xmlTimesliceWindow       = "WhiteRabbitDeltaTime";
+
+
+
+
+mbs::WRTimeStampType mbs::SubeventHeader::GetWRTimeStamp()
+{
+   WRTimeStampType ts=0;
+   WRTimeStampType tmp=0;
+   uint32_t value=0;
+   uint32_t *pdat = (uint32_t*) RawData();
+   pdat++; // skip subsystem id
+   value =(*pdat) >> 16;
+   if (value != WRTS__ID_L16)
+      {
+//#ifdef WRTS_DEBUG
+        printf ("ERROR GetWRTimeStamp(): wrong low 16bit identifier:\n");
+        printf ("should be: 0x%x, but is: 0x%x\n", WRTS__ID_L16, value);
+//#endif
+        return 0;
+      }
+   ts = *pdat++ & 0xFFFF;
+   value =(*pdat) >> 16;
+   if (value != WRTS__ID_M16)
+         {
+//#ifdef WRTS_DEBUG
+           printf ("ERROR GetWRTimeStamp(): wrong mid 16bit identifier:\n");
+           printf ("should be: 0x%x, but is: 0x%x\n", WRTS__ID_M16, value);
+//#endif
+           return 0;
+         }
+   ts +=( (*pdat++ & 0xFFFF) << 16);
+   value =(*pdat) >> 16;
+   if (value != WRTS__ID_H16)
+         {
+//#ifdef WRTS_DEBUG
+           printf ("ERROR GetWRTimeStamp(): wrong high 16bit identifier:\n");
+           printf ("should be: 0x%x, but is: 0x%x\n", WRTS__ID_H16, value);
+//#endif
+           return 0;
+         }
+   tmp=(*pdat++ & 0xFFFF);
+   ts += (tmp << 32);
+
+   value =(*pdat) >> 16;
+   if (value != WRTS__ID_X16)
+      {
+//#ifdef WRTS_DEBUG
+         printf ("ERROR GetWRTimeStamp():wrong xhigh 16bit identifier:\n");
+         printf ("should be: 0x%x, but is: 0x%x\n", WRTS__ID_X16, value);
+//#endif
+      return 0;
+      }
+   tmp=(*pdat++ & 0xFFFF);
+   ts +=(tmp << 48);
+#ifdef WRTS_DEBUG
+      printf("WRWR - GetWRTimeStamp found ts=0x%lx \n",ts);
+#endif
+   return ts;
+
+
+}
+
+uint32_t  mbs::SubeventHeader::GetWRSubsytemID()
+   {
+   // TODO: check first if we have valid WR TS afterwards?
+   uint32_t *pdat = (uint32_t*) RawData();
+   return (*pdat); // currently id is first word of subevent payload
+   }
+
+
+bool mbs::SubeventHeader::PutWRTimstamp(uint32_t subid, WRTimeStampType fulltimestamp)
+{
+   // TODO: need to check before if we have enough space in output buffer for this...
+   uint32_t *pdat = (uint32_t*) RawData();
+   *pdat++ =subid;
+   *pdat++ =  (WRTS__ID_L16 << 16 ) | (fulltimestamp & 0xFFFF);
+   *pdat++ =  (WRTS__ID_M16 << 16 ) | ((fulltimestamp >> 16) & 0xFFFF);
+   *pdat++ =  (WRTS__ID_H16 << 16 ) | ((fulltimestamp >> 32) & 0xFFFF);
+   *pdat   =  (WRTS__ID_X16 << 16 ) | ((fulltimestamp >> 48) & 0xFFFF);
+   SetRawDataSize(5*sizeof(uint32_t));
+   return true;
+}
+
+
+
 
 
 void mbs::SubeventHeader::PrintHeader()

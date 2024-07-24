@@ -35,6 +35,20 @@ namespace mbs {
 #pragma pack(push, 1)
 
 
+/** JAM 7/2024: added evaluation of standard MBS white rabbit TS format*/
+#define WRTS__ID_L16         0x3e1
+#define WRTS__ID_M16         0x4e1
+#define WRTS__ID_H16         0x5e1
+#define WRTS__ID_X16         0x6e1
+
+//#define WRTS_DEBUG 1
+
+
+typedef uint64_t WRTimeStampType;
+
+
+
+
    /** \brief MBS subevent  */
 
    struct SubeventHeader : public Header {
@@ -81,6 +95,23 @@ namespace mbs {
       int16_t ProcId() const { return iProcId; }
       int8_t Control() const { return iControl; }
       int8_t Subcrate() const { return iSubcrate; }
+
+
+      /** JAM 7/2024: evaluate white rabbit timestamp from MBS in payload.
+       * Returns 0 if no timestamp or invalid format. Otherwise WR timestamp in units 1 nanosecond (lsb)*/
+      WRTimeStampType GetWRTimeStamp();
+
+      /** JAM 7/2024: get white rabbit subsystem ID from MBS in payload.
+        * Returns 0 if invalid format*/
+      uint32_t GetWRSubsytemID();
+
+      /** JAM 7/2024: write white rabbit timestamp from MBS into payload, marked with subsystem id.
+       * TODO for writing subevents of dabc subsystem to MBS timesorter*/
+      bool PutWRTimstamp(uint32_t subid, WRTimeStampType fulltimestamp);
+
+
+
+
 
       /** Prints sub-event header */
       void PrintHeader();
@@ -392,11 +423,13 @@ namespace mbs {
    extern const char* xmlTextCharBuffer;
 
    extern const char* xmlCombineCompleteOnly;
+   extern const char* xmlCombineTimestamps;
    extern const char* xmlCheckSubeventIds;
    extern const char* xmlEvidMask;
    extern const char* xmlEvidTolerance;
    extern const char* xmlSpecialTriggerLimit;
    extern const char* xmlCombinerRatesPrefix;
+   extern const char* xmlTimesliceWindow;
 
 };
 

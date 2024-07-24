@@ -26,11 +26,16 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
    fOut(),
    fFlushFlag(false),
    fBuildCompleteEvents(false),
-   fCheckSubIds(false)
+   fBuildTimestampMergedEvents(false),
+   fCheckSubIds(false),
+   fBuildevid(0),
+   fWRTimeWindow(0)
 {
    EnsurePorts(0, 0, dabc::xmlWorkPool);
 
    fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
+   fBuildTimestampMergedEvents= Cfg(mbs::xmlCombineTimestamps,cmd).AsBool(false);
+   fWRTimeWindow= Cfg(mbs::xmlTimesliceWindow,cmd).AsUInt(100);
    fCheckSubIds = Cfg(mbs::xmlCheckSubeventIds,cmd).AsBool(true);
 
    fEventIdMask = Cfg(mbs::xmlEvidMask,cmd).AsInt(0);
@@ -46,6 +51,8 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
 
    double flushtmout = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(1.);
 
+   fNumObligatoryInputs = NumInputs();
+
    for (unsigned n=0;n<NumInputs();n++) {
       DOUT0(" MBS COMBINER  Port%u: Capacity %u", n, InputQueueCapacity(n));
 
@@ -53,9 +60,47 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
       fCfg.emplace_back(InputCfg());
       fInp[n].Close();
       fCfg[n].Reset();
+      // JAM24 todo: take parameters from port tags in xml file
+      // fCfg[n].fResort = FindPort(InputName(n)).Cfg("resort").AsBool(false);
+      fCfg[n].wr_timestamped =  FindPort(InputName(n)).Cfg("whiterabbit").AsBool(true);
+      fCfg[n].real_mbs =  FindPort(InputName(n)).Cfg("realmbs").AsBool(true);
+      fCfg[n].real_evnt_num =  FindPort(InputName(n)).Cfg("realevntnum").AsBool(true);
+      fCfg[n].no_evnt_num =  FindPort(InputName(n)).Cfg("noevntnum").AsBool(false);
+      fCfg[n].optional_input =  FindPort(InputName(n)).Cfg("optional").AsBool(false);
+      fCfg[n].evntsrc_fullid =  FindPort(InputName(n)).Cfg("fullid").AsUInt(0);
+      std::string ratename =  FindPort(InputName(n)).Cfg("ratename").AsStr("");
+      if (!ratename.empty())
+         SetPortRatemeter(InputName(n), CreatePar(ratename).SetRatemeter(false,1.));
+
+
+
+
+      // optional imputs not need to be accounted for obligatory inputs
+      if (fCfg[n].optional_input || fCfg[n].no_evnt_num) {
+         if (fNumObligatoryInputs>1) fNumObligatoryInputs--;
+         }
+
+      // events without number could not be MBS events
+                  if (fCfg[n].no_evnt_num) {
+                     fCfg[n].real_mbs = false;
+                  }
+
+
+                  if(fCfg[n].wr_timestamped)
+                     DOUT1("Configure input%u of module %s: for white rabbit merging",
+                                                   n, GetName());
+                  else
+                     DOUT1("Configure input%u of module %s: RealMbs:%s RealEvntNum:%s EvntSrcFullId: 0x%x EvntSrcShift: %u",
+                                n, GetName(),
+                                DBOOL(fCfg[n].real_mbs), DBOOL(fCfg[n].real_evnt_num),
+                                fCfg[n].evntsrc_fullid, fCfg[n].evntsrc_shift);
+
    }
 
-   fNumObligatoryInputs = NumInputs();
+
+
+
+
 
    if (flushtmout>0.) CreateTimer("FlushTimer", flushtmout);
 
@@ -83,12 +128,23 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
 
    CreateCmdDef(mbs::comStopServer);
 
-   CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
+   //CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
+
+   CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
+
    CreatePar(fFileStateName).Dflt(false);
 
    PublishPars(dabc::format("$CONTEXT$/%sCombinerModule",ratesprefix.c_str()));
 
-   SetInfo(dabc::format("MBS combiner module ready. Mode: full events only:%d, subids check:%d flush:%3.1f" ,fBuildCompleteEvents,fCheckSubIds,flushtmout), true);
+
+   if(fBuildTimestampMergedEvents){
+      DOUT0("MODE WR time sorter with time slice window:%lu ns" ,fWRTimeWindow);
+      SetInfo(dabc::format("MBS combiner module ready. Mode: WR time sorter with time slice window:%lu ns" ,fWRTimeWindow), true);
+   }
+   else
+   {
+       SetInfo(dabc::format("MBS combiner module ready. Mode: full events only:%d, subids check:%d flush:%3.1f" ,fBuildCompleteEvents,fCheckSubIds,flushtmout), true);
+   }
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -109,9 +165,11 @@ void mbs::CombinerModule::ModuleCleanup()
 void mbs::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 {
 
-   Par(fInfoName).SetValue(info);
-
-   if (forceinfo) Par(fInfoName).FireModified();
+////// before
+//   Par(fInfoName).SetValue(info);
+//
+//   if (forceinfo) Par(fInfoName).FireModified();
+//////////////////
 
 /*
    dabc::Logger::Debug(lvl, __FILE__, __LINE__, __func__, info.c_str());
@@ -124,6 +182,17 @@ void mbs::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
       if (!forceinfo) DOUT0("%s: %s", GetName(), info.c_str());
    }
 */
+
+
+   // JAM24 below like in hadaq combiner:
+   dabc::InfoParameter par;
+
+      if (!fInfoName.empty()) par = Par(fInfoName);
+
+      par.SetValue(info);
+      if (forceinfo)
+         par.FireModified();
+
 }
 
 
@@ -218,6 +287,32 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
          continue;
       }
 
+
+      // JAM7/2024: first check if we just need timesorter
+      if (fCfg[ninp].wr_timestamped){
+         mbs::SubeventHeader* subevnt = fInp[ninp].evnt()->SubEvents();
+         while (subevnt) {
+            // usually there is only one subevent in a triggered transport input containing the WR timestamp. look for it.
+            WRTimeStampType ts=subevnt->GetWRTimeStamp();
+            if(ts!=0){
+               fCfg[ninp].curr_wr_ts=ts;
+               break;
+            }
+            subevnt = fInp[ninp].evnt()->NextSubEvent(subevnt);
+         }
+
+         if (fCfg[ninp].curr_wr_ts!=0){
+            DOUT4("Found WR timestamp 0x%lx on input %u", fCfg[ninp].curr_wr_ts, ninp);
+            foundevent = true;
+         }
+         else
+         {
+            EOUT("MBS combiner: No WR timestamp available on any subevents in input %u although it is expected!!! check XML configuration", ninp);
+            fCfg[ninp].valid=false;
+            return false;
+         }
+      } else
+      // JAM below old code for hybrid event building:
       if (fCfg[ninp].real_mbs && (fInp[ninp].evnt()->iTrigger>=fSpecialTriggerLimit)) {
          // TODO: Probably, one should combine trigger events from all normal mbs channels.
          foundevent = true;
@@ -274,6 +369,10 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
 bool mbs::CombinerModule::BuildEvent()
 {
+
+   if(fBuildTimestampMergedEvents)
+         return BuildTimesortedEvent(); // JAM24 - treat time sorted mode differently, no hybrid event building possible.
+
    mbs::EventNumType mineventid = 0, maxeventid = 0, triggereventid = 0;
 
    // indicate if some of main (non-optional) input queues are mostly full
@@ -311,10 +410,14 @@ bool mbs::CombinerModule::BuildEvent()
       return false;
    }
 
+
+
+
    int hasTriggerEvent = -1;
    int num_valid = 0;
 
    double tm_now = dabc::TimeStamp::Now().AsDouble();
+
 
    for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
 
@@ -560,54 +663,123 @@ bool mbs::CombinerModule::BuildEvent()
 }
 
 
+
+bool mbs::CombinerModule::BuildTimesortedEvent()
+{
+
+   mbs::WRTimeStampType mintimestamp = 0;
+   int num_valid = 0;
+   int16_t trignum=1;
+
+   for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
+      fCfg[ninp].selected = false;
+      if (!fInp[ninp].evnt()) {
+         if (!ShiftToNextEvent(ninp)) {
+            return false;
+         }
+//         else {
+//   //         fCfg[ninp].last_valid_tm = tm_now;
+//         }
+      }
+
+      mbs::WRTimeStampType curtimestamp= fCfg[ninp].curr_wr_ts;
+      if (num_valid == 0)  {
+         mintimestamp=curtimestamp;
+         trignum=fInp[ninp].evnt()->TriggerNumber();
+      } else {
+         if (curtimestamp < mintimestamp) {
+            mintimestamp = curtimestamp;
+            trignum=fInp[ninp].evnt()->TriggerNumber();
+         }
+      }
+      num_valid++;
+   } // for ninp
+
+   if (num_valid == 0) return false;
+   if(mintimestamp==0){
+      EOUT("BuildTimesortedEvent() did not find WR timestamp in any of the inputs!");
+      return false;
+   }
+
+   // select inputs which will be used for building
+   uint32_t subeventssize = 0;
+   for (unsigned ninp = 0; ninp < fCfg.size(); ninp++){
+      // select alls subevents within time slice window:
+      if (fCfg[ninp].valid && (fCfg[ninp].curr_wr_ts <= mintimestamp + fWRTimeWindow)){
+      fCfg[ninp].selected = true;
+      subeventssize += fInp[ninp].evnt()->SubEventsSize();
+      }
+   }
+
+
+
+
+//  check output buffer:
+        // if there is no place for the event, flush current buffer
+   if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize))
+      if (!FlushBuffer()) return false;
+
+   if (!fOut.IsBuffer()) {
+      dabc::Buffer buf = TakeBuffer();
+      if (buf.null()) return false;
+
+      if (!fOut.Reset(buf)) {
+         SetInfo("Cannot use buffer for output - hard error!!!!", true);
+
+         buf.Release();
+
+         dabc::mgr.StopApplication();
+         return false;
+      }
+   }
+
+// build output event:
+
+   DOUT4("Building event %u, ts:0x%lx ,num_valid %u", fBuildevid, mintimestamp, num_valid);
+   fOut.NewEvent(fBuildevid++); // merged events have new event sequence number from here.
+   for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
+         if (fCfg[ninp].selected) {
+            if (!fInp[ninp].IsData())
+               throw dabc::Exception("Input has no buffer but used for event building");
+            // here insert all subevents of selected input:
+            mbs::SubeventHeader* sub=nullptr;
+            do{
+               sub = fInp[ninp].evnt()->NextSubEvent(sub);
+               if(sub) fOut.AddSubevent(sub);
+            } while(sub);
+         }
+      }
+   fOut.evnt()->iTrigger = trignum; // keep original trigger type from MBS here
+   fOut.FinishEvent();
+
+
+   Par(fEventRateName).SetValue(1);
+   Par(fDataRateName).SetValue((subeventssize + sizeof(mbs::EventHeader))/1024./1024.);
+
+   // if output buffer filled already, flush it immediately
+   if (!fOut.IsPlaceForEvent(0))
+         FlushBuffer();
+
+
+   // now progress the already used inputs only:
+   for (unsigned ninp = 0; ninp < fCfg.size(); ninp++){
+        if (fCfg[ninp].selected) {
+              if(!ShiftToNextEvent(ninp)) return false;
+        }
+   }
+return true;
+}
+
+
+
+
 int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
 {
 
-
-
-///// JAM this is old section, we replace it with new features as implemented in pexorplugin
-//   if (cmd.IsName(mbs::comStartFile)) {
-//      if (NumOutputs()<2) {
-//         EOUT("No ports was created for the file");
-//         return dabc::cmd_false;
-//      }
-//
-//      // TODO: check if it works, probably some parameters should be taken from original command
-//      bool res = dabc::mgr.CreateTransport(OutputName(1, true));
-//      return cmd_bool(res);
-//   } else
-//   if (cmd.IsName(mbs::comStopFile)) {
-//
-//      FindPort(OutputName(1)).Disconnect();
-//
-//      SetInfo("Stop file", true);
-//
-//      return dabc::cmd_true;
-//   } else
-//   if (cmd.IsName(mbs::comStartServer)) {
-//      if (NumOutputs()<1) {
-//         EOUT("No ports was created for the server");
-//         return dabc::cmd_false;
-//      }
-//
-//      bool res = dabc::mgr.CreateTransport(OutputName(0, true));
-//
-//      return cmd_bool(res);
-//   } else
-//   if (cmd.IsName(mbs::comStopServer)) {
-//      FindPort(OutputName()).Disconnect();
-//
-//      SetInfo("Stop server", true);
-//      return dabc::cmd_true;
-//   }
-///////////////////////////////////////////////////////////////////////////////////7
-
-
-////// begin new part from pexorplugin:
   if (cmd.IsName(mbs::comStartFile)) {
 
      std::string fname = cmd.GetStr(dabc::xmlFileName); //"filename")
-     int maxsize = cmd.GetInt(dabc::xml_maxsize, 30); // maxsize
+     int maxsize = cmd.GetInt(dabc::xmlFileSizeLimit, 30); // maxsize
      std::string url = dabc::format("%s://%s?%s=%d", mbs::protocolLmd, fname.c_str(), dabc::xml_maxsize, maxsize);
      EnsurePorts(0, 2);
      bool res = dabc::mgr.CreateTransport(OutputName(1, true), url);
@@ -642,10 +814,9 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
          SetInfo("Stopped server", true);
          return dabc::cmd_true;
       }
-////////////// end new part from pexorplugin
 
 
-
+// JAM 22-07-2024: configuration via command is deprecated, stil keep it here to optionally let very old code run:
    else
    if (cmd.IsName("ConfigureInput")) {
       unsigned ninp = cmd.GetUInt("Port", 0);

@@ -25,9 +25,11 @@
 #include <cstdlib>
 #include <cmath>
 
+//const struct elderdabc::ObjectHandle elderdabc::NullHandle = {"",nullptr,0};
+
+
 elderdabc::VisConDabc::VisConDabc() :
    elderpt::viscon::Interface(),
-   fTop(),
    fSortOrder(true),
    fDefaultFill(3)
 {
@@ -45,6 +47,11 @@ void elderdabc::VisConDabc::SetTop(dabc::Hierarchy& top, bool withcmds)
 {
    fTop = top;
    //fTop=top.CreateHChild("Viscon");later
+   fHistFolder=top.CreateHChild("Histograms");
+   fCondFolder=top.CreateHChild("Conditions");
+
+   // JAM24 - same as in fesa plugin?
+   //fCondFolder.SetField("_autoload", "dabcsys/plugins/elder/elder.js");
 
    if (!withcmds) return;
 
@@ -119,7 +126,7 @@ void elderdabc::VisConDabc::AddErrLog(const char *msg)
                          double left,
                          double right)
 {
-   double* hist= MakeH1(name, title, n_bins, left, right);
+   elderdabc::H1handle hist= MakeH1(name, title, n_bins, left, right);
    fvHistograms1d.push_back(hist);
    return fvHistograms1d.size()-1;
 
@@ -154,7 +161,7 @@ void elderdabc::VisConDabc::hist1d_set_bin(
                          double left2,
                          double right2)
 {
-   double* hist= MakeH2(name, title, n_bins1, left1, right1,  n_bins2, left2, right2);
+   elderdabc::H2handle hist= MakeH2(name, title, n_bins1, left1, right1,  n_bins2, left2, right2);
    fvHistograms2d.push_back(hist);
    return fvHistograms2d.size()-1;
 }
@@ -179,39 +186,47 @@ void elderdabc::VisConDabc::hist2d_set_bin(::elderpt::viscon::Interface::Histogr
            //! @param right right limit of the window
            //! @param h a handle to a histogram that should be linked to that condition
 ::elderpt::viscon::Interface::Condition1DHandle elderdabc::VisConDabc::cond1d_create(
-                           const char* ,//name,
-                          double, // left,
-                          double, // right,
-                          int //h
+                           const char* name,
+                          double left,
+                          double right,
+                          int h
                           )
 {
-   // TODO
-   return ::elderpt::viscon::Interface::INVALID_HANDLE;
-//
-   //const char *histogram_name = "";
-//                 if (h >= 0)
-//                 {
-//                    histogram_name = histograms1d_[h]->GetName();
-//                 }
-//                 TGo4WinCond* condition = creator_.MakeWinCond(name, left, right, histogram_name);
-//                 conditions1d_.push_back(condition);
-//                 return conditions1d_.size()-1;
-              }
+   // first check if we get the histogram name from the handle h:
+   std::string histoname="";
+   if (h >=0 || (size_t) h < fvHistograms1d.size())
+   {
+       elderdabc::H1handle hist = fvHistograms1d[h];
+       histoname=hist.name;
+   }
+
+   elderdabc::C1handle conny= MakeC1(name, left, right, histoname.c_str());
+   fvConditions1d.push_back(conny);
+    return fvConditions1d.size()-1;
+
+//   return ::elderpt::viscon::Interface::INVALID_HANDLE;
+}
+
+
+
+
+
 //! @brief Implements the Go4-way of creating a 1d window condition
                      //! @param h ???
                      //! @param left left limit of the window
                      //! @param right right limit of the window
                      //! @warning Documented by Pico, h needs documentation
 void elderdabc::VisConDabc::cond1d_get(::elderpt::viscon::Interface::Condition1DHandle h, double &left, double &right)
-              {
-                 if (h == ::elderpt::viscon::Interface::INVALID_HANDLE)
-                    return;
+{
 
-//                 int dim;
-//                             //PK double x1,y1,x2,y2; //x1 and y1 are not used anywhere
-//                             double x2,y2;
-//                 conditions1d_[h]->GetValues(dim,left,right,x2,y2);
-           }
+
+
+   if (h == ::elderpt::viscon::Interface::INVALID_HANDLE)
+      return;
+   if (h < 0 || (size_t) h > fvConditions1d.size()) return; // error handling required when handle out of bounds?
+   elderdabc::C1handle con = fvConditions1d[h];
+   GetLimitsC1(con, left, right);
+}
                      //! @brief Implements the Go4-way of creating a 1d window condition
            //! @param name the name of the condition
                      //! @param points ???
@@ -220,75 +235,69 @@ void elderdabc::VisConDabc::cond1d_get(::elderpt::viscon::Interface::Condition1D
 ::elderpt::viscon::Interface::Condition2DHandle elderdabc::VisConDabc::cond2d_create(const char *name,
                           const std::vector<double> &points,
                           int h)
-              {
+{
+   int size = points.size();
+   if (size < 4)
+      return ::elderpt::viscon::Interface::INVALID_HANDLE;
+   if (size%2 != 0)
+      return ::elderpt::viscon::Interface::INVALID_HANDLE;
 
 
-                 int size = points.size();
-                 if (size < 4)
-                    return ::elderpt::viscon::Interface::INVALID_HANDLE;
-                 if (size%2 != 0)
-                    return ::elderpt::viscon::Interface::INVALID_HANDLE;
+     std::string histoname="";
+     elderdabc::C2handle connny;
+     if (h >=0 || (size_t) h < fvHistograms2d.size())
+     {
+        elderdabc::H1handle hist = fvHistograms2d[h];
+        histoname=hist.name;
+     }
 
-                 // TODO:::
+
+     if (size == 4) // create 2d window condition
+     {
+
+        elderdabc::C2handle conny= MakeC2Win(name, points[0], points[1], points[2], points[3],histoname.c_str());
+        fvConditions2d.push_back(conny);
+        return fvConditions2d.size()-1;
+
+     }
+     else  // create 2d polygon condition
+     {
+
+        elderdabc::C2handle conny= MakeC2Poly(name, points, histoname.c_str());
+        fvConditions2d.push_back(conny);
+        return fvConditions2d.size()-1;
+     }
+
+}
 
 
-//                 const char *histogram_name = "";
-//                 if (h >= 0)
-//                 {
-//                    histogram_name = histograms2d_[h]->GetName();
-//                 }
-//
-//                 if (size == 4) // create 2d window condition
-//                 {
-//                    TGo4WinCond* condition = creator_.MakeWinCond(name, points[0],points[1], points[2],points[3], histogram_name);
-//                    conditions2d_.push_back(condition);
-//                    return conditions2d_.size()-1;
-//                 }
-//                 else  // create 2d polygon condition
-//                 {
-//                    static double points_array[100][2] = {{0,},};
-//                    for (int i = 0; i < size/2; ++i)
-//                    {
-//                       points_array[i][0] = points[2*i];
-//                       points_array[i][1] = points[2*i+1];
-//                 }
-//                    TGo4PolyCond * condition = creator_.MakePolyCond(name, size/2, points_array, histogram_name);
-//                    condition->GetCut(false)->SetMarkerStyle(kCircle);
-//                    conditions2d_poly_.push_back(condition);
-//                    return conditions2d_poly_.size()-1;
-//              }
-                 return ::elderpt::viscon::Interface::INVALID_HANDLE;
-              }
 
-              void elderdabc::VisConDabc::cond2d_get(::elderpt::viscon::Interface::Condition2DHandle h, std::vector<double> &points)
-              {
-                 if (h == ::elderpt::viscon::Interface::INVALID_HANDLE)
-                    return;
+void elderdabc::VisConDabc::cond2d_get(
+   ::elderpt::viscon::Interface::Condition2DHandle h,
+   std::vector<double> &points)
+{
+   if (h == ::elderpt::viscon::Interface::INVALID_HANDLE)
+      return;
 
-                 if (points.size() < 4)
-                    return;
+   if (points.size() < 4)
+      return;
 
-                 if (points.size() == 4)
-                 {
-                    int dim;
-                    //conditions2d_[h]->GetValues(dim,points[0],points[1],points[2],points[3]);
-                 }
-                 else
-                 {
-//                    TCutG *cut = conditions2d_poly_[h]->GetCut(0);
-//                    uint n_points = cut->GetN();
-//                    double *x_coords = cut->GetX();
-//                    double *y_coords = cut->GetY();
-//
-//                    if (points.size() < 2*n_points-2)
-//                       points.resize(2*n_points-2);
-//
-//                    for (uint i = 0; i < points.size()/2; ++i)
-//                    {
-//                       points[2*i  ] = x_coords[i];
-//                       points[2*i+1] = y_coords[i];
-                 }
-              }
+   if (h < 0 || (size_t) h > fvConditions2d.size())
+      return; // error handling required when handle out of bounds?
+   elderdabc::C2handle con = fvConditions2d[h];
+
+   if (points.size() == 4) {
+      points.resize(4, 0);
+      GetLimitsC2Win(con, points[0], points[1], points[2], points[3]);
+   } else {
+      double *parray;
+      int numpoints = 0;
+      GetLimitsC2Poly(con, &parray, numpoints);
+      points.clear();
+      for (int i = 0; i < numpoints; ++i)
+         points.push_back(parray[i]);
+   }
+}
 
 
 
@@ -301,7 +310,7 @@ elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char* name, const char* 
 {
    std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
    bool reuse = false, clear_protect = false;
-
+   elderdabc::H1handle ret=elderdabc::NullHandle;
    while (options) {
       const char* separ = strchr(options,';');
       std::string part = options;
@@ -325,19 +334,21 @@ elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char* name, const char* 
 
    dabc::LockGuard lock(fTop.GetHMutex());
 
-   dabc::Hierarchy h = fTop.GetHChild(name);
-   if (!h.null() && reuse && h.GetFieldPtr("bins"))
-      return (elderdabc::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
-
+   dabc::Hierarchy h = fHistFolder.GetHChild(name);
+   if (!h.null() && reuse && h.GetFieldPtr("bins")){
+         ret.data= h.GetFieldPtr("bins")->GetDoubleArr();
+         ret.name=name;
+         return ret;
+   }
    if (!h) {
       std::string sname = name;
       auto pos = sname.find_last_of("/");
       if ((pos != std::string::npos) && fSortOrder)
-         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
+         h = fHistFolder.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
       else
-         h = fTop.CreateHChild(name);
+         h = fHistFolder.CreateHChild(name);
    }
-   if (!h) return nullptr;
+   if (!h) return elderdabc::NullHandle;
 
    h.SetField("_kind","ROOT.TH1D");
    h.SetField("_title", title);
@@ -363,16 +374,17 @@ elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char* name, const char* 
    bins[2] = right;
    h.SetField("bins", bins);
 
-   fTop.MarkChangedItems();
-
-   return (elderdabc::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
+   fHistFolder.MarkChangedItems();
+   ret.name=name;
+   ret.data=h.GetFieldPtr("bins")->GetDoubleArr();
+   return ret;
 }
 
 elderdabc::H2handle elderdabc::VisConDabc::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
    std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax, h2poly;
    bool reuse = false, clear_protect = false;
-
+   elderdabc::H2handle ret=elderdabc::NullHandle;
    while (options != nullptr) {
       const char* separ = strchr(options,';');
       std::string part = options;
@@ -398,19 +410,24 @@ elderdabc::H2handle elderdabc::VisConDabc::MakeH2(const char* name, const char* 
 
    dabc::LockGuard lock(fTop.GetHMutex());
 
-   dabc::Hierarchy h = fTop.GetHChild(name);
-   if (!h.null() && reuse && h.GetFieldPtr("bins"))
-      return (elderdabc::H2handle) h.GetFieldPtr("bins")->GetDoubleArr();
+   dabc::Hierarchy h = fHistFolder.GetHChild(name);
+   if (!h.null() && reuse && h.GetFieldPtr("bins")){
+            ret.data= h.GetFieldPtr("bins")->GetDoubleArr();
+            ret.name=name;
+            return ret;
+      }
+
+
 
    if (!h) {
       std::string sname = name;
       auto pos = sname.find_last_of("/");
       if ((pos != std::string::npos) && fSortOrder)
-         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
+         h = fHistFolder.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
       else
-         h = fTop.CreateHChild(name);
+         h = fHistFolder.CreateHChild(name);
    }
-   if (!h) return nullptr;
+   if (!h) return elderdabc::NullHandle;
 
    h.SetField("_kind", h2poly.empty() ? "ROOT.TH2D" : "ROOT.TH2Poly");
    h.SetField("_title", title);
@@ -444,17 +461,18 @@ elderdabc::H2handle elderdabc::VisConDabc::MakeH2(const char* name, const char* 
    bins[5] = right2;
    h.SetField("bins", bins);
 
-   fTop.MarkChangedItems();
+   fHistFolder.MarkChangedItems();
 
-   return (elderdabc::H2handle) h.GetFieldPtr("bins")->GetDoubleArr();
+   ret.name=name;
+   ret.data=h.GetFieldPtr("bins")->GetDoubleArr();
+   return ret;
 }
 
-////////// from stream ProcMgr/Processor code
 
 void elderdabc::VisConDabc::FillH1(elderdabc::H1handle h1, double x, double weight)
 {
    // taken from stream framework, double array is treated like in ROOT histograms (overflow, underflow bins etc.)
-   double* arr = (double*) h1;
+   double* arr = h1.data;
    int nbin = (int) arr[0];
    int bin = (int) (nbin * (x - arr[1]) / (arr[2] - arr[1]));
    if (bin<0) arr[3]+=weight; else
@@ -466,7 +484,7 @@ void elderdabc::VisConDabc::FillH1(elderdabc::H1handle h1, double x, double weig
 double elderdabc::VisConDabc::GetH1Content(elderdabc::H1handle h1, int bin)
 {
    // taken from stream framework, double array is treated like in ROOT histograms (overflow, underflow bins etc.)
-   double* arr = (double*) h1;
+   double* arr = h1.data;
    int nbin = (int) arr[0];
    if (bin<0) return arr[3];
    if (bin>=nbin) return arr[4+nbin];
@@ -477,7 +495,7 @@ double elderdabc::VisConDabc::GetH1Content(elderdabc::H1handle h1, int bin)
 void  elderdabc::VisConDabc::SetH1Content(elderdabc::H1handle h1, int bin, double v)
 {
    // taken from stream framework, double array is treated like in ROOT histograms (overflow, underflow bins etc.)
-   double* arr = (double*) h1;
+   double* arr = h1.data;
    int nbin = (int) arr[0];
    if (bin<0) arr[3] = v;
    else if (bin>=nbin) arr[4+nbin] = v;
@@ -490,7 +508,7 @@ void  elderdabc::VisConDabc::SetH1Content(elderdabc::H1handle h1, int bin, doubl
 void elderdabc::VisConDabc::FillH2(elderdabc::H2handle h2, double x, double y, double weight)
 {
    // taken from stream framework, double array is treated like in ROOT histograms (overflow, underflow bins etc.)
-   double* arr = (double*) h2;
+   double* arr = h2.data;
 
    int nbin1 = (int) arr[0];
    int nbin2 = (int) arr[3];
@@ -507,7 +525,7 @@ void elderdabc::VisConDabc::FillH2(elderdabc::H2handle h2, double x, double y, d
 double elderdabc::VisConDabc::GetH2Content(H2handle h2, int bin1, int bin2)
 {
    // taken from stream framework, double array is treated like in ROOT histograms (overflow, underflow bins etc.)
-   double* arr = (double*) h2;
+   double* arr = h2.data;
 
    int nbin1 = (int) arr[0];
    int nbin2 = (int) arr[3];
@@ -522,7 +540,7 @@ double elderdabc::VisConDabc::GetH2Content(H2handle h2, int bin1, int bin2)
 void elderdabc::VisConDabc::SetH2Content(H2handle h2, int bin1, int bin2, double v)
 {
    // taken from stream framework, double array is treated like in ROOT histograms (overflow, underflow bins etc.)
-   double* arr = (double*) h2;
+   double* arr = h2.data;
 
    int nbin1 = (int) arr[0];
    int nbin2 = (int) arr[3];
@@ -543,7 +561,7 @@ dabc::Hierarchy elderdabc::VisConDabc::FindHistogram(double *handle)
 
    if (!handle) return nullptr;
 
-   dabc::Iterator iter(fTop);
+   dabc::Iterator iter(fHistFolder);
    while (iter.next()) {
       dabc::Hierarchy item = iter.ref();
       if (item.HasField("_dabc_hist"))
@@ -553,17 +571,31 @@ dabc::Hierarchy elderdabc::VisConDabc::FindHistogram(double *handle)
    return nullptr;
 }
 
+//dabc::Hierarchy elderdabc::VisConDabc::FindCondition(double *handle)
+//{
+//
+//   if (!handle) return nullptr;
+//   dabc::Iterator iter(fCondFolder);
+//   while (iter.next()) {
+//      dabc::Hierarchy item = iter.ref();
+//         if (item.GetFieldPtr("limits")->GetDoubleArr() == handle)
+//            return item;
+//   }
+//   return nullptr;
+//}
+//
+
 
 void elderdabc::VisConDabc::SetH1Title(elderdabc::H1handle h1, const char *title)
 {
-   auto item = FindHistogram(h1);
+   auto item = FindHistogram(h1.data);
    if (!item.null())
       item.SetField("_title", title);
 }
 
 void elderdabc::VisConDabc::TagH1Time(elderdabc::H1handle h1)
 {
-   auto item = FindHistogram(h1);
+   auto item = FindHistogram(h1.data);
    if (!item.null()) {
       auto now = dabc::DateTime().GetNow();
       item.SetField("_humantime", now.AsString(3, true));
@@ -573,14 +605,14 @@ void elderdabc::VisConDabc::TagH1Time(elderdabc::H1handle h1)
 
 void elderdabc::VisConDabc::SetH2Title(elderdabc::H2handle h2, const char *title)
 {
-   auto item = FindHistogram(h2);
+   auto item = FindHistogram(h2.data);
    if (!item.null())
       item.SetField("_title", title);
 }
 
 void elderdabc::VisConDabc::TagH2Time(elderdabc::H2handle h2)
 {
-   auto item = FindHistogram(h2);
+   auto item = FindHistogram(h2.data);
    if (!item.null()) {
       auto now = dabc::DateTime().GetNow();
       item.SetField("_humantime", now.AsString(3, true));
@@ -669,11 +701,11 @@ bool elderdabc::VisConDabc::SaveAllDabcHistograms(dabc::Hierarchy &folder)
 //   if (name == "ROOTCMD") {
 //      if (item.IsName("Clear")) {
 //         DOUT0("Call CLEAR");
-//         ClearAllDabcHistograms(fTop);
+//         ClearAllDabcHistograms(fHistFolder);
 //         res = "true";
 //      } else if (item.IsName("Save")) {
 //         DOUT0("Call SAVE");
-//         SaveAllHistograms(fTop);
+//         SaveAllHistograms(fHistFolder);
 //         res = "true";
 /////////////////////////////////////////
 ////      } else if (item.IsName("Start")) {
@@ -739,4 +771,180 @@ bool elderdabc::VisConDabc::SaveAllDabcHistograms(dabc::Hierarchy &folder)
 //}
 
 //typedef void StreamCallFunc(void*);
+
+
+
+
+elderdabc::C1handle elderdabc::VisConDabc::MakeC1(const char *name, double left,
+      double right, const char *histogram_name)
+{
+   dabc::LockGuard lock(fTop.GetHMutex());
+   dabc::Hierarchy h = fCondFolder.GetHChild(name);
+   elderdabc::C1handle ret=elderdabc::NullHandle;
+   if (!h.null() && h.GetFieldPtr("limits")){
+            ret.data= h.GetFieldPtr("limits")->GetDoubleArr();
+            ret.name=name;
+            ret.size=h.GetField("numpoints").AsInt(2);
+            return ret;
+      }
+
+
+   if (!h) {
+      std::string sname = name;
+      auto pos = sname.find_last_of("/");
+      if ((pos != std::string::npos) && fSortOrder)
+         h = fCondFolder.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
+      else
+         h = fCondFolder.CreateHChild(name);
+   }
+   if (!h) return elderdabc::NullHandle;
+
+   h.SetField("_kind","ELDER.WINCON1");
+   h.SetField("_can_draw", true);
+   h.SetField("_title", name);
+   //h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
+//   h.SetField("_make_request", "DABC.ReqH"); // provide proper request
+//   h.SetField("_after_request", "ELDER.ConvertC"); // convert object into elder condition display, added in elder.js
+   h.SetField("_autoload", "dabcsys/plugins/elder/htm/elder.js");
+   if(histogram_name)
+      h.SetField("linked_histogram",histogram_name);
+   else
+      h.SetField("linked_histogram", "");
+
+   std::vector<double> limits;
+   limits.resize(2, 0.);
+   limits[0] = left;
+   limits[1] = right;
+   h.SetField("limits", limits);
+   h.SetField("numpoints",2);
+   fCondFolder.MarkChangedItems();
+   ret.name=name;
+   ret.data=h.GetFieldPtr("limits")->GetDoubleArr();
+   ret.size=2;
+   return ret;
+}
+
+elderdabc::C2handle elderdabc::VisConDabc::MakeC2Win(const char *name,
+      double xmin, double xmax, double ymin, double ymax,
+      const char *histogram_name)
+{
+
+   dabc::LockGuard lock(fTop.GetHMutex());
+   dabc::Hierarchy h = fCondFolder.GetHChild(name);
+   elderdabc::C2handle ret=elderdabc::NullHandle;
+   if (!h.null() && h.GetFieldPtr("limits")){
+      ret.data= h.GetFieldPtr("limits")->GetDoubleArr();
+      ret.name=name;
+      ret.size=h.GetField("numpoints").AsInt(4);
+      return ret;
+   }
+   if (!h) {
+         std::string sname = name;
+         auto pos = sname.find_last_of("/");
+         if ((pos != std::string::npos) && fSortOrder)
+            h = fCondFolder.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
+         else
+            h = fCondFolder.CreateHChild(name);
+      }
+      if (!h) return elderdabc::NullHandle;
+
+      h.SetField("_kind","ELDER.WINCON2");
+      h.SetField("_can_draw", true);
+      h.SetField("_title", name);
+      //h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
+//      h.SetField("_make_request", "DABC.ReqH"); // provide proper request
+//      h.SetField("_after_request", "ELDER.ConvertC");  // convert object into elder condition display, added in elder.js
+      h.SetField("_autoload", "dabcsys/plugins/elder/htm/elder.js");
+      if(histogram_name)
+         h.SetField("linked_histogram",histogram_name);
+      else
+         h.SetField("linked_histogram", "");
+
+      std::vector<double> limits;
+      limits.resize(4, 0.);
+      limits[0] = xmin;
+      limits[1] = xmax;
+      limits[2] = ymin;
+      limits[3] = ymax;
+      h.SetField("limits", limits);
+      h.SetField("numpoints",4);
+      fCondFolder.MarkChangedItems();
+      ret.name=name;
+      ret.data=h.GetFieldPtr("limits")->GetDoubleArr();
+      ret.size=4;
+      return ret;
+}
+
+elderdabc::C2handle elderdabc::VisConDabc::MakeC2Poly(const char *name,
+      const std::vector<double> &points, const char *histogram_name)
+{
+
+   dabc::LockGuard lock(fTop.GetHMutex());
+   dabc::Hierarchy h = fCondFolder.GetHChild(name);
+   elderdabc::C2handle ret=elderdabc::NullHandle;
+   if (!h.null() && h.GetFieldPtr("limits")){
+         ret.data= h.GetFieldPtr("limits")->GetDoubleArr();
+         ret.name=name;
+         ret.size= h.GetField("numpoints").AsInt(0);
+         return ret;
+      }
+      if (!h) {
+         std::string sname = name;
+         auto pos = sname.find_last_of("/");
+         if ((pos != std::string::npos) && fSortOrder)
+            h = fCondFolder.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
+         else
+            h = fCondFolder.CreateHChild(name);
+      }
+      if (!h) return elderdabc::NullHandle;
+
+      h.SetField("_kind","ELDER.POLYCON");
+      h.SetField("_can_draw", true);
+      h.SetField("_title", name);
+      //h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
+//      h.SetField("_make_request", "DABC.ReqH"); // provide proper request
+//      h.SetField("_after_request", "ELDER.ConvertC");  // convert object into elder condition display, added in elder.js
+      h.SetField("_autoload", "dabcsys/plugins/elder/htm/elder.js");
+      if(histogram_name)
+         h.SetField("linked_histogram",histogram_name);
+      else
+         h.SetField("linked_histogram", "");
+
+      h.SetField("limits", points);
+      h.SetField("numpoints",points.size());
+      fCondFolder.MarkChangedItems();
+      ret.name=name;
+      ret.data=h.GetFieldPtr("limits")->GetDoubleArr();
+      ret.size=points.size();
+      return ret;
+}
+
+void elderdabc::VisConDabc::GetLimitsC1(elderdabc::C1handle h, double &left,
+      double &right)
+{
+   double* arr = h.data;
+   left=arr[0];
+   right=arr[1];
+}
+
+void elderdabc::VisConDabc::GetLimitsC2Poly(elderdabc::C2handle h,
+      double **points, int &numpoints)
+{
+   *points = h.data;
+   numpoints=h.size;
+}
+
+
+void elderdabc::VisConDabc::GetLimitsC2Win(elderdabc::C2handle h, double &xmin,
+      double &xmax, double &ymin, double &ymax)
+{
+   double* arr = h.data;
+   xmin=arr[0];
+   xmax=arr[1];
+   ymin=arr[2];
+   ymax=arr[3];
+}
+
+
+
 

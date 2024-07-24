@@ -42,6 +42,12 @@ namespace mbs {
             /** keeps current event number */
             mbs::EventNumType curr_evnt_num;
 
+            /** JAM24: optional WR timestamp*/
+            mbs::WRTimeStampType curr_wr_ts;
+
+            /** indicate that we like to use white rabbit timestamps for merging */
+            bool wr_timestamped;
+
             /** if it is start/stop daq event, treat it in special way */
             bool curr_evnt_special;
 
@@ -75,6 +81,8 @@ namespace mbs {
             InputCfg() :
                real_mbs(true),
                curr_evnt_num(0),
+               curr_wr_ts(0),
+               wr_timestamped(false),
                curr_evnt_special(false),
                real_evnt_num(true),
                no_evnt_num(false),
@@ -88,6 +96,8 @@ namespace mbs {
             InputCfg(const InputCfg& src) :
                real_mbs(src.real_mbs),
                curr_evnt_num(src.curr_evnt_num),
+               curr_wr_ts(src.curr_wr_ts),
+               wr_timestamped(src.wr_timestamped),
                curr_evnt_special(src.curr_evnt_special),
                real_evnt_num(src.real_evnt_num),
                no_evnt_num(src.no_evnt_num),
@@ -102,6 +112,8 @@ namespace mbs {
             {
                real_mbs = true;
                curr_evnt_num = 0;
+               curr_wr_ts=0;
+               wr_timestamped= false;
                curr_evnt_special = false;
                real_evnt_num = true;
                no_evnt_num = false;
@@ -122,6 +134,9 @@ namespace mbs {
          /* switch between partial combining of smallest event ids (false)
           * and building of complete events only (true)*/
          bool                       fBuildCompleteEvents;
+
+         /** JAM24: if true, ignore event id but sort input data according to white rabbit timestamp information*/
+         bool                       fBuildTimestampMergedEvents;
 
          /*switch on checking duplicate subevent ids in merged events -> indicate setup error*/
          bool                       fCheckSubIds;
@@ -149,6 +164,12 @@ namespace mbs {
          /** Time to exclude optional input when no data comming */
          double                     fExcludeTime;
 
+         /** JAM24: for timestamp merger, we use new event sequence number:*/
+         mbs::EventNumType fBuildevid;
+
+         /** JAM24: accepted time interval (ns) after minimum TS for timestamp merger into single output event ("time slice buffer")*/
+         mbs::WRTimeStampType fWRTimeWindow;
+
          std::string                fEventRateName;
          std::string                fDataRateName;
          std::string                fInfoName;
@@ -156,6 +177,9 @@ namespace mbs {
 
          bool BuildEvent();
          bool FlushBuffer();
+
+         /** JAM24: merge white rabbit timestamped input transports here*/
+         bool BuildTimesortedEvent();
 
          void BeforeModuleStart() override;
 

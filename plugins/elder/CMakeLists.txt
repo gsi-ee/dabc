@@ -12,7 +12,7 @@ if(ELDER_FOUND)
     
     dabc_install_plugin_data(
     DabcElder
-    DIRECTORIES icons app
+    DIRECTORIES icons app htm
     DESTINATION ${DABC_INSTALL_PLUGINDIR}/elder
     )
     

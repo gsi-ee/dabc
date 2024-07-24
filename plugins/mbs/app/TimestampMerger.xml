@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Worker">
+    <Run>
+      <lib value="libDabcHttp.so"/>  	
+      <lib value="libDabcMbs.so"/>
+      <logfile value="tsmerger.log"/>
+    </Run>
+    
+    <HttpServer name="http" port="8091"/>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+    <Module name="Combiner" class="mbs::CombinerModule">
+	    <WhiteRabbitMergedEvents value="true"/>
+	    <WhiteRabbitDeltaTime value="50"/>
+       <NumInputs value="2"/>
+       <NumOutputs value="1"/>
+
+<!--
+	this is merging without timestamp check
+	       <InputPort name="Input0" url="mbs://x86l-183/Transport" queue="5" ratename="port0" realmbs="true" noevntnum="true" optional="true" />
+       <InputPort name="Input1" url="mbs://x86l-59/Transport" queue="5" ratename="port1" realmbs="true" noevntnum="false" optional="false"/>
+       
+-->
+       <InputPort name="Input0" url="mbs://x86l-183/Transport" queue="10" ratename="port0" whiterabbit="true"  />
+       <InputPort name="Input1" url="mbs://x86l-59/Transport" queue="10" ratename="port1"  whiterabbit="true"/>
+       
+<!--       <InputPort name="Input2" url="mbs://lxi011/Transport" queue="5"/>
+-->
+       <OutputPort name="Output0" url="mbs://Stream" queue="10"/>
+       <OutputPort name="Output1" url="lmd://combiner.lmd?size=128" queue="10"/>
+     </Module>
+  </Context>
+</dabc>
