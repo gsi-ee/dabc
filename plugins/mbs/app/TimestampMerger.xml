@@ -14,7 +14,7 @@
     </MemoryPool>
     <Module name="Combiner" class="mbs::CombinerModule">
 	    <WhiteRabbitMergedEvents value="true"/>
-	    <WhiteRabbitDeltaTime value="50"/>
+	    <WhiteRabbitDeltaTime value="0"/>
        <NumInputs value="2"/>
        <NumOutputs value="1"/>
 
