@@ -71,6 +71,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fBNETNumRecv = Cfg("BNET_NUMRECEIVERS", cmd).AsInt(1);
    fBNETNumSend = Cfg("BNET_NUMSENDERS", cmd).AsInt(1);
 
+   fTriggerNumberStep = Cfg("TriggerNumberStep", cmd).AsUInt(1);
+
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
 
    fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
@@ -823,13 +825,13 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       if ((errorBits != 0) && (errorBits != 1))
          cfg.fErrorBitsCnt++;
 
-      int diff = 1;
+      int diff = fTriggerNumberStep;
       if (cfg.fLastTrigNr != kNoTrigger)
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
       cfg.fLastTrigNr = cfg.fTrigNr;
 
-      if (diff > 1)
-         cfg.fLostTrig += (diff-1);
+      if (diff >= (int) (2*fTriggerNumberStep))
+         cfg.fLostTrig += diff / fTriggerNumberStep - 1;
 
       // printf("Input%u Trig:%6x Tag:%2x diff:%d %s\n", ninp, cfg.fTrigNr, cfg.fTrigTag, diff, diff != 1 ? "ERROR" : "");
    }
