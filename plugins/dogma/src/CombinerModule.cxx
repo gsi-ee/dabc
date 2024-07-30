@@ -93,8 +93,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fMaxDogmaTrigger = Cfg("TriggerNumRange", cmd).AsUInt(0x1000000);
    fTriggerNumStep = Cfg("TriggerNumStep", cmd).AsUInt(1);
-   fTriggerRangeMask = fMaxDogmaTrigger-1;
-   DOUT1("DOGMA %s module using maxtrigger 0x%x, rangemask:0x%x", GetName(), fMaxDogmaTrigger, fTriggerRangeMask);
+   fTriggerRangeMask = fMaxDogmaTrigger - 1;
+   DOUT1("DOGMA %s module using maxtrigger 0x%x, rangemask:0x%x, triggerstep:%u", GetName(), fMaxDogmaTrigger, fTriggerRangeMask, fTriggerNumStep);
    fEvnumDiffStatistics = Cfg("AccountLostEventDiff", cmd).AsBool(true);
 
    fTriggerNrTolerance = Cfg("TriggerTollerance", cmd).AsInt(-1);
