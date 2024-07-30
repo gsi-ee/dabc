@@ -211,7 +211,7 @@ namespace dogma {
          uint64_t           fEventRateCnt;
          double             fLostEventRateCnt;
 
-         unsigned           fTriggerNumStep = 1;  ///< step in trigger numbers
+         int                fTriggerNumStep = 1;  ///< step in trigger numbers
 
          uint64_t           fRunRecvBytes;
          uint64_t           fRunBuildEvents;   ///< number of build events

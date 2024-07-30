@@ -92,9 +92,10 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       fRunNumber = 1; // runid from configuration time.
 
    fMaxDogmaTrigger = Cfg("TriggerNumRange", cmd).AsUInt(0x1000000);
-   fTriggerNumStep = Cfg("TriggerNumStep", cmd).AsUInt(1);
+   fTriggerNumStep = Cfg("TriggerNumStep", cmd).AsInt(1);
+   if (fTriggerNumStep < 1) fTriggerNumStep = 1;
    fTriggerRangeMask = fMaxDogmaTrigger - 1;
-   DOUT1("DOGMA %s module using maxtrigger 0x%x, rangemask:0x%x, triggerstep:%u", GetName(), fMaxDogmaTrigger, fTriggerRangeMask, fTriggerNumStep);
+   DOUT1("DOGMA %s module using maxtrigger 0x%x, rangemask:0x%x, triggerstep:%d", GetName(), fMaxDogmaTrigger, fTriggerRangeMask, fTriggerNumStep);
    fEvnumDiffStatistics = Cfg("AccountLostEventDiff", cmd).AsBool(true);
 
    fTriggerNrTolerance = Cfg("TriggerTollerance", cmd).AsInt(-1);
@@ -829,7 +830,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
       cfg.fLastTrigNr = cfg.fTrigNr;
 
-      if (diff >= (int) (2*fTriggerNumStep))
+      if (diff >= 2*fTriggerNumStep)
          cfg.fLostTrig += diff / fTriggerNumStep - 1;
 
       // printf("Input%u Trig:%6x Tag:%2x diff:%d %s\n", ninp, cfg.fTrigNr, cfg.fTrigTag, diff, diff != 1 ? "ERROR" : "");
@@ -1267,17 +1268,17 @@ bool dogma::CombinerModule::BuildEvent()
       fEventRateCnt++;
       // Par(fEventRateName).SetValue(1);
 
-      if (fEvnumDiffStatistics && (buildevid_diff > 1)) {
+      if (fEvnumDiffStatistics && (buildevid_diff > fTriggerNumStep)) {
 
          if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
             DOUT1("Events gap %d", buildevid_diff-1);
             fLastDebugTm = currTm;
          }
 
-         fLostEventRateCnt += (buildevid_diff-1);
+         fLostEventRateCnt += buildevid_diff / fTriggerNumStep - 1;
          //Par(fLostEventRateName).SetValue(diff-1);
-         fRunDiscEvents += (buildevid_diff-1);
-         fAllDiscEvents += (buildevid_diff-1);
+         fRunDiscEvents += buildevid_diff / fTriggerNumStep - 1;
+         fAllDiscEvents += buildevid_diff / fTriggerNumStep - 1;
       }
 
       // if (subeventssize == 0) EOUT("ZERO EVENT");
