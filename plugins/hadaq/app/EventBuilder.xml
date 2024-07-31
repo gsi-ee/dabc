@@ -15,6 +15,10 @@ and provide hld file name for Output1 port
 
 File name fill be extended according to HADAQ naming convention.
 
+To change available UPD buffer size, use:
+
+   echo "2129920" > /proc/sys/net/core/rmem_max
+
 By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
 put <HttpServer name="http" auto="false">. One could change http port number.
 When dabc runs, in any browser address like
