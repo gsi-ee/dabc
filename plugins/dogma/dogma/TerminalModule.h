@@ -41,24 +41,35 @@ namespace dogma {
             std::string           state;
          };
 
-         uint64_t        fTotalBuildEvents{0};
-         uint64_t        fTotalRecvBytes{0};
-         uint64_t        fTotalDiscEvents{0};
-         uint64_t        fTotalDroppedData{0};
+         uint64_t        fTotalBuildEvents = 0;
+         uint64_t        fTotalRecvBytes = 0;
+         uint64_t        fTotalDiscEvents = 0;
+         uint64_t        fTotalDroppedData = 0;
 
-         bool            fDoClear{false};       ///< clear terminal when start module
-         bool            fDoShow{false};        ///< perform output
+         bool            fDoClear = false;    ///< clear terminal when start module
+         bool            fDoShow = false;     ///< perform output
          dabc::TimeStamp fLastTm;
          std::vector<CalibrRect> fCalibr;
-         int             fServPort{0};
+         int             fServPort = 0;
          dabc::Command   fLastServCmd;    ///< last received data from file transport
          bool            fServReqRunning{false}; ///<  is file request running
-         int             fFilePort{0};
+         int             fFilePort = 0;
          dabc::Command   fLastFileCmd;    ///< last received data from file transport
          bool            fFileReqRunning{false}; ///< is file request running
-         int             fRingSize{0};       ///< number of last IDs shown
+         int             fRingSize = 0;       ///< number of last IDs shown
 
          std::string     fModuleName;    ///< name of hadaq combiner module
+
+         bool            fDoSlow = false;     ///< perform slow rate output
+         double          fSlowRate1 = 0;
+         double          fSlowRate2 = 0;
+         double          fSlowRate3 = 0;
+         double          fSlowRate4 = 0;
+         dabc::TimeStamp fLastSlowTm;
+         uint64_t        fTotalBuildEvents2 = 0;
+         uint64_t        fTotalRecvBytes2 = 0;
+         uint64_t        fTotalDiscEvents2 = 0;
+         uint64_t        fTotalDroppedData2 = 0;
 
          std::string rate_to_str(double r);
 

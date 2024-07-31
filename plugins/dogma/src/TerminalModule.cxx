@@ -43,6 +43,7 @@ dogma::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
    fFileReqRunning(false)
 {
    double period = Cfg("period", cmd).AsDouble(1);
+   double slow = Cfg("slow", cmd).AsDouble(-1);
    fServPort = Cfg("servport", cmd).AsInt(-1);
    fFilePort = Cfg("fileport", cmd).AsInt(-1);
 
@@ -55,8 +56,13 @@ dogma::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
    if (fRingSize > DOGMA_RINGSIZE) fRingSize = DOGMA_RINGSIZE;
 
    CreateTimer("update", period);
+   if (slow > 0) {
+      fDoSlow = true;
+      CreateTimer("slow", slow);
+   }
 
    fLastTm.Reset();
+   fLastSlowTm.Reset();
 
    fWorkerHierarchy.Create("Term");
 
@@ -122,16 +128,30 @@ std::string dogma::TerminalModule::rate_to_str(double r)
    return dabc::format("%5.1f kev/s",r/1e3);
 }
 
-void dogma::TerminalModule::ProcessTimerEvent(unsigned)
+void dogma::TerminalModule::ProcessTimerEvent(unsigned id)
 {
    dabc::ModuleRef m = dabc::mgr.FindModule(fModuleName);
 
    auto comb = dynamic_cast<dogma::CombinerModule*> (m());
    if (!comb) return;
 
+   if (fDoSlow && TimerName(id) == "slow") {
+      double delta2 = fLastSlowTm.SpentTillNow(true);
+      delta2 = (delta2 > 0.01) ? 1./delta2 : 0.;
+      fSlowRate1 = (comb->fAllBuildEvents > fTotalBuildEvents2) ? (comb->fAllBuildEvents - fTotalBuildEvents2) * delta2 : 0.,
+      fSlowRate2 = (comb->fAllRecvBytes > fTotalRecvBytes2) ? (comb->fAllRecvBytes - fTotalRecvBytes2) * delta2 : 0.,
+      fSlowRate3 = (comb->fAllDiscEvents > fTotalDiscEvents2) ? (comb->fAllDiscEvents - fTotalDiscEvents2) * delta2 : 0.,
+      fSlowRate4 = (comb->fAllDroppedData > fTotalDroppedData2) ? (comb->fAllDroppedData - fTotalDroppedData2) * delta2 : 0.;
+      fTotalBuildEvents2 = comb->fAllBuildEvents;
+      fTotalRecvBytes2 = comb->fAllRecvBytes;
+      fTotalDiscEvents2 = comb->fAllDiscEvents;
+      fTotalDroppedData2 = comb->fAllDroppedData;
+      return;
+   }
+
    double delta = fLastTm.SpentTillNow(true);
 
-   delta = (delta > 0.01) ? 1./delta : 0.;
+   delta = (delta > 0.001) ? 1./delta : 0.;
 
    double rate1 = (comb->fAllBuildEvents > fTotalBuildEvents) ? (comb->fAllBuildEvents - fTotalBuildEvents) * delta : 0.,
           rate2 = (comb->fAllRecvBytes > fTotalRecvBytes) ? (comb->fAllRecvBytes - fTotalRecvBytes) * delta : 0.,
@@ -167,24 +187,32 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    fTotalDiscEvents = comb->fAllDiscEvents;
    fTotalDroppedData = comb->fAllDroppedData;
 
-   std::string s;
+   std::string s, s1,s2,s3,s4;
+   if (fDoSlow) {
+      s1 = dabc::format(" (%12s)", rate_to_str(fSlowRate1).c_str());
+      s2 = dabc::format(" (%6.3f)", fSlowRate2/1024./1024.);
+      s3 = dabc::format(" (%12s)", rate_to_str(fSlowRate3).c_str());
+      s4 = dabc::format(" (%6.3f)", fSlowRate4/1024./1024.);
+   }
 
    s += "---------------------------------------------\n";
-   s += dabc::format("Events:%8s   Rate:%12s  Data: %10s  Rate:%6.3f MB/s\n",
+   s += dabc::format("Events:%8s   Rate:%12s %s Data: %10s  Rate:%6.3f MB/s%s\n",
                         dabc::number_to_str(fTotalBuildEvents, 1).c_str(),
-                        rate_to_str(rate1).c_str(),
-                        dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
-   s += dabc::format("Dropped:%7s   Rate:%12s  Data: %10s  Rate:%6.3f MB/s",
+                        rate_to_str(rate1).c_str(), s1.c_str(),
+                        dabc::size_to_str(fTotalRecvBytes).c_str(),
+                        rate2/1024./1024., s2.c_str());
+   s += dabc::format("Dropped:%7s   Rate:%12s %s Data: %10s  Rate:%6.3f MB/s%s",
                         dabc::number_to_str(fTotalDiscEvents, 1).c_str(),
-                        rate_to_str(rate3).c_str(),
-                        dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
+                        rate_to_str(rate3).c_str(), s3.c_str(),
+                        dabc::size_to_str(fTotalDroppedData).c_str(),
+                        rate4/1024./1024., s4.c_str());
 
-   if (comb->fAllFullDrops>0)
+   if (comb->fAllFullDrops > 0)
       s += dabc::format(" Total:%s\n", dabc::size_to_str(comb->fAllFullDrops, 1).c_str());
    else
       s += "\n";
 
-   if (fServPort>=0) {
+   if (fServPort >= 0) {
       if (fLastServCmd.null()) {
          s += dabc::format("Server: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fServPort);
       } else {
@@ -195,7 +223,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
       s += "\n";
    }
 
-   if (fFilePort>=0) {
+   if (fFilePort >= 0) {
       if (fLastFileCmd.null()) {
          s += dabc::format("File: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fFilePort);
       } else {
