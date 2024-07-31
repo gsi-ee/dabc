@@ -60,6 +60,18 @@ namespace hadaq {
 
          std::string     fModuleName;    ///< name of hadaq combiner module
 
+         bool            fDoSlow = false;     ///< perform slow rate output
+         double          fSlowRate1 = 0;
+         double          fSlowRate2 = 0;
+         double          fSlowRate3 = 0;
+         double          fSlowRate4 = 0;
+         dabc::TimeStamp fLastSlowTm;
+         uint64_t        fTotalBuildEvents2 = 0;
+         uint64_t        fTotalRecvBytes2 = 0;
+         uint64_t        fTotalDiscEvents2 = 0;
+         uint64_t        fTotalDroppedData2 = 0;
+
+
          std::string rate_to_str(double r);
 
          bool ReplyCommand(dabc::Command cmd) override;

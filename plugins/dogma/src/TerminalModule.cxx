@@ -187,7 +187,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned id)
    fTotalDiscEvents = comb->fAllDiscEvents;
    fTotalDroppedData = comb->fAllDroppedData;
 
-   std::string s, s1,s2,s3,s4;
+   std::string s,s1,s2,s3,s4;
    if (fDoSlow) {
       s1 = dabc::format(" (%12s)", rate_to_str(fSlowRate1).c_str());
       s2 = dabc::format(" (%6.3f)", fSlowRate2/1024./1024.);
