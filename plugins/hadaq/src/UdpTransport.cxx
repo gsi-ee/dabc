@@ -236,27 +236,27 @@ int hadaq::NewAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
    }
 
    if (rcvbuflen > 0) {
-      // for hadaq application: set receive buffer length _before_ bind:
-      //         int rcvBufLenReq = 1 * (1 << 20);
-      socklen_t rcvBufLenLen = sizeof(rcvbuflen);
-      if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuflen, rcvBufLenLen) == -1) {
+      uint64_t arg_rcvbuflen = (uint32_t) rcvbuflen;
+      if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &arg_rcvbuflen, sizeof(arg_rcvbuflen)) == -1) {
          EOUT("Fail to setsockopt SO_RCVBUF %s", strerror(errno));
       }
 
-      int rcvBufLenRet = 0;
-      if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, &rcvBufLenLen) == -1) {
+      arg_rcvbuflen = 0;
+      socklen_t arg_len = sizeof(arg_rcvbuflen);
+      if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &arg_rcvbuflen, &arg_len) == -1) {
          EOUT("fail to getsockopt SO_RCVBUF, ...): %s", strerror(errno));
       }
 
-      if (rcvBufLenRet < rcvbuflen) {
-         EOUT("UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet, rcvbuflen);
-         rcvbuflen = rcvBufLenRet;
+      if ((int) arg_rcvbuflen < rcvbuflen) {
+         EOUT("UDP receive buffer length (%u) smaller than requested buffer length (%d)", (unsigned) arg_rcvbuflen, rcvbuflen);
+      } else if (rcvbuflen == (int) arg_rcvbuflen / 2) {
+         DOUT0("SO_RCVBUF   Configured %d", rcvbuflen);
       } else {
-         DOUT0("SO_RCVBUF   Configured %ld  Actual %ld", (long) rcvbuflen, (long) rcvBufLenRet);
+         DOUT0("SO_RCVBUF   Configured %d  Actual %u", rcvbuflen, (unsigned) arg_rcvbuflen);
       }
    }
 
-   if ((host.length()>0) && (host!="host")) {
+   if ((host.length() > 0) && (host != "host")) {
       struct addrinfo hints, *info = nullptr;
 
       memset(&hints, 0, sizeof(hints));
