@@ -56,13 +56,10 @@ dogma::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
    if (fRingSize > DOGMA_RINGSIZE) fRingSize = DOGMA_RINGSIZE;
 
    CreateTimer("update", period);
-   if (slow > 0) {
-      fDoSlow = true;
-      CreateTimer("slow", slow);
-   }
+   if ((slow > 0) && (period > 0) && (slow > 2 * period))
+      fDoSlow = (int) slow / period;
 
    fLastTm.Reset();
-   fLastSlowTm.Reset();
 
    fWorkerHierarchy.Create("Term");
 
@@ -128,26 +125,12 @@ std::string dogma::TerminalModule::rate_to_str(double r)
    return dabc::format("%5.1f kev/s",r/1e3);
 }
 
-void dogma::TerminalModule::ProcessTimerEvent(unsigned id)
+void dogma::TerminalModule::ProcessTimerEvent(unsigned)
 {
    dabc::ModuleRef m = dabc::mgr.FindModule(fModuleName);
 
    auto comb = dynamic_cast<dogma::CombinerModule*> (m());
    if (!comb) return;
-
-   if (fDoSlow && TimerName(id) == "slow") {
-      double delta2 = fLastSlowTm.SpentTillNow(true);
-      delta2 = (delta2 > 0.01) ? 1./delta2 : 0.;
-      fSlowRate1 = (comb->fAllBuildEvents > fTotalBuildEvents2) ? (comb->fAllBuildEvents - fTotalBuildEvents2) * delta2 : 0.,
-      fSlowRate2 = (comb->fAllRecvBytes > fTotalRecvBytes2) ? (comb->fAllRecvBytes - fTotalRecvBytes2) * delta2 : 0.,
-      fSlowRate3 = (comb->fAllDiscEvents > fTotalDiscEvents2) ? (comb->fAllDiscEvents - fTotalDiscEvents2) * delta2 : 0.,
-      fSlowRate4 = (comb->fAllDroppedData > fTotalDroppedData2) ? (comb->fAllDroppedData - fTotalDroppedData2) * delta2 : 0.;
-      fTotalBuildEvents2 = comb->fAllBuildEvents;
-      fTotalRecvBytes2 = comb->fAllRecvBytes;
-      fTotalDiscEvents2 = comb->fAllDiscEvents;
-      fTotalDroppedData2 = comb->fAllDroppedData;
-      return;
-   }
 
    double delta = fLastTm.SpentTillNow(true);
 
@@ -158,13 +141,35 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned id)
           rate3 = (comb->fAllDiscEvents > fTotalDiscEvents) ? (comb->fAllDiscEvents - fTotalDiscEvents) * delta : 0.,
           rate4 = (comb->fAllDroppedData > fTotalDroppedData) ? (comb->fAllDroppedData - fTotalDroppedData) * delta : 0.;
 
+   std::string s,s1,s2,s3,s4;
+
+   if (fDoSlow > 0) {
+      auto calc = [=](std::vector<double> &vect, double rate) {
+         if (vect.size() >= (unsigned) fDoSlow)
+            vect.erase(vect.begin());
+         vect.emplace_back(rate);
+         double sum = 0.;
+         for (auto v : vect)
+            sum += v;
+         return sum / vect.size();
+      };
+      double srate1 = calc(fSlowRate1, rate1),
+             srate2 = calc(fSlowRate2, rate2),
+             srate3 = calc(fSlowRate3, rate3),
+             srate4 = calc(fSlowRate4, rate4);
+      s1 = dabc::format(" (%12s)", rate_to_str(srate1).c_str());
+      s2 = dabc::format(" (%6.3f)", srate2/1024./1024.);
+      s3 = dabc::format(" (%12s)", rate_to_str(srate3).c_str());
+      s4 = dabc::format(" (%6.3f)", srate4/1024./1024.);
+   }
+
    if (fDoShow) {
       if (delta > 0) {
          unsigned nlines = comb->fCfg.size() + 4;
-         if (fServPort>=0) nlines++;
-         if (fFilePort>=0) nlines++;
-         for (unsigned n=0;n<nlines;n++)
-            fputs("\033[A\033[2K",stdout);
+         if (fServPort >= 0) nlines++;
+         if (fFilePort >= 0) nlines++;
+         for (unsigned n = 0; n < nlines; n++)
+            fputs("\033[A\033[2K", stdout);
          rewind(stdout);
          auto res = ftruncate(1,0);
          (void) res; // just avoid compiler warnings
@@ -186,14 +191,6 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned id)
    fTotalRecvBytes = comb->fAllRecvBytes;
    fTotalDiscEvents = comb->fAllDiscEvents;
    fTotalDroppedData = comb->fAllDroppedData;
-
-   std::string s,s1,s2,s3,s4;
-   if (fDoSlow) {
-      s1 = dabc::format(" (%12s)", rate_to_str(fSlowRate1).c_str());
-      s2 = dabc::format(" (%6.3f)", fSlowRate2/1024./1024.);
-      s3 = dabc::format(" (%12s)", rate_to_str(fSlowRate3).c_str());
-      s4 = dabc::format(" (%6.3f)", fSlowRate4/1024./1024.);
-   }
 
    s += "---------------------------------------------\n";
    s += dabc::format("Events:%8s   Rate:%12s %s Data: %10s  Rate:%6.3f MB/s%s\n",
