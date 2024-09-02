@@ -259,7 +259,7 @@ void PrintCtdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             reference = data & 0x1FFF;
             printf("ref:%5.1f\n", reference * 0.4);
          } else if ((data >> 26) & 1) {
-            printf("Ch:%02u ERROR\n", (unsigned) data >> 27);
+            printf("ch:%02u ERROR\n", (unsigned) data >> 27);
          } else {
             unsigned channel = (unsigned) data >> 27;
             signed risingHit = (data >> 13) & 0x1fff;
@@ -274,7 +274,7 @@ void PrintCtdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
             float timeToT = (fallingHit - risingHit) * 0.4;
             if (timeToT < 0)
                timeToT += 8192 * 0.4;
-            printf("  ch:%02u rising:%5.1f ToT:%5.1f\n", channel, timeDiff, timeToT);
+            printf("ch:%02u rising:%5.1f ToT:%5.1f\n", channel, timeDiff, timeToT);
          }
       }
    }
@@ -769,11 +769,16 @@ int main(int argc, char* argv[])
 
                if (print_subsubhdr) {
                   const char *kind = "Subsubevent";
-                  if (as_tdc) kind = "TDC "; else
-                  if (as_ctdc) kind = "CTDC "; else
-                  if (as_new) kind = "TDC "; else
-                  if (as_cts) kind = "CTS "; else
-                  if (as_adc) kind = "ADC ";
+                  if (as_tdc)
+                     kind = "TDC ";
+                  else if (as_ctdc)
+                     kind = "CTDC ";
+                  else if (as_new)
+                     kind = "TDC ";
+                  else if (as_cts)
+                     kind = "CTS ";
+                  else if (as_adc)
+                     kind = "ADC ";
 
                   printf("%*s*** %s size %3u id 0x%04x", prefix-3, "", kind, datalen, datakind);
                   if(standalone_subevnt && (ix == 0))
