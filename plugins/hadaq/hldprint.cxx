@@ -65,6 +65,7 @@ int usage(const char* errstr = nullptr)
    printf("   -hub id                 - identify hub inside subevent (default none) \n");
    printf("   -auto                   - automatically assign ID for TDCs (0x0zzz or 0x1zzz) and HUBs (0x8zzz) (default false)\n");
    printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff)\n");
+   printf("   -onlyctdc subsubid      - printout of CTDC data only for specified subsubevent\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
    printf("   -onlynew subsubid       - printout raw data only for specified TDC4 subsubevent\n");
    printf("   -onlymonitor id         - printout only event/subevent created by hadaq::Monitor module (default off) \n");
@@ -313,8 +314,8 @@ void PrintMonitorData(hadaq::RawSubevent *sub)
 }
 
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false,
-   dominsz = false, domaxsz = false, autoid = false, only_errors = false;
-unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
+     dominsz = false, domaxsz = false, autoid = false, only_errors = false;
+unsigned idrange = 0xff, onlynew = 0, onlyctdc = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 std::vector<unsigned> hubs, tdcs, ctdcs, ctsids, newtdcs;
 
 bool is_cts(unsigned id)
@@ -412,6 +413,8 @@ int main(int argc, char* argv[])
          newtdcs.emplace_back(tdcmask);
       } else if ((strcmp(argv[n], "-range") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &idrange);
+      } else if ((strcmp(argv[n], "-onlyctdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &onlyctdc);
       } else if ((strcmp(argv[n], "-onlynew") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &onlynew);
       } else if ((strcmp(argv[n], "-onlyraw") == 0) && (n + 1 < argc)) {
@@ -460,7 +463,7 @@ int main(int argc, char* argv[])
          return usage("Unknown option");
    }
 
-   if ((adcmask != 0) || !tdcs.empty() || !ctdcs.empty() || (onlytdc != 0) || (onlynew != 0) || (onlyraw != 0)) { printsub = true; }
+   if ((adcmask != 0) || !tdcs.empty() || !ctdcs.empty() || (onlytdc != 0) || (onlyctdc != 0) || (onlynew != 0) || (onlyraw != 0)) { printsub = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -612,7 +615,7 @@ int main(int argc, char* argv[])
       hadaq::RawSubevent* sub = nullptr;
       while ((sub = evnt->NextSubevent(sub)) != nullptr) {
          bool print_sub_header = false;
-         if ((onlytdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
+         if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
          }
@@ -658,7 +661,7 @@ int main(int argc, char* argv[])
             }
 
             bool as_raw = false, as_cts = false, as_tdc = false, as_ctdc = false, as_new = false, as_adc = false,
-                 print_subsubhdr = (onlytdc == 0) && (onlynew == 0) && (onlyraw == 0) && !only_errors;
+                 print_subsubhdr = (onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && !only_errors;
 
             if (maxhublen > 0) {
 
@@ -685,15 +688,18 @@ int main(int argc, char* argv[])
             }
 
             if (is_tdc(datakind))
-               as_tdc = !onlytdc && !onlynew && !onlyraw;
+               as_tdc = !onlytdc && !onlyctdc && !onlynew && !onlyraw;
             else if (is_ctdc(datakind))
-               as_ctdc = !onlytdc && !onlynew && !onlyraw;
+               as_ctdc = !onlytdc && !onlyctdc && !onlynew && !onlyraw;
             else if (is_newtdc(datakind))
-               as_new = !onlytdc && !onlynew && !onlyraw;
+               as_new = !onlytdc && !onlyctdc && !onlynew && !onlyraw;
 
             if (!as_tdc) {
                if ((onlytdc != 0) && (datakind == onlytdc)) {
                   as_tdc = true;
+                  print_subsubhdr = true;
+               } else if ((onlyctdc != 0) && (datakind == onlyctdc)) {
+                  as_ctdc = true;
                   print_subsubhdr = true;
                } else if ((onlynew != 0) && (datakind == onlynew)) {
                   as_new = true;
@@ -717,7 +723,7 @@ int main(int argc, char* argv[])
                   as_raw = true;
                   print_subsubhdr = true;
                } else if (printraw) {
-                  as_raw = (onlytdc == 0) && (onlynew == 0) && (onlyraw == 0);
+                  as_raw = (onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0);
                }
             }
 
