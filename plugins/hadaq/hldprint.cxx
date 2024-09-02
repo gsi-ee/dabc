@@ -248,10 +248,34 @@ void PrintCtdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
 
    unsigned wlen = (sz > 999) ? 4 : (sz > 99 ? 3 : 2);
 
+   signed reference = 0;
+
    for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
-      unsigned msg = sub->Data(ix);
-      if (prefix > 0)
-         printf("%*s[%*u] %08x\n", prefix, "", wlen, ix, msg);
+      unsigned data = sub->Data(ix);
+      if (prefix > 0) {
+         printf("%*s[%*u] %08x  ", prefix, "", wlen, ix, data);
+         if (cnt == 0) {
+            reference = data & 0x1FFF;
+            printf("ref:%5.1f\n", reference * 0.4);
+         } else if ((data >> 26) & 1) {
+            printf("Ch:%02u ERROR\n", (unsigned) data >> 27);
+         } else {
+            unsigned channel = (unsigned) data >> 27;
+            signed risingHit = (data >> 13) & 0x1fff;
+            signed fallingHit = (data >> 0) & 0x1fff;
+
+            float timeDiff = ((risingHit - reference)) * 0.4;
+            if (timeDiff < -1250)
+               timeDiff += 8192 * 0.4;
+            if (timeDiff > 1250)
+               timeDiff -= 8192 * 0.4;
+
+            float timeToT = (fallingHit - risingHit) * 0.4;
+            if (timeToT < 0)
+               timeToT += 8192 * 0.4;
+            printf("  ch:%02u rising:%5.1f ToT:%5.1f\n", channel, timeDiff, timeToT);
+         }
+      }
    }
 }
 
