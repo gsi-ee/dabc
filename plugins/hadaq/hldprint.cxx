@@ -288,9 +288,7 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if ((ix >= sz) || (len == 0)) return;
    if ((len == 0) || (ix + len > sz)) len = sz - ix;
 
-   unsigned wlen = 2;
-   if (sz>99) wlen = 3; else
-   if (sz>999) wlen = 4;
+   unsigned wlen = (sz > 999) ? 4 : (sz > 99 ? 3 : 2);
 
    for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
       unsigned msg = sub->Data(ix);
