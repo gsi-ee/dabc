@@ -59,6 +59,7 @@ int usage(const char* errstr = nullptr)
    printf("   -onlyerr                - printout only TDC data with errors\n");
    printf("   -cts id                 - printout raw data as CTS subsubevent (default none)\n");
    printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
+   printf("   -ctdc id                - printout raw data as CTDC subsubevent (default none)\n");
    printf("   -new id                 - printout raw data as new TDC subsubevent (default none)\n");
    printf("   -adc id                 - printout raw data as ADC subsubevent (default none)\n");
    printf("   -hub id                 - identify hub inside subevent (default none) \n");
@@ -238,6 +239,22 @@ void PrintCtsData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 }
 
+void PrintCtdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
+{
+   unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
+
+   if ((ix >= sz) || (len == 0)) return;
+   if ((len == 0) || (ix + len > sz)) len = sz - ix;
+
+   unsigned wlen = (sz > 999) ? 4 : (sz > 99 ? 3 : 2);
+
+   for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
+      unsigned msg = sub->Data(ix);
+      if (prefix > 0)
+         printf("%*s[%*u] %08x\n", prefix, "", wlen, ix, msg);
+   }
+}
+
 
 void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
 {
@@ -274,7 +291,7 @@ void PrintMonitorData(hadaq::RawSubevent *sub)
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false,
    dominsz = false, domaxsz = false, autoid = false, only_errors = false;
 unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
-std::vector<unsigned> hubs, tdcs, ctsids, newtdcs;
+std::vector<unsigned> hubs, tdcs, ctdcs, ctsids, newtdcs;
 
 bool is_cts(unsigned id)
 {
@@ -291,6 +308,12 @@ bool is_hub(unsigned id)
 
    return true;
 }
+
+bool is_ctdc(unsigned id)
+{
+   return (std::find(ctdcs.begin(), ctdcs.end(), id) != ctdcs.end());
+}
+
 
 bool is_tdc(unsigned id)
 {
@@ -357,6 +380,9 @@ int main(int argc, char* argv[])
       } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &tdcmask);
          tdcs.emplace_back(tdcmask);
+      } else if ((strcmp(argv[n], "-ctdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &tdcmask);
+         ctdcs.emplace_back(tdcmask);
       } else if ((strcmp(argv[n], "-new") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &tdcmask);
          newtdcs.emplace_back(tdcmask);
@@ -410,7 +436,7 @@ int main(int argc, char* argv[])
          return usage("Unknown option");
    }
 
-   if ((adcmask != 0) || !tdcs.empty() || (onlytdc != 0) || (onlynew != 0) || (onlyraw != 0)) { printsub = true; }
+   if ((adcmask != 0) || !tdcs.empty() || !ctdcs.empty() || (onlytdc != 0) || (onlynew != 0) || (onlyraw != 0)) { printsub = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -607,7 +633,7 @@ int main(int argc, char* argv[])
                lasthhubid = 0;
             }
 
-            bool as_raw = false, as_cts = false, as_tdc = false, as_new = false, as_adc = false,
+            bool as_raw = false, as_cts = false, as_tdc = false, as_ctdc = false, as_new = false, as_adc = false,
                  print_subsubhdr = (onlytdc == 0) && (onlynew == 0) && (onlyraw == 0) && !only_errors;
 
             if (maxhublen > 0) {
@@ -636,8 +662,9 @@ int main(int argc, char* argv[])
 
             if (is_tdc(datakind))
                as_tdc = !onlytdc && !onlynew && !onlyraw;
-
-            if (is_newtdc(datakind))
+            else if (is_ctdc(datakind))
+               as_ctdc = !onlytdc && !onlynew && !onlyraw;
+            else if (is_newtdc(datakind))
                as_new = !onlytdc && !onlynew && !onlyraw;
 
             if (!as_tdc) {
@@ -685,7 +712,7 @@ int main(int argc, char* argv[])
                   errmask = 0;
                }
 
-               if (as_raw || as_tdc || as_new || as_adc) {
+               if (as_raw || as_tdc || as_ctdc || as_new || as_adc) {
                   if (!print_header) {
                      print_header = true;
                      evnt->Dump();
@@ -713,6 +740,7 @@ int main(int argc, char* argv[])
                if (print_subsubhdr) {
                   const char *kind = "Subsubevent";
                   if (as_tdc) kind = "TDC "; else
+                  if (as_ctdc) kind = "CTDC "; else
                   if (as_new) kind = "TDC "; else
                   if (as_cts) kind = "CTS "; else
                   if (as_adc) kind = "ADC ";
@@ -727,6 +755,8 @@ int main(int argc, char* argv[])
 
                if (as_tdc)
                   PrintTdcData(sub, ix, datalen, prefix, errmask);
+               else if (as_ctdc)
+                  PrintCtdcData(sub, ix, datalen, prefix);
                else if (as_new)
                   PrintTdcData(sub, ix, datalen, prefix, errmask, nullptr, true);
                else if (as_adc)
