@@ -88,7 +88,7 @@ unsigned dogma::DogmaInput::Read_Complete(dabc::Buffer& buf)
    }
 
    // only first segment can be used for reading
-   uint32_t bufsize = ((uint32_t) (buf.SegmentSize(0) * fReduce) / 4) * 4;
+   uint32_t bufsize = ((uint32_t) (buf.SegmentSize(0) * fReduce) / 4 - 2) * 4;
 
    if (!fFile.ReadBuffer(buf.SegmentPtr(0), &bufsize)) {
       // if by chance reading of buffer leads to eof, skip buffer and let switch file on the next turn
