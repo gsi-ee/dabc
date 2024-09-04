@@ -107,7 +107,7 @@ void dabc::Buffer::SetTotalSize(BufferSize_t len)
 
    BufferSize_t totalsize = GetTotalSize();
    if (len > totalsize)
-      throw dabc::Exception(dabc::ex_Buffer, "Cannot extend size of the buffer by SetTotalSize method, use Append() method instead", "Buffer");
+      throw dabc::Exception(dabc::ex_Buffer, dabc::format("Cannot extend size %u to %u of the buffer by SetTotalSize method, use Append() method instead", totalsize, len), "Buffer");
 
    if (len == totalsize) return;
 
