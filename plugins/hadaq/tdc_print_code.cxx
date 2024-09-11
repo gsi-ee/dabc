@@ -611,7 +611,7 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
    unsigned channel = 0, maxch = 0, coarse = 0, fine = 0, ndebug = 0, nheader = 0, isrising = 0, dkind = 0, dvalue = 0, rawtime = 0;
    int epoch_channel = -11; // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
-   static unsigned NumCh = 66;
+   static const unsigned NumCh = 66;
 
    double last_rising[NumCh], last_falling[NumCh];
    int leading_trailing[NumCh], num_leading[NumCh], num_trailing[NumCh];
