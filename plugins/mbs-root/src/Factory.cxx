@@ -22,7 +22,7 @@
 
 dabc::FactoryPlugin mbsrootfactory(new mbs_root::Factory("mbs-root"));
 
-dabc::DataInput* mbs_root::Factory::CreateDataInput(const std::string &typ)
+dabc::DataInput* mbs_root::Factory::CreateDataInput(const std::string &)
 {
    return nullptr;
 }
