@@ -37,6 +37,7 @@ int usage(const char* errstr = nullptr)
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
    printf("   -maxage value           - maximal age time for events, if expired queue are cleaned (default off)\n");
+   printf("   -buf sz                 - buffer size in MB, default 4\n");
    printf("   -num number             - number of events to print\n");
    printf("   -hex                    - print raw data in hex form\n");
    printf("   -dec                    - print raw data in decimal form\n");
@@ -73,11 +74,13 @@ void PrintSlowSubevent(mbs::SubeventHeader* sub)
 
 int main(int argc, char* argv[])
 {
-   if (argc<2) return usage();
+   if (argc < 2)
+      return usage();
 
    long number = 10;
    double tmout = 5., maxage = -1., debug_delay = -1.;
    unsigned slowsubevid = 0;
+   int buffer_size = 4;
 
    bool printdata = false, ashex = true, aslong = true, showrate = false, reconnect = false;
 
@@ -89,6 +92,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-short") == 0) { printdata = true; aslong = false; } else
       if (strcmp(argv[n],"-rate") == 0) { showrate = true; reconnect = true; } else
       if ((strcmp(argv[n],"-num") == 0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
+      if ((strcmp(argv[n],"-buf") == 0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &buffer_size); } else
       if ((strcmp(argv[n],"-tmout") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-maxage") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
       if ((strcmp(argv[n],"-delay") == 0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
@@ -117,7 +121,7 @@ int main(int argc, char* argv[])
       }
    }
 
-   mbs::ReadoutHandle ref = mbs::ReadoutHandle::Connect(src);
+   mbs::ReadoutHandle ref = mbs::ReadoutHandle::Connect(src, buffer_size);
 
    if (ref.null()) return 1;
 
