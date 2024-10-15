@@ -32,15 +32,9 @@ int dogma::ReadoutModule::AcceptBuffer(dabc::Buffer& buf)
 // =========================================================================
 
 
-dogma::ReadoutHandle dogma::ReadoutHandle::Connect(const std::string &src)
+dogma::ReadoutHandle dogma::ReadoutHandle::Connect(const std::string &src, int bufsz_mb)
 {
-   std::string newurl = src;
-
-   //if (((newurl.find(".hld") != std::string::npos) || (newurl.find(".HLD") != std::string::npos)) &&
-   //      (newurl.find("hld://") == std::string::npos))
-   //   newurl = std::string("hld://") + src;
-
-   return DoConnect(newurl, "dogma::ReadoutModule", 16);
+   return DoConnect(src, "dogma::ReadoutModule", bufsz_mb);
 }
 
 unsigned dogma::ReadoutHandle::NextPortion(double tmout, double maxage)

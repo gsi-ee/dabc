@@ -48,7 +48,7 @@ namespace dogma {
       DABC_REFERENCE(ReadoutHandle, mbs::ReadoutHandle, dogma::ReadoutModule)
 
       /** Connect with data source */
-      static ReadoutHandle Connect(const std::string &url);
+      static ReadoutHandle Connect(const std::string &url, int bufsz_mb = 16);
 
       /** Return true if handle not initialized */
       bool null() const { return mbs::ReadoutHandle::null(); }

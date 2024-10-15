@@ -32,7 +32,7 @@ int hadaq::ReadoutModule::AcceptBuffer(dabc::Buffer& buf)
 // =========================================================================
 
 
-hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string &src)
+hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string &src, int bufsz_mb)
 {
    std::string newurl = src;
 
@@ -40,7 +40,7 @@ hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string &src)
          (newurl.find("hld://") == std::string::npos))
       newurl = std::string("hld://") + src;
 
-   return DoConnect(newurl, "hadaq::ReadoutModule");
+   return DoConnect(newurl, "hadaq::ReadoutModule", bufsz_mb);
 }
 
 

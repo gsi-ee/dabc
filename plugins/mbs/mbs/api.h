@@ -76,9 +76,9 @@ namespace mbs {
       DABC_REFERENCE(ReadoutHandle, dabc::ModuleAsyncRef, ReadoutModule)
 
       /** Connect with MBS server */
-      static ReadoutHandle Connect(const std::string &url)
+      static ReadoutHandle Connect(const std::string &url, int bufsz_mb = 8)
       {
-         return DoConnect(url, "mbs::ReadoutModule");
+         return DoConnect(url, "mbs::ReadoutModule", bufsz_mb);
       }
 
       /** Check if handle is initialized */
