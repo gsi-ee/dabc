@@ -33,7 +33,7 @@ int usage(const char* errstr = nullptr)
    if (errstr)
       printf("Error: %s\n\n", errstr);
 
-   printf("Utility for printing HLD events. 22.10.2018. S.Linev\n");
+   printf("Utility for printing HLD events. 15.10.2024. S.Linev\n");
    printf("   hldprint source [args]\n");
    printf("Following sources are supported:\n");
    printf("   hld://path/file.hld         - HLD file reading\n");
@@ -46,6 +46,7 @@ int usage(const char* errstr = nullptr)
    printf("Arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
    printf("   -maxage value           - maximal age time for events, if expired queue are cleaned (default off)\n");
+   printf("   -buf sz                 - buffer size in MB, default 4\n");
    printf("   -num number             - number of events to print, 0 - all events (default 10)\n");
    printf("   -all                    - print all events (equivalent to -num 0)\n");
    printf("   -skip number            - number of events to skip before start printing\n");
@@ -315,6 +316,7 @@ bool printraw = false, printsub = false, showrate = false, reconnect = false, do
      dominsz = false, domaxsz = false, autoid = false, only_errors = false;
 unsigned idrange = 0xff, onlynew = 0, onlyctdc = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 std::vector<unsigned> hubs, tdcs, ctdcs, ctsids, newtdcs;
+int buffer_size = 4;
 
 bool is_cts(unsigned id)
 {
@@ -387,6 +389,8 @@ int main(int argc, char* argv[])
    while (++n < argc) {
       if ((strcmp(argv[n], "-num") == 0) && (n + 1 < argc)) {
          dabc::str_to_lint(argv[++n], &number);
+      } else if ((strcmp(argv[n], "-buf") == 0) && (n + 1 < argc)) {
+         dabc::str_to_int(argv[++n], &buffer_size);
       } else if (strcmp(argv[n], "-all") == 0) {
          number = 0;
       } else if ((strcmp(argv[n], "-skip") == 0) && (n + 1 < argc)) {
@@ -510,7 +514,7 @@ int main(int argc, char* argv[])
 
    while (nagain-- >= 0) {
 
-   ref = hadaq::ReadoutHandle::Connect(src);
+   ref = hadaq::ReadoutHandle::Connect(src, buffer_size);
 
    if (ref.null()) return 1;
 
