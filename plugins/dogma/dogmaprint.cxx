@@ -89,7 +89,7 @@ uint32_t ref_addr = 0;
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
-   printf("%sTu addr:%04x type:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
+   printf("%sTu addr:%06x type:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
           (unsigned)tu->GetAddr(), (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
           (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
           (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
