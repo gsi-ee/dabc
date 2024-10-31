@@ -138,8 +138,8 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
 
 
    if(fBuildTimestampMergedEvents){
-      DOUT0("MODE WR time sorter with time slice window:%lu ns" ,fWRTimeWindow);
-      SetInfo(dabc::format("MBS combiner module ready. Mode: WR time sorter with time slice window:%lu ns" ,fWRTimeWindow), true);
+      DOUT0("MODE WR time sorter with time slice window:%lu ns", (long unsigned) fWRTimeWindow);
+      SetInfo(dabc::format("MBS combiner module ready. Mode: WR time sorter with time slice window:%lu ns", (long unsigned) fWRTimeWindow), true);
    }
    else
    {
