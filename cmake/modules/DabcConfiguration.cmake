@@ -48,26 +48,19 @@ configure_file(
 set(DABCSYS ${PROJECT_BINARY_DIR})
 set(DABCLIBDIR lib)
 if(APPLE)
-  configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in
-                 ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
+  set(_ldvname_ DYLD_LIBRARY_PATH)
 else()
-  configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.linux.in
-                 ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
+  set(_ldvname_ LD_LIBRARY_PATH)
 endif()
+configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.in
+               ${PROJECT_BINARY_DIR}/dabclogin @ONLY NEWLINE_STYLE UNIX)
 # -----------------------------
 
 # --- for install use case ----
 set(DABCSYS ${CMAKE_INSTALL_PREFIX})
 set(DABCLIBDIR ${CMAKE_INSTALL_LIBDIR})
-if(APPLE)
-  configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.mac.in
-    ${PROJECT_BINARY_DIR}/macros/dabclogin @ONLY NEWLINE_STYLE UNIX)
-else()
-  configure_file(
-    ${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.linux.in
-    ${PROJECT_BINARY_DIR}/macros/dabclogin @ONLY NEWLINE_STYLE UNIX)
-endif()
+configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.in
+               ${PROJECT_BINARY_DIR}/macros/dabclogin @ONLY NEWLINE_STYLE UNIX)
 # -----------------------------
 
 foreach(lib pthread dl)
