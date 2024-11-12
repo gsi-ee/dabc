@@ -89,10 +89,12 @@ uint32_t ref_addr = 0;
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
-   printf("%sTu addr:%06x type:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
-          (unsigned)tu->GetAddr(), (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
-          (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
-          (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
+   if (!onlytdc || (onlytdc == tu->GetAddr())) {
+      printf("%sTu addr:%06x type:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
+            (unsigned)tu->GetAddr(), (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
+            (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
+            (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
+   }
 
    unsigned len = tu->GetPayloadLen();
 
@@ -103,7 +105,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
          if ((i == len - 1) || (i % 8 == 7))
             printf("\n%s", i < len-1 ? prefix : "");
       }
-   } else if (is_tdc(tu->GetAddr())) {
+   } else if (is_tdc(tu->GetAddr()) || (onlytdc && (onlytdc == tu->GetAddr()))) {
       std::vector<uint32_t> data(len, 0);
       for (unsigned i = 0; i < len; ++i)
          data[i] = tu->GetPayload(i);
