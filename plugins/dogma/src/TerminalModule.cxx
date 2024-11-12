@@ -144,7 +144,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    std::string s,s1,s2,s3,s4;
 
    if (fDoSlow > 0) {
-      auto calc = [=](std::vector<double> &vect, double rate) {
+      auto calc = [this](std::vector<double> &vect, double rate) {
          if (vect.size() >= (unsigned) fDoSlow)
             vect.erase(vect.begin());
          vect.emplace_back(rate);
