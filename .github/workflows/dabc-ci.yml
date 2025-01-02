@@ -14,10 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Release]
-        compiler: [ { name: g++-11, cpp: g++-11, c: gcc-11 },
-                    { name: g++-12, cpp: g++-12, c: gcc-12 },
-                    { name: clang-13, cpp: clang++-13, c: clang-13 },
-                    { name: clang-14, cpp: clang++-14, c: clang-14 } ]
+        compiler: [ { name: g++-12, cpp: g++-12, c: gcc-12 },
+                    { name: g++-13, cpp: g++-13, c: gcc-13 },
+                    { name: clang-14, cpp: clang++-14, c: clang-14 },
+                    { name: clang-15, cpp: clang++-15, c: clang-15 } ]
 
     steps:
       - name: Checkout repository
