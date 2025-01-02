@@ -9,6 +9,9 @@ endif()
 set(DABC_LIBRARY_PROPERTIES SUFFIX ${libsuffix} PREFIX ${libprefix}
                             IMPORT_PREFIX ${libprefix})
 
+# let use MAIN_DEPENDENCY with newer cmake
+cmake_policy(SET CMP0175 OLD)
+
 # cmake-format: off
 #---------------------------------------------------------------------------------------------------
 #---DABC_INSTALL_HEADERS([hdr1 hdr2 ...])
@@ -27,8 +30,8 @@ function(DABC_INSTALL_HEADERS target)
     add_custom_command(
       OUTPUT ${dst}
       COMMAND ${CMAKE_COMMAND} -E copy ${src} ${dst}
-      COMMENT "Copying header ${include_file} to ${dst}"
-      MAIN_DEPENDENCY ${src})
+      MAIN_DEPENDENCY ${src}
+      COMMENT "Copying header ${include_file} to ${dst}")
     list(APPEND dst_list ${dst})
   endforeach()
   add_custom_target(${tgt} DEPENDS ${dst_list})
@@ -217,8 +220,8 @@ function(DABC_INSTALL_PLUGIN_DATA_SOURCE target)
         TARGET ${target}
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E ${COPY_ACTION} ${src} ${dst}
-        COMMENT "Copying plugin ${plugin_file} to ${dst}" MAIN_DEPENDENCY
-                ${src})
+        MAIN_DEPENDENCY ${src}
+        COMMENT "Copying plugin ${plugin_file} to ${dst}")
 
     endforeach()
   endif()
