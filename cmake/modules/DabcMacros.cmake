@@ -10,7 +10,9 @@ set(DABC_LIBRARY_PROPERTIES SUFFIX ${libsuffix} PREFIX ${libprefix}
                             IMPORT_PREFIX ${libprefix})
 
 # let use MAIN_DEPENDENCY with newer cmake
-cmake_policy(SET CMP0175 OLD)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.31.0)
+  cmake_policy(SET CMP0175 OLD)
+endif()
 
 # cmake-format: off
 #---------------------------------------------------------------------------------------------------
