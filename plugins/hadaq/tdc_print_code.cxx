@@ -718,9 +718,14 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
             break;
          case tdckind_Epoch:
             epoch = msg & 0xFFFFFFF;
-            tm = (epoch << 11) *5.;
+
+            if (use_400mhz) {
+               tm = (epoch << 12) * coarse_tmlen;
+            } else {
+               tm = (epoch << 11) * coarse_tmlen;
+            }
             epoch_channel = -1; // indicate that we have new epoch
-            if (prefix > 0) printf("%s epoch %u tm %6.3f ns\n", sbeg, msg & 0xFFFFFFF, tm);
+            if (prefix > 0) printf("%s epoch %u tm %12.3f ns\n", sbeg, (unsigned) epoch, (print_fulltime || !epoch0 || !ch0tm) ? tm : tm - ch0tm);
             break;
          case tdckind_Calibr:
             calibr[0] = msg & 0x3fff;
