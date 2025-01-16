@@ -89,7 +89,11 @@ uint32_t ref_addr = 0;
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
+   unsigned epoch0 = 0, coarse0 = 0;
+
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
+      epoch0 = tu->GetTrigTime() & 0xfffffff;
+      coarse0 = tu->GetLocalTrigTime() & 0x7ff;
       printf("%sTu addr:%06x type:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
             (unsigned)tu->GetAddr(), (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
             (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
@@ -110,7 +114,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       for (unsigned i = 0; i < len; ++i)
          data[i] = tu->GetPayload(i);
       unsigned errmask = 0;
-      PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask);
+      PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask, false, epoch0, coarse0);
    }
 }
 

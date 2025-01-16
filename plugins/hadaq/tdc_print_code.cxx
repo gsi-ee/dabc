@@ -580,7 +580,7 @@ const char* debug_name[32] = {
 };
 
 
-unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask, bool as_ver4 = false)
+unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsigned prefix, unsigned &errmask, bool as_ver4 = false, unsigned long long epoch0 = 0, unsigned coarse0 = 0)
 {
    unsigned len = data.size();
    errmask = 0;
@@ -606,6 +606,16 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
 
    unsigned long long epoch = 0;
    double tm, ch0tm = 0;
+
+
+   // use as reference epoch from subevent header
+   if (epoch0 || coarse0) {
+      if (use_400mhz) {
+         ch0tm = ((epoch0 << 12) | (coarse0 << 1)) * coarse_tmlen;
+      } else {
+         ch0tm = ((epoch0 << 11) | coarse0) * coarse_tmlen;
+      }
+   }
 
    bool haschannel0 = false;
    unsigned channel = 0, maxch = 0, coarse = 0, fine = 0, ndebug = 0, nheader = 0, isrising = 0, dkind = 0, dvalue = 0, rawtime = 0;
@@ -646,7 +656,7 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
             if (bubble_ch == channel) { bubble[bubble_len++] = msg & 0xFFFF; bubble_eix = ix; }
          }
          if ((bubble_len >= 100) || (cnt == len-1) || (channel!=bubble_ch) || (!israw && (bubble_len > 0))) {
-            if (prefix>0) {
+            if (prefix > 0) {
                printf("%*s[%*u..%*u] Ch:%02x bubble: ",  prefix, "", wlen, bubble_ix, wlen, bubble_eix, bubble_ch);
                PrintBubble(bubble, (unsigned) bubble_len);
                printf("\n");
@@ -670,7 +680,8 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
          continue;
       }
 
-      if ((cnt==skip_msgs_in_tdc) && ((msg & tdckind_Mask) != tdckind_Header)) errmask |= tdcerr_MissHeader;
+      if ((cnt == skip_msgs_in_tdc) && ((msg & tdckind_Mask) != tdckind_Header))
+         errmask |= tdcerr_MissHeader;
 
       switch (msg & tdckind_Mask) {
          case tdckind_Reserved:
@@ -737,7 +748,8 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
                }
             }
 
-            if ((epoch_channel == -11) || (epoch_per_channel && (epoch_channel != (int) channel))) errmask |= tdcerr_MissEpoch;
+            if ((epoch_channel == -11) || (epoch_per_channel && (epoch_channel != (int) channel)))
+               errmask |= tdcerr_MissEpoch;
 
             bad_fine = false;
 
@@ -803,7 +815,8 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
                printf("%s %s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
                       sbeg, ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
                       channel, isrising, coarse, sfine, print_fulltime ? tm : tm - ch0tm, sbuf);
-            if ((channel == 0) && (ch0tm == 0)) ch0tm = tm;
+            if ((channel == 0) && (ch0tm == 0))
+               ch0tm = tm;
             if ((onlych >= 0) && (channel > (unsigned) onlych))
                cnt = len; // stop processing when higher channel number seen
             break;
