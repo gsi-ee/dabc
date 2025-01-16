@@ -695,7 +695,7 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
                default: hdrkind = "normal"; break;
             }
 
-            if (prefix > 0)
+            if ((prefix > 0) && (onlych < 0))
                printf("%s tdc header fmt:0x01%x hwtyp:0x%02x %s\n", sbeg, ((msg >> 24) & 0x0F), ((msg >> 8) & 0xFF), hdrkind);
             break;
          case tdckind_Debug:
@@ -725,7 +725,8 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
                tm = (epoch << 11) * coarse_tmlen;
             }
             epoch_channel = -1; // indicate that we have new epoch
-            if (prefix > 0) printf("%s epoch %u tm %12.3f ns\n", sbeg, (unsigned) epoch, (print_fulltime || !epoch0 || !ch0tm) ? tm : tm - ch0tm);
+            if ((prefix > 0) && (onlych < 0))
+               printf("%s epoch %u tm %12.3f ns\n", sbeg, (unsigned) epoch, (print_fulltime || !epoch0 || !ch0tm) ? tm : tm - ch0tm);
             break;
          case tdckind_Calibr:
             calibr[0] = msg & 0x3fff;
