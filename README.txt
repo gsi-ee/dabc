@@ -34,42 +34,26 @@ This package was tested on:
 
 INSTALLATION:
 
-1. Unpack this DABC distribution in the future DABC system directory.
+1. Checkout from repository:
 
-      [shell] cd /usr/local/pub/dabc
-      [shell] tar xzvf /path/to/the/file/dabc.tar.gz
-
-   or checkout DABC from repository:
-
-      [shell] cd /usr/local/pub
-      [shell] svn co https://subversion.gsi.de/dabc/trunk dabc
+      [shell] cd /home/user/git
+      [shell] git clone https://github.com/gsi-ee/dabc.git
 
 2. Compile with cmake
 
      [shell] mkdir build
      [shell] cd build
-     [shell] cmake /usr/local/pub/dabc
+     [shell] cmake /home/user/git/dabc
      [shell] make -j
 
-One could switch on/off different plugins calling cmake -Dverbs=OFF
+   One could switch on/off different plugins calling `cmake -Dverbs=OFF`
 
-3. Compile with make
+3. Install with cmake
 
-    Just in source directory call:
-
-       [shell] make -j
-
-    One could specify following options:
-
-       noverbs=1 - disable compilation of IB VERBS plugin. In some situation
-                   plugin can have problem during compilation and can be disabled
-                   with such option
-
-       nodim=1 - disable compilation of DIM plugin.
-
-       optimiz=1|2|3 - specify gcc optimization level (default 3)
-
-       debug=1|2|3  - include debug symbols, compile correspondent debug messages (default 1)
+      [shell] mkdir -p /home/user/soft/dabc
+      [shell] cmake /home/user/soft/dabc -DCMAKE_INSTALL_PREFIX=/home/user/soft/dabc
+      [shell] make -j
+      [shell] cmake --install .
 
 4. After successful compilation "dabclogin" script will be generated,
    which should be called like ". dabclogin" before dabc can be used
