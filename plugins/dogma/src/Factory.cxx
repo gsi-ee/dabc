@@ -19,7 +19,6 @@
 #include "dogma/Iterator.h"
 #include "dogma/DogmaInput.h"
 #include "dogma/DogmaOutput.h"
-#include "dogma/CommandModule.h"
 #include "dogma/CombinerModule.h"
 #include "dogma/TerminalModule.h"
 #include "dogma/api.h"
@@ -36,9 +35,6 @@ dabc::Reference dogma::Factory::CreateObject(const std::string &classname, const
 
 dabc::Module* dogma::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
-   if (classname == "dogma::CommandModule")
-      return new dogma::CommandModule(modulename, cmd);
-
    if (classname == "dogma::CombinerModule")
       return new dogma::CombinerModule(modulename, cmd);
 

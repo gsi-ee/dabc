@@ -1,7 +1,6 @@
 dabc_link_library(
   DabcDogma
-  SOURCES src/CommandModule.cxx
-          src/CombinerModule.cxx
+  SOURCES src/CombinerModule.cxx
           src/TerminalModule.cxx
           src/Factory.cxx
           src/DogmaFile.cxx
@@ -12,8 +11,7 @@ dabc_link_library(
           src/UdpTransport.cxx
           src/TypeDefs.cxx
           src/api.cxx
-  HEADERS dogma/CommandModule.h
-          dogma/CombinerModule.h
+  HEADERS dogma/CombinerModule.h
           dogma/TerminalModule.h
           dogma/Factory.h
           dogma/DogmaFile.h
