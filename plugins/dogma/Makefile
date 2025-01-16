@@ -7,11 +7,11 @@ include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
 DOGMADIR = plugins/dogma
-DOGMAPRINT_EXE      = $(DABCBINPATH)/dogmaprint
+DLDPRINT_EXE      = $(DABCBINPATH)/dldprint
 else
 DOGMADIR = .
 INCLUDES += $(DOGMADIR)
-DOGMAPRINT_EXE      = dogmaprint
+DLDPRINT_EXE      = dldprint
 endif
 
 
@@ -27,21 +27,21 @@ DOGMA_S           = $(wildcard $(DOGMADIRS)/*.$(SrcSuf))
 DOGMA_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DOGMA_S))
 DOGMA_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DOGMA_S))
 
-DOGMAPRINT_EXES   = $(DOGMADIR)/dogmaprint.$(SrcSuf)
-DOGMAPRINT_EXEO   = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DOGMAPRINT_EXES))
-DOGMAPRINT_EXED   = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DOGMAPRINT_EXES))
+DLDPRINT_EXES   = $(DOGMADIR)/dldprint.$(SrcSuf)
+DLDPRINT_EXEO   = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DLDPRINT_EXES))
+DLDPRINT_EXED   = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DLDPRINT_EXES))
 
 # used in the main Makefile
 
 ALLHDRS           += $(patsubst $(DOGMADIR)/%.h, $(DABCINCPATH)/%.h, $(DOGMA_H))
-ALLDEPENDENC      += $(DOGMA_D) $(DOGMAPRINT_EXED)
+ALLDEPENDENC      += $(DOGMA_D) $(DLDPRINT_EXED)
 
 libs:: $(DABCDOGMA_LIB)
 
-exes:: $(DOGMAPRINT_EXE)
+exes:: $(DLDPRINT_EXE)
 
 clean::
-	@$(RM) $(DOGMAPRINT_EXE)
+	@$(RM) $(DLDPRINT_EXE)
 
 
 ##### local rules #####
@@ -53,8 +53,8 @@ $(DABCINCPATH)/%.h: $(DOGMADIR)/%.h
 $(DABCDOGMA_LIB):  $(DOGMA_O) $(DABCBASE_LIB) $(DABCMBS_LIB)
 	@$(MakeLib) $(DABCDOGMA_LIBNAME) "$(DOGMA_O)" $(TGTDLLPATH) "-lDabcBase -lDabcMbs"
 
-$(DOGMAPRINT_EXE) : $(DOGMAPRINT_EXEO) $(DABCDOGMA_LIB)
-	$(LD) $(LDFLAGSPRE) -O $(DOGMAPRINT_EXEO) $(LIBS_CORESET) -lDabcMbs -lDabcDogma -o $(DOGMAPRINT_EXE)
+$(DLDPRINT_EXE) : $(DLDPRINT_EXEO) $(DABCDOGMA_LIB)
+	$(LD) $(LDFLAGSPRE) -O $(DLDPRINT_EXEO) $(LIBS_CORESET) -lDabcMbs -lDabcDogma -o $(DLDPRINT_EXE)
 
 ########### extra rules #############
 

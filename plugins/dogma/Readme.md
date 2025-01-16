@@ -1,4 +1,4 @@
-## Usage of `dogmaprint`
+## Usage of `dldprint`
 
 1. Start readout
 
@@ -6,7 +6,7 @@
 
 2. Run print on any other node
 
-    dogmaprint host:6002 -raw
+    dldprint host:6002 -raw
 
-    dogmaprint host:6002 -rate
+    dldprint host:6002 -rate
 

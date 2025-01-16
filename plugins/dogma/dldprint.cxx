@@ -35,7 +35,7 @@ int usage(const char* errstr = nullptr)
       printf("Error: %s\n\n", errstr);
 
    printf("Utility for printing DOGMA data. 15.10.2024. S.Linev\n");
-   printf("   dogmaprint source [args]\n");
+   printf("   dldprint source [args]\n");
    printf("Following sources are supported:\n");
    printf("   file.bin                    - DABC binary file reading\n");
    printf("   dabcnode                    - DABC stream server\n");
