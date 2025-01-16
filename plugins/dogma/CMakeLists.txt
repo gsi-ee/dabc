@@ -29,11 +29,6 @@ dabc_link_library(
   INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
 
 dabc_executable(
-  dogmacmd
-  SOURCES dogmacmd.cxx
-  LIBRARIES DabcBase)
-
-dabc_executable(
   dogmaprint
   SOURCES dogmaprint.cxx
   LIBRARIES DabcBase DabcMbs DabcDogma)
