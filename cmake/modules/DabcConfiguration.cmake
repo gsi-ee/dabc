@@ -45,8 +45,8 @@ configure_file(
   ${PROJECT_BINARY_DIR}/include/dabc/defines.h @ONLY NEWLINE_STYLE UNIX)
 
 # --- for in-build use case ---
-set(DABCSYS ${PROJECT_BINARY_DIR})
-set(DABCLIBDIR lib)
+set(_dabcsys_ ${PROJECT_BINARY_DIR})
+set(_dabclibdir_ lib)
 if(APPLE)
   set(_ldvname_ DYLD_LIBRARY_PATH)
 else()
@@ -57,14 +57,14 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.in
 # -----------------------------
 
 # --- for install use case ----
-set(DABCSYS ${CMAKE_INSTALL_PREFIX})
-set(DABCLIBDIR ${CMAKE_INSTALL_LIBDIR})
+set(_dabcsys_ ${CMAKE_INSTALL_PREFIX})
+set(_dabclibdir_ ${CMAKE_INSTALL_LIBDIR})
 configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/dabclogin.in
                ${PROJECT_BINARY_DIR}/macros/dabclogin @ONLY NEWLINE_STYLE UNIX)
 # -----------------------------
 
 foreach(lib pthread dl)
-   find_library(DABC_${lib}_LIBRARY ${lib})
+  find_library(DABC_${lib}_LIBRARY ${lib})
 endforeach()
 
 if(NOT APPLE)

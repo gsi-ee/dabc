@@ -1,8 +1,8 @@
-export DABCSYS=@DABCSYS@
+export DABCSYS=@_dabcsys_@
 
 export PATH=$DABCSYS/bin:$PATH
 
-export @_ldvname_@=.:$DABCSYS/@DABCLIBDIR@:$@_ldvname_@
+export @_ldvname_@=.:$DABCSYS/@_dabclibdir_@:$@_ldvname_@
 
 export CMAKE_PREFIX_PATH=$DABCSYS:$CMAKE_PREFIX_PATH
 
