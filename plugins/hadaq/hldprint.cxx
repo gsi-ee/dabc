@@ -58,18 +58,20 @@ int usage(const char* errstr = nullptr)
    printf("   -maxsz                  - find sequence id of event with maximum size\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -onlyerr                - printout only TDC data with errors\n");
-   printf("   -cts id                 - printout raw data as CTS subsubevent (default none)\n");
-   printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
-   printf("   -ctdc id                - printout raw data as CTDC subsubevent (default none)\n");
-   printf("   -new id                 - printout raw data as new TDC subsubevent (default none)\n");
-   printf("   -adc id                 - printout raw data as ADC subsubevent (default none)\n");
-   printf("   -hub id                 - identify hub inside subevent (default none) \n");
+   printf("   -cts id                 - printout raw data as CTS subsubevent\n");
+   printf("   -tdc id                 - printout raw data as TDC subsubevent\n");
+   printf("   -ctdc id                - printout raw data as CTDC subsubevent\n");
+   printf("   -new id                 - printout raw data as new TDC subsubevent\n");
+   printf("   -adc id                 - printout raw data as ADC subsubevent\n");
+   printf("   -mdc id                 - printout raw data as MDC TDC subsubevent\n");
+   printf("   -hub id                 - identify hub inside subevent (default none)\n");
    printf("   -auto                   - automatically assign ID for TDCs (0x0zzz or 0x1zzz) and HUBs (0x8zzz) (default false)\n");
    printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff)\n");
    printf("   -onlyctdc subsubid      - printout of CTDC data only for specified subsubevent\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
    printf("   -onlynew subsubid       - printout raw data only for specified TDC4 subsubevent\n");
    printf("   -onlymonitor id         - printout only event/subevent created by hadaq::Monitor module (default off) \n");
+   printf("   -onlymdc id             - printout of MDC data only for specified subsubevent\n");
    printf("   -fullid value           - printout only events with specified fullid (default all)\n");
    printf("   -rate                   - display only events and data rate\n");
    printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
@@ -281,6 +283,26 @@ void PrintCtdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned 
    }
 }
 
+void PrintMdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
+{
+   unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
+
+   if ((ix >= sz) || (len == 0))
+      return;
+   if ((len == 0) || (ix + len > sz))
+      len = sz - ix;
+
+   unsigned wlen = (sz > 999) ? 4 : (sz > 99 ? 3 : 2);
+
+   for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
+      unsigned msg = sub->Data(ix);
+      if (prefix > 0)
+         printf("%*s[%*u] %08x  ", prefix, "", wlen, ix, msg);
+      printf("\n");
+   }
+}
+
+
 
 void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
 {
@@ -314,8 +336,8 @@ void PrintMonitorData(hadaq::RawSubevent *sub)
 
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false,
      dominsz = false, domaxsz = false, autoid = false, only_errors = false;
-unsigned idrange = 0xff, onlynew = 0, onlyctdc = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
-std::vector<unsigned> hubs, tdcs, ctdcs, ctsids, newtdcs;
+unsigned idrange = 0xff, onlynew = 0, onlyctdc = 0, onlyraw = 0, onlymdc = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
+std::vector<unsigned> hubs, tdcs, ctdcs, ctsids, newtdcs, mdcs;
 int buffer_size = 4;
 
 bool is_cts(unsigned id)
@@ -360,7 +382,8 @@ bool is_tdc(unsigned id)
 
 bool is_newtdc(unsigned id)
 {
-   if (std::find(newtdcs.begin(), newtdcs.end(), id) != newtdcs.end()) return true;
+   if (std::find(newtdcs.begin(), newtdcs.end(), id) != newtdcs.end())
+      return true;
 
    for (unsigned n=0;n<newtdcs.size();n++)
       if (((id & idrange) <= (newtdcs[n] & idrange)) && ((id & ~idrange) == (newtdcs[n] & ~idrange)))
@@ -368,6 +391,19 @@ bool is_newtdc(unsigned id)
 
    return false;
 }
+
+bool is_mdc(unsigned id)
+{
+   if (std::find(mdcs.begin(), mdcs.end(), id) != mdcs.end())
+      return true;
+
+   for (auto entry : mdcs)
+      if (((id & idrange) <= (entry & idrange)) && ((id & ~idrange) == (entry & ~idrange)))
+         return true;
+
+   return false;
+}
+
 
 bool is_adc(unsigned id)
 {
@@ -421,6 +457,12 @@ int main(int argc, char* argv[])
          dabc::str_to_uint(argv[++n], &onlynew);
       } else if ((strcmp(argv[n], "-onlyraw") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &onlyraw);
+      } else if ((strcmp(argv[n], "-mdc") == 0) && (n + 1 < argc)) {
+         unsigned mdc = 0;
+         dabc::str_to_uint(argv[++n], &mdc);
+         mdcs.emplace_back(mdc);
+      } else if ((strcmp(argv[n], "-onlymdc") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &onlymdc);
       } else if ((strcmp(argv[n], "-adc") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &adcmask);
       } else if ((strcmp(argv[n], "-fullid") == 0) && (n + 1 < argc)) {
@@ -465,7 +507,7 @@ int main(int argc, char* argv[])
          return usage("Unknown option");
    }
 
-   if ((adcmask != 0) || !tdcs.empty() || !ctdcs.empty() || (onlytdc != 0) || (onlyctdc != 0) || (onlynew != 0) || (onlyraw != 0)) { printsub = true; }
+   if ((adcmask != 0) || !tdcs.empty() || !ctdcs.empty() || (onlytdc != 0) || (onlyctdc != 0) || (onlynew != 0) || (onlyraw != 0) || (onlymdc != 0)) { printsub = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -617,7 +659,7 @@ int main(int argc, char* argv[])
       hadaq::RawSubevent* sub = nullptr;
       while ((sub = evnt->NextSubevent(sub)) != nullptr) {
          bool print_sub_header = false;
-         if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
+         if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
          }
@@ -662,8 +704,8 @@ int main(int argc, char* argv[])
                lasthhubid = 0;
             }
 
-            bool as_raw = false, as_cts = false, as_tdc = false, as_ctdc = false, as_new = false, as_adc = false,
-                 print_subsubhdr = (onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && !only_errors;
+            bool as_raw = false, as_cts = false, as_tdc = false, as_ctdc = false, as_new = false, as_mdc = false, as_adc = false,
+                 print_subsubhdr = (onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && !only_errors;
 
             if (maxhublen > 0) {
 
@@ -690,11 +732,11 @@ int main(int argc, char* argv[])
             }
 
             if (is_tdc(datakind))
-               as_tdc = !onlytdc && !onlyctdc && !onlynew && !onlyraw;
+               as_tdc = !onlytdc && !onlyctdc && !onlynew && !onlyraw && !onlymdc;
             else if (is_ctdc(datakind))
-               as_ctdc = !onlytdc && !onlyctdc && !onlynew && !onlyraw;
+               as_ctdc = !onlytdc && !onlyctdc && !onlynew && !onlyraw && !onlymdc;
             else if (is_newtdc(datakind))
-               as_new = !onlytdc && !onlyctdc && !onlynew && !onlyraw;
+               as_new = !onlytdc && !onlyctdc && !onlynew && !onlyraw && !onlymdc;
 
             if (!as_tdc) {
                if ((onlytdc != 0) && (datakind == onlytdc)) {
@@ -708,6 +750,8 @@ int main(int argc, char* argv[])
                   print_subsubhdr = true;
                } else if (is_cts(datakind)) {
                   as_cts = true;
+               } else if (is_mdc(datakind)) {
+                  as_mdc = true;
                } else if (is_adc(datakind)) {
                   as_adc = true;
                } else if ((maxhublen == 0) && is_hub(datakind)) {
@@ -724,8 +768,11 @@ int main(int argc, char* argv[])
                } else if ((onlyraw != 0) && (datakind == onlyraw)) {
                   as_raw = true;
                   print_subsubhdr = true;
+               } else if ((onlymdc != 0) && (datakind == onlymdc)) {
+                  as_mdc = true;
+                  print_subsubhdr = true;
                } else if (printraw) {
-                  as_raw = (onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0);
+                  as_raw = !onlytdc && !onlyctdc && !onlynew && !onlyraw && !onlymdc;
                }
             }
 
@@ -744,7 +791,7 @@ int main(int argc, char* argv[])
                   errmask = 0;
                }
 
-               if (as_raw || as_tdc || as_ctdc || as_new || as_adc) {
+               if (as_raw || as_tdc || as_ctdc || as_new || as_mdc || as_adc) {
                   if (!print_header) {
                      print_header = true;
                      evnt->Dump();
@@ -779,6 +826,8 @@ int main(int argc, char* argv[])
                      kind = "TDC ";
                   else if (as_cts)
                      kind = "CTS ";
+                  else if (as_mdc)
+                     kind = "MDC ";
                   else if (as_adc)
                      kind = "ADC ";
 
@@ -796,6 +845,8 @@ int main(int argc, char* argv[])
                   PrintCtdcData(sub, ix, datalen, prefix);
                else if (as_new)
                   PrintTdcData(sub, ix, datalen, prefix, errmask, nullptr, true);
+               else if (as_mdc)
+                  PrintMdcData(sub, ix, datalen, prefix);
                else if (as_adc)
                   PrintAdcData(sub, ix, datalen, prefix);
                else if (as_cts)
