@@ -292,16 +292,47 @@ void PrintMdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if ((len == 0) || (ix + len > sz))
       len = sz - ix;
 
-   unsigned wlen = (sz > 999) ? 4 : (sz > 99 ? 3 : 2);
+   unsigned wlen = (sz > 999) ? 4 : (sz > 99 ? 3 : 2),
+            reference = 0;
 
    for (unsigned cnt = 0; cnt < len; cnt++, ix++) {
-      unsigned msg = sub->Data(ix);
+      unsigned data = sub->Data(ix);
       if (prefix > 0)
-         printf("%*s[%*u] %08x  ", prefix, "", wlen, ix, msg);
+         printf("%*s[%*u] %08x  ", prefix, "", wlen, ix, data);
+      if (cnt == 0) {
+         reference = data & 0x1FFF;
+      } else if ((data >> 26) & 1) {
+         unsigned channel = data >> 27;
+         if (prefix > 0)
+            printf("ch: %2u error", channel);
+      } else {
+         unsigned channel = data >> 27;
+         signed risingHit = (data >> 13) & 0x1fff;
+         signed fallingHit = (data >> 0) & 0x1fff;
+
+         float timeDiff = ((risingHit - reference)) * 0.4;
+         if (timeDiff < -2100)
+            timeDiff += 8192 * 0.4;
+         if (timeDiff > 300)
+            timeDiff -= 8192 * 0.4;
+
+         float timeDiff1 = ((fallingHit - reference)) * 0.4;
+         if (timeDiff1 < -2100)
+            timeDiff1 += 8192 * 0.4;
+         if (timeDiff1 > 300)
+            timeDiff1 -= 8192 * 0.4;
+
+         float timeToT = (fallingHit - risingHit) * 0.4;
+         if (timeToT < 0)
+            timeToT += 8192 * 0.4;
+
+         if (prefix > 0)
+            printf("ch: %2u  TO: %5.1f  T1: %5.1f  ToT: %4.1f", channel, timeDiff, timeDiff1, timeToT);
+      }
+
       printf("\n");
    }
 }
-
 
 
 void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
