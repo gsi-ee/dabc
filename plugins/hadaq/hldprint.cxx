@@ -304,7 +304,7 @@ void PrintMdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       } else if ((data >> 26) & 1) {
          unsigned channel = data >> 27;
          if (prefix > 0)
-            printf("ch: %2u error", channel);
+            printf("ch: %2u %sError%s", channel, getCol(col_RED), getCol(col_RESET));
       } else {
          unsigned channel = data >> 27;
          signed risingHit = (data >> 13) & 0x1fff;
