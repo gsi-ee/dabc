@@ -1,0 +1,12 @@
+{
+   "cmake.configureOnOpen": false,
+   "deepscan.ignoreConfirmWarning": true,
+   "files.associations": {
+      "array": "cpp",
+      "string": "cpp",
+      "string_view": "cpp",
+      "span": "cpp",
+      "vector": "cpp",
+      "first.C": "cpp"
+   }
+}
