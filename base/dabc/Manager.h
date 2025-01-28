@@ -444,6 +444,8 @@ namespace dabc {
 
          bool DoCleanupApplication();
 
+         bool IsTerminated() const { return !fMgrStoppedTime.null(); }
+
          // virtual methods from Worker
 
          double ProcessTimeout(double last_diff) override;
@@ -662,7 +664,7 @@ namespace dabc {
            { return null() ? layoutBalanced : GetObject()->GetThreadsLayout(); }
 
          bool IsTerminated() const
-         { return null() ? true : !GetObject()->fMgrStoppedTime.null(); }
+         { return null() ? true : GetObject()->IsTerminated(); }
 
          /**\brief Request connection between two ports.
           * If both ports belong to local node, they will be connected immediately.

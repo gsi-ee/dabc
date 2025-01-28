@@ -1626,7 +1626,7 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
    ThreadRef thrd = thread();
    if (thrd.null()) return;
 
-   if (!fMgrStoppedTime.null()) {
+   if (IsTerminated()) {
       DOUT1("Manager stopped before entering to the mainloop - stop running");
       return;
    }
@@ -1664,12 +1664,13 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
       else
          thrd.RunEventLoop(period);
 
-      if (appstopped && fAppFinished) break;
+      if (appstopped && fAppFinished)
+         break;
 
       // check if stop time was not set
       if (fMgrStoppedTime.null()) {
-         if ((runtime <= 0) || !starttm.Expired(runtime)) continue;
-         DOUT0("++++++++ Set stop time while runtime expired");
+         if ((runtime <= 0) || !starttm.Expired(runtime))
+            continue;
          fMgrStoppedTime.GetNow();
       }
 
@@ -1680,7 +1681,9 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
          appref.Submit(Assign(dabc::CmdStateTransition(dabc::Application::stHalted())));
       }
 
-      if (fMgrStoppedTime.Expired(10.)) break; // TODO: make 10 second configurable
+      // TODO: make 10 second configurable
+      if (fMgrStoppedTime.Expired(10.))
+         break;
    }
 
    DOUT2("Exit dabc::Manager::RunManagerMainLoop");
@@ -1746,7 +1749,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string &remnode
          break;
       }
 
-      if (!fMgrStoppedTime.null()) {
+      if (IsTerminated()) {
          DOUT0("break command shell");
          break;
       }
