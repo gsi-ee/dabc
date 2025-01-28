@@ -53,8 +53,10 @@ hadaq::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
    fRingSize = Cfg("showtrig", cmd).AsInt(10);
 
    fModuleName = Cfg("mname", cmd).AsStr("Combiner");
+   fFileModuleName = Cfg("mname2", cmd).AsStr("");
 
-   if (fRingSize > HADAQ_RINGSIZE) fRingSize = HADAQ_RINGSIZE;
+   if (fRingSize > HADAQ_RINGSIZE)
+      fRingSize = HADAQ_RINGSIZE;
 
    CreateTimer("update", period);
    if ((slow > 0) && (period > 0) && (slow > 2 * period))
@@ -86,8 +88,7 @@ bool hadaq::TerminalModule::ReplyCommand(dabc::Command cmd)
          fFileReqRunning = false;
          if (cmd.GetResult() == dabc::cmd_true) fLastFileCmd = cmd;
                                            else fLastFileCmd.Release();
-      } else
-      if (cmd.GetBool("_serv_req")) {
+      } else if (cmd.GetBool("_serv_req")) {
          fServReqRunning = false;
          if (cmd.GetResult() == dabc::cmd_true) fLastServCmd = cmd;
                                            else fLastServCmd.Release();
@@ -95,7 +96,8 @@ bool hadaq::TerminalModule::ReplyCommand(dabc::Command cmd)
       return true;
    }
 
-   if (!cmd.IsName("GetCalibrState")) return true;
+   if (!cmd.IsName("GetCalibrState"))
+      return true;
 
    unsigned n = cmd.GetUInt("indx");
    if (n < fCalibr.size()) {
@@ -130,7 +132,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
 {
    dabc::ModuleRef m = dabc::mgr.FindModule(fModuleName);
 
-   hadaq::CombinerModule *comb = dynamic_cast<hadaq::CombinerModule*> (m());
+   auto comb = dynamic_cast<hadaq::CombinerModule*> (m());
    if (!comb) return;
 
    double delta = fLastTm.SpentTillNow(true);
@@ -207,12 +209,12 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
                         dabc::size_to_str(fTotalDroppedData).c_str(),
                         rate4/1024./1024., s4.c_str());
 
-   if (comb->fAllFullDrops>0)
+   if (comb->fAllFullDrops > 0)
       s += dabc::format(" Total:%s\n", dabc::size_to_str(comb->fAllFullDrops, 1).c_str());
    else
       s += "\n";
 
-   if (fServPort>=0) {
+   if (fServPort >= 0) {
       if (fLastServCmd.null()) {
          s += dabc::format("Server: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fServPort);
       } else {
@@ -223,9 +225,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
       s += "\n";
    }
 
-   if (fFilePort>=0) {
+   if (fFilePort >= 0) {
       if (fLastFileCmd.null()) {
-         s += dabc::format("File: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fFilePort);
+         s += dabc::format("File: missing, failed or not found on %s/Output%d\n", fFileModuleName.empty() ? fModuleName.c_str() : fFileModuleName.c_str(), fFilePort);
       } else {
          std::string state = fLastFileCmd.GetStr("OutputState");
          if (state!="Ready") state = std::string(" State: ") + state;
@@ -355,14 +357,19 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
    ditem.SetField("inpdrop", inpdrop);
    ditem.SetField("inplost", inplost);
 
-   if (!fFileReqRunning && (fFilePort>=0)) {
+   if (!fFileReqRunning && (fFilePort >= 0)) {
+      fFileReqRunning = true;
       dabc::Command cmd("GetTransportStatistic");
       cmd.SetStr("_for_the_port_", dabc::format("Output%d", fFilePort));
       cmd.SetBool("_file_req", true);
-      m.Submit(Assign(cmd));
+      if (fFileModuleName.empty() || (fFileModuleName == fModuleName))
+         m.Submit(Assign(cmd));
+      else
+         dabc::mgr.FindModule(fFileModuleName).Submit(Assign(cmd));
    }
 
-   if (!fServReqRunning && (fServPort>=0)) {
+   if (!fServReqRunning && (fServPort >= 0)) {
+      fServReqRunning = true;
       dabc::Command cmd("GetTransportStatistic");
       cmd.SetStr("_for_the_port_", dabc::format("Output%d", fServPort));
       cmd.SetBool("_serv_req", true);
