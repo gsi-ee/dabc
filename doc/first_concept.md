@@ -136,7 +136,7 @@ Lets summarize requirements for different components of the framework.
    * both peer-to-peer and network in one interface;
    * local transport between modules in two threads;
    * local transport between modules in single thread;
-   * global transport via pipe, socket, dapl, mpi, verbs, XDAQ peer-to-peer;
+   * global transport via pipe, socket, dapl, mpi, verbs;
    * logging of data flow.
 
 ### Module

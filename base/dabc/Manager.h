@@ -306,7 +306,7 @@ namespace dabc {
 
          static Manager* fInstance;  ///< pointer on current manager instance
          static int fInstanceId;     ///< magic number which indicates that instance is initialized
-         static Factory* fFirstFactories[10]; ///< first factories, which are comming before manager is created
+         static Factory* fFirstFactories[10]; ///< first factories, which are coming before manager is created
          static int fFirstFactoriesId;  ///< magic number which should be set when fFirstFactories initialized for the first time
 
 
@@ -491,7 +491,7 @@ namespace dabc {
 
          /** Return address of the node to be able communicate with it */
          std::string GetNodeAddress(int nodeid);
-         /** From address like dabc://nodeabc:988/item/subtim extracts server (with port) and itemname
+         /** From address like dabc://nodeabc:988/item/subitem extracts server (with port) and itemname
           * If server name corresponds to local name, islocal set to true */
          bool DecomposeAddress(const std::string &url, bool& islocal, std::string& server, std::string& itemtname);
          /** Provides string, which can be used as receiver argument */

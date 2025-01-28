@@ -108,10 +108,10 @@ namespace dabc {
       protected:
          enum ESshArgsKinds { kindTest, kindCopy, kindStart, kindRun, kindStop, kindKill, kindGetlog, kindDellog };
 
-         XMLDocPointer_t   fDoc;
-         int               fVersion;           // -1 - error, 0 - xdaq, 1 and more - dabc
-         XMLNodePointer_t  fCmdVariables;      // node with command variables
-         XMLNodePointer_t  fVariables;         // node with variables definition
+         XMLDocPointer_t   fDoc = nullptr;
+         int               fVersion = 0;                 // -1 - error, 1 and more - dabc
+         XMLNodePointer_t  fCmdVariables = nullptr;      // node with command variables
+         XMLNodePointer_t  fVariables = nullptr;         // node with variables definition
 
          // following variables work as 'environment'
          std::string       envDABCSYS;
@@ -171,8 +171,6 @@ namespace dabc {
       public:
          ConfigBase(const char* fname = nullptr);
          ~ConfigBase();
-
-         // following methods implemented for both XDAQ/native xml formats
 
          bool IsOk() const { return fVersion >= 0; }
 
