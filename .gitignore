@@ -2,6 +2,7 @@ x86_64/
 include/
 bin/
 lib/
+html/
 dabclogin
 
 config/Makefile.gener
