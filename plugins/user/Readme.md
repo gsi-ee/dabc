@@ -35,9 +35,7 @@ subdirectory x86_64/lib.
 All parameters of the user input can be passed as url options in the port definition of the first
  (and only) data input:
 
-~~~~{.xml}
      <InputPort name="Input0" url="user://host:12345" urlopt1="size=2000&cratid=1&procid=9&ctrlid=3&debug"/>
-~~~~~
 
 Following options are implemented for the default example:
 - bufsize      : allocated readout buffer size (bytes)
@@ -50,36 +48,30 @@ Following options are implemented for the default example:
 
 By default, the data is just send to an mbs stream server socket with specified port number:
 
-~~~~{.xml}
      <OutputPort name="Output0" url="mbs://Stream:6900"/>
-~~~~
 
 To activate writing an additional lmd file, the number of ouputs must be set to 2:
 
-~~~~{.xml}
      <NumOutputs value="2"/>
-~~~~
 
 File name can be defined with
 
-~~~~{.xml}
     <OutputPort name="Output1" url="lmd://myfile.lmd?maxsize=1500&log=2"/>
-~~~~
 
 
 
-  Monitoring
-  ==========
-  Once running, the dabc application can be monitored and controlled by default
-  with a standard web browser using the address:
+## Monitoring
+
+Once running, the dabc application can be monitored and controlled by default
+with a standard web browser using the address:
 
       http://localhost:8091/
 
- This offers a simple ratemeter available at
+This offers a simple ratemeter available at
 
        UserRadoutExample/Readout/InputDataRate
 
- Additionally, the State of the Application may be changed from remote using the command handles at subfoler App:
+Additionally, the State of the Application may be changed from remote using the command handles at subfoler App:
  - DoConfigure : Initialize DAQ
  - DoStart     : Start Acquisition
  - DoStop      : Stop Acquisition
@@ -87,12 +79,11 @@ File name can be defined with
 
 
 
- How to adjust the example
- =========================
- The class user::Input offers several user functions
- that can be modified to adjust the code to a custom data acquisition system:
+## How to adjust the example
+The class user::Input offers several user functions
+that can be modified to adjust the code to a custom data acquisition system:
 
-
+~~~~~~~~~~~~~~~~{.c}
 - virtual int user::Input::User_Init ();
        Initialize the readout hardware on startup
 - virtual int user::Input::User_Readout (uint32_t* pdat, unsigned long& size);
@@ -103,6 +94,7 @@ File name can be defined with
      Used to clear any kind of external trigger information
 - virtual int user::Input::User_Cleanup();
      shut down the readout hardware properly at the end
+~~~~~~~~~~~~~~~~
 
 Additionally, constructor and destructor of this class and the member variables may be modified as you like.
 
