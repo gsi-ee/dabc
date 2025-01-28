@@ -148,7 +148,7 @@ int dabc::Application::DoTransition(const std::string &tgtstate, Command cmd)
 {
    std::string currstate = GetState();
 
-   DOUT3("Doing transition curr %s tgt %s", currstate.c_str(), tgtstate.c_str());
+   DOUT0("Doing transition curr %s tgt %s", currstate.c_str(), tgtstate.c_str());
 
    if (currstate == tgtstate) return cmd_true;
 
@@ -168,24 +168,27 @@ int dabc::Application::DoTransition(const std::string &tgtstate, Command cmd)
    if (tgtstate == stHalted()) {
       if (currstate == stRunning()) res = cmd_bool(StopModules());
       if (!CleanupApplication()) res = cmd_false;
-   } else
-   if (tgtstate == stReady()) {
-      if (currstate == stHalted()) res = CallInitFunc(cmd, tgtstate); else
-      if (currstate == stRunning()) res = cmd_bool(StopModules());
-   } else
-   if (tgtstate == stRunning()) {
+   } else if (tgtstate == stReady()) {
+      if (currstate == stHalted())
+         res = CallInitFunc(cmd, tgtstate);
+      else if (currstate == stRunning())
+         res = cmd_bool(StopModules());
+   } else if (tgtstate == stRunning()) {
       if (currstate == stHalted()) {
          res = CallInitFunc(cmd, tgtstate);
-         if (res == cmd_true) currstate = stReady();
+         if (res == cmd_true)
+            currstate = stReady();
       }
-      if (currstate == stReady())
-         if (!StartModules()) res = cmd_false;
+      if (currstate == stReady()) {
+         if (!StartModules())
+            res = cmd_false;
+      }
 
       // use timeout to control if application should be shutdown
-      if ((res==cmd_true) && fSelfControl) ActivateTimeout(0.2);
+      if ((res == cmd_true) && fSelfControl)
+         ActivateTimeout(0.2);
 
-   } else
-   if (tgtstate == stFailure()) {
+   } else if (tgtstate == stFailure()) {
       StopModules();
    } else {
       EOUT("Unsupported state name %s", tgtstate.c_str());
@@ -229,11 +232,12 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
 {
    if (fInitFunc) {
       fInitFunc();
-      return cmd_true;
+      return cmd_bool(!dabc::mgr.IsTerminated());
    }
 
    // TODO: check that function is redefined
-   if (CreateAppModules()) return cmd_true;
+   if (CreateAppModules())
+      return cmd_bool(!dabc::mgr.IsTerminated());
 
    XMLNodePointer_t node = nullptr;
    dabc::Configuration *cfg = dabc::mgr()->cfg();
@@ -392,7 +396,12 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
       }
    }
 
-   if (nconn == 0) return cmd_true;
+   // if manager terminated - init should fail
+   if (dabc::mgr.IsTerminated())
+      return cmd_false;
+
+   if (nconn == 0)
+      return cmd_true;
 
    dabc::Command cmd("ActivateConnections");
    cmd.SetTimeout(fConnTimeout);
