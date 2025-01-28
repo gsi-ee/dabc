@@ -58,7 +58,8 @@ namespace dogma {
          bool            fFileReqRunning{false}; ///< is file request running
          int             fRingSize = 0;       ///< number of last IDs shown
 
-         std::string     fModuleName;    ///< name of hadaq combiner module
+         std::string     fModuleName;    ///< name of combiner module
+         std::string     fFileModuleName;  ///< name of module with file output
 
          int             fDoSlow = 0;     ///< size of slow average
          std::vector<double> fSlowRate1;

@@ -52,8 +52,10 @@ dogma::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
    fRingSize = Cfg("showtrig", cmd).AsInt(10);
 
    fModuleName = Cfg("mname", cmd).AsStr("Combiner");
+   fFileModuleName = Cfg("mname2", cmd).AsStr("");
 
-   if (fRingSize > DOGMA_RINGSIZE) fRingSize = DOGMA_RINGSIZE;
+   if (fRingSize > DOGMA_RINGSIZE)
+      fRingSize = DOGMA_RINGSIZE;
 
    CreateTimer("update", period);
    if ((slow > 0) && (period > 0) && (slow > 2 * period))
@@ -222,11 +224,13 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
 
    if (fFilePort >= 0) {
       if (fLastFileCmd.null()) {
-         s += dabc::format("File: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fFilePort);
+         s += dabc::format("File: missing, failed or not found on %s/Output%d\n", fFileModuleName.empty() ? fModuleName.c_str() : fFileModuleName.c_str(), fFilePort);
       } else {
          std::string state = fLastFileCmd.GetStr("OutputState");
-         if (state!="Ready") state = std::string(" State: ") + state;
-                        else state.clear();
+         if (state != "Ready")
+            state = std::string(" State: ") + state;
+         else
+            state.clear();
          s += dabc::format("File:  %8s   Curr:  %10s  Data: %10s  Name: %s%s\n",
                            dabc::number_to_str(fLastFileCmd.GetDouble("OutputFileEvents"),1).c_str(),
                            dabc::size_to_str(fLastFileCmd.GetDouble("OutputCurrFileSize")).c_str(),
@@ -353,13 +357,18 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    ditem.SetField("inplost", inplost);
 
    if (!fFileReqRunning && (fFilePort >= 0)) {
+      fFileReqRunning = true;
       dabc::Command cmd("GetTransportStatistic");
       cmd.SetStr("_for_the_port_", dabc::format("Output%d", fFilePort));
       cmd.SetBool("_file_req", true);
-      m.Submit(Assign(cmd));
+      if (fFileModuleName.empty() || (fFileModuleName == fModuleName))
+         m.Submit(Assign(cmd));
+      else
+         dabc::mgr.FindModule(fFileModuleName).Submit(Assign(cmd));
    }
 
    if (!fServReqRunning && (fServPort >= 0)) {
+      fServReqRunning = true;
       dabc::Command cmd("GetTransportStatistic");
       cmd.SetStr("_for_the_port_", dabc::format("Output%d", fServPort));
       cmd.SetBool("_serv_req", true);
