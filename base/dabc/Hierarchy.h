@@ -383,12 +383,16 @@ namespace dabc {
       void EnableReading(const Hierarchy &upto = nullptr);
 
       /** \brief Return child, if necessary creates with full subfolder
-       * If \param force specified, missing childs and folders will be recreated
-       * If \param allowslahes enabled, instead of subfolders item with coded name will be created */
+       * \param[in] name - name of the child
+       * \param[in] force  - when true, missing childs and folders will be recreated
+       * \param[in] allowslahes  - when true, instead of subfolders item with coded name will be created
+       * \param[in] sortorder - create childs in sorting order */
       Hierarchy GetHChild(const std::string &name, bool allowslahes = false, bool force = false, bool sortorder = false);
 
       /** \brief Create child item in hierarchy with specified name
-       * If \param allowslahes enabled, instead of subfolders item with coded name will be created */
+       * \param[in] name - name of the child
+       * \param[in] allowslahes - when true, instead of subfolders item with coded name will be created
+       * \param[in] sortorder - create childs in sorting order */
       Hierarchy CreateHChild(const std::string &name, bool allowslahes = false, bool sortorder = false)
         { return GetHChild(name, allowslahes, true, sortorder); }
 

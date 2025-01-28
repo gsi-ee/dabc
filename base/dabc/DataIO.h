@@ -79,7 +79,7 @@ namespace dabc {
           * \param[in] wrk  reference on input port
           * \param[in] cmd  reference on command object
           * \returns        false when method fails */
-         virtual bool Read_Init(const WorkerRef &, const Command &) { return true; }
+         virtual bool Read_Init(const WorkerRef &wrk, const Command &cmd) { return true; }
 
 
          /** \brief Defines required buffer size for next operation
@@ -267,9 +267,9 @@ namespace dabc {
 
          virtual ~FileInput();
 
-         void SetIO(dabc::FileInterface* io);
+         void SetIO(dabc::FileInterface *io);
 
-         bool Read_Init(const WorkerRef& wrk, const Command& cmd) override;
+         bool Read_Init(const WorkerRef &wrk, const Command &cmd) override;
 
          bool Read_Stat(dabc::Command cmd) override;
    };

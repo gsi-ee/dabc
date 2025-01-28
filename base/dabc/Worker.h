@@ -235,7 +235,7 @@ namespace dabc {
          /** \brief Detach worker from the thread, later worker can be assigned to some other thread
           * Method especially useful to normally finish object recursion (if it possible).
           * If successful, object can be assigned to new thread again or destroyed.
-          * Worker halt (recursion break) is also performed during object destroyment,
+          * Worker halt (recursion break) is also performed when object destroyed,
           * therefore it is not necessary to call this method before destroy of the worker */
          bool DettachFromThread();
 
@@ -250,9 +250,9 @@ namespace dabc {
           *  After specified time interval ProcessTimeout() method of worker will be called.
           *
           *  \param[in] tmout_sec has following meaning:
-          *     = 0 ProcessTimeout() will be called as soon as possible
-          *     < 0 deactivate if possible previously scheduled timeout
-          *     > 0 activate after specified interval
+          *    - = 0 ProcessTimeout() will be called as soon as possible
+          *    - < 0 deactivate if possible previously scheduled timeout
+          *    - > 0 activate after specified interval
           *  \returns false if timeout cannot be configured (when thread is not assigned or not active) */
          bool ActivateTimeout(double tmout_sec);
 

@@ -86,11 +86,7 @@ private:
   /** previous overflow counter of all configured inputs*/
   uint64_t fLastOverflowCount;
 
-
-
 protected:
-
-
 
   /** use dabc reference instead of direct pointer here.*/
   DeviceRef fDevice;
@@ -104,13 +100,11 @@ protected:
   /** switch to work with time out polling or transport call back mode*/
   bool fUseCallbackMode;
 
-
   /** full mbs id number for saft subevent*/
   unsigned fSubeventId;
 
   /** Event number*/
   long fEventNumber;
-
 
   /** verbose mode for timing events*/
   bool fVerbose;
@@ -174,7 +168,7 @@ public:
   Input (const saftdabc::DeviceRef &owner);
   virtual ~Input ();
 
-  virtual bool Read_Init (const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+  virtual bool Read_Init (const dabc::WorkerRef &, const dabc::Command &);
 
   void SetTransportRef(dabc::InputTransport* trans);
 
@@ -203,8 +197,8 @@ public:
     /** This is a signalhandler that treats overflow counter events*/
     void OverflowHandler(guint64 count);
 #endif
-    
-    
+
+
 };
 
 }

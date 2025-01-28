@@ -34,7 +34,7 @@ namespace user
 
    protected:
 
-     bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) override;
+     bool Read_Init(const dabc::WorkerRef &, const dabc::Command &) override;
 
      unsigned Read_Size () override;
 
@@ -44,13 +44,9 @@ namespace user
 
      double Read_Timeout() override;
 
-     unsigned int GetReadLength ()
-      {
-        return fReadLength;
-      }
+     unsigned int GetReadLength() { return fReadLength; }
 
      // These are the actual user readout functions to implement: //
-
 
       /** Initialize the readout hardware on startup*/
       virtual int User_Init ();
@@ -85,7 +81,7 @@ namespace user
        /** subevent size for this example*/
        unsigned int fSubeventSize;
 
-       /** For mbsformat: defines subevent subcrate id for case fSingleSubevent=true*/
+       /** For mbsformat: defines subevent sub-crate id for case fSingleSubevent=true*/
         unsigned int fSubeventSubcrate;
 
         /** For mbsformat: defines subevent procid*/
