@@ -66,7 +66,7 @@ hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
       int res = std::system(exec.c_str());
 
       if (res != 0) {
-         EOUT("Fail to compile first.C/second.C scripts. Abort");
+         EOUT("Fail to compile %s. Abort", file_name.c_str());
          dabc::mgr.StopApplication();
          return;
       }
