@@ -47,6 +47,11 @@ dabc::Buffer dabc::DataInput::ReadBuffer()
    return buf;
 }
 
+bool dabc::DataInput::Read_Init(const WorkerRef &, const Command &)
+{
+   return true;
+}
+
 // ======================================================
 
 dabc::DataOutput::DataOutput(const dabc::Url &) :
