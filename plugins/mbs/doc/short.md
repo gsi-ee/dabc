@@ -1,4 +1,4 @@
-# Short description of MBS plugin {#mbs_readme}
+\page mbs_readme Short description of MBS plugin
 
 Plugin designed to work with GSI DAQ system [MBS](http://daq.gsi.de) and
 provides following components:

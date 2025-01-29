@@ -1,4 +1,4 @@
-# Web interface to MBS {#mbs_web_interface}
+\page mbs_web_interface Web interface to %MBS
 
 @ref mbs::Monitor module provides possibility to interact with MBS over DABC web interface
 
@@ -64,9 +64,7 @@ Via web interface user can than submit commands like
 MBS prompter also allows to submit MBS commands remotely (but only remotely).
 To start prompter on mbs, one should do:
 
-~~~~~~~~~~~~~
-rio4> rpm -r client_host_name
-~~~~~~~~~~~~~
+    rio4> rpm -r client_host_name
 
 Value of argument after -r should be host name, where DABC will run.
 

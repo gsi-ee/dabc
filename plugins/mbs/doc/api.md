@@ -1,4 +1,4 @@
-# MBS API documentation {#mbs_api}
+\page mbs_api MBS API documentation
 
 [MBS plugin in DABC](@ref mbs_plugin) provides C++ based API to access MBS
 from user code. Two major classes are provided:

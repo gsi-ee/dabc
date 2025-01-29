@@ -1,4 +1,4 @@
-# Software collection for TRB3 {#hadaq_trb3_package}
+\page hadaq_trb3_package Software collection for %TRB3
 
 ## Table of content
 

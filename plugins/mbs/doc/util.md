@@ -1,4 +1,4 @@
-# MBS utilities documentation {#mbs_util}
+\page mbs_util %MBS utilities documentation
 
 Together with [MBS plugin in DABC](@ref mbs_plugin) two command-line
 utilities are provided: mbsprint and mbscmd.
