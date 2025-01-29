@@ -1,13 +1,11 @@
-\page stream_plugin
-## Stream plugin for DABC (libDabcStream.so)
+\page stream_plugin Stream plugin for DABC (libDabcStream.so)
 
 \ingroup dabc_plugins
 
 \subpage stream_plugin_doc
 
 
-\page stream_plugin_doc
-# Stream usage with DABC {#stream_plugin_doc}
+\page stream_plugin_doc Stream usage with DABC
 
 
 Implements following classes:

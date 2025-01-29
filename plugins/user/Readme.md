@@ -1,13 +1,11 @@
-\page user_plugin
-## User readout plugin for DABC (libDabcUser.so)
+\page user_plugin User readout plugin for DABC (libDabcUser.so)
 
 \subpage user_plugin_doc
 
 \ingroup dabc_plugins
 
 
-\page user_plugin_doc
-# Example of a user defined readout plugin {#user_plugin_doc}
+\page user_plugin_doc Example of a user defined readout plugin
 
 
 ## Introduction

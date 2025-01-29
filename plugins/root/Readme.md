@@ -1,17 +1,15 @@
-\page root_plugin
-## ROOT plugin for DABC (libDabcRoot.so)
+\page root_plugin ROOT plugin for DABC (libDabcRoot.so)
 
 \ingroup dabc_plugins
 
-\subpage root_readme
+\subpage root_readme <br>
 
-[JavaScript ROOT](https://github.com/root-project/jsroot/blob/master/docs/JSROOT.md)
+[JavaScript ROOT](https://github.com/root-project/jsroot/blob/master/docs/JSROOT.md) <br>
 
-[THttpServer](https://github.com/root-project/jsroot/blob/master/docs/HttpServer.md)
+[THttpServer](https://github.com/root-project/jsroot/blob/master/docs/HttpServer.md) <br>
 
 
-\page root_readme
-# Use of ROOT plugin {#root_readme}
+\page root_readme Use of ROOT plugin
 
 ## Introduction
 

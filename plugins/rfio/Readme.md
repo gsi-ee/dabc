@@ -1,15 +1,11 @@
-\page rfio_plugin
-
-## RFIO plugin for DABC (libDabcRfio.so)
+\page rfio_plugin RFIO plugin for DABC (libDabcRfio.so)
 
 \subpage rfio_plugin_doc
 
 \ingroup dabc_plugins
 
 
-\page rfio_plugin_doc
-
-# Short description of RFIO plugin {#rfio_plugin_doc}
+\page rfio_plugin_doc  Short description of RFIO plugin
 
 ## Introduction
 Plugin provides implementation of dabc::FileInterface class for
@@ -26,4 +22,4 @@ ADSMDIR should contain necessary includes and librawapiclin64.a.
 
 To disable plugin compilation, norfio variable should be specified:
 
-    make norfio=1
+    cmake .. -Drfio=OFF

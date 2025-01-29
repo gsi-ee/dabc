@@ -1,4 +1,4 @@
-\page fesa_plugin %FESA plugin for %DABC (libDabcFesa.so)
+\page fesa_plugin FESA plugin for DABC (libDabcFesa.so)
 
 \subpage fesa_plugin_doc
 

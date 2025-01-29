@@ -1,8 +1,11 @@
 \page gosip_plugin GOSIP plugin for DABC (libDabcGosip.so)
 
-\subpage gosip_plugin_doc
-
 \ingroup dabc_plugins
+
+\subpage gosip_plugin_doc <br>
+
+\subpage gosip_rgoc_doc <br>
+
 
 
 \page gosip_plugin_doc Short description of GOSIP plugin
@@ -32,10 +35,10 @@ GosipCommandServer   0.139443 Starting GOSIP command server module
 
 
 
-## Usage of rgoc
+\page gosip_rgoc_doc Usage of rgoc
 
 
-```
+~~~~~~~~~~
 ***************************************************************************
  rgoc (remote gosipcmd) for dabc and mbspex library
  v0.3 07-Dec-2022 by JAM (j.adamczewski@gsi.de)
@@ -79,12 +82,12 @@ GosipCommandServer   0.139443 Starting GOSIP command server module
           rgoc -u     x86l-113 0 0 0x200000 0x4 0xFF : unset bit 100 on sfp0, slave 0, address 0x200000-0x2000FF
           rgoc -x -c  x86l-113  run42.gos           : write configuration values from file run42.gos to slaves
 *****************************************************************************
-```
+~~~~~~~~~~
 
 ## Compilation
 To enable compilation of gosip plugin, select the flag in cmake configuration like:
 
-   cmake -Dgosip=on  <path_to_source_directory>
+    cmake -Dgosip=on  <path_to_source_directory>
 
 The TerminalModule requires to link against
 `libmbspex.so`. The rgoc command line tool works independently from any hardware driver library.
