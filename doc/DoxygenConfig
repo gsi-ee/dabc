@@ -573,7 +573,7 @@ RECURSIVE              = YES
 # excluded from the INPUT source files. This way you can easily exclude a
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = base/run plugins/ezca/go4 plugins/bnet plugins/bnet-mbs plugins/mbs-root plugins/http/civetweb plugins/http/js
+EXCLUDE                = base/run doc/dabc plugins/ezca/go4 plugins/bnet plugins/bnet-mbs plugins/mbs-root plugins/http/civetweb plugins/http/js
 
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or
