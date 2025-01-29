@@ -60,6 +60,10 @@ jobs:
         shell: bash
         run: cmake --build build --target install
 
+      - name: Doxygen
+        shell: bash
+        run: doxygen doc/DoxygenConfig
+
   build-macos:
     runs-on: macos-latest
     strategy:
@@ -102,6 +106,3 @@ jobs:
         shell: bash
         run: cmake --build build --target install
 
-      - name: Doxygen
-        shell: bash
-        run: doxygen doc/DoxygenConfig
