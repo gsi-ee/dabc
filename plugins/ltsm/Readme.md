@@ -1,13 +1,11 @@
-\page ltsm_plugin
-## ltsm plugin for DABC (libDabcLtsm.so)
+\page ltsm_plugin ltsm plugin for DABC (libDabcLtsm.so)
 
 \subpage ltsm_plugin_doc
 
 \ingroup dabc_plugins
 
 
-\page ltsm_plugin_doc
-# Short description of LTSM plugin {#ltsm_plugin_doc}
+\page ltsm_plugin_doc Short description of LTSM plugin
 
 ## Introduction
 Plugin provides implementation of dabc::FileInterface class for
@@ -19,7 +17,7 @@ The ltsm library must be installed first on the system.
 Please see https://github.com/tstibor/ltsm to get the sources and how to install
 
 To use any other ltsm installation, the
-environment LTMSAPI should contain necessary includes and libtsmapi.a :
+environment LTMSAPI should contain necessary includes and `libtsmapi.a`:
 
     make LTSMAPI=/home/adamczew/git/ltsm/src/lib
 

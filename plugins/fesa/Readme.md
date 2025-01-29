@@ -1,13 +1,11 @@
-\page fesa_plugin
-## FESA plugin for DABC (libDabcFesa.so)
+\page fesa_plugin %FESA plugin for %DABC (libDabcFesa.so)
 
 \subpage fesa_plugin_doc
 
 \ingroup dabc_plugins
 
 
-\page fesa_plugin_doc
-# Short description of FESA plugin {#fesa_plugin_doc}
+\page fesa_plugin_doc Short description of FESA plugin
 
 Plugin provides access to FESA variables for DABC.
 
@@ -18,4 +16,4 @@ During compilation RDA_HOME variable should be defined.
 
 To disable compilation of FESA plugin
 
-   make nofesa=1
+   cmake .. -Dfesa=OFF

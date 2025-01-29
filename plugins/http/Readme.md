@@ -1,14 +1,11 @@
-\page http_plugin
-
-## HTTP plugin for DABC (libDabcHttp.so)
+\page http_plugin HTTP plugin for DABC (libDabcHttp.so)
 
 \ingroup dabc_plugins
 
 \subpage http_readme
 
 
-\page http_readme
-# Use of HTTP plugin {#http_readme}
+\page http_readme Use of HTTP plugin
 
 ## Introduction
 HTTP server implementation in DABC based on civetweb project.
@@ -26,8 +23,8 @@ Compiled automatically during DABC compilation.
 First of all, libDabcHttp.so should be loaded.
 Minimal configuration for server looks like:
 
-~~~~~{.xml}
-  <HttpServer name="http" port="8090"/>
+~~~~~
+    <HttpServer name="http" port="8090"/>
 ~~~~~
 
 Following parameters can be specified:
