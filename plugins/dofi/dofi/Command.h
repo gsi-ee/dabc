@@ -33,7 +33,7 @@ typedef enum
 
    /** \brief DOFI command interface
     *
-    * Contains command definitions for execution on raspi@muppet node.
+    * Contains command definitions for execution on `raspi@muppet` node.
     *
     */
 
