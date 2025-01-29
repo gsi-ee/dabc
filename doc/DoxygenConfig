@@ -129,8 +129,7 @@ STRIP_FROM_PATH        =
 # definition is used. Otherwise one should specify the include paths that
 # are normally passed to the compiler using the -I flag.
 
-STRIP_FROM_INC_PATH    = base plugins/aqua plugins/dim plugins/ezca plugins/fesa plugins/gosip plugins/hadaq plugins/http plugins/ltsm plugins/mbs \
-                         plugins/mbs-root plugins/rfio plugins/root plugins/saft plugins/stream plugins/user plugins/verbs
+STRIP_FROM_INC_PATH    =
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter
 # (but less readable) file names. This can be useful is your file systems
