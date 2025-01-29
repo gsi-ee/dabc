@@ -30,7 +30,7 @@ jobs:
           sudo rm -f /etc/apt/sources.list.d/archive_uri-*
           sudo apt-get update || true
           sudo apt-get install -y ${{ matrix.compiler.name }}
-          sudo apt-get install -y libncurses-dev
+          sudo apt-get install -y libncurses-dev doxygen
 
       - name: Use compiler
         shell: bash
@@ -101,3 +101,7 @@ jobs:
       - name: Install
         shell: bash
         run: cmake --build build --target install
+
+      - name: Doxygen
+        shell: bash
+        run: doxygen doc/DoxygenConfig
