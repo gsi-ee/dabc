@@ -928,7 +928,8 @@ int f_fltrd(struct s_clnt_filter *p_clnt_filter, char *c_file)
               fltrd_modnam,
               c_file);
       perror(c_retmsg);
-      fclose(infile);
+      /* SL: do not close not opened file */
+      /* fclose(infile); */
       return(FALSE);
    }
 

@@ -22,7 +22,7 @@ dabc_link_library(
                 mbsapi/f_evt.c
                 mbsapi/fLmd.c
                 mbsapi/f_radware.c
-                mbsapi/f_ut_utime.c  
+                mbsapi/f_ut_utime.c
                    src/Factory.cxx
                    src/OlmdInput.cxx
                    src/OlmdFile.cxx
@@ -86,11 +86,12 @@ dabc_link_library(
                  olmd/Factory.h
                  olmd/OlmdFile.h
                  olmd/OlmdInput.h
-  INCDIR olmd 
+  INCDIR olmd
   LIBRARIES dabc::DabcBase dabc::DabcMbs
   INCLUDES mbsapi mbsapibase
   DEFINITIONS ${_platform} _LARGEFILE64_SOURCE
-  COPY_HEADERS)
+  COPY_HEADERS
+  NOWARN)
 
 dabc_install_plugin_data(
   DabcOlmd
