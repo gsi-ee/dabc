@@ -65,11 +65,11 @@ File name can be defined with
 Once running, the dabc application can be monitored and controlled by default
 with a standard web browser using the address:
 
-      http://localhost:8091/
+     http://localhost:8091/
 
 This offers a simple ratemeter available at
 
-       UserRadoutExample/Readout/InputDataRate
+     UserRadoutExample/Readout/InputDataRate
 
 Additionally, the State of the Application may be changed from remote using the command handles at subfoler App:
  - DoConfigure : Initialize DAQ
@@ -99,19 +99,17 @@ that can be modified to adjust the code to a custom data acquisition system:
 Additionally, constructor and destructor of this class and the member variables may be modified as you like.
 
 
- One may just change these functions directly in the private DABCSYS installation and recompile DABC.
+One may just change these functions directly in the private DABCSYS installation and recompile DABC.
 
- However, to run several readout variants with the same DABC installation, it is recommended to copy the directory
- plugins/user to another location and compile it locally.
- PLEASE NOTE that this case the full (relative) path to the local library  libDabcUser.so must be specified
- in the `<Run>` section of the configuration file UserReadout.xml, e.g.
+However, to run several readout variants with the same DABC installation, it is recommended to copy the directory
+plugins/user to another location and compile it locally.
+PLEASE NOTE that this case the full (relative) path to the local library  libDabcUser.so must be specified
+in the `<Run>` section of the configuration file UserReadout.xml, e.g.
 
-      <lib value="x86_64/lib/libDabcUser.so"/>
+     <lib value="x86_64/lib/libDabcUser.so"/>
 
- Otherwise, the dabc will load the default library from $DABCSYS/lib instead the modified one!
+Otherwise, the dabc will load the default library from $DABCSYS/lib instead the modified one!
 
 
- Additionally, the class user::Input may be further modified with additional data members and configuration file
- tags. Extracting valules from the configuration url is donein constructor of user::Input class.
-
- */
+Additionally, the class user::Input may be further modified with additional data members and configuration file
+tags. Extracting valules from the configuration url is donein constructor of user::Input class.

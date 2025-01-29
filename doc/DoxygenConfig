@@ -543,8 +543,9 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = doc base plugins/aqua plugins/dim plugins/ezca plugins/fesa plugins/gosip plugins/hadaq plugins/http plugins/ltsm plugins/mbs \
-                         plugins/mbs-root plugins/rfio plugins/root plugins/saft plugins/stream plugins/user plugins/verbs
+INPUT                  = doc base plugins
+
+USE_MDFILE_AS_MAINPAGE = doc/main.md
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -561,7 +562,7 @@ INPUT_ENCODING         = UTF-8
 # *.c *.cc *.cxx *.cpp *.c++ *.java *.ii *.ixx *.ipp *.i++ *.inl *.h *.hh *.hxx
 # *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.py *.f90
 
-FILE_PATTERNS          = *.c *.cxx *.h *.xml *.md JSRoot*.js
+FILE_PATTERNS          = *.c *.cxx *.h *.xml *.md
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -588,7 +589,7 @@ EXCLUDE_SYMLINKS       = NO
 # against the file with absolute path, so to exclude all test directories
 # for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       = */hadaq/hadaq/worker.h */hadaq/hadaq/psxshm.h */hadaq/src/worker.c */hadaq/src/psxshm.c
+EXCLUDE_PATTERNS       =
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
