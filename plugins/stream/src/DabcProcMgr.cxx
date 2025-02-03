@@ -102,7 +102,7 @@ void stream::DabcProcMgr::AddErrLog(const char *msg)
 void stream::DabcProcMgr::PrintLog(const char *msg)
 {
    if (fDebug >= 0)
-      DOUT0(msg);
+      DOUT0("%s",msg);
 }
 
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
