@@ -83,7 +83,15 @@ hadaq::FilterModule::FilterModule(const std::string &name, dabc::Command cmd) :
          dabc::mgr.StopApplication();
          return;
       }
+   }
 
+   if (!fSpliter && !fSubFilter) {
+      CreateCmdDef("StartHldFile")
+         .AddArg("filename", "string", true, "file.hld")
+         .AddArg(dabc::xml_maxsize, "int", false, 1500)
+         .SetArgMinMax(dabc::xml_maxsize, 1, 5000);
+      CreateCmdDef("StopHldFile");
+      CreateCmdDef("RestartHldFile");
    }
 
 }
@@ -281,7 +289,46 @@ void hadaq::FilterModule::ProcessTimerEvent(unsigned)
 
 int hadaq::FilterModule::ExecuteCommand(dabc::Command cmd)
 {
-   return dabc::ModuleAsync::ExecuteCommand(cmd);
+   bool do_start = false, do_stop = false;
+
+   if (cmd.IsName("StartHldFile")) {
+      do_start = do_stop = true;
+   } else if (cmd.IsName("StopHldFile")) {
+      do_stop = true;
+   } else if (cmd.IsName("RestartHldFile")) {
+      if (NumOutputs() < 2)
+         return dabc::cmd_false;
+      cmd.ChangeName("RestartTransport");
+      SubmitCommandToTransport(OutputName(1), cmd);
+      return dabc::cmd_postponed;
+   } else {
+      return dabc::ModuleAsync::ExecuteCommand(cmd);
+   }
+
+   bool res = true;
+
+   if (do_stop) {
+      if (NumOutputs() > 1)
+         res = DisconnectPort(OutputName(1));
+
+      DOUT0("Stop HLD file res = %s", DBOOL(res));
+   }
+
+   if (do_start && res) {
+      std::string fname = cmd.GetStr("filename", "file.hld");
+      int maxsize = cmd.GetInt(dabc::xml_maxsize, 1500);
+
+      std::string url = dabc::format("hld://%s?%s=%d", fname.c_str(), dabc::xml_maxsize, maxsize);
+
+      // we guarantee, that at least two ports will be created
+      EnsurePorts(0, 2);
+
+      res = dabc::mgr.CreateTransport(OutputName(1, true), url);
+
+      DOUT0("Start HLD file %s res = %s", fname.c_str(), DBOOL(res));
+   }
+
+   return cmd_bool(res);
 }
 
 void hadaq::FilterModule::ProcessConnectEvent(const std::string &name, bool on)
