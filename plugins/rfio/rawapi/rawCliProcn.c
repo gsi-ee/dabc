@@ -176,7 +176,8 @@
 #include "rawentn.h"
 #include "rawapplcli.h"
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ >= 11)
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
 
@@ -3959,4 +3960,8 @@ unsigned long ielpst_( unsigned long *iScale,
 {
    return( ielpst( *iScale, iBuf ) );
 } /* ielpst_ */
+#endif
+
+#if defined(__GNUC__) && (__GNUC__ >= 11)
+#pragma GCC diagnostic pop
 #endif
