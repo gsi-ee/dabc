@@ -176,6 +176,10 @@
 #include "rawentn.h"
 #include "rawapplcli.h"
 
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+
 extern FILE *fLogFile;
 extern int *piEntryList;                /* for rawGetFilelistEntries */
 
