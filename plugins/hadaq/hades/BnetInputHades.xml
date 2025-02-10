@@ -67,8 +67,8 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     <Application ConnTimeout="100" ConnDebug="false"/>
 
     <MemoryPool name="Pool">
-       <BufferSize value="2000000"/>
-       <NumBuffers value="10000"/>
+       <BufferSize value="4000000"/>
+       <NumBuffers value="5000"/>
     </MemoryPool>
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
@@ -233,7 +233,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <BNET_NUMSENDERS value="#${bnetsenders}"/>
 
         <!-- number of events send to the same event builder -->
-       <EB_EVENTS value="16"/>
+       <EB_EVENTS value="50"/>
 
        <NumInputs value="#${hadaqports}"/>
        <NumOutputs value="#${bnetreceivers}"/>
