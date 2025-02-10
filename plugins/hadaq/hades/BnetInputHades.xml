@@ -233,7 +233,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <BNET_NUMSENDERS value="#${bnetsenders}"/>
 
         <!-- number of events send to the same event builder -->
-       <EB_EVENTS value="50"/>
+       <EB_EVENTS value="10"/>
 
        <NumInputs value="#${hadaqports}"/>
        <NumOutputs value="#${bnetreceivers}"/>

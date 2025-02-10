@@ -109,7 +109,7 @@ DAQDISK - switches disk demon mode on/off
        <BNETrecv value="true"/>
        <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
        <BNET_NUMSENDERS value="#${bnetsenders}"/>
-       <EB_EVENTS value="50"/>
+       <EB_EVENTS value="10"/>
 
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="${FILEOUTPUTS}"/>
