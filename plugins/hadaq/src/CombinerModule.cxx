@@ -618,7 +618,7 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 }
 
 
-int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next)
+int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t &prev, const uint32_t &next)
 {
    int res = (int) (next) - prev;
    if (res > (int) fMaxHadaqTrigger/2) res -= fMaxHadaqTrigger; else
@@ -667,6 +667,7 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
    // if (diff != 1)
    //   DOUT0("Inp%u Diff%d %x %x distance: %u", ninp, diff, cfg.fLastTrigNr, cfg.fTrigNr, iter.OnlyDebug());
 
+   DOUT0("ninp %u Shift to event %x", ninp, cfg.fTrigNr);
    cfg.fLastTrigNr = cfg.fTrigNr;
 
    return true;
@@ -731,13 +732,36 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       }
 
       // no need to analyze data
-      if (fast) return true;
+      if (fast)
+         return true;
+
+      bool ignore_resort = false;
 
       if (tryresort && (cfg.fLastTrigNr != kNoTrigger)) {
          uint32_t trignr = iter.subevnt()->GetTrigNr();
+
          if (trignr == kNoTrigger) continue; // this is processed trigger, exclude it
 
-         int diff = CalcTrigNumDiff(cfg.fLastTrigNr, (trignr >> 8) & fTriggerRangeMask);
+         trignr = (trignr >> 8) & fTriggerRangeMask;
+
+         int diff = CalcTrigNumDiff(cfg.fLastTrigNr, trignr);
+
+         uint32_t hubid = iter.subevnt()->GetId() & 0xffff;
+
+         // hardcode MDC range
+         bool is_mdc = fHadesTriggerType && (hubid >= 0x1100) && (hubid < 0x1200);
+
+         if ((diff != 1) && is_mdc &&              // data belongs to MDC where such disorder allowed to repair
+             ((trignr & 0xffff) == 0) &&           // lower two bytes in trigger id are 0 (from 0x2b0000)
+             (fTriggerRangeMask > 0x100000) &&     // more than 4+16 bits used in trigger mask
+             (cfg.fLastTrigNr != kNoTrigger) &&    // last trigger is not dummy
+             ((cfg.fLastTrigNr & 0xffff) == 0xffff) &&  // lower byte of last trigger is 0xffff (from 0x2bffff)
+             ((trignr & 0xffff0000) == (cfg.fLastTrigNr & 0xffff0000))) { // high bytes are same in last and now (0x2b == 0x2b)
+                diff = 1;
+                ignore_resort = true; // for MDC allows to repair also in the case of resorted data
+                // if (cfg.fResortIndx >= 0)
+                //   DOUT0("Potential fix for inp %u trignr %x resort index %d id %x", ninp, trignr, cfg.fResortIndx, hubid);
+             }
 
          if (diff != 1) {
 
@@ -759,16 +783,20 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fTrigNr = (cfg.subevnt->GetTrigNr() >> 8) & fTriggerRangeMask;
       cfg.fTrigTag = cfg.subevnt->GetTrigNr() & 0xFF;
 
-      // try to fix problem with TRB2 readout
+      // Trying to fix problem with old MDC readout
       // Produced sequence of trigger numbers are: 0x2bffff, 0x2b0000, 0x2c0001 and repeated every 64k events
+      // In addition, packets order can be broken, therefore one can continue to search for such sequence
 
       if (((cfg.fTrigNr & 0xffff) == 0) &&       // lower two bytes in trigger id are 0 (from 0x2b0000)
            (fTriggerRangeMask > 0x100000) &&     // more than 4+16 bits used in trigger mask
-           (cfg.fResortIndx < 0) &&              // do not try to resort data, normally enabled for very special cases
+           (ignore_resort || (cfg.fResortIndx < 0)) &&  // do not try to resort data, normally enabled for very special cases
            (cfg.fLastTrigNr != kNoTrigger) &&    // last trigger is not dummy
            ((cfg.fLastTrigNr & 0xffff) == 0xffff) &&  // lower byte of last trigger is 0xffff (from 0x2bffff)
            ((cfg.fTrigNr & 0xffff0000) == (cfg.fLastTrigNr & 0xffff0000))) // high bytes are same in last and now (0x2b == 0x2b)
-         cfg.fTrigNr = (cfg.fLastTrigNr + 1) & fTriggerRangeMask;
+         {
+            // DOUT0("Repair trigger input %u detect: %x last: %x repaired: %x", ninp, cfg.fTrigNr, cfg.fLastTrigNr, (cfg.fLastTrigNr + 1) & fTriggerRangeMask);
+            cfg.fTrigNr = (cfg.fLastTrigNr + 1) & fTriggerRangeMask;
+         }
 
 #ifdef HADAQ_DEBUG
       fprintf(stderr, "Input%u Trig:%6x Tag:%2x\n", ninp, cfg.fTrigNr, cfg.fTrigTag);
@@ -806,10 +834,13 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       int diff = 1;
       if (cfg.fLastTrigNr != kNoTrigger)
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
-      cfg.fLastTrigNr = cfg.fTrigNr;
 
-      if (diff > 1)
-         cfg.fLostTrig += (diff-1);
+      if (diff > 1) {
+         // DOUT0("******** LOST ninp %u last %x trignr %x lost %d", ninp, cfg.fLastTrigNr, cfg.fTrigNr, (diff-1));
+         cfg.fLostTrig += (diff - 1);
+      }
+
+      cfg.fLastTrigNr = cfg.fTrigNr;
 
       // printf("Input%u Trig:%6x Tag:%2x diff:%d %s\n", ninp, cfg.fTrigNr, cfg.fTrigTag, diff, diff != 1 ? "ERROR" : "");
    }
