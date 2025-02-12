@@ -158,10 +158,6 @@ namespace dogma {
          /** timeout in seconds since last complete event when previous buffers are dropped*/
          double fEventBuildTimeout;
 
-         /** When true, read trigger type as in original hades event builders */
-         bool fHadesTriggerType;
-         unsigned fHadesTriggerHUB;
-
          uint32_t fLastTrigNr;  ///<  last number of build event
 
          std::vector<InputCfg> fCfg; ///< all input-dependent configurations

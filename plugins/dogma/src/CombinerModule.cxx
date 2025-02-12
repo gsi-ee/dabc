@@ -102,8 +102,6 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    if (fTriggerNrTolerance == -1) fTriggerNrTolerance = fMaxDogmaTrigger / 4;
    fEventBuildTimeout = Cfg("BuildDropTimeout", cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
    fAllBuildEventsLimit = Cfg("MaxNumBuildEvt", cmd).AsUInt(0);
-   fHadesTriggerType = Cfg("HadesTriggerType", cmd).AsBool(false);
-   fHadesTriggerHUB = Cfg("HadesTriggerHUB", cmd).AsUInt(0x8800);
 
    for (unsigned n = 0; n < NumInputs(); n++) {
       fCfg.emplace_back();
