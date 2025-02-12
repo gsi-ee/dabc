@@ -31,9 +31,7 @@ namespace dofi {
 
    /** \brief Player of DOFI data
     *
-    * Module provides DOFI command and custom user interface
-    *
-    **/
+    * Module provides DOFI command and custom user interface */
 
    class Player : public dabc::ModuleAsync {
       protected:

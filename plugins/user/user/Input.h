@@ -48,19 +48,19 @@ namespace user
 
      // These are the actual user readout functions to implement: //
 
-      /** Initialize the readout hardware on startup*/
-      virtual int User_Init ();
+      /** Initialize the readout hardware on startup */
+      virtual int User_Init();
 
-      /** Fill the data at the buffer pointer. size returns filled size in bytes*/
+      /** Fill the data at the buffer pointer. size returns filled size in bytes */
       virtual int User_Readout (uint32_t* pdat, unsigned long& size);
 
       /** Here any kind of external trigger can be waited for*/
-      virtual int User_WaitForTrigger ();
+      virtual int User_WaitForTrigger();
 
-      /** Used to clear any kind of external trigger information**/
+      /** Used to clear any kind of external trigger information */
       virtual int User_ResetTrigger();
 
-      /** shut down the readout hardware properly at the end*/
+      /** shut down the readout hardware properly at the end */
       virtual int User_Cleanup();
 
 
@@ -75,23 +75,23 @@ namespace user
        /** actual payload length of read buffer*/
        unsigned int fReadLength;
 
-       /** Event number since device init*/
+       /** Event number since device init */
        unsigned int fNumEvents;
 
-       /** subevent size for this example*/
+       /** subevent size for this example */
        unsigned int fSubeventSize;
 
-       /** For mbsformat: defines subevent sub-crate id for case fSingleSubevent=true*/
+       /** For mbsformat: defines subevent sub-crate id for case fSingleSubevent=true */
         unsigned int fSubeventSubcrate;
 
-        /** For mbsformat: defines subevent procid*/
+        /** For mbsformat: defines subevent procid */
         unsigned int fSubeventProcid;
 
-        /** For mbsformat: defines subevent control*/
+        /** For mbsformat: defines subevent control */
         unsigned int fSubeventControl;
 
         /** rest the trigger before device buffer has been read out.
-         * This can speed up things if DAQ is provided with double buffering or external data queues.**/
+         * This can speed up things if DAQ is provided with double buffering or external data queues. */
         bool fEarlyTriggerClear;
 
         /** flag for optional debug output*/

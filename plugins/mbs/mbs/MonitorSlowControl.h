@@ -32,9 +32,7 @@ namespace mbs {
 
    /** \brief Base class for monitoring of slow control data
     *
-    * It delivers collected slow-control data to output
-    *
-    **/
+    * It delivers collected slow-control data to output */
 
    class MonitorSlowControl : public dabc::ModuleAsync {
       protected:

@@ -28,9 +28,7 @@ namespace gosip {
 
    /** \brief Player of GOSIP data
     *
-    * Module provides GOSIP command and custom user interface
-    *
-    **/
+    * Module provides GOSIP command and custom user interface */
 
    class Player : public dabc::ModuleAsync {
       protected:

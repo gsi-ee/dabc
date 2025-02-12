@@ -27,9 +27,7 @@ namespace ezca {
     * Module builds hierarchy for connected FESA classes,
     * which could be served via DABC web server in any browser
     *
-    * In addition, module can provide data with stored EPICS records in form of MBS events
-    *
-    **/
+    * In addition, module can provide data with stored EPICS records in form of MBS events */
 
    class Monitor : public mbs::MonitorSlowControl {
       protected:

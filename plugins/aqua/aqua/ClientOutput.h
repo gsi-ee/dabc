@@ -27,9 +27,7 @@
 
 namespace aqua {
 
-   /** \brief Client transport for A1 DAQ
-    *
-    **/
+   /** \brief Client transport for A1 DAQ */
 
    struct SendHeader {
       int64_t counter;

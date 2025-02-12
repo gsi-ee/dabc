@@ -34,9 +34,7 @@ namespace fesa {
    /** \brief Player of FESA data
     *
     * Module builds hierarchy for connected FESA classes,
-    * which could be served via DABC web server in any browser
-    *
-    **/
+    * which could be served via DABC web server in any browser */
 
    class Player : public dabc::ModuleAsync {
       protected:

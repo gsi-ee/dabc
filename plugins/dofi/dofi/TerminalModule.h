@@ -41,7 +41,7 @@ extern "C"
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 }
-/****************************************************************/
+
 /** we use this spi device for communication with muppet fpga */
 #define DOFI_SPIDEV_DEFAULT "/dev/spidev1.2"
 
@@ -54,8 +54,8 @@ namespace dofi {
     */
 
 class TerminalModule : public dabc::ModuleAsync {
-	   
-	   
+
+
 public:
 
 	TerminalModule(const std::string &name, dabc::Command cmd = nullptr);
@@ -89,8 +89,8 @@ protected:
 	/** fill next values from configuration file into com structure.
 	 * returns -1 if end of config is reached*/
 	int next_config_values (dofi::Command &com);
-	
-	
+
+
 	/** configure registers from file*/
 	int configure (dofi::Command &com);
 
@@ -117,13 +117,13 @@ protected:
 	int single_command (dofi::Command &com);
 
 
-private: 
+private:
 
 
 
 typedef enum
 {
-  
+
   DOFI_SPI_WRITE = 0x1,
   DOFI_SPI_READ = 0x2,
   DOFI_SPI_SCALER_DISABLE = 0x4,
@@ -155,9 +155,9 @@ typedef enum
 
 
 
-	   
+
 	std::string fSPI_Device; /**< name of spi device for communication. */
-	  
+
 	int fFD_spi; /**< file descriptor to driver /dev/spidev1.2"*/
 
 	/** parameters for spi transfer: */
@@ -197,9 +197,9 @@ typedef enum
 
 	/*** return message after command execution */
 	std::string fCommandMessage;
- 
-          
-              
+
+
+
 
    };
 }

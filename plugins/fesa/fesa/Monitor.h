@@ -31,9 +31,7 @@ namespace fesa {
     *
     * Module builds hierarchy for connected FESA classes,
     * which could be served via DABC web server in any browser
-    * Optionally, one able to convert data into MBS events, which could be delivered to analysis
-    *
-    **/
+    * Optionally, one able to convert data into MBS events, which could be delivered to analysis*/
 
    class Monitor : public mbs::MonitorSlowControl {
       protected:

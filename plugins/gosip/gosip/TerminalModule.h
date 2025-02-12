@@ -28,11 +28,6 @@
 #include <sstream>
 
 
-
-/****************************************************************/
-
-
-
 namespace gosip {
 
    /** \brief Abstract GOSIP terminal module

@@ -31,8 +31,7 @@
 
 namespace mbs {
 
-
-   /** \brief Addon class to retrieve status record from MBS server  **/
+   /** \brief Addon class to retrieve status record from MBS server */
 
    class DaqStatusAddon : public dabc::SocketIOAddon {
 
@@ -217,9 +216,7 @@ namespace mbs {
     * used to calculate different rate values.
     *
     * Details about module usage are described in
-    * [web interface for MBS](\ref mbs_web_interface).
-    *
-    **/
+    * [web interface for MBS](\ref mbs_web_interface). */
 
    class Monitor : public mbs::MonitorSlowControl {
       protected:

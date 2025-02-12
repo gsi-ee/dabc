@@ -31,9 +31,7 @@ namespace dim {
 
    /** \brief Player of DIM data
     *
-    * Module builds hierarchy for discovered DIM variables
-    *
-    **/
+    * Module builds hierarchy for discovered DIM variables */
 
    class Monitor : public mbs::MonitorSlowControl,
                    public DimInfoHandler {
