@@ -64,10 +64,6 @@ typedef enum
   int errcount; /**< errorcount for verify*/
 
 
-
-  /**********************************************************************/
-
-
      Command():
       devnum(0),command(gosip::GOSIP_NOP),verboselevel(0),hexformat(0),
              broadcast(0), verify(0),sfp(-2),slave(-2),address(-1),

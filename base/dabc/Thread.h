@@ -304,7 +304,7 @@ namespace dabc {
 
          /** \brief Internal DABC method, used to verify if worker can be halted now while recursion is over
           * Request indicates that halt action is requested : actDestroy = 1 or actHalt = 2.
-          * Returns true when worker is really halted **/
+          * Returns true when worker is really halted */
 
          int CheckWorkerCanBeHalted(unsigned id, unsigned request = 0, Command cmd = nullptr);
 

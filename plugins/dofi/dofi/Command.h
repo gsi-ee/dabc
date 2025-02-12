@@ -56,9 +56,6 @@ typedef enum
   char filename[DOFI_MAXTEXT]; /**< optional name of configuration file*/
 
 
-  /**********************************************************************/
-
-
      Command():
       command(dofi::DOFI_NOP),verboselevel(0),hexformat(0),
              address(-1),
