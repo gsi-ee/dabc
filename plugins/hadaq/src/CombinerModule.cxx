@@ -667,7 +667,7 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
    // if (diff != 1)
    //   DOUT0("Inp%u Diff%d %x %x distance: %u", ninp, diff, cfg.fLastTrigNr, cfg.fTrigNr, iter.OnlyDebug());
 
-   DOUT0("ninp %u Shift to event %x", ninp, cfg.fTrigNr);
+   // DOUT0("ninp %u Shift to event %x", ninp, cfg.fTrigNr);
    cfg.fLastTrigNr = cfg.fTrigNr;
 
    return true;
