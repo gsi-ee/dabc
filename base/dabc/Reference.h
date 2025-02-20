@@ -224,28 +224,28 @@ namespace dabc {
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */ \
          RefClass(T *obj = nullptr) throw() : ParentClass(obj) {} \
          /** \brief Copy constructor */ \
-         RefClass(const RefClass& src) throw() : ParentClass(src) {} \
+         RefClass(const RefClass &src) throw() : ParentClass(src) {} \
          /** \brief Copy constructor */ \
-         RefClass(const Reference& src) throw() : ParentClass() \
+         RefClass(const Reference &src) throw() : ParentClass() \
             { T *res = nullptr; if (verify_object(src(),res)) { Assign(src); } } \
          /** \brief Return pointer on the object */ \
-         inline T* GetObject() const { return (T*) ParentClass::GetObject(); } \
+         inline T *GetObject() const { return static_cast<T *>(ParentClass::GetObject()); } \
          /** \brief Return pointer on the object */ \
-         inline T* operator()() const { return (T*) ParentClass::GetObject(); } \
+         inline T *operator()() const { return static_cast<T *>(ParentClass::GetObject()); } \
          /** \brief Assignment operator - copy reference */ \
-         RefClass& operator=(const RefClass& src) throw() { ParentClass::operator=(src); return *this; } \
+         RefClass& operator=(const RefClass &src) throw() { ParentClass::operator=(src); return *this; } \
          /** \brief Assignment operator - copy reference. Also check dynamic_cast that type is supported */ \
-         RefClass& operator=(const Reference& src) throw() \
+         RefClass& operator=(const Reference &src) throw() \
          { \
             Release(); T *res = nullptr; \
             if (verify_object(src(),res)) Assign(src);  \
             return *this; \
          } \
          /** \brief Assignment operator - create reference for object */ \
-         RefClass& operator=(dabc::Object* obj) throw() \
+         RefClass& operator=(dabc::Object *obj) throw() \
          { \
             Release(); T *res = nullptr; \
-            if (verify_object(obj,res)) { RefClass ref((T*)obj); *this << ref; } \
+            if (verify_object(obj,res)) { RefClass ref(static_cast<T *>(obj)); *this << ref; } \
             return *this; \
          } \
          /** \brief Move operator - reference moved from source to target */ \
