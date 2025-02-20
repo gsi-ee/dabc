@@ -96,7 +96,7 @@ bool dabc::ConfigIO::CheckAttr(const char *name, const char *value)
    return res;
 }
 
-dabc::Object *dabc::ConfigIO::GetObjParent(Object* obj, int lvl)
+dabc::Object *dabc::ConfigIO::GetObjParent(Object *obj, int lvl)
 {
    // make hack for the objects, which are not registered in the object manager,
    // but which are want to use config files. Make special case:
@@ -131,7 +131,7 @@ std::string dabc::ConfigIO::ResolveEnv(const char *value)
    return fCfg->ResolveEnv(value, fCgfId);
 }
 
-bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, RecordField* field, RecordFieldsMap* fieldsmap)
+bool dabc::ConfigIO::ReadRecordField(Object *obj, const std::string &itemname, RecordField* field, RecordFieldsMap* fieldsmap)
 {
    // here we search all nodes in config file which are compatible with for specified object
    // and config name. From all places we reconstruct all fields and attributes which can belong
@@ -140,7 +140,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
    if (!fCfg || !obj) return false;
 
    int maxlevel = 0;
-   Object* prnt = nullptr;
+   Object *prnt = nullptr;
    while ((prnt = GetObjParent(obj, maxlevel)) != nullptr) {
       if (prnt == dabc::mgr()) break;
       maxlevel++;

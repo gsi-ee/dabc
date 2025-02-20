@@ -78,7 +78,7 @@ dabc::Object *dabc::FileInterface::fmatch(const char *fmask, bool select_files)
    int len = scandir(pathname.c_str(), &namelist, nullptr, alphasort);
    if (len < 0) return nullptr;
 
-   Object* res = nullptr;
+   Object *res = nullptr;
    struct stat buf;
 
    for (int n=0;n<len;n++) {

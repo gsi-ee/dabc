@@ -544,7 +544,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string &name, Command cmd) const
    DOUT3("Check Cfg %s in parent parameters", name.c_str());
 
    // forth - in parameters of all parents
-   Object* prnt = GetParent();
+   auto prnt = GetParent();
    while (prnt) {
       res = WorkerRef(prnt).Par(name).Value();
       if (!res.null()) return res;

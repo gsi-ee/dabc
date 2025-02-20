@@ -378,7 +378,7 @@ namespace dabc {
 
          /** Method should be used to produce name of object, which can be used as item name
           * in different Find methods of manager. Item name later can be used to produce url to the item*/
-         void FillItemName(const Object* ptr, std::string& itemname, bool compact = true);
+         void FillItemName(const Object *ptr, std::string& itemname, bool compact = true);
 
          ThreadRef FindThread(const std::string &name, const std::string &required_class = "");
 
@@ -526,12 +526,12 @@ namespace dabc {
            * \param[in] src,tgt        object src waiting when tgt object is destroyed
            * \param[in] bidirectional  define that dependency should be register in both directions
            * \returns                  true when dependency can be registered */
-         bool RegisterDependency(Object* src, Object* tgt, bool bidirectional = false);
+         bool RegisterDependency(Object *src, Object *tgt, bool bidirectional = false);
 
          /** \brief Unregister dependency between objects
           *
           * Opposite to RegisterDependency call */
-         bool UnregisterDependency(Object* src, Object* tgt, bool bidirectional = false);
+         bool UnregisterDependency(Object *src, Object *tgt, bool bidirectional = false);
 
          bool InstallSignalHandlers();
          void ProcessCtrlCSignal();

@@ -245,7 +245,7 @@ void dabc::Object::Destructor()
 
       if (fObjectRefCnt != 0) {
          EOUT("!!!!!!!!!!!! Destructor called when refcounter %u obj:%s %p", fObjectRefCnt, GetName(), this);
-//         Object* obj = (Object*) 29387898;
+//         Object *obj = (Object*) 29387898;
 //         delete obj;
       }
 
@@ -562,12 +562,12 @@ unsigned dabc::Object::NumReferences()
 }
 
 
-bool dabc::Object::AddChild(Object* child, bool withmutex) throw()
+bool dabc::Object::AddChild(Object *child, bool withmutex) throw()
 {
    return AddChildAt(child, (unsigned) -1, withmutex);
 }
 
-bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
+bool dabc::Object::AddChildAt(Object *child, unsigned pos, bool withmutex)
 {
    if (!child) return false;
 
@@ -601,7 +601,7 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
    return true;
 }
 
-bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
+bool dabc::Object::RemoveChild(Object *child, bool cleanup) throw()
 {
    if (!child) return false;
 
@@ -859,7 +859,7 @@ bool dabc::Object::RemoveChilds(bool cleanup)
 
       // ensure that object do not longer reference parent
       for (unsigned n=0;n<del_vect->GetSize();n++) {
-         Object* obj = del_vect->GetObject(n);
+         Object *obj = del_vect->GetObject(n);
          if (obj) obj->fObjectParent.Release();
       }
 
@@ -920,7 +920,7 @@ void dabc::Object::SetNameDirect(const char *name)
 
 
 
-void dabc::Object::Destroy(Object* obj) throw()
+void dabc::Object::Destroy(Object *obj) throw()
 {
    if (!obj) return;
 
@@ -973,7 +973,7 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::
    return pair;
 }
 
-dabc::Object::ConstructorPair dabc::Object::MakePair(Object* prnt, const std::string &fullname, bool withmanager)
+dabc::Object::ConstructorPair dabc::Object::MakePair(Object *prnt, const std::string &fullname, bool withmanager)
 {
    return dabc::Object::MakePair(Reference(prnt), fullname, withmanager);
 }
@@ -984,11 +984,11 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(const std::string &fullname
 }
 
 
-bool dabc::Object::IsParent(Object* obj) const
+bool dabc::Object::IsParent(Object *obj) const
 {
    if (!obj) return false;
 
-   Object* prnt = GetParent();
+   Object *prnt = GetParent();
 
    while (prnt) {
       if (prnt==obj) return true;
@@ -1060,7 +1060,7 @@ bool dabc::Object::NameMatchM(const std::string &name, const std::string &mask)
 }
 
 
-void dabc::Object::FillFullName(std::string &fullname, Object* upto, bool exclude_top_parent) const
+void dabc::Object::FillFullName(std::string &fullname, Object *upto, bool exclude_top_parent) const
 {
    if (GetParent() && (GetParent() != upto)) {
       GetParent()->FillFullName(fullname, upto, exclude_top_parent);
@@ -1106,7 +1106,7 @@ void dabc::Object::InspectGarbageCollector()
    DOUT0("GarbageCollector: there are %u objects in collector now", gObjectGarbageCollector.size());
 
    for (unsigned n=0;n<gObjectGarbageCollector.size();n++) {
-      Object* obj = (Object*) gObjectGarbageCollector.at(n);
+      Object *obj = (Object*) gObjectGarbageCollector.at(n);
       DOUT0("   obj:%p name:%s class:%s refcnt:%u", obj, obj->GetName(), obj->ClassName(), obj->fObjectRefCnt);
    }
 
@@ -1122,7 +1122,7 @@ void dabc::Object::InspectGarbageCollector()
 #include <cstdio>
 #include <map>
 
-void dabc::Object::DebugObject(const char *classname, Object* instance, int kind)
+void dabc::Object::DebugObject(const char *classname, Object *instance, int kind)
 {
 
    typedef std::list<dabc::Object*> obj_list;

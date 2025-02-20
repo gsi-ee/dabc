@@ -49,7 +49,7 @@ namespace dabc {
 
          XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char *name);
 
-         static Object* GetObjParent(Object* obj, int lvl);
+         static Object *GetObjParent(Object *obj, int lvl);
 
          std::string ResolveEnv(const char *value);
 
@@ -65,7 +65,7 @@ namespace dabc {
          /** \brief Check if item, found by FindItem routine, has attribute with specified value */
          bool CheckAttr(const char *name, const char *value);
 
-         bool ReadRecordField(Object* obj, const std::string &name, RecordField* field, RecordFieldsMap* fieldsmap);
+         bool ReadRecordField(Object *obj, const std::string &name, RecordField* field, RecordFieldsMap* fieldsmap);
    };
 
 }

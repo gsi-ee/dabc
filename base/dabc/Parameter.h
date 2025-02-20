@@ -183,7 +183,7 @@ namespace dabc {
 
          /** \brief Method used in reference constructor/assignments to verify is object is suitable */
          template<class T>
-         bool verify_object(Object* src, T* &tgt)
+         bool verify_object(Object *src, T* &tgt)
          {
             // TODO: should we implement this method ???
             tgt = dynamic_cast<T*>(src);

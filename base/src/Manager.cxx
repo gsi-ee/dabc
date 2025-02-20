@@ -66,11 +66,11 @@ namespace dabc {
     */
    struct DependPair {
       Reference src; ///< reference on object which want to be informed when DependPair#tgt object is deleted
-      Object* tgt{nullptr};   ///< when this object deleted, DependPair#src will be informed
+      Object *tgt{nullptr};   ///< when this object deleted, DependPair#src will be informed
       int fire{0};      ///< how to proceed pair 0 - remain, 1 - inform src, 2 - just delete
 
       DependPair() = default;
-      DependPair(Object* _src, Object* _tgt) : src(_src), tgt(_tgt), fire(0) {}
+      DependPair(Object *_src, Object *_tgt) : src(_src), tgt(_tgt), fire(0) {}
       DependPair(const DependPair &d) : src(d.src), tgt(d.tgt), fire(d.fire) {}
       DependPair &operator=(const DependPair &d) { src = d.src; tgt = d.tgt; fire = d.fire; return *this; }
    };
@@ -451,7 +451,7 @@ bool dabc::Manager::ProcessDestroyQueue()
 
    // first inform about dependencies
    for (unsigned n = 0; n < clr_vect.GetSize(); n++) {
-      Object* obj = clr_vect.GetObject(n);
+      Object *obj = clr_vect.GetObject(n);
       Worker* w = dynamic_cast<Worker*> (obj);
       if (w) {
          if (obj->IsLogging())
@@ -733,7 +733,7 @@ dabc::ApplicationRef dabc::Manager::app()
    return FindChildRef(xmlAppDfltName);
 }
 
-void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool compact)
+void dabc::Manager::FillItemName(const Object *ptr, std::string& itemname, bool compact)
 {
    itemname.clear();
 
@@ -1484,7 +1484,7 @@ bool dabc::Manager::DecomposeAddress(const std::string &addr, bool& islocal, std
 }
 
 
-bool dabc::Manager::RegisterDependency(Object* src, Object* tgt, bool bidirectional)
+bool dabc::Manager::RegisterDependency(Object *src, Object *tgt, bool bidirectional)
 {
    if (!src || !tgt) return false;
 
@@ -1505,7 +1505,7 @@ bool dabc::Manager::RegisterDependency(Object* src, Object* tgt, bool bidirectio
    return RegisterDependency(tgt, src, false);
 }
 
-bool dabc::Manager::UnregisterDependency(Object* src, Object* tgt, bool bidirectional)
+bool dabc::Manager::UnregisterDependency(Object *src, Object *tgt, bool bidirectional)
 {
    if (!src || !tgt) return false;
 

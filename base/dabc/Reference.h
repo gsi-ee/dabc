@@ -33,7 +33,7 @@ namespace dabc {
     *  Ensure that object on which reference is pointing on is not disappear until reference
     *  is existing. In normal situation one should use reference in form:
     *
-    *  void func(Object* obj)
+    *  void func(Object *obj)
     *  {
     *     dabc::Reference ref(new Object);
     *     ref.SetAutoDestroy(true);
@@ -77,7 +77,7 @@ namespace dabc {
 
       protected:
 
-         Object*    fObj{nullptr};       ///< pointer on the object
+         Object *   fObj{nullptr};       ///< pointer on the object
 
          Mutex* ObjectMutex() const;
 
@@ -90,12 +90,12 @@ namespace dabc {
 
          /** \brief Method used in reference constructor/assignments to verify is object is suitable */
          template<class T>
-         bool verify_object(Object* src, T* &tgt) { return (tgt = dynamic_cast<T*>(src)) != nullptr; }
+         bool verify_object(Object *src, T* &tgt) { return (tgt = dynamic_cast<T*>(src)) != nullptr; }
 
       public:
 
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */
-         Reference(Object* obj = nullptr);
+         Reference(Object *obj = nullptr);
 
          /** \brief Copy constructor, if source is transient than source reference will be emptied */
          Reference(const Reference& src) throw();
@@ -109,7 +109,7 @@ namespace dabc {
 
          /** \brief Direct set of object to reference.
           * withmutex = false means that user already lock object mutex */
-         void SetObject(Object* obj, bool withmutex = true);
+         void SetObject(Object *obj, bool withmutex = true);
 
          /** \brief Returns number of references on the object */
          unsigned NumReferences() const;
@@ -126,10 +126,10 @@ namespace dabc {
          void Destroy() throw();
 
          /** \brief Return pointer on the object */
-         inline Object* GetObject() const { return fObj; }
+         inline Object *GetObject() const { return fObj; }
 
          /** \brief Returns pointer on parent object */
-         Object* GetParent() const;
+         Object *GetParent() const;
 
          /** \brief Returns reference on parent object */
          Reference GetParentRef() const { return dabc::Reference(GetParent()); }
@@ -145,7 +145,7 @@ namespace dabc {
          bool IsName(const char *name) const;
 
          /** \brief Return pointer on the object */
-         inline Object* operator()() const { return fObj; }
+         inline Object *operator()() const { return fObj; }
 
          /** \brief Returns true if reference contains nullptr */
          inline bool null() const { return GetObject() == nullptr; }
@@ -154,7 +154,7 @@ namespace dabc {
          inline bool operator!() const { return null(); }
 
          /** \brief Add child to list of object children */
-         bool AddChild(Object* obj);
+         bool AddChild(Object *obj);
 
          /** \brief Return number of childs in referenced object.
           * If object null, always return 0 */
@@ -181,7 +181,7 @@ namespace dabc {
          Reference& operator=(const Reference& src) throw();
 
          /** \brief Assignment operator - copy reference */
-         Reference& operator=(Object* obj) throw();
+         Reference& operator=(Object *obj) throw();
 
          /** \brief Move operator - reference moved from source to target */
          Reference& operator<<(Reference& src) throw();
@@ -193,10 +193,10 @@ namespace dabc {
          inline bool operator!=(const Reference& src) const { return GetObject() != src(); }
 
          /** \brief Compare operator - return true if reference refer to same object */
-         inline bool operator==(Object* obj) const { return GetObject() == obj; }
+         inline bool operator==(Object *obj) const { return GetObject() == obj; }
 
          /** \brief Compare operator - return true if reference refer to different objects */
-         inline bool operator!=(Object* obj) const { return GetObject() != obj; }
+         inline bool operator!=(Object *obj) const { return GetObject() != obj; }
 
          /** \brief Show on debug output content of reference */
          void Print(int lvl = 0, const char *from = nullptr) const;

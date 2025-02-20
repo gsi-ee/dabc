@@ -59,7 +59,7 @@ namespace dabc {
 
          /** Produce list of files, object must be explicitly destroyed with ref.Destroy call
           * One could decide if files or directories should be listed */
-         virtual Object* fmatch(const char *fmask, bool select_files = true);
+         virtual Object *fmatch(const char *fmask, bool select_files = true);
 
          virtual bool mkdir(const char *path);
 

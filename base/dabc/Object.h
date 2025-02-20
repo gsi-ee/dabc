@@ -232,7 +232,7 @@ namespace dabc {
 
          /** \brief Method used to produce full item name,
           * \details Produced name can be used to find such item in the objects hierarchy */
-         void FillFullName(std::string &fullname, Object* upto, bool exclude_top_parent = false) const;
+         void FillFullName(std::string &fullname, Object *upto, bool exclude_top_parent = false) const;
 
          /** \brief Same as IsNormalState() but without mutex lock - user should lock mutex himself */
          bool _IsNormalState();
@@ -265,7 +265,7 @@ namespace dabc {
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor */
-         static ConstructorPair MakePair(Object* prnt, const std::string &fullname, bool withmanager = true);
+         static ConstructorPair MakePair(Object *prnt, const std::string &fullname, bool withmanager = true);
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor */
@@ -283,13 +283,13 @@ namespace dabc {
          virtual ~Object();
 
          /** \brief Returns pointer on parent object, __thread safe__ */
-         Object* GetParent() const { return fObjectParent(); }
+         Object *GetParent() const { return fObjectParent(); }
 
          /** \brief \returns reference on parent object, __thread safe__ */
          Reference GetParentRef() const { return fObjectParent; }
 
          /** \brief Checks if specified argument is in the list of object parents */
-         bool IsParent(Object* obj) const;
+         bool IsParent(Object *obj) const;
 
          /** \brief Returns name of the object, __thread safe__ */
          const char *GetName() const { return fObjectName.c_str(); }
@@ -342,7 +342,7 @@ namespace dabc {
           * \param[in] child        object to add
           * \param[in] withmutex    true if object mutex should be locked
           * \returns                true if successful */
-         bool AddChild(Object* child, bool withmutex = true) throw();
+         bool AddChild(Object *child, bool withmutex = true) throw();
 
          /** \brief Add object to list of child objects at specified position
           *
@@ -350,11 +350,11 @@ namespace dabc {
           * \param[in] pos         position at which add object, if grater than number of childs, will be add at the end
           * \param[in] withmutex   true if object mutex should be locked
           * \returns               true if successful */
-         bool AddChildAt(Object* child, unsigned pos, bool withmutex = true);
+         bool AddChildAt(Object *child, unsigned pos, bool withmutex = true);
 
          /** \brief Detach child from parent object
           *  If cleanup==true and parent is owner of child, child will be destroyed */
-         bool RemoveChild(Object* child, bool cleanup = true) throw();
+         bool RemoveChild(Object *child, bool cleanup = true) throw();
 
          /** \brief Detach child object from parent at specified position
           *  If cleanup==true and object is owner of child, child will be destroyed */
@@ -368,7 +368,7 @@ namespace dabc {
          unsigned NumChilds() const;
 
          /** \brief returns pointer on child object */
-         Object* GetChild(unsigned n) const;
+         Object *GetChild(unsigned n) const;
 
          /** \brief returns reference on child object */
          Reference GetChildRef(unsigned n) const;
@@ -376,7 +376,7 @@ namespace dabc {
          bool GetAllChildRef(ReferencesVector* vect) const;
 
          /** \brief returns pointer on child object with given name */
-         Object* FindChild(const char *name) const;
+         Object *FindChild(const char *name) const;
 
          //TODO: one need method reverse to FindChild - MakePath()
          // one should be able to produce string which can be used to find specified object
@@ -411,7 +411,7 @@ namespace dabc {
           * In some special cases objects cannot be destroyed at all - they will be cleaned by
           * other means (like thread - it is only destroyed by manager when no longer used
           * TODO: probably, one should remove it and always use reference */
-         static void Destroy(Object* obj) throw();
+         static void Destroy(Object *obj) throw();
 
          /**  \brief Returns class name of the object instance.
           *
