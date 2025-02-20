@@ -54,18 +54,18 @@ namespace http {
          int         fMonitoring{0};  ///< _monitoring value in h.json, only for top page
 
          /** Check if relative path below current dir - prevents file access to top directories via http */
-         static bool VerifyFilePath(const char* fname);
+         static bool VerifyFilePath(const char *fname);
 
          /** Check if file is requested. Can only be from server */
-         bool IsFileRequested(const char* uri, std::string& fname);
+         bool IsFileRequested(const char *uri, std::string& fname);
 
-         void ExtractPathAndFile(const char* uri, std::string& pathname, std::string& filename);
+         void ExtractPathAndFile(const char *uri, std::string& pathname, std::string& filename);
 
          /** Returns true if authentication is required */
-         bool IsAuthRequired(const char* uri);
+         bool IsAuthRequired(const char *uri);
 
          /** Method process different URL requests, should be called from server thread */
-         bool Process(const char* uri, const char* query,
+         bool Process(const char *uri, const char *query,
                       std::string& content_type,
                       std::string& content_header,
                       std::string& content_str,
@@ -82,9 +82,9 @@ namespace http {
                           const std::string &nameprefix = "",
                           const std::string &nameprefixrepl = "");
 
-         const char* ClassName() const override { return "HttpServer"; }
+         const char *ClassName() const override { return "HttpServer"; }
 
-         static const char* GetMimeType(const char* fname);
+         static const char *GetMimeType(const char *fname);
    };
 
 }

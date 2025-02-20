@@ -63,16 +63,16 @@ TEpicsProc::~TEpicsProc()
 
 //***********************************************************
 // this one is used in standard factory
-TEpicsProc::TEpicsProc(const char* name) : TGo4EventProcessor(name)
+TEpicsProc::TEpicsProc(const char *name) : TGo4EventProcessor(name)
 {
    TGo4Log::Info("TEpicsProc: Create instance %s", name);
 
    fVerbose = false;
 }
 
-const char* TEpicsProc::GetUpdateTimeString()
+const char *TEpicsProc::GetUpdateTimeString()
 {
-   if(fUTimeSeconds == 0) 
+   if(fUTimeSeconds == 0)
       return "EPICS time not available";
 
    UInt_t timeseconds=fUTimeSeconds;
@@ -210,7 +210,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
 }
 
 
-TEpicsProc::VariableHist* TEpicsProc::FindVariable(const char* name)
+TEpicsProc::VariableHist* TEpicsProc::FindVariable(const char *name)
 {
    if (!name || (strlen(name) == 0)) return nullptr;
    for (unsigned n=0;n<all_hists.size();n++)
@@ -219,11 +219,11 @@ TEpicsProc::VariableHist* TEpicsProc::FindVariable(const char* name)
    return nullptr;
 }
 
-TEpicsProc::VariableHist* TEpicsProc::CreateHist(const char* varname)
+TEpicsProc::VariableHist* TEpicsProc::CreateHist(const char *varname)
 {
    if (!varname || (strlen(varname) == 0)) return nullptr;
 
-   const char* dirname = "EPICS";
+   const char *dirname = "EPICS";
    Double_t range = CBM_EPIX_STATRANGE;
    Int_t bins = 2*CBM_EPIX_STATRANGE;
 
@@ -297,7 +297,7 @@ void  TEpicsProc::IncTrending( TH1 * histo, Double_t value, bool forwards )
    histo->SetBinContent(j+dj,value);
 }
 
-void TEpicsProc::UpdateHist(VariableHist* hst, double val, const char* varname)
+void TEpicsProc::UpdateHist(VariableHist* hst, double val, const char *varname)
 {
    if (!varname || !hst) return;
 

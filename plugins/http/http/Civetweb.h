@@ -46,7 +46,7 @@ namespace http {
          Civetweb(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Civetweb();
 
-         const char* ClassName() const override { return "HttpServer"; }
+         const char *ClassName() const override { return "HttpServer"; }
 
          static int begin_request_handler(struct mg_connection *conn, void*);
 

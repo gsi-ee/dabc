@@ -186,11 +186,10 @@ void elderdabc::VisConDabc::hist2d_set_bin(::elderpt::viscon::Interface::Histogr
            //! @param right right limit of the window
            //! @param h a handle to a histogram that should be linked to that condition
 ::elderpt::viscon::Interface::Condition1DHandle elderdabc::VisConDabc::cond1d_create(
-                           const char* name,
+                           const char *name,
                           double left,
                           double right,
-                          int h
-                          )
+                          int h)
 {
    // first check if we get the histogram name from the handle h:
    std::string histoname="";
@@ -306,13 +305,13 @@ void elderdabc::VisConDabc::cond2d_get(
 
 
 //////////////////////////////////////////// JAM below old from stream interface
-elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
+elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char *name, const char *title, int nbins, double left, double right, const char *options)
 {
    std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
    bool reuse = false, clear_protect = false;
    elderdabc::H1handle ret=elderdabc::NullHandle;
    while (options) {
-      const char* separ = strchr(options,';');
+      const char *separ = strchr(options,';');
       std::string part = options;
       if (separ) {
          part.resize(separ-options);
@@ -380,13 +379,13 @@ elderdabc::H1handle elderdabc::VisConDabc::MakeH1(const char* name, const char* 
    return ret;
 }
 
-elderdabc::H2handle elderdabc::VisConDabc::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
+elderdabc::H2handle elderdabc::VisConDabc::MakeH2(const char *name, const char *title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char *options)
 {
    std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax, h2poly;
    bool reuse = false, clear_protect = false;
    elderdabc::H2handle ret=elderdabc::NullHandle;
    while (options != nullptr) {
-      const char* separ = strchr(options,';');
+      const char *separ = strchr(options,';');
       std::string part = options;
       if (separ) {
          part.resize(separ-options);

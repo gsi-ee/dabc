@@ -197,7 +197,7 @@ bool olmd::OlmdFile::ReadBuffer(void* ptr, uint64_t* sz)
 }
 
 
-void olmd::OlmdFile::LmdErrorMessage(int status, const char* description)
+void olmd::OlmdFile::LmdErrorMessage(int status, const char *description)
 {
    char msg[128];
    f_evt_error(status,msg,1); // provide text message for later output

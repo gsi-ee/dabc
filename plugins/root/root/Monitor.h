@@ -83,7 +83,7 @@ namespace root {
 
          virtual ~Monitor();
 
-         const char* ClassName() const override { return "Player"; }
+         const char *ClassName() const override { return "Player"; }
 
          bool IsEnabled() const { return fEnabled; }
    };

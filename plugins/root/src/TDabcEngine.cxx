@@ -34,7 +34,7 @@ TDabcEngine::~TDabcEngine()
    // destructor
 }
 
-Bool_t TDabcEngine::Create(const char* args)
+Bool_t TDabcEngine::Create(const char *args)
 {
    // create different kinds of DABC access to the ROOT server. Possible
    //

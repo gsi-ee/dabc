@@ -40,10 +40,10 @@
 #endif // WR_TIME_STAMP
 
 #ifdef USE_MBS_PARAM
- #define MAX_TRACE_SIZE    4000   // in samples 
+ #define MAX_TRACE_SIZE    4000   // in samples
  #define MAX_TRAPEZ_N_AVG  1000   // in samples
-#else 
- #define     TRACE_SIZE    1024   // in samples 
+#else
+ #define     TRACE_SIZE    1024   // in samples
  #define     TRAPEZ_N_AVG    64   // in samples
  // nr of slaves on SFP 0    1  2  3
  //                     |    |  |  |
@@ -54,7 +54,7 @@
 
 //#define NR_SLAVES    { 0,   1, 0, 0}
  #define ADC_TYPE     { 0, 0xffff, 0, 0} // 12 bit: 0, 14 bit: 1
-                                         // bit 0 fuer slave module 0 
+                                         // bit 0 fuer slave module 0
                                          // bit n fuer slave module n (max n = 31)
 #endif
 
@@ -72,9 +72,9 @@ class TGo4Fitter;
 class TWRcheckBasicProc : public TGo4EventProcessor {
    public:
       TWRcheckBasicProc() ;
-      TWRcheckBasicProc(const char* name);
+      TWRcheckBasicProc(const char *name);
       virtual ~TWRcheckBasicProc() ;
-      void f_make_histo (Int_t); 
+      void f_make_histo (Int_t);
 
       Bool_t BuildEvent(TGo4EventElement* target); // event processing function
 
@@ -101,7 +101,7 @@ class TWRcheckBasicProc : public TGo4EventProcessor {
      ULong_t l_wr_timestamp_prev;
 
      Double_t f_wr_delta_t;
-     
+
      /* JAM24: for WR merger take difference within subevents:*/
 	#define NUM_TS_SUBCONTROL 10
 

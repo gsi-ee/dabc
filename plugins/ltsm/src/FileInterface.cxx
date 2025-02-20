@@ -47,8 +47,8 @@ ltsm::FileInterface::~FileInterface()
    tsm_cleanup (DSM_MULTITHREAD);
 }
 
-dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
-                         const char* mode, const char* opt)
+dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char *fname,
+                         const char *mode, const char *opt)
 {
 
   DOUT0("ltsm::FileInterface::fopen with options %s",opt);
@@ -217,7 +217,7 @@ if (url.HasOption("ltsmFSQDestination"))
   return 0;
 }
 
-int ltsm::FileInterface::GetFileIntPar(Handle, const char* parname)
+int ltsm::FileInterface::GetFileIntPar(Handle, const char *parname)
 {
    // TODO: meaningful info for HADES epics display?
 
@@ -232,7 +232,7 @@ int ltsm::FileInterface::GetFileIntPar(Handle, const char* parname)
    return 0;
 }
 
-bool ltsm::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
+bool ltsm::FileInterface::GetFileStrPar(Handle, const char *parname, char* sbuf,
    int sbuflen)
     {
     // some info for HADES epics display - backward compatibility
@@ -407,14 +407,14 @@ bool ltsm::FileInterface::fflush(Handle )
    // return f == 0 ? false : ::fflush((FILE*)f) == 0;
 }
 
-dabc::Object* ltsm::FileInterface::fmatch(const char* , bool )
+dabc::Object* ltsm::FileInterface::fmatch(const char *, bool )
 {
    return nullptr;
 }
 
 
 
-bool ltsm::FileInterface::OpenTSMSession(const char* opt)
+bool ltsm::FileInterface::OpenTSMSession(const char *opt)
 {
   DOUT3("ltsm::FileInterface::OpenTSMSession ... ");
   dabc::Url url;

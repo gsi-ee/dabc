@@ -38,9 +38,7 @@ namespace olmd {
 
    };
 
-
-   extern const char* protocolOlmd;
-
+   extern const char *protocolOlmd;
 
 }
 

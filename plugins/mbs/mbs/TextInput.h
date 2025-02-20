@@ -56,7 +56,7 @@ namespace mbs {
          unsigned Read_Complete(dabc::Buffer& buf) override;
 
          virtual unsigned RawDataSize();
-         virtual unsigned FillRawData(const char* str, void* rawdata, unsigned maxsize);
+         virtual unsigned FillRawData(const char *str, void* rawdata, unsigned maxsize);
 
    };
 

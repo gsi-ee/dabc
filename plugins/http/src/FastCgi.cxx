@@ -25,7 +25,7 @@
 #include <fstream>
 
 
-void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
+void FCGX_DABC_send_file(FCGX_Request* request, const char *fname)
 {
    std::ifstream is(fname);
 
@@ -163,9 +163,9 @@ void* http::FastCgi::RunFunc(void* args)
 
       count++;
 
-      const char* inp_path = FCGX_GetParam("PATH_INFO", request.envp);
+      const char *inp_path = FCGX_GetParam("PATH_INFO", request.envp);
       if (!inp_path) inp_path = FCGX_GetParam("SCRIPT_FILENAME", request.envp);
-      const char* inp_query = FCGX_GetParam("QUERY_STRING", request.envp);
+      const char *inp_query = FCGX_GetParam("QUERY_STRING", request.envp);
 
       if (server->fDebugMode) {
 

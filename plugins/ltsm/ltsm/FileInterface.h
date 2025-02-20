@@ -114,7 +114,7 @@ namespace ltsm {
 
 
 	/** Re-open session with parameters specified in dabc options string*/
-	bool OpenTSMSession(const char* options);
+	bool OpenTSMSession(const char *options);
 
 	/** Shut down current TSM session*/
 	bool CloseTSMSession();
@@ -127,27 +127,27 @@ namespace ltsm {
 
 	virtual ~FileInterface();
 
-	virtual Handle fopen(const char* fname, const char* mode, const char *opt = nullptr) override;
+	Handle fopen(const char *fname, const char *mode, const char *opt = nullptr) override;
 
-	virtual void fclose(Handle f) override;
+	void fclose(Handle f) override;
 
-	virtual size_t fwrite(const void* ptr, size_t sz, size_t nmemb,
+	size_t fwrite(const void* ptr, size_t sz, size_t nmemb,
 		Handle f) override;
 
-	virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f) override;
+	size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f) override;
 
-	virtual bool feof(Handle f) override;
+	bool feof(Handle f) override;
 
-	virtual bool fflush(Handle f) override;
+	bool fflush(Handle f) override;
 
-	virtual bool fseek(Handle f, long int offset, bool realtive = true) override;
+	bool fseek(Handle f, long int offset, bool realtive = true) override;
 
-	virtual dabc::Object* fmatch(const char* fmask,
+	dabc::Object* fmatch(const char *fmask,
 		bool select_files = true) override;
 
-	virtual int GetFileIntPar(Handle h, const char* parname) override;
+	int GetFileIntPar(Handle h, const char *parname) override;
 
-	virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf,
+	bool GetFileStrPar(Handle h, const char *parname, char* sbuf,
 		int sbuflen) override;
 
 	};

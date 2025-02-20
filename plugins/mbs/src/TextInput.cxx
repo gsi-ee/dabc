@@ -121,7 +121,7 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
 
       // read next nonempty line into buffer
 
-      const char* sbuf = nullptr;
+      const char *sbuf = nullptr;
       do {
          if (fFile.eof())
          	if (!OpenNextFile()) return dabc::di_EndOfStream;
@@ -175,7 +175,7 @@ unsigned mbs::TextInput::RawDataSize()
    return fNumData * fDataUnitSize;
 }
 
-unsigned mbs::TextInput::FillRawData(const char* str, void* rawdata, unsigned maxsize)
+unsigned mbs::TextInput::FillRawData(const char *str, void* rawdata, unsigned maxsize)
 {
    /** Decode raw data from text string into subevent,
     * Return actual filled event size, 0 - error */

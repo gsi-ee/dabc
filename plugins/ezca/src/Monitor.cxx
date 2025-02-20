@@ -248,7 +248,7 @@ std::string ezca::Monitor::CA_ErrorString()
    return res;
 }
 
-const char* ezca::Monitor::CA_RetCode(int ret)
+const char *ezca::Monitor::CA_RetCode(int ret)
 {
    switch (ret) {
       case EZCA_OK:                return "EZCA_OK";

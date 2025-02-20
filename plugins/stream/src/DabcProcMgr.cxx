@@ -105,7 +105,7 @@ void stream::DabcProcMgr::PrintLog(const char *msg)
       DOUT0("%s",msg);
 }
 
-base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
+base::H1handle stream::DabcProcMgr::MakeH1(const char *name, const char *title, int nbins, double left, double right, const char *options)
 {
    if (IsBlockHistCreation()) {
       DOUT0("Block H1 creation %s due to multithreading", name);
@@ -116,7 +116,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    bool reuse = false, clear_protect = false;
 
    while (options) {
-      const char* separ = strchr(options,';');
+      const char *separ = strchr(options,';');
       std::string part = options;
       if (separ) {
          part.resize(separ-options);
@@ -181,7 +181,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
 }
 
-base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
+base::H2handle stream::DabcProcMgr::MakeH2(const char *name, const char *title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char *options)
 {
    if (IsBlockHistCreation()) {
       DOUT0("Block H2 creation %s due to multithreading", name);
@@ -192,7 +192,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    bool reuse = false, clear_protect = false;
 
    while (options != nullptr) {
-      const char* separ = strchr(options,';');
+      const char *separ = strchr(options,';');
       std::string part = options;
       if (separ) {
          part.resize(separ-options);
@@ -474,7 +474,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
 
 typedef void StreamCallFunc(void*);
 
-bool stream::DabcProcMgr::CallFunc(const char* funcname, void* arg)
+bool stream::DabcProcMgr::CallFunc(const char *funcname, void* arg)
 {
    if (!funcname) return false;
 
@@ -489,7 +489,7 @@ bool stream::DabcProcMgr::CallFunc(const char* funcname, void* arg)
 }
 
 
-bool stream::DabcProcMgr::CreateStore(const char* storename)
+bool stream::DabcProcMgr::CreateStore(const char *storename)
 {
    fStore = dabc::mgr.CreateObject("root::TreeStore","stream_store");
    if (fStore.null()) {
@@ -525,7 +525,7 @@ bool stream::DabcProcMgr::CloseStore()
    return true;
 }
 
-bool stream::DabcProcMgr::CreateBranch(const char* name, const char* class_name, void** obj)
+bool stream::DabcProcMgr::CreateBranch(const char *name, const char *class_name, void** obj)
 {
    DOUT3("Create Branch1 %s", name);
 
@@ -536,7 +536,7 @@ bool stream::DabcProcMgr::CreateBranch(const char* name, const char* class_name,
    return fStore.Execute(cmd);
 }
 
-bool stream::DabcProcMgr::CreateBranch(const char* name, void* member, const char* kind)
+bool stream::DabcProcMgr::CreateBranch(const char *name, void* member, const char *kind)
 {
    DOUT3("Create Branch2 %s", name);
 

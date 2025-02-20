@@ -25,7 +25,7 @@
 #include "zlib.h"
 #endif
 
-const char* http::Server::GetMimeType(const char* path)
+const char *http::Server::GetMimeType(const char *path)
 {
    static const struct {
      const char *extension;
@@ -88,7 +88,7 @@ const char* http::Server::GetMimeType(const char* path)
 
    for (int i = 0; builtin_mime_types[i].extension != nullptr; i++) {
       if (path_len <= builtin_mime_types[i].ext_len) continue;
-      const char* ext = path + (path_len - builtin_mime_types[i].ext_len);
+      const char *ext = path + (path_len - builtin_mime_types[i].ext_len);
       if (strcmp(ext, builtin_mime_types[i].extension) == 0) {
          return builtin_mime_types[i].mime_type;
       }
@@ -107,7 +107,7 @@ http::Server::Server(const std::string &server_name, dabc::Command cmd) :
 {
    fHttpSys = ".";
 
-   const char* dabcsys = std::getenv("DABCSYS");
+   const char *dabcsys = std::getenv("DABCSYS");
    if (dabcsys) {
 
       AddLocation(dabcsys, "dabcsys/");
@@ -132,7 +132,7 @@ http::Server::Server(const std::string &server_name, dabc::Command cmd) :
       }
    }
 
-   const char* jsrootsys = std::getenv("JSROOTSYS");
+   const char *jsrootsys = std::getenv("JSROOTSYS");
    if (jsrootsys) fJsRootSys = jsrootsys;
 
    if (!fJsRootSys.empty()) {
@@ -170,7 +170,7 @@ void http::Server::AddLocation(const std::string &filepath,
 }
 
 
-bool http::Server::VerifyFilePath(const char* fname)
+bool http::Server::VerifyFilePath(const char *fname)
 {
    if (!fname || (*fname == 0)) return false;
 
@@ -179,7 +179,7 @@ bool http::Server::VerifyFilePath(const char* fname)
    while (*fname != 0) {
 
       // find next slash or backslash
-      const char* next = strpbrk(fname, "/\\");
+      const char *next = strpbrk(fname, "/\\");
       if (!next) return true;
 
       // most important - change to parent dir
@@ -208,7 +208,7 @@ bool http::Server::VerifyFilePath(const char* fname)
    return true;
 }
 
-bool http::Server::IsFileRequested(const char* uri, std::string& res)
+bool http::Server::IsFileRequested(const char *uri, std::string& res)
 {
    if (!uri || (*uri == 0)) return false;
 
@@ -227,10 +227,10 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
    return false;
 }
 
-void http::Server::ExtractPathAndFile(const char* uri, std::string& pathname, std::string& filename)
+void http::Server::ExtractPathAndFile(const char *uri, std::string& pathname, std::string& filename)
 {
    pathname.clear();
-   const char* rslash = strrchr(uri,'/');
+   const char *rslash = strrchr(uri,'/');
    if (!rslash) {
       filename = uri;
    } else {
@@ -241,7 +241,7 @@ void http::Server::ExtractPathAndFile(const char* uri, std::string& pathname, st
 }
 
 
-bool http::Server::IsAuthRequired(const char* uri)
+bool http::Server::IsAuthRequired(const char *uri)
 {
    if (fDefaultAuth < 0) return false;
 
@@ -261,7 +261,7 @@ bool http::Server::IsAuthRequired(const char* uri)
    return res > 0;
 }
 
-bool http::Server::Process(const char* uri, const char* _query,
+bool http::Server::Process(const char *uri, const char *_query,
                            std::string& content_type,
                            std::string& content_header,
                            std::string& content_str,

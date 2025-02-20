@@ -20,7 +20,7 @@
 
 
 //***********************************************************
-TSaftParam::TSaftParam(const char* name) : TGo4Parameter(name),
+TSaftParam::TSaftParam(const char *name) : TGo4Parameter(name),
     fVerbose(kFALSE)
 {
   fSubeventID=0x000000A;
@@ -33,8 +33,3 @@ TSaftParam::~TSaftParam()
 }
 //***********************************************************
 
-
-
-
-
-//----------------------------END OF GO4 SOURCE FILE ---------------------

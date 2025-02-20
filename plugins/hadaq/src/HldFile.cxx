@@ -28,7 +28,7 @@ hadaq::HldFile::~HldFile()
    Close();
 }
 
-bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid, const char* opt)
+bool hadaq::HldFile::OpenWrite(const char *fname, uint32_t runid, const char *opt)
 {
    if (isOpened()) return false;
 
@@ -60,7 +60,7 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid, const char* op
    return true;
 }
 
-bool hadaq::HldFile::OpenRead(const char* fname, const char* opt)
+bool hadaq::HldFile::OpenRead(const char *fname, const char *opt)
 {
    if (isOpened()) return false;
 

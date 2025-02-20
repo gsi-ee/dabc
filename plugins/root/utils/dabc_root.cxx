@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 
    printf("dabc_root utility, v %s\n", DABC_RELEASE);
 
-   const char* inpfile = nullptr, *outfile = nullptr;
+   const char *inpfile = nullptr, *outfile = nullptr;
    bool skipzero = false;
 
    for (int n=1;n<argc;n++) {

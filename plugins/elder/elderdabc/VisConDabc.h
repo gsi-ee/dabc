@@ -89,21 +89,21 @@ class VisConDabc : public ::elderpt::viscon::Interface
 
 
 
-         elderdabc::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = nullptr); ///<! returns handle to histogram object in hierarchy
+         elderdabc::H1handle MakeH1(const char *name, const char *title, int nbins, double left, double right, const char *xtitle = nullptr); ///<! returns handle to histogram object in hierarchy
          //
-         elderdabc::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr);///<! returns handle to histogram object
+         elderdabc::H2handle MakeH2(const char *name, const char *title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char *options = nullptr);///<! returns handle to histogram object
          //
 
          void FillH1(elderdabc::H1handle h1, double x, double weight); // implementation stolen from stream framework
          double GetH1Content(elderdabc::H1handle h1, int bin);
          void  SetH1Content(elderdabc::H1handle h1, int bin, double v);
-          void SetH1Title(elderdabc::H1handle h1, const char* title);
+          void SetH1Title(elderdabc::H1handle h1, const char *title);
          void TagH1Time(elderdabc::H1handle h1);
 
          void FillH2(elderdabc::H2handle h2, double x, double y, double weight); // implementation stolen from stream framework
          double GetH2Content(elderdabc::H2handle h2, int bin1, int bin2);
          void SetH2Content(elderdabc::H2handle h2, int bin1, int bin2, double v);
-         void SetH2Title(elderdabc::H2handle h2, const char* title) ;
+         void SetH2Title(elderdabc::H2handle h2, const char *title) ;
          void TagH2Time(elderdabc::H2handle h2);
          //
 

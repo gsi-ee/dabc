@@ -395,41 +395,41 @@ typedef uint64_t WRTimeStampType;
       OldStreamServer = 4
    };
 
-   extern const char* ServerKindToStr(int kind);
+   extern const char *ServerKindToStr(int kind);
    extern int StrToServerKind(const std::string &str);
    extern int DefualtServerPort(int kind);
 
    extern void SwapData(void* data, unsigned bytessize);
 
-   extern const char* protocolLmd;
-   extern const char* protocolMbs;
-   extern const char* protocolMbss;
-   extern const char* protocolMbst;
+   extern const char *protocolLmd;
+   extern const char *protocolMbs;
+   extern const char *protocolMbss;
+   extern const char *protocolMbst;
 
-   extern const char* comStartServer;
-   extern const char* comStopServer;
-   extern const char* comStartFile;
-   extern const char* comStopFile;
+   extern const char *comStartServer;
+   extern const char *comStopServer;
+   extern const char *comStartFile;
+   extern const char *comStopFile;
 
-   extern const char* xmlServerName;
-   extern const char* xmlServerKind;
-   extern const char* xmlServerPort;
-   extern const char* xmlServerScale;
-   extern const char* xmlServerLimit;
+   extern const char *xmlServerName;
+   extern const char *xmlServerKind;
+   extern const char *xmlServerPort;
+   extern const char *xmlServerScale;
+   extern const char *xmlServerLimit;
 
-   extern const char* xmlTextDataFormat;
-   extern const char* xmlTextNumData;
-   extern const char* xmlTextHeaderLines;
-   extern const char* xmlTextCharBuffer;
+   extern const char *xmlTextDataFormat;
+   extern const char *xmlTextNumData;
+   extern const char *xmlTextHeaderLines;
+   extern const char *xmlTextCharBuffer;
 
-   extern const char* xmlCombineCompleteOnly;
-   extern const char* xmlCombineTimestamps;
-   extern const char* xmlCheckSubeventIds;
-   extern const char* xmlEvidMask;
-   extern const char* xmlEvidTolerance;
-   extern const char* xmlSpecialTriggerLimit;
-   extern const char* xmlCombinerRatesPrefix;
-   extern const char* xmlTimesliceWindow;
+   extern const char *xmlCombineCompleteOnly;
+   extern const char *xmlCombineTimestamps;
+   extern const char *xmlCheckSubeventIds;
+   extern const char *xmlEvidMask;
+   extern const char *xmlEvidTolerance;
+   extern const char *xmlSpecialTriggerLimit;
+   extern const char *xmlCombinerRatesPrefix;
+   extern const char *xmlTimesliceWindow;
 
 };
 

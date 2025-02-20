@@ -20,7 +20,7 @@
 
 #include "mbs/api.h"
 
-int usage(const char* errstr = nullptr)
+int usage(const char *errstr = nullptr)
 {
    if (errstr) printf("Error: %s\n\n", errstr);
 

@@ -95,9 +95,6 @@ namespace olmd {
         unsigned long fuEventInterval{0};
 
 
-
-
-
       public:
 
          OlmdFile();
@@ -107,13 +104,13 @@ namespace olmd {
          bool IsOpen() {return fbIsOpen;}
 
 
-         const char* GetFileName(){return fxFileName.c_str();}
+         const char *GetFileName(){return fxFileName.c_str();}
 
          const char *GetTagName() const { return fxTagName.c_str(); }
 
          bool HasTagFile(){return !fxTagName.empty();}
 
-         void SetTagFile(const char* tag){fxTagName=tag;}
+         void SetTagFile(const char *tag){fxTagName=tag;}
 
          void SetStartEvent(unsigned long num) {fuStartEvent=num;}
 
@@ -123,18 +120,13 @@ namespace olmd {
 
 
          /** show dabc error message for lmd status */
-         void LmdErrorMessage(int status, const char* description);
+         void LmdErrorMessage(int status, const char *description);
 
 
-         bool OpenReading(const char* fname, const char *opt = nullptr);
-
-
-
+         bool OpenReading(const char *fname, const char *opt = nullptr);
 
 
          void Close();
-
-
 //
 //         /** Reads buffer with several MBS events */
          bool ReadBuffer(void* ptr, uint64_t* sz);
@@ -143,10 +135,8 @@ namespace olmd {
          /** Reads next MBS event */
          bool ReadNextEvent(); //void** ptr, uint64_t* sz);
 
-         /** copy  current mbs event  from  event api bufffer  into  dabc buffer*/
+         /** copy  current mbs event  from  event api buffer  into  dabc buffer*/
          bool CopyEvent();
-
-
 
    };
 }

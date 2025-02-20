@@ -62,7 +62,7 @@ namespace verbs {
          int Wait(double timeout, double fasttm = 0.);
          void AcknoledgeEvents();
 
-         static const char* GetStrError(int err);
+         static const char *GetStrError(int err);
    };
 }
 

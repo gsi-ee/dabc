@@ -19,7 +19,7 @@
 #include "verbs/Device.h"
 
 verbs::MemoryPool::MemoryPool(ContextRef ctx,
-                              const char* name,
+                              const char *name,
                               int32_t number,
                               int64_t bufsize,
                               bool isud,

@@ -55,15 +55,15 @@ namespace verbs {
             evntVerbsLast // from this event user can specified it own events
          };
 
-         WorkerAddon(QueuePair* qp);
+         WorkerAddon(QueuePair *qp);
 
          virtual ~WorkerAddon();
 
          std::string RequiredThrdClass() const override;
 
-         void SetQP(QueuePair* qp);
-         inline QueuePair* QP() const { return fQP; }
-         QueuePair* TakeQP();
+         void SetQP(QueuePair *qp);
+         inline QueuePair *QP() const { return fQP; }
+         QueuePair *TakeQP();
 
          void ProcessEvent(const dabc::EventId&) override;
 
@@ -73,7 +73,7 @@ namespace verbs {
 
          void CloseQP();
 
-         const char* ClassName() const override { return "verbs::WorkerAddon"; }
+         const char *ClassName() const override { return "verbs::WorkerAddon"; }
    };
 
 }

@@ -15,4 +15,4 @@
 
 #include "dogma/TypeDefs.h"
 
-const char* dogma::protocolDogma = "dogma";
+const char *dogma::protocolDogma = "dogma";

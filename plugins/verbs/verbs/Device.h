@@ -35,7 +35,7 @@ namespace verbs {
    class Thread;
    class ProtocolAddon;
 
-   extern const char* xmlMcastAddr;
+   extern const char *xmlMcastAddr;
 
    // ____________________________________________________________________
 
@@ -72,12 +72,12 @@ namespace verbs {
 
          ContextRef IbContext() { return fIbContext; }
 
-         dabc::ThreadRef MakeThread(const char* name, bool force = false);
+         dabc::ThreadRef MakeThread(const char *name, bool force = false);
 
          bool IsAllocateIndividualCQ() const { return fAllocateIndividualCQ; }
          void SetAllocateIndividualCQ(bool on) { fAllocateIndividualCQ = on; }
 
-         const char* ClassName() const override { return verbs::typeDevice; }
+         const char *ClassName() const override { return verbs::typeDevice; }
 
          static bool IsThreadSafeVerbs() { return fThreadSafeVerbs; }
 

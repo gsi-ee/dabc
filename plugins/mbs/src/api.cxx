@@ -133,7 +133,7 @@ bool mbs::ReadoutModule::GetEventInTime(double maxage)
 
 // ===================================================================================
 
-mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const char* classname, int bufsz_mb)
+mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const char *classname, int bufsz_mb)
 {
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(-1);

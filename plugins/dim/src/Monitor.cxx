@@ -278,7 +278,7 @@ void dim::Monitor::infoHandler()
       item.SetField(dabc::prop_kind,"log");
    } else
    if (strlen(info->getFormat()) > 2) {
-      const char* fmt = info->getFormat();
+      const char *fmt = info->getFormat();
 
       // DOUT0("Process FORMAT %s", fmt);
       int fldcnt = 0;

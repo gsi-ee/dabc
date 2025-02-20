@@ -24,7 +24,7 @@
 #include <netinet/in.h>
 
 
-const char* verbs::xmlMcastAddr = "McastAddr";
+const char *verbs::xmlMcastAddr = "McastAddr";
 
 #ifndef  __NO_MULTICAST__
 #include "verbs/OpenSM.h"
@@ -292,7 +292,7 @@ verbs::QueuePair *verbs::Device::CreatePortQP(const std::string &thrd_name, dabc
    return port_qp;
 }
 
-dabc::ThreadRef verbs::Device::MakeThread(const char* name, bool force)
+dabc::ThreadRef verbs::Device::MakeThread(const char *name, bool force)
 {
    ThreadRef thrd = dabc::mgr.FindThread(name, verbs::typeThread);
 

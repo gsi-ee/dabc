@@ -73,7 +73,7 @@ namespace verbs {
             return -1;
          }
 
-         const char* ClassName() const override { return "verbs::TimeoutWorker"; }
+         const char *ClassName() const override { return "verbs::TimeoutWorker"; }
 
    };
 
@@ -440,7 +440,7 @@ void verbs::Thread::WorkersSetChanged()
    DOUT5("WorkersNumberChanged finished");
 }
 
-const char* verbs::Thread::StatusStr(int code)
+const char *verbs::Thread::StatusStr(int code)
 {
     static struct {
        const char  *name;

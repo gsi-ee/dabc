@@ -98,7 +98,7 @@ namespace mbs {
 
       protected:
 
-      static ReadoutHandle DoConnect(const std::string &url, const char* classname, int bufsz_mb = 8);
+      static ReadoutHandle DoConnect(const std::string &url, const char *classname, int bufsz_mb = 8);
 
    };
 

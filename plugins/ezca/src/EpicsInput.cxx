@@ -277,7 +277,7 @@ std::string ezca::EpicsInput::CA_ErrorString()
    return res;
 }
 
-const char* ezca::EpicsInput::CA_RetCode(int ret)
+const char *ezca::EpicsInput::CA_RetCode(int ret)
 {
    switch (ret) {
       case EZCA_OK:                return "EZCA_OK";

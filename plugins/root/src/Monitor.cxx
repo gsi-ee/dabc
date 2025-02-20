@@ -40,7 +40,7 @@ public:
 
    virtual ~TRootSnifferStoreDabc() {}
 
-   void CreateNode(Int_t lvl, const char* nodename) override
+   void CreateNode(Int_t lvl, const char *nodename) override
    {
       (void) lvl;
       if (curr.null()) {
@@ -50,7 +50,7 @@ public:
          curr = curr.CreateHChild(nodename, true);
       }
    }
-   void SetField(Int_t lvl, const char* field, const char* value, Bool_t with_quotes) override
+   void SetField(Int_t lvl, const char *field, const char *value, Bool_t with_quotes) override
    {
       (void) lvl;
       if (!with_quotes) {
@@ -146,7 +146,7 @@ int root::Monitor::ExecuteCommand(dabc::Command cmd)
 }
 
 
-void root::Monitor::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, const char* path)
+void root::Monitor::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, const char *path)
 {
    main.Release();
 

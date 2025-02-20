@@ -64,7 +64,7 @@ TSaftProc::~TSaftProc()
 
 //***********************************************************
 // this one is used in standard factory
-TSaftProc::TSaftProc(const char* name) : TGo4EventProcessor(name),fLastEventNumber(0), fLastTime(0)
+TSaftProc::TSaftProc(const char *name) : TGo4EventProcessor(name),fLastEventNumber(0), fLastTime(0)
 {
    TGo4Log::Info("TSaftProc: Create instance %s", name);
    hDeltaN=MakeTH1('I',"DeltaN","MBS Eventnumber difference", 1000, 0,1000);

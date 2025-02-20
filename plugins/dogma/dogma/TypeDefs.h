@@ -29,7 +29,7 @@ namespace dogma {
       mbt_DogmaStopRun = 155         // buffer just indicates stop of current run
   };
 
-   extern const char* protocolDogma;
+   extern const char *protocolDogma;
 }
 
 #endif

@@ -28,11 +28,9 @@
 
 
 
-const char* olmd::protocolOlmd          = "olmd";
+const char *olmd::protocolOlmd          = "olmd";
 
 dabc::FactoryPlugin olmdfactory(new olmd::Factory("olmd"));
-
-
 
 
 dabc::DataInput* olmd::Factory::CreateDataInput(const std::string& typ)

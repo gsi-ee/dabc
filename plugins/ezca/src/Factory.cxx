@@ -26,20 +26,20 @@
 #include "ezca/EpicsInput.h"
 #include "ezca/Monitor.h"
 
-const char* ezca::xmlEpicsName               = "EpicsIdentifier";
-const char* ezca::xmlUpdateFlagRecord        = "EpicsFlagRec";
-const char* ezca::xmlEventIDRecord           = "EpicsEventIDRec";
-const char* ezca::xmlNameLongRecords         = "EpicsLongRecs";
-const char* ezca::xmlNameDoubleRecords       = "EpicsDoubleRecs";
-const char* ezca::xmlTimeout                 = "EpicsPollingTimeout";
-const char* ezca::xmlEpicsSubeventId         = "EpicsSubeventId";
-const char* ezca::xmlEzcaTimeout             = "EzcaTimeout";
-const char* ezca::xmlEzcaRetryCount          = "EzcaRetryCount";
-const char* ezca::xmlEzcaDebug               = "EzcaDebug";
-const char* ezca::xmlEzcaAutoError           = "EzcaAutoError";
+const char *ezca::xmlEpicsName               = "EpicsIdentifier";
+const char *ezca::xmlUpdateFlagRecord        = "EpicsFlagRec";
+const char *ezca::xmlEventIDRecord           = "EpicsEventIDRec";
+const char *ezca::xmlNameLongRecords         = "EpicsLongRecs";
+const char *ezca::xmlNameDoubleRecords       = "EpicsDoubleRecs";
+const char *ezca::xmlTimeout                 = "EpicsPollingTimeout";
+const char *ezca::xmlEpicsSubeventId         = "EpicsSubeventId";
+const char *ezca::xmlEzcaTimeout             = "EzcaTimeout";
+const char *ezca::xmlEzcaRetryCount          = "EzcaRetryCount";
+const char *ezca::xmlEzcaDebug               = "EzcaDebug";
+const char *ezca::xmlEzcaAutoError           = "EzcaAutoError";
 
-const char* ezca::nameUpdateCommand          = "ezca::OnUpdate";
-const char* ezca::xmlCommandReceiver         = "EpicsDabcCommandReceiver"; // Command receiver on flag change event
+const char *ezca::nameUpdateCommand          = "ezca::OnUpdate";
+const char *ezca::xmlCommandReceiver         = "EpicsDabcCommandReceiver"; // Command receiver on flag change event
 
 dabc::FactoryPlugin epicsfactory(new ezca::Factory("ezca"));
 

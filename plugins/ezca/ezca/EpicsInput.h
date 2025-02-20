@@ -120,7 +120,7 @@ namespace ezca {
          /** Return error string with error description */
          std::string CA_ErrorString();
 
-         const char* CA_RetCode(int ret);
+         const char *CA_RetCode(int ret);
 
          bool Close();
 

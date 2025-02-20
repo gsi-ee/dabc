@@ -27,44 +27,44 @@
 //#include "saftdabc/Monitor.h"
 
 /** name of the saft device, e.g. baseboard*/
-const char* saftdabc::xmlDeviceName               = "SaftBoard";
+const char *saftdabc::xmlDeviceName               = "SaftBoard";
 
 /** EXPLODER input name items that should be latched with timestamp*/
-const char* saftdabc::xmlInputs                = "SaftHardwareInputNames";
+const char *saftdabc::xmlInputs                = "SaftHardwareInputNames";
 
 /** WR event masks to snoop*/
-const char* saftdabc::xmlMasks           = "SaftSnoopEventMasks";
+const char *saftdabc::xmlMasks           = "SaftSnoopEventMasks";
 
 
 /** WR event ids to snoop*/
-const char* saftdabc::xmlEventIds         = "SaftSnoopEventIds";
+const char *saftdabc::xmlEventIds         = "SaftSnoopEventIds";
 
-const char* saftdabc::xmlOffsets           = "SaftSnoopOffsets";
+const char *saftdabc::xmlOffsets           = "SaftSnoopOffsets";
 
 
 /** WR event accept flags to snoop*/
-const char* saftdabc::xmlAcceptFlags        = "SaftSnoopFlags";
+const char *saftdabc::xmlAcceptFlags        = "SaftSnoopFlags";
 
 
-const char* saftdabc::xmlSaftVerbose        = "SaftVerbose";
+const char *saftdabc::xmlSaftVerbose        = "SaftVerbose";
 
 
 
 
-const char* saftdabc::xmlSaftSubeventId         = "SaftSubeventId";
+const char *saftdabc::xmlSaftSubeventId         = "SaftSubeventId";
 
-const char* saftdabc::xmlSaftSingleEvent        ="SaftSingleEvents";
+const char *saftdabc::xmlSaftSingleEvent        ="SaftSingleEvents";
 
-const char* saftdabc::xmlEventFormat        ="SaftEventFormat";
+const char *saftdabc::xmlEventFormat        ="SaftEventFormat";
 
 
-const char* saftdabc::xmlCallbackMode = "SaftTransportCallback";
+const char *saftdabc::xmlCallbackMode = "SaftTransportCallback";
 
-const char* saftdabc::xmlTimeout = "SaftTimeout";
+const char *saftdabc::xmlTimeout = "SaftTimeout";
 
-const char* saftdabc::commandRunMainloop = "RunGlibMainloop";
+const char *saftdabc::commandRunMainloop = "RunGlibMainloop";
 
-const char* saftdabc::parEventRate= "ReceiveEventRate";
+const char *saftdabc::parEventRate= "ReceiveEventRate";
 
 dabc::FactoryPlugin saftfactory(new saftdabc::Factory("saftdabc"));
 

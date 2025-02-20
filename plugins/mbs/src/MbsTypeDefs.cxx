@@ -28,39 +28,39 @@
 #include <byteswap.h>
 #endif
 
-const char* mbs::protocolLmd          = "lmd";
-const char* mbs::protocolMbs          = "mbs";
-const char* mbs::protocolMbss         = "mbss";
-const char* mbs::protocolMbst         = "mbst";
+const char *mbs::protocolLmd          = "lmd";
+const char *mbs::protocolMbs          = "mbs";
+const char *mbs::protocolMbss         = "mbss";
+const char *mbs::protocolMbst         = "mbst";
 
 // Command names used in combiner module:
-const char* mbs::comStartServer       = "StartServer";
-const char* mbs::comStopServer        = "StopServer";
-const char* mbs::comStartFile         = "StartFile";
-const char* mbs::comStopFile          = "StopFile";
+const char *mbs::comStartServer       = "StartServer";
+const char *mbs::comStopServer        = "StopServer";
+const char *mbs::comStartFile         = "StartFile";
+const char *mbs::comStopFile          = "StopFile";
 
 // tag names for xml config file:
-const char* mbs::xmlServerName        = "MbsServerName";
-const char* mbs::xmlServerKind        = "MbsServerKind";
-const char* mbs::xmlServerPort        = "MbsServerPort";
-const char* mbs::xmlServerScale       = "MbsServerScale";
-const char* mbs::xmlServerLimit       = "MbsServerLimit";
+const char *mbs::xmlServerName        = "MbsServerName";
+const char *mbs::xmlServerKind        = "MbsServerKind";
+const char *mbs::xmlServerPort        = "MbsServerPort";
+const char *mbs::xmlServerScale       = "MbsServerScale";
+const char *mbs::xmlServerLimit       = "MbsServerLimit";
 
-const char* mbs::xmlTextDataFormat    = "MbsTextFormat";
-const char* mbs::xmlTextNumData       = "MbsTextNumData";
-const char* mbs::xmlTextHeaderLines   = "MbsTextHeader";
-const char* mbs::xmlTextCharBuffer    = "MbsCharBuffer";
+const char *mbs::xmlTextDataFormat    = "MbsTextFormat";
+const char *mbs::xmlTextNumData       = "MbsTextNumData";
+const char *mbs::xmlTextHeaderLines   = "MbsTextHeader";
+const char *mbs::xmlTextCharBuffer    = "MbsCharBuffer";
 
 
-const char* mbs::xmlCombineCompleteOnly   = "BuildCompleteEvents";
-const char* mbs::xmlCombineTimestamps     = "WhiteRabbitMergedEvents";
+const char *mbs::xmlCombineCompleteOnly   = "BuildCompleteEvents";
+const char *mbs::xmlCombineTimestamps     = "WhiteRabbitMergedEvents";
 
-const char* mbs::xmlCheckSubeventIds      = "CheckSubIds";
-const char* mbs::xmlEvidMask              = "EventIdMask";
-const char* mbs::xmlEvidTolerance         = "MaxDeltaEventId";
-const char* mbs::xmlSpecialTriggerLimit   = "SpecialTriggerLimit";
-const char* mbs::xmlCombinerRatesPrefix   = "CombinerRatesPrefix";
-const char* mbs::xmlTimesliceWindow       = "WhiteRabbitDeltaTime";
+const char *mbs::xmlCheckSubeventIds      = "CheckSubIds";
+const char *mbs::xmlEvidMask              = "EventIdMask";
+const char *mbs::xmlEvidTolerance         = "MaxDeltaEventId";
+const char *mbs::xmlSpecialTriggerLimit   = "SpecialTriggerLimit";
+const char *mbs::xmlCombinerRatesPrefix   = "CombinerRatesPrefix";
+const char *mbs::xmlTimesliceWindow       = "WhiteRabbitDeltaTime";
 
 
 
@@ -307,7 +307,7 @@ void mbs::SwapData(void* data, unsigned bytessize)
    }
 }
 
-const char* mbs::ServerKindToStr(int kind)
+const char *mbs::ServerKindToStr(int kind)
 {
    switch (kind) {
       case TransportServer: return "Transport";

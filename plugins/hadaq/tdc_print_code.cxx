@@ -31,7 +31,7 @@ enum TdcErrorsKind {
    tdcerr_ToT         = 0x0020
 };
 
-const char* TdcErrName(int cnt)
+const char *TdcErrName(int cnt)
 {
    switch (cnt) {
       case 0: return "header";
@@ -544,7 +544,7 @@ unsigned PrintTdc4DataPlain(unsigned ix, const std::vector<uint32_t> &data, unsi
 }
 
 
-const char* debug_name[32] = {
+const char *debug_name[32] = {
       "Number of valid triggers",
       "Number of release signals send",
       "Number of valid timing triggers received",
@@ -643,7 +643,7 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
    unsigned calibr[2] = { 0xffff, 0xffff };
    unsigned skip = skip_msgs_in_tdc;
    int ncalibr = 2;
-   const char* hdrkind = "";
+   const char *hdrkind = "";
    bool with_calibr = false, bad_fine = false;
 
    for (unsigned cnt = 0; cnt < len; cnt++, ix++) {

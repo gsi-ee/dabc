@@ -73,7 +73,7 @@ public:
   bool DestroyByOwnThread() override;
 
 
-  const char* ClassName () const override
+  const char *ClassName () const override
   {
     return "saftdabc::Device";
   }

@@ -15,7 +15,7 @@
 
 #include "dogma/DogmaFile.h"
 
-bool dogma::DogmaFile::OpenWrite(const char* fname, const char* opt)
+bool dogma::DogmaFile::OpenWrite(const char *fname, const char *opt)
 {
    if (isOpened())
       return false;
@@ -38,7 +38,7 @@ bool dogma::DogmaFile::OpenWrite(const char* fname, const char* opt)
    return true;
 }
 
-bool dogma::DogmaFile::OpenRead(const char* fname, const char* opt)
+bool dogma::DogmaFile::OpenRead(const char *fname, const char *opt)
 {
    if (isOpened()) return false;
 

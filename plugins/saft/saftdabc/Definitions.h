@@ -62,47 +62,47 @@ namespace saftdabc {
  * */
 
 /** name of the saft device, e.g. "baseboard"*/
-extern const char* xmlDeviceName;
+extern const char *xmlDeviceName;
 
 /** EXPLODER input name items that should be latched with timestamp*/
-extern const char* xmlInputs;
+extern const char *xmlInputs;
 
 /** WR event masks to snoop*/
-extern const char* xmlMasks;
+extern const char *xmlMasks;
 
 /** WR event ids to snoop*/
-extern const char* xmlEventIds;
+extern const char *xmlEventIds;
 
 /** WR event offsets to snoop*/
-extern const char* xmlOffsets;
+extern const char *xmlOffsets;
 
 /** WR event accept flags to snoop*/
-extern const char* xmlAcceptFlags;
+extern const char *xmlAcceptFlags;
 
 
 /** time out for polling mode*/
-extern const char* xmlTimeout;
+extern const char *xmlTimeout;
 
 /** switch between polling for data or callback mode*/
-extern const char* xmlCallbackMode;
+extern const char *xmlCallbackMode;
 
 /** switch between silent or verbose event receiver  mode*/
-extern const char* xmlSaftVerbose;
+extern const char *xmlSaftVerbose;
 
 /* full subevent id for timestamp data*/
-extern const char* xmlSaftSubeventId;
+extern const char *xmlSaftSubeventId;
 
 /* switch to fill single timing event for each (MBS or hadaq) Event container*/
-extern const char* xmlSaftSingleEvent;
+extern const char *xmlSaftSingleEvent;
 
 /* specify output event format: mbs, hadaq, or raw*/
-extern const char* xmlEventFormat;
+extern const char *xmlEventFormat;
 
 /** Command to invoke the glib/dbus mainloop*/
-extern const char* commandRunMainloop;
+extern const char *commandRunMainloop;
 
 /** Name of event rate parameter*/
-extern const char* parEventRate;
+extern const char *parEventRate;
 
 /** \brief The saftlib input event data structure.
  */

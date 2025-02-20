@@ -34,8 +34,8 @@ void http::Factory::Initialize()
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, "HttpServer", true)) {
 
-      const char* name = dabc::Xml::GetAttr(node, dabc::xmlNameAttr);
-      const char* thrdname = dabc::Xml::GetAttr(node, dabc::xmlThreadAttr);
+      const char *name = dabc::Xml::GetAttr(node, dabc::xmlNameAttr);
+      const char *thrdname = dabc::Xml::GetAttr(node, dabc::xmlThreadAttr);
 
 //      DOUT0("Found HttpServer node name = %s!!!", name ? name : "---");
 
@@ -54,8 +54,8 @@ void http::Factory::Initialize()
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, "FastCgiServer", true)) {
 
-      const char* name = dabc::Xml::GetAttr(node, dabc::xmlNameAttr);
-      const char* thrdname = dabc::Xml::GetAttr(node, dabc::xmlThreadAttr);
+      const char *name = dabc::Xml::GetAttr(node, dabc::xmlNameAttr);
+      const char *thrdname = dabc::Xml::GetAttr(node, dabc::xmlThreadAttr);
 
 //      DOUT0("Found FastCgiServer node name = %s!!!", name ? name : "---");
 

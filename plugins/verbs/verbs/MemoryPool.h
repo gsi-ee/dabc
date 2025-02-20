@@ -41,11 +41,11 @@ namespace verbs {
 
       public:
     	  MemoryPool(ContextRef ctx,
-                     const char* name,
-                     int32_t number,
-                     int64_t bufsize,
-                     bool isud,
-                     bool without_wr = false);
+                   const char *name,
+                   int32_t number,
+                   int64_t bufsize,
+                   bool isud,
+                   bool without_wr = false);
 
          virtual ~MemoryPool();
 

@@ -178,7 +178,7 @@ verbs::Context::~Context()
 
 
 
-bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int ibport)
+bool verbs::Context::OpenVerbs(bool withmulticast, const char *devicename, int ibport)
 {
    DOUT1("Call  verbs::Context::OpenVerbs multicast=%s", DBOOL(withmulticast));
 
@@ -290,7 +290,7 @@ bool verbs::Context::CloseVerbs()
 }
 
 
-bool verbs::ContextRef::OpenVerbs(bool withmulticast, const char* devicename, int ibport)
+bool verbs::ContextRef::OpenVerbs(bool withmulticast, const char *devicename, int ibport)
 {
    if (GetObject()) return true;
 

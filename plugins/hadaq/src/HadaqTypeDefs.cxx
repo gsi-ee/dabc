@@ -20,27 +20,27 @@
 #include <ctime>
 
 
-const char* hadaq::protocolHld = "hld";
+const char *hadaq::protocolHld = "hld";
 
 // Command names used in combiner module:
-//const char* hadaq::comStartServer       = "StartServer";
-//const char* hadaq::comStopServer        = "StopServer";
-//const char* hadaq::comStartFile         = "StartFile";
-//const char* hadaq::comStopFile          = "StopFile";
+//const char *hadaq::comStartServer       = "StartServer";
+//const char *hadaq::comStopServer        = "StopServer";
+//const char *hadaq::comStartFile         = "StartFile";
+//const char *hadaq::comStopFile          = "StopFile";
 
 
 // tag names for xml config file:
-const char* hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
+const char *hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
 
-//const char* hadaq::xmlServerKind        = "HadaqServerKind";
+//const char *hadaq::xmlServerKind        = "HadaqServerKind";
 
-//const char* hadaq::xmlServerScale       = "HadaqServerScale";
-//const char* hadaq::xmlServerLimit       = "HadaqServerLimit";
+//const char *hadaq::xmlServerScale       = "HadaqServerScale";
+//const char *hadaq::xmlServerLimit       = "HadaqServerLimit";
 
-const char* hadaq::xmlHadaqTrignumRange   = "TriggerNumRange";
-const char* hadaq::xmlHadaqTriggerTollerance = "TriggerTollerance";
-const char* hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";
-const char* hadaq::xmlEvtbuildTimeout     = "BuildDropTimeout";
-const char* hadaq::xmlMaxNumBuildEvt      = "MaxNumBuildEvt";
-const char* hadaq::xmlHadesTriggerType    = "HadesTriggerType";
-const char* hadaq::xmlHadesTriggerHUB     = "HadesTriggerHUB";
+const char *hadaq::xmlHadaqTrignumRange   = "TriggerNumRange";
+const char *hadaq::xmlHadaqTriggerTollerance = "TriggerTollerance";
+const char *hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";
+const char *hadaq::xmlEvtbuildTimeout     = "BuildDropTimeout";
+const char *hadaq::xmlMaxNumBuildEvt      = "MaxNumBuildEvt";
+const char *hadaq::xmlHadesTriggerType    = "HadesTriggerType";
+const char *hadaq::xmlHadesTriggerHUB     = "HadesTriggerHUB";

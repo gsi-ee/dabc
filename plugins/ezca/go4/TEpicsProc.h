@@ -40,15 +40,15 @@ class TEpicsProc : public TGo4EventProcessor {
       UInt_t fUTimeSeconds;
       char fcTimeString[200];
 
-      const char* GetUpdateTimeString();
+      const char *GetUpdateTimeString();
 
-      VariableHist* FindVariable(const char* name);
+      VariableHist* FindVariable(const char *name);
 
-      VariableHist* CreateHist(const char* varname);
+      VariableHist* CreateHist(const char *varname);
 
       TGraph* MakeTimeGraph(const TString& name, const TString& dir);
 
-      void UpdateHist(VariableHist* hst, double val, const char* varname);
+      void UpdateHist(VariableHist* hst, double val, const char *varname);
 
       void UpdateTrending(TH1* histo, Double_t val, time_t time);
 
@@ -59,7 +59,7 @@ class TEpicsProc : public TGo4EventProcessor {
 
    public:
       TEpicsProc() ;
-      TEpicsProc(const char* name);
+      TEpicsProc(const char *name);
       virtual ~TEpicsProc() ;
 
       Bool_t BuildEvent(TGo4EventElement*); // event processing function

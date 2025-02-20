@@ -3,7 +3,7 @@
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI
 //-----------------------------------------------------------------------
-// Copyright (C) 2000- GSI Helmholtzzentrum für Schwerionenforschung GmbH
+// Copyright (C) 2000- GSI Helmholtzzentrum fï¿½r Schwerionenforschung GmbH
 //                     Planckstr. 1, 64291 Darmstadt, Germany
 // Contact:            http://go4.gsi.de
 //-----------------------------------------------------------------------
@@ -78,7 +78,7 @@ class TSaftProc : public TGo4EventProcessor {
 
    public:
       TSaftProc() ;
-      TSaftProc(const char* name);
+      TSaftProc(const char *name);
       virtual ~TSaftProc() ;
 
       Bool_t BuildEvent(TGo4EventElement*); // event processing function

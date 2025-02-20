@@ -205,11 +205,11 @@ void verbs::ComplQueue::AcknoledgeEvents()
    }
 }
 
-const char* verbs::ComplQueue::GetStrError(int err)
+const char *verbs::ComplQueue::GetStrError(int err)
 {
    struct discr_t {
        int code;
-       const char* name;
+       const char *name;
        discr_t(int _code, const char * _name) : code(_code), name(_name) {}
    };
 

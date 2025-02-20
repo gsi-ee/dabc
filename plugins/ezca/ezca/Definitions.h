@@ -31,40 +31,40 @@ namespace ezca {
  * */
 
    /* Name of record containing the ioc identifier name- TODO Do we need this?*/
-   extern const char* xmlEpicsName;
+   extern const char *xmlEpicsName;
 
    /* Name of record containing the update flag*/
-   extern const char* xmlUpdateFlagRecord;
+   extern const char *xmlUpdateFlagRecord;
 
    /* Name of record containing the id number*/
-   extern const char* xmlEventIDRecord;
+   extern const char *xmlEventIDRecord;
 
    /* Name prefix of longword records, will be completed by number*/
-   extern const char* xmlNameLongRecords;
+   extern const char *xmlNameLongRecords;
 
    /* Name prefix of double records, will be completed by number*/
-   extern const char* xmlNameDoubleRecords;
+   extern const char *xmlNameDoubleRecords;
 
    /* Timeout for update polling loop*/
-   extern const char* xmlTimeout;
+   extern const char *xmlTimeout;
 
    /* full subevent id for epics data*/
-   extern const char* xmlEpicsSubeventId;
+   extern const char *xmlEpicsSubeventId;
 
    /** timeout for ezca operation */
-   extern const char* xmlEzcaTimeout;
+   extern const char *xmlEzcaTimeout;
 
    /** retry counter for ezca operation */
-   extern const char* xmlEzcaRetryCount;
+   extern const char *xmlEzcaRetryCount;
 
    /** retry counter for ezca operation */
-   extern const char* xmlEzcaDebug;
+   extern const char *xmlEzcaDebug;
 
    /** indicates if error should be automatically printed */
-   extern const char* xmlEzcaAutoError;
+   extern const char *xmlEzcaAutoError;
 
-   extern const char* xmlCommandReceiver;
-   extern const char* nameUpdateCommand;
+   extern const char *xmlCommandReceiver;
+   extern const char *nameUpdateCommand;
 
 
 }

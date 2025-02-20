@@ -90,11 +90,11 @@ namespace verbs {
 
          bool IsFastModus() const { return fFastModus > 0; }
 
-         const char* ClassName() const override { return verbs::typeThread; }
+         const char *ClassName() const override { return verbs::typeThread; }
 
          bool CompatibleClass(const std::string &clname) const override;
 
-         static const char* StatusStr(int code);
+         static const char *StatusStr(int code);
 
       protected:
 

@@ -96,7 +96,7 @@ public:
 
   void AppendTextWindow (const QString& text);
 
-  void AppendTextWindow (const char* txt)
+  void AppendTextWindow (const char *txt)
          {
            QString buf (txt);
            AppendTextWindow (buf);
@@ -220,7 +220,7 @@ protected:
   /** execute (rdofi) command in shell. Return value is output of command*/
   QString ExecuteMuppetCmd (QString& command,  int timeout=5000);
 
- 
+
 
   void DebugTextWindow (const char*txt)
   {

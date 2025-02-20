@@ -42,7 +42,7 @@ rfio::FileInterface::~FileInterface()
 }
 
 
-dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const char* mode, const char* opt)
+dabc::FileInterface::Handle rfio::FileInterface::fopen(const char *fname, const char *mode, const char *opt)
 {
    // clear possible parameters
    if ((!opt || (*opt == 0)) && !fRemote) {
@@ -147,14 +147,14 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 }
 
 
-int rfio::FileInterface::GetFileIntPar(Handle, const char* parname)
+int rfio::FileInterface::GetFileIntPar(Handle, const char *parname)
 {
    if (strcmp(parname, "RFIO") == 0) return 8; // return RFIO version number
    if (fRemote && strcmp(parname, "DataMoverIndx") == 0) return fDataMoverIndx;
    return 0;
 }
 
-bool rfio::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf, int sbuflen)
+bool rfio::FileInterface::GetFileStrPar(Handle, const char *parname, char* sbuf, int sbuflen)
 {
    if (fRemote && strcmp(parname, "DataMoverName") == 0)
       if (strlen(fDataMoverName) < (unsigned) sbuflen) {
@@ -220,7 +220,7 @@ bool rfio::FileInterface::fflush(Handle)
    // return !f ? false : ::fflush((FILE*)f) == 0;
 }
 
-dabc::Object* rfio::FileInterface::fmatch(const char* fmask, bool select_files)
+dabc::Object* rfio::FileInterface::fmatch(const char *fmask, bool select_files)
 {
    (void) fmask;
    (void) select_files;
