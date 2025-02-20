@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) {
 
-   const char* filename = "file.hld";
+   const char *filename = "file.hld";
    if (argc>1) filename = argv[1];
 
    hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect(filename);

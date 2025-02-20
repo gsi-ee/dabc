@@ -63,7 +63,7 @@ struct LevelItem {
    {
       int max = 10;
       for (unsigned n=0;n<num_items;n++) {
-         const char* name = item_name(my_items[n]);
+         const char *name = item_name(my_items[n]);
          int len = strlen(name);
          if (len>max) max = len;
       }
@@ -109,7 +109,7 @@ struct LevelItem {
       my_items = new ITEM* [num_items+1];
 
       for (unsigned n=0;n<num_items-1; n++) {
-         const char* objname = h.GetChild(n).GetName();
+         const char *objname = h.GetChild(n).GetName();
          my_items[n] = new_item(objname, objname);
       }
 
@@ -158,7 +158,7 @@ struct LevelItem {
       return current_item_index() + 1 == (int) num_items;
    }
 
-   const char* curr_name()
+   const char *curr_name()
    {
       return item_name(current_item(my_menu));
    }

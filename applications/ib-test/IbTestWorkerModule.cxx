@@ -2406,7 +2406,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    }
 
 
-   const char* pattern_name = "---";
+   const char *pattern_name = "---";
    switch (pattern) {
       case 1:
          pattern_name = "ALL-TO-ALL (shift 1)";

@@ -125,8 +125,8 @@ class IbTestClusterRouting {
       int NumSpines() { return fNumSpines; }
       int NumLeafs() { return NumSwitches() - NumSpines(); }
 
-      const char* NodeName(int nodeid) const;
-      const char* SwitchName(int id) const;
+      const char *NodeName(int nodeid) const;
+      const char *SwitchName(int id) const;
 
       /** Add routes which were optimized during scanning */
       void ReinjectOptimizedRoutes();

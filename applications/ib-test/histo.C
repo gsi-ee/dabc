@@ -1,4 +1,4 @@
-void draw_histo(const char* name, const char* title, const char* fname)
+void draw_histo(const char *name, const char *title, const char *fname)
 {
    std::ifstream f(fname);
 

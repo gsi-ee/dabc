@@ -1027,7 +1027,7 @@ extern "C" void RunPoolTest()
       DOUT0("Result of insertion is: %s", hdr.AsStdString().c_str());
 
 
-      const char* mystr = "This is example of external buffer";
+      const char *mystr = "This is example of external buffer";
 
       buf1 = dabc::Buffer::CreateBuffer(mystr, strlen(mystr), false);
 

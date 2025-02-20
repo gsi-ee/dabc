@@ -409,7 +409,7 @@ void IbTestClusterRouting::GenerateFullTopology(int switchsize, bool manylids)
 }
 
 
-const char* IbTestClusterRouting::NodeName(int nodeid) const
+const char *IbTestClusterRouting::NodeName(int nodeid) const
 {
    auto iter = fNodes.begin();
    while (iter != fNodes.end()) {
@@ -420,7 +420,7 @@ const char* IbTestClusterRouting::NodeName(int nodeid) const
    return "---";
 }
 
-const char* IbTestClusterRouting::SwitchName(int id) const
+const char *IbTestClusterRouting::SwitchName(int id) const
 {
    auto iter = fSwitchNames.begin();
    while (iter != fSwitchNames.end()) {
@@ -735,8 +735,8 @@ bool IbTestClusterRouting::MatchNodes(IbTestClusterRouting& other)
    int n2 = 0;
 
    while ((n1<NumNodes()) && (n2<other.NumNodes())) {
-      const char* n1name = NodeName(n1);
-      const char* n2name = other.NodeName(n2);
+      const char *n1name = NodeName(n1);
+      const char *n2name = other.NodeName(n2);
       if (!n1name || !n2name) { EOUT("Cannot define node name - FAILURE"); return false; }
 
       if (strcmp(n1name, n2name) == 0) {
@@ -998,7 +998,7 @@ void IbTestClusterRouting::FillInteractiveNodes(IbTestIntColumn& column) const
    int cnt = 0;
 
    for (int n=0; n<NumNodes(); n++) {
-      const char* name = NodeName(n);
+      const char *name = NodeName(n);
       if (!name) continue;
 
       if (strstr(name,"node")==name)

@@ -80,17 +80,17 @@ namespace dabc {
          typedef void* ExternalFunction();
 
          // these are states in default state machine
-         static const char* stHalted()  { return "Halted"; }
-         static const char* stReady()   { return "Ready"; }
-         static const char* stRunning() { return "Running"; }
-         static const char* stFailure() { return "Failure"; }
-         static const char* stTransition() { return "Transition"; }
+         static const char *stHalted()  { return "Halted"; }
+         static const char *stReady()   { return "Ready"; }
+         static const char *stRunning() { return "Running"; }
+         static const char *stFailure() { return "Failure"; }
+         static const char *stTransition() { return "Transition"; }
 
          // these are commands provided by state machine
-         static const char* stcmdDoConfigure() { return "DoConfigure"; }
-         static const char* stcmdDoStart() { return "DoStart"; }
-         static const char* stcmdDoStop()  { return "DoStop"; }
-         static const char* stcmdDoHalt()  { return "DoHalt"; }
+         static const char *stcmdDoConfigure() { return "DoConfigure"; }
+         static const char *stcmdDoStart() { return "DoStart"; }
+         static const char *stcmdDoStop()  { return "DoStop"; }
+         static const char *stcmdDoHalt()  { return "DoHalt"; }
 
       private:
 
@@ -159,13 +159,13 @@ namespace dabc {
          Application(const char *classname = nullptr);
          virtual ~Application();
 
-         static const char* StateParName() { return "State"; }
+         static const char *StateParName() { return "State"; }
 
          std::string GetState() const { return Par(StateParName()).Value().AsStr(); }
 
          bool Find(ConfigIO &cfg) override;
 
-         const char* ClassName() const override { return fAppClass.c_str(); }
+         const char *ClassName() const override { return fAppClass.c_str(); }
    };
 
    // ________________________________________________________________________________

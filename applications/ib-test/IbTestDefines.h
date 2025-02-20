@@ -132,7 +132,8 @@ class IbTestMatrix {
            }
       }
 
-      int CountEqual(T value) {
+      int CountEqual(T value)
+      {
          int cnt = 0;
          for (int row=0;row<nrow();row++)
            for (int col=0;col<ncol();col++)
@@ -140,7 +141,8 @@ class IbTestMatrix {
          return cnt;
       }
 
-      void PrintMatrix(const char* format = "%5d") {
+      void PrintMatrix(const char *format = "%5d")
+      {
         for (int row=0;row<nrow();row++) {
           for (int col=0;col<ncol();col++)
             printf(format,fMatrix[row][col]);
