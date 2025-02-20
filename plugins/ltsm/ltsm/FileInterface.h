@@ -142,7 +142,7 @@ namespace ltsm {
 
 	bool fseek(Handle f, long int offset, bool realtive = true) override;
 
-	dabc::Object* fmatch(const char *fmask,
+	dabc::Object *fmatch(const char *fmask,
 		bool select_files = true) override;
 
 	int GetFileIntPar(Handle h, const char *parname) override;

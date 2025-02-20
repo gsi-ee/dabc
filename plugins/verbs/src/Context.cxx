@@ -74,7 +74,7 @@ void verbs::PoolRegistry::ObjectCleanup()
    dabc::Object::ObjectCleanup();
 }
 
-void verbs::PoolRegistry::ObjectDestroyed(dabc::Object* obj)
+void verbs::PoolRegistry::ObjectDestroyed(dabc::Object *obj)
 {
    if (obj == fPool) {
       EOUT("!!!!!!!!! Hard error - memory pool %s destroyed behind the scene", fPool->GetName());

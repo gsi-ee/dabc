@@ -159,7 +159,7 @@ void dabc::Reference::Destroy() throw()
 }
 
 
-dabc::Object* dabc::Reference::GetParent() const
+dabc::Object *dabc::Reference::GetParent() const
 {
    return GetObject() ? GetObject()->GetParent() : nullptr;
 }
@@ -180,7 +180,7 @@ bool dabc::Reference::IsName(const char *name) const
    return GetObject()->IsName(name);
 }
 
-dabc::Mutex* dabc::Reference::ObjectMutex() const
+dabc::Mutex *dabc::Reference::ObjectMutex() const
 {
    return GetObject() ? GetObject()->ObjectMutex() : nullptr;
 }

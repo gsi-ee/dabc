@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
       TString dirname;
 
       for (unsigned n=1;n<iter.level();n++) {
-         dabc::Object* prnt = iter.parent(n);
+         dabc::Object *prnt = iter.parent(n);
          if (!prnt) break;
 
          if (n>1) dirname.Append("/");

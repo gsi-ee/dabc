@@ -674,7 +674,7 @@ unsigned dabc::Object::NumChilds() const
    return fObjectChilds ? fObjectChilds->GetSize() : 0;
 }
 
-dabc::Object* dabc::Object::GetChild(unsigned n) const
+dabc::Object *dabc::Object::GetChild(unsigned n) const
 {
    LockGuard guard(fObjectMutex);
 
@@ -727,7 +727,7 @@ bool dabc::Object::GetAllChildRef(ReferencesVector* vect) const
 }
 
 
-dabc::Object* dabc::Object::FindChild(const char *name) const
+dabc::Object *dabc::Object::FindChild(const char *name) const
 {
    return FindChildRef(name, false)();
 }

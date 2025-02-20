@@ -57,7 +57,7 @@ bool dabc::FileInterface::mkdir(const char *path)
 }
 
 
-dabc::Object* dabc::FileInterface::fmatch(const char *fmask, bool select_files)
+dabc::Object *dabc::FileInterface::fmatch(const char *fmask, bool select_files)
 {
    if (!fmask || (*fmask == 0)) return nullptr;
 

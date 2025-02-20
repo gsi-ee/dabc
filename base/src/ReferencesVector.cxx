@@ -159,11 +159,13 @@ dabc::Reference dabc::ReferencesVector::TakeLast()
 
 bool dabc::ReferencesVector::Clear(bool isowner) throw()
 {
-   for (unsigned n=0;n<fVector->size();n++) {
+   for (unsigned n = 0; n < fVector->size(); n++) {
       dabc::Reference ref;
       ref << fVector->at(n);
-      if (isowner) ref.Destroy();
-              else ref.Release();
+      if (isowner)
+         ref.Destroy();
+      else
+         ref.Release();
    }
 
    fVector->clear();
@@ -171,10 +173,10 @@ bool dabc::ReferencesVector::Clear(bool isowner) throw()
    return true;
 }
 
-dabc::Object* dabc::ReferencesVector::FindObject(const char *name, int len) const
+dabc::Object *dabc::ReferencesVector::FindObject(const char *name, int len) const
 {
    for (unsigned n = 0; n < fVector->size(); n++) {
-      dabc::Object* obj = fVector->at(n).GetObject();
+      dabc::Object *obj = fVector->at(n).GetObject();
       if (obj && obj->IsName(name, len)) return obj;
    }
    return nullptr;

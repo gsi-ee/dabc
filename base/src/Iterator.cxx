@@ -27,7 +27,7 @@ dabc::Iterator::Iterator(Reference topfolder, int maxlevel) :
 {
 }
 
-dabc::Iterator::Iterator(Object* topfolder, int maxlevel) :
+dabc::Iterator::Iterator(Object *topfolder, int maxlevel) :
    fTop(topfolder),
    fCurrent(),
    fIndexes(),
@@ -41,7 +41,7 @@ dabc::Iterator::~Iterator()
 {
 }
 
-dabc::Object* dabc::Iterator::next(bool goinside)
+dabc::Object *dabc::Iterator::next(bool goinside)
 {
    if (!fCurrent()) {
       fCurrent = fTop;
@@ -88,9 +88,9 @@ dabc::Object* dabc::Iterator::next(bool goinside)
    return fCurrent();
 }
 
-dabc::Object* dabc::Iterator::parent(unsigned lvl)
+dabc::Object *dabc::Iterator::parent(unsigned lvl)
 {
-   return (lvl<fFolders.GetSize()) ? fFolders[lvl].GetObject() : nullptr;
+   return (lvl < fFolders.GetSize()) ? fFolders[lvl].GetObject() : nullptr;
 }
 
 

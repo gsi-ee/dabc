@@ -407,7 +407,7 @@ bool ltsm::FileInterface::fflush(Handle )
    // return f == 0 ? false : ::fflush((FILE*)f) == 0;
 }
 
-dabc::Object* ltsm::FileInterface::fmatch(const char *, bool )
+dabc::Object *ltsm::FileInterface::fmatch(const char *, bool )
 {
    return nullptr;
 }

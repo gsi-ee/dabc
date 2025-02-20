@@ -220,7 +220,7 @@ bool rfio::FileInterface::fflush(Handle)
    // return !f ? false : ::fflush((FILE*)f) == 0;
 }
 
-dabc::Object* rfio::FileInterface::fmatch(const char *fmask, bool select_files)
+dabc::Object *rfio::FileInterface::fmatch(const char *fmask, bool select_files)
 {
    (void) fmask;
    (void) select_files;

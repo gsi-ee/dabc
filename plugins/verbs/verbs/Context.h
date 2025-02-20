@@ -95,10 +95,10 @@ namespace verbs {
 
          int GetGidIndex(ibv_gid* lookgid);
 
-         struct ibv_ah* CreateAH(uint32_t dest_lid);
+         struct ibv_ah *CreateAH(uint32_t dest_lid);
 
-         int ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid);
-         struct ibv_ah* CreateMAH(ibv_gid& mgid, uint32_t mlid);
+         int ManageMulticast(int action, ibv_gid &mgid, uint16_t &mlid);
+         struct ibv_ah *CreateMAH(ibv_gid& mgid, uint32_t mlid);
    };
 
    // ________________________________________________________________________
@@ -131,7 +131,7 @@ namespace verbs {
 
          inline uint32_t GetLkey(unsigned id) { return id < f_nummr ? f_mr[id]->lkey : 0; }
 
-         void ObjectDestroyed(dabc::Object* obj) override;
+         void ObjectDestroyed(dabc::Object *obj) override;
 
          void SyncMRStructure();
 
