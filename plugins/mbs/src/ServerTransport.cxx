@@ -433,7 +433,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       dabc::SocketThread::SetNoDelaySocket(fd);
 
-      ServerOutputAddon *addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
+      auto addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
 
       addon->FillServInfo(fBufSize, true);
 

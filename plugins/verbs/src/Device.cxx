@@ -179,7 +179,7 @@ void verbs::ProtocolAddon::VerbsProcessSendCompl(uint32_t bufid)
       return;
    }
 
-   const char* connid = (const char*) fPool->GetSendBufferLocation(bufid);
+   const char *connid = (const char*) fPool->GetSendBufferLocation(bufid);
 
    if (req.GetConnId().compare(connid) != 0) {
       EOUT("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str());
@@ -189,7 +189,7 @@ void verbs::ProtocolAddon::VerbsProcessSendCompl(uint32_t bufid)
    // therefore we can declare connection as done
 
 
-   VerbsNetworkInetrface* addon = new VerbsNetworkInetrface(fIbContext, TakeQP());
+   auto addon = new VerbsNetworkInetrface(fIbContext, TakeQP());
 
    dabc::NetworkTransport::Make(req, addon, fPortThrd.GetName());
 
@@ -207,7 +207,7 @@ void verbs::ProtocolAddon::VerbsProcessRecvCompl(uint32_t bufid)
 
    dabc::ConnectionRequestFull req = dabc::mgr.FindPar(fReqItem);
 
-   const char* connid = (const char*) fPool->GetBufferLocation(bufid);
+   const char *connid = (const char *) fPool->GetBufferLocation(bufid);
 
    if (req.GetConnId().compare(connid) != 0) {
       EOUT("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str());
@@ -215,7 +215,7 @@ void verbs::ProtocolAddon::VerbsProcessRecvCompl(uint32_t bufid)
 
    // from here we knew, that client is ready and we also can complete connection
 
-   VerbsNetworkInetrface* addon = new VerbsNetworkInetrface(fIbContext, TakeQP());
+   auto addon = new VerbsNetworkInetrface(fIbContext, TakeQP());
 
    dabc::NetworkTransport::Make(req, addon, fPortThrd.GetName());
 
@@ -257,7 +257,7 @@ verbs::Device::~Device()
    DOUT5("verbs::Device::~Device()");
 }
 
-verbs::QueuePair* verbs::Device::CreatePortQP(const std::string &thrd_name, dabc::Reference port, int conn_type, dabc::ThreadRef& thrd)
+verbs::QueuePair *verbs::Device::CreatePortQP(const std::string &thrd_name, dabc::Reference port, int conn_type, dabc::ThreadRef& thrd)
 {
    ibv_qp_type qp_type = IBV_QPT_RC;
 
@@ -273,15 +273,16 @@ verbs::QueuePair* verbs::Device::CreatePortQP(const std::string &thrd_name, dabc
 
    dabc::NetworkTransport::GetRequiredQueuesSizes(port, input_size, output_size);
 
-   ComplQueue* port_cq = thrd_ptr->MakeCQ();
+   auto port_cq = thrd_ptr->MakeCQ();
 
    int num_send_seg = fIbContext.max_sge() - 1;
-   if (conn_type==IBV_QPT_UD) num_send_seg = fIbContext.max_sge() - 5; // I do not now why, but otherwise it fails
+   if (conn_type==IBV_QPT_UD)
+      num_send_seg = fIbContext.max_sge() - 5; // I do not now why, but otherwise it fails
    if (num_send_seg<2) num_send_seg = 2;
 
-   verbs::QueuePair* port_qp = new QueuePair(IbContext(), qp_type,
-                                   port_cq, output_size + 1, num_send_seg,
-                                   port_cq, input_size + 1, 2);
+   auto port_qp = new QueuePair(IbContext(), qp_type,
+                                port_cq, output_size + 1, num_send_seg,
+                                port_cq, input_size + 1, 2);
 
    if (!port_qp->qp()) {
       delete port_qp;

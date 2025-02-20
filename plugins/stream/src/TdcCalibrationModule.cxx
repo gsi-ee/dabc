@@ -498,7 +498,7 @@ bool stream::TdcCalibrationModule::retransmit()
                unsigned numtdc = 0;
                for (unsigned indx = 0; indx < ids.size(); ++indx) {
                   if (MatchTdcId(ids[indx])) {
-                     hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(fTrbProc, ids[indx], fNumCh, fEdges);
+                     auto tdc = new hadaq::TdcProcessor(fTrbProc, ids[indx], fNumCh, fEdges);
                      numtdc++;
                      ConfigureNewTDC(tdc);
                   }
@@ -588,7 +588,7 @@ bool stream::TdcCalibrationModule::retransmit()
                   unsigned numtdc = 0;
                   for (unsigned indx = 0; indx < newids.size(); ++indx) {
                      if (MatchTdcId(newids[indx])) {
-                        hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(fTrbProc, newids[indx], fNumCh, fEdges);
+                        auto tdc = new hadaq::TdcProcessor(fTrbProc, newids[indx], fNumCh, fEdges);
                         numtdc++;
                         ConfigureNewTDC(tdc);
                      }
