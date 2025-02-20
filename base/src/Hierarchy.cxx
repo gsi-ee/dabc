@@ -96,7 +96,7 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
          fArr.Allocate((int)storenum > hlimit ? (int) storenum : hlimit);
 
       for (uint32_t n=0;n<storenum;n++) {
-         RecordFieldsMap* fields = new RecordFieldsMap;
+         auto fields = new RecordFieldsMap;
          fields->Stream(s);
 
          if (fArr.Full()) fArr.PopOnly();
@@ -553,15 +553,16 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    return fChildsChanged || fNodeChanged;
 }
 
-dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::string &name, int indx)
+dabc::HierarchyContainer *dabc::HierarchyContainer::CreateChildAt(const std::string &name, int indx)
 {
    while ((indx>=0) && (indx<(int) NumChilds())) {
       dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
-      if (child->IsName(name.c_str())) return child;
+      if (child->IsName(name.c_str()))
+         return child;
       RemoveChildAt(indx, true);
    }
 
-   dabc::HierarchyContainer* res = new dabc::HierarchyContainer(name);
+   auto res = new dabc::HierarchyContainer(name);
    AddChild(res);
 
    //fNamesChanged = true;
@@ -594,7 +595,7 @@ void dabc::HierarchyContainer::BuildObjectsHierarchy(const Reference& top)
 
       if (chlds[n].GetObject()->IsHidden()) continue;
 
-      HierarchyContainer* chld = new HierarchyContainer(chlds[n].GetName());
+      auto chld = new HierarchyContainer(chlds[n].GetName());
       AddChild(chld);
       chld->BuildObjectsHierarchy(chlds[n]);
    }
@@ -936,7 +937,7 @@ void dabc::Hierarchy::Create(const std::string &name, bool withmutex)
 {
    Release();
 
-   HierarchyContainer* cont = new HierarchyContainer(name);
+   auto cont = new HierarchyContainer(name);
    if (withmutex) cont->CreateHMutex();
    SetObject(cont);
 }

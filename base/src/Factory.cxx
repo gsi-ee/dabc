@@ -71,10 +71,11 @@ dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::s
          return nullptr;
       }
 
-      dabc::InputTransport* tr = new dabc::InputTransport(cmd, portref, inp, true);
+      auto tr = new dabc::InputTransport(cmd, portref, inp, true);
 
       dabc::Url url(typ);
-      if (url.HasOption("reconnect")) tr->EnableReconnect(typ);
+      if (url.HasOption("reconnect"))
+         tr->EnableReconnect(typ);
 
       return tr;
    }
