@@ -88,7 +88,7 @@ bool dabc::ReferencesVector::AddAt(Reference& ref, unsigned pos) throw()
 }
 
 
-bool dabc::ReferencesVector::Remove(Object* obj) throw()
+bool dabc::ReferencesVector::Remove(Object *obj) throw()
 {
    if (!obj || (GetSize() == 0)) return false;
 
@@ -134,7 +134,7 @@ bool dabc::ReferencesVector::ExtractRef(unsigned n, Reference& ref)
    return true;
 }
 
-bool dabc::ReferencesVector::ExtractRef(Object* obj, Reference& ref)
+bool dabc::ReferencesVector::ExtractRef(Object *obj, Reference& ref)
 {
    for (unsigned n=0;n<GetSize();n++)
       if (fVector->at(n).GetObject() == obj)
@@ -182,7 +182,7 @@ dabc::Object *dabc::ReferencesVector::FindObject(const char *name, int len) cons
    return nullptr;
 }
 
-bool dabc::ReferencesVector::HasObject(Object* ptr)
+bool dabc::ReferencesVector::HasObject(Object *ptr)
 {
    if (!ptr) return false;
    for (unsigned n = 0; n < fVector->size(); n++)
