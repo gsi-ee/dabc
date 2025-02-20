@@ -104,7 +104,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdConnectionManagerHandle, "CmdConnectionManager")
 
-      static const char* ReqArg() { return "#REQ"; }
+      static const char *ReqArg() { return "#REQ"; }
 
       CmdConnectionManagerHandle(ConnectionRequestFull& req);
 

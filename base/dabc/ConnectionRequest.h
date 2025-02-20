@@ -145,11 +145,11 @@ namespace dabc {
          }
 
       public:
-         const char* ClassName() const override { return "ConnectionObject"; }
+         const char *ClassName() const override { return "ConnectionObject"; }
 
-         static const char* ObjectName() { return "Connection"; }
+         static const char *ObjectName() { return "Connection"; }
 
-         static const char* GetStateName(EState state);
+         static const char *GetStateName(EState state);
    };
 
 
@@ -247,7 +247,7 @@ namespace dabc {
       void SetAllowedField(const std::string &name = "");
 
       /** Indicates that only connection kind can be assigned to the reference */
-      const char* ParReferenceKind() override { return "connection"; }
+      const char *ParReferenceKind() override { return "connection"; }
 
    };
 

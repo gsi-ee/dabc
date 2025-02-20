@@ -285,7 +285,7 @@ std::string dabc::DateTime::OnlyTimeAsString(const char *separ, bool localtime) 
    return std::string(sbuf);
 }
 
-bool dabc::DateTime::SetOnlyDate(const char* sbuf)
+bool dabc::DateTime::SetOnlyDate(const char *sbuf)
 {
    if (!sbuf || (strlen(sbuf) != 10)) return false;
 
@@ -305,7 +305,7 @@ bool dabc::DateTime::SetOnlyDate(const char* sbuf)
    return true;
 }
 
-bool dabc::DateTime::SetOnlyTime(const char* sbuf)
+bool dabc::DateTime::SetOnlyTime(const char *sbuf)
 {
    if (!sbuf || (strlen(sbuf) != 8)) return false;
 

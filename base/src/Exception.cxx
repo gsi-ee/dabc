@@ -17,12 +17,12 @@
 
 #include "dabc/logging.h"
 
-dabc::Exception::Exception() throw() : 
+dabc::Exception::Exception() throw() :
    std::exception(),
    fKind(ex_None),
    fWhat(),
    fItem()
-{ 
+{
    DOUT2("Generic exception");
 }
 
@@ -46,11 +46,11 @@ dabc::Exception::Exception(ExceptionKind _kind, const std::string &info, const s
 }
 
 
-dabc::Exception::~Exception() throw() 
+dabc::Exception::~Exception() throw()
 {
 }
 
-const char* dabc::Exception::what() const throw()
+const char *dabc::Exception::what() const throw()
 {
    switch(kind()) {
       case ex_None:    return "undefined";

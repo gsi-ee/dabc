@@ -65,7 +65,7 @@ namespace dabc {
 
          virtual Transport* CreateTransport(Command /* cmd */, const Reference & /* port */) { return nullptr; }
 
-         const char* ClassName() const override { return dabc::typeDevice; }
+         const char *ClassName() const override { return dabc::typeDevice; }
    };
 
 

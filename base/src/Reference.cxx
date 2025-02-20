@@ -164,17 +164,17 @@ dabc::Object* dabc::Reference::GetParent() const
    return GetObject() ? GetObject()->GetParent() : nullptr;
 }
 
-const char* dabc::Reference::GetName() const
+const char *dabc::Reference::GetName() const
 {
    return GetObject() ? GetObject()->GetName() : "---";
 }
 
-const char* dabc::Reference::ClassName() const
+const char *dabc::Reference::ClassName() const
 {
    return GetObject() ? GetObject()->ClassName() : "---";
 }
 
-bool dabc::Reference::IsName(const char* name) const
+bool dabc::Reference::IsName(const char *name) const
 {
    if ((name == nullptr) || (*name == 0) || (GetObject() == nullptr)) return false;
    return GetObject()->IsName(name);
@@ -206,12 +206,12 @@ bool dabc::Reference::GetAllChildRef(ReferencesVector* vect) const
    return GetObject()->GetAllChildRef(vect);
 }
 
-dabc::Reference dabc::Reference::FindChild(const char* name) const
+dabc::Reference dabc::Reference::FindChild(const char *name) const
 {
    return GetObject() ? GetObject()->FindChildRef(name) : Reference();
 }
 
-bool dabc::Reference::RemoveChild(const char* name, bool cleanup)
+bool dabc::Reference::RemoveChild(const char *name, bool cleanup)
 {
    if (!GetObject()) return false;
 
@@ -223,7 +223,7 @@ bool dabc::Reference::RemoveChilds(bool cleanup)
    return GetObject() ?  GetObject()->RemoveChilds(cleanup) : true;
 }
 
-void dabc::Reference::Print(int lvl, const char* from) const
+void dabc::Reference::Print(int lvl, const char *from) const
 {
    dabc::lgr()->Debug(lvl,"filename",1,"funcname", dabc::format("%s REF:%p obj:%p", (from ? from : ""), this, fObj).c_str());
 }

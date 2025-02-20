@@ -34,7 +34,7 @@
 #endif
 #endif
 
-const char* SocketErr(int err)
+const char *SocketErr(int err)
 {
    switch (err) {
       case -1: return "Internal";
@@ -770,7 +770,7 @@ void dabc::SocketIOAddon::CancelIOOperations()
 
 // ___________________________________________________________________
 
-dabc::SocketServerAddon::SocketServerAddon(int serversocket, const char* hostname, int portnum, struct addrinfo *info) :
+dabc::SocketServerAddon::SocketServerAddon(int serversocket, const char *hostname, int portnum, struct addrinfo *info) :
    SocketConnectAddon(serversocket),
    fServerHostName(hostname ? hostname : ""),
    fServerPortNumber(portnum)
@@ -1186,7 +1186,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
    int numtests = 1; // at least test value of nport
    if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
 
-   const char* hostname = host.empty() ? nullptr : host.c_str();
+   const char *hostname = host.empty() ? nullptr : host.c_str();
 
    SocketServerAddon *addon = nullptr;
 

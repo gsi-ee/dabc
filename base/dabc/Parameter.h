@@ -141,7 +141,7 @@ namespace dabc {
 
       public:
 
-         const char* ClassName() const override { return "Parameter"; }
+         const char *ClassName() const override { return "Parameter"; }
 
          const std::string &Kind() const;
    };
@@ -166,7 +166,7 @@ namespace dabc {
 
       protected:
 
-         virtual const char* ParReferenceKind() { return nullptr; }
+         virtual const char *ParReferenceKind() { return nullptr; }
 
          /** Specifies that parameter produce 'modified' events synchronous with changes of parameter.
           * If on=false (asynchronous), events are produced by timeout from manager (with granularity of 1 sec).
@@ -188,7 +188,7 @@ namespace dabc {
             // TODO: should we implement this method ???
             tgt = dynamic_cast<T*>(src);
             if (!tgt) return false;
-            const char* refkind = ParReferenceKind();
+            const char *refkind = ParReferenceKind();
             if (!refkind) return true;
             return tgt->Kind() == refkind;
          }
@@ -300,7 +300,7 @@ namespace dabc {
 
       protected:
          // by this we indicate that only parameter specified as info can be referenced
-         const char* ParReferenceKind() override { return infokind(); }
+         const char *ParReferenceKind() override { return infokind(); }
 
       public:
 
@@ -315,7 +315,7 @@ namespace dabc {
          void SetVerbosity(int level) { SetField("verbosity", level); }
          int GetVerbosity() const { return GetField("verbosity").AsInt(1); }
 
-         static const char* infokind() { return "info"; }
+         static const char *infokind() { return "info"; }
    };
 
    // _______________________________________________________________________________

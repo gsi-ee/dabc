@@ -46,14 +46,14 @@ namespace dabc {
          static std::string  fLocalHost;
 
       public:
-         Configuration(const char* fname = nullptr);
+         Configuration(const char *fname = nullptr);
          virtual ~Configuration();
 
          bool SelectContext(unsigned nodeid, unsigned numnodes);
 
          std::string MgrHost() const { return fMgrHost; }
          int MgrPort() const { return fMgrPort; }
-         const char* MgrName() const { return fMgrName.c_str(); }
+         const char *MgrName() const { return fMgrName.c_str(); }
          int MgrNodeId() const { return fMgrNodeId; }
          int MgrNumNodes() const { return fMgrNumNodes; }
 
@@ -96,10 +96,10 @@ namespace dabc {
 
          /** Method is used to find xml nodes like Module, MemoryPool, Connection in
           * the xml file which should be used for autocreation */
-         bool NextCreationNode(XMLNodePointer_t& prev, const char* nodename, bool check_name_for_multicast);
+         bool NextCreationNode(XMLNodePointer_t& prev, const char *nodename, bool check_name_for_multicast);
 
-         std::string GetUserPar(const char* name, const char* dflt = nullptr);
-         int GetUserParInt(const char* name, int dflt = 0);
+         std::string GetUserPar(const char *name, const char *dflt = nullptr);
+         int GetUserParInt(const char *name, int dflt = 0);
 
          std::string ConetextAppClass();
 

@@ -179,7 +179,7 @@ extern "C" void* StartTRunnable(void* abc)
 cpu_set_t dabc::PosixThread::fSpecialSet;
 cpu_set_t dabc::PosixThread::fDfltSet;
 
-bool dabc::PosixThread::SetDfltAffinity(const char* aff)
+bool dabc::PosixThread::SetDfltAffinity(const char *aff)
 {
    CPU_ZERO(&fSpecialSet);
    CPU_ZERO(&fDfltSet);
@@ -225,7 +225,7 @@ bool dabc::PosixThread::SetDfltAffinity(const char* aff)
 
    if ((*aff == 'o') || (*aff == 'x') || (*aff == 's')) {
       unsigned cpu = 0;
-      const char* curr = aff;
+      const char *curr = aff;
       bool isany = false;
 
       while ((*curr != 0) && (cpu<CPU_SETSIZE)) {
@@ -280,7 +280,7 @@ dabc::PosixThread::~PosixThread()
 {
 }
 
-bool dabc::PosixThread::SetAffinity(const char* aff)
+bool dabc::PosixThread::SetAffinity(const char *aff)
 {
    CPU_ZERO(&fCpuSet);
 
@@ -315,7 +315,7 @@ bool dabc::PosixThread::SetAffinity(const char* aff)
 
    if ((*aff=='o') || (*aff=='x')) {
       unsigned cpu = 0;
-      const char* curr = aff;
+      const char *curr = aff;
       bool isany = false;
 
       while ((*curr != 0) && (cpu<CPU_SETSIZE)) {

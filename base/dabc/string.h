@@ -51,52 +51,52 @@ namespace dabc {
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     * \returns true if succeed */
-   extern bool str_to_int(const char* val, int* res);
+   extern bool str_to_int(const char *val, int* res);
 
    /** \brief Convert string to long integer value
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     * \returns true if succeed */
-   extern bool str_to_lint(const char* val, long* res);
+   extern bool str_to_lint(const char *val, long* res);
 
    /** \brief Convert string to long long integer value
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     * \returns true if succeed */
-   extern bool str_to_llint(const char* val, long long* res);
+   extern bool str_to_llint(const char *val, long long* res);
 
    /** \brief Convert string to unsigned integer value
     * One could use hexadecimal (in form 0xabc100)  or decimal format
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     *\returns true if succeed */
-   extern bool str_to_uint(const char* val, unsigned* res);
+   extern bool str_to_uint(const char *val, unsigned* res);
 
    /** \brief Convert string to long unsigned integer value
     * One could use hexadecimal (in form 0xabc100)  or decimal format
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     *\returns true if succeed */
-   extern bool str_to_luint(const char* val, long unsigned* res);
+   extern bool str_to_luint(const char *val, long unsigned* res);
 
    /** \brief Convert string to long unsigned integer value
     * One could use hexadecimal (in form 0xabc100)  or decimal format
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     *\returns true if succeed */
-   extern bool str_to_lluint(const char* val, long long unsigned* res);
+   extern bool str_to_lluint(const char *val, long long unsigned* res);
 
    /** \brief Convert string to double value
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     *\returns true if succeed */
-   extern bool str_to_double(const char* val, double* res);
+   extern bool str_to_double(const char *val, double* res);
 
    /** \brief Convert string to bool value
     * \param[in]  val   source string
     * \param[out] res   pointer on result value
     *\returns true if succeed */
-   extern bool str_to_bool(const char* val, bool* res);
+   extern bool str_to_bool(const char *val, bool* res);
 
    /** \brief Replace all matches in the string
     * \param[in] str     initial string

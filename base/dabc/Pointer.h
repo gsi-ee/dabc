@@ -196,7 +196,7 @@ namespace dabc {
          inline BufferSize_t copyfrom_shift(const void* src, BufferSize_t sz) throw()
             { return shift(copyfrom(src, sz)); }
 
-         BufferSize_t copyfromstr(const char* str, unsigned len = 0) throw();
+         BufferSize_t copyfromstr(const char *str, unsigned len = 0) throw();
 
          int distance_to(const Pointer& child) const;
 

@@ -213,7 +213,7 @@ namespace dabc {
          Worker(Reference parent, const std::string &name);
          virtual ~Worker();
 
-         const char* ClassName() const override { return "Worker"; }
+         const char *ClassName() const override { return "Worker"; }
 
          /** Method returns name of required thread class for processor.
            * If returns empty string, any thread class is sufficient. */

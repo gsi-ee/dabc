@@ -187,7 +187,7 @@ namespace dabc {
       public:
 
          /** \brief Returns class name of the object */
-         const char* ClassName() const override { return "ModuleAsync"; }
+         const char *ClassName() const override { return "ModuleAsync"; }
 
    };
 

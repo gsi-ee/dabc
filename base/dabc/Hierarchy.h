@@ -28,18 +28,18 @@
 
 namespace dabc {
 
-   extern const char* prop_kind;
-   extern const char* prop_version;       // version number of hierarchy item
-   extern const char* prop_realname;      // real name property specified, when dabc item can not have such name (including HTTP syntax)
-   extern const char* prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
-   extern const char* prop_producer;      // identifies item, which can deliver binary data for all its
-   extern const char* prop_error;         // indicates any kind of error - typically in text form
-   extern const char* prop_hash;          // content hash, which should describe if object is changed
-   extern const char* prop_auth;          // when specified, enabled (true) or disabled (false) authentication for the elements
-   extern const char* prop_history;       // indicates that history for that element is kept
-   extern const char* prop_time;          // time property, supplied when history is created
-   extern const char* prop_more;          // indicate that item can provide more hierarchy if requested
-   extern const char* prop_view;          // property indicate preferable view for the item
+   extern const char *prop_kind;
+   extern const char *prop_version;       // version number of hierarchy item
+   extern const char *prop_realname;      // real name property specified, when dabc item can not have such name (including HTTP syntax)
+   extern const char *prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
+   extern const char *prop_producer;      // identifies item, which can deliver binary data for all its
+   extern const char *prop_error;         // indicates any kind of error - typically in text form
+   extern const char *prop_hash;          // content hash, which should describe if object is changed
+   extern const char *prop_auth;          // when specified, enabled (true) or disabled (false) authentication for the elements
+   extern const char *prop_history;       // indicates that history for that element is kept
+   extern const char *prop_time;          // time property, supplied when history is created
+   extern const char *prop_more;          // indicate that item can provide more hierarchy if requested
+   extern const char *prop_view;          // property indicate preferable view for the item
 
 
    class Hierarchy;
@@ -252,7 +252,7 @@ namespace dabc {
          HierarchyContainer(const std::string &name);
          virtual ~HierarchyContainer();
 
-         const char* ClassName() const override { return "Hierarchy"; }
+         const char *ClassName() const override { return "Hierarchy"; }
 
          uint64_t StoreSize(unsigned kind = stream_Full, uint64_t v = 0, unsigned hist_limit = 0);
 
@@ -359,7 +359,7 @@ namespace dabc {
       bool FillBinHeader(const std::string &itemname, dabc::Command& cmd, uint64_t mhash = 0, const std::string &dflt_master_name = "");
 
       /** \brief Return child element from hierarchy */
-      Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
+      Hierarchy FindChild(const char *name) { return Record::FindChild(name); }
 
       /** Removes folder and its parents as long as no other childs are present */
       bool RemoveEmptyFolders(const std::string &path);

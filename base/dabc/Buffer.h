@@ -259,7 +259,7 @@ namespace dabc {
        * \param[in] src   source string
        * \param[in] len   bytes copied, (if 0, complete string excluding trailing null)
        * \returns         actual number of bytes copied  */
-      BufferSize_t CopyFromStr(const char* src, unsigned len = 0) throw();
+      BufferSize_t CopyFromStr(const char *src, unsigned len = 0) throw();
 
       /** \brief Copy content into provided raw buffer.
        *

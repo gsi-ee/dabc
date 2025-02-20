@@ -68,7 +68,7 @@ namespace dabc {
       char          *fLimitAddr{nullptr};
 
    public:
-      XmlOutputStream(const char* filename, int bufsize = 20000)
+      XmlOutputStream(const char *filename, int bufsize = 20000)
       {
          fOut = new std::ofstream(filename);
          fOutStr = nullptr;
@@ -116,7 +116,7 @@ namespace dabc {
             fOutStr->append(1, symb);
       }
 
-      void Write(const char* str)
+      void Write(const char *str)
       {
          int len = strlen(str);
          if (fCurrent+len>=fMaxAddr) {
@@ -166,7 +166,7 @@ namespace dabc {
 
       char           *fCurrent{nullptr};
 
-      XmlInputStream(bool isfilename, const char* filename, int ibufsize)
+      XmlInputStream(bool isfilename, const char *filename, int ibufsize)
       {
          if (isfilename) {
             fInp = new std::ifstream(filename);
@@ -306,7 +306,7 @@ namespace dabc {
          return false;
       }
 
-      bool CheckFor(const char* str)
+      bool CheckFor(const char *str)
       {
          // Check if in current position we see specified string
          int len = strlen(str);
@@ -318,7 +318,7 @@ namespace dabc {
          return ShiftCurrent(len);
       }
 
-      int SearchFor(const char* str)
+      int SearchFor(const char *str)
       {
          // Search for specified string in the stream
          // return number of symbols before string was found, -1 if error
@@ -402,7 +402,7 @@ namespace dabc {
 
 
 //______________________________________________________________________________
-bool dabc::Xml::HasAttr(XMLNodePointer_t xmlnode, const char* name)
+bool dabc::Xml::HasAttr(XMLNodePointer_t xmlnode, const char *name)
 {
    // checks if node has attribute of specified name
 
@@ -416,7 +416,7 @@ bool dabc::Xml::HasAttr(XMLNodePointer_t xmlnode, const char* name)
 }
 
 //______________________________________________________________________________
-const char* dabc::Xml::GetAttr(XMLNodePointer_t xmlnode, const char* name)
+const char *dabc::Xml::GetAttr(XMLNodePointer_t xmlnode, const char *name)
 {
    // returns value of attribute for xmlnode
 
@@ -431,20 +431,20 @@ const char* dabc::Xml::GetAttr(XMLNodePointer_t xmlnode, const char* name)
 }
 
 //______________________________________________________________________________
-int dabc::Xml::GetIntAttr(XMLNodePointer_t xmlnode, const char* name)
+int dabc::Xml::GetIntAttr(XMLNodePointer_t xmlnode, const char *name)
 {
    // returns value of attribute as integer
 
    if (!xmlnode) return 0;
    int res = 0;
-   const char* attr = GetAttr(xmlnode, name);
+   const char *attr = GetAttr(xmlnode, name);
    if (attr) sscanf(attr, "%d", &res);
    return res;
 }
 
 //______________________________________________________________________________
 dabc::XMLAttrPointer_t dabc::Xml::NewAttr(XMLNodePointer_t xmlnode, XMLNsPointer_t,
-                                                const char* name, const char* value)
+                                                const char *name, const char *value)
 {
    // creates new attribute for xmlnode,
    // namespaces are not supported for attributes
@@ -471,7 +471,7 @@ dabc::XMLAttrPointer_t dabc::Xml::NewAttr(XMLNodePointer_t xmlnode, XMLNsPointer
 
 //______________________________________________________________________________
 dabc::XMLAttrPointer_t dabc::Xml::NewIntAttr(XMLNodePointer_t xmlnode,
-                                                   const char* name,
+                                                   const char *name,
                                                    int value)
 {
    // create node attribute with integer value
@@ -482,7 +482,7 @@ dabc::XMLAttrPointer_t dabc::Xml::NewIntAttr(XMLNodePointer_t xmlnode,
 }
 
 //______________________________________________________________________________
-void dabc::Xml::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
+void dabc::Xml::FreeAttr(XMLNodePointer_t xmlnode, const char *name)
 {
    // remove attribute from xmlnode
 
@@ -547,7 +547,7 @@ dabc::XMLAttrPointer_t dabc::Xml::GetNextAttr(XMLAttrPointer_t xmlattr)
 }
 
 //______________________________________________________________________________
-const char* dabc::Xml::GetAttrName(XMLAttrPointer_t xmlattr)
+const char *dabc::Xml::GetAttrName(XMLAttrPointer_t xmlattr)
 {
    // return name of the attribute
 
@@ -557,19 +557,19 @@ const char* dabc::Xml::GetAttrName(XMLAttrPointer_t xmlattr)
 }
 
 //______________________________________________________________________________
-const char* dabc::Xml::GetAttrValue(XMLAttrPointer_t xmlattr)
+const char *dabc::Xml::GetAttrValue(XMLAttrPointer_t xmlattr)
 {
    // return value of attribute
 
    if (!xmlattr) return nullptr;
 
-   const char* attrname = SXmlAttr_t::Name(xmlattr);
+   const char *attrname = SXmlAttr_t::Name(xmlattr);
    return attrname + strlen(attrname) + 1;
 }
 
 //______________________________________________________________________________
 dabc::XMLNodePointer_t dabc::Xml::NewChild(XMLNodePointer_t parent, XMLNsPointer_t ns,
-                                      const char* name, const char* content)
+                                      const char *name, const char *content)
 {
    // create new child element for parent node
 
@@ -599,7 +599,7 @@ dabc::XMLNodePointer_t dabc::Xml::NewChild(XMLNodePointer_t parent, XMLNsPointer
 }
 
 //______________________________________________________________________________
-dabc::XMLNsPointer_t dabc::Xml::NewNS(XMLNodePointer_t xmlnode, const char* reference, const char* name)
+dabc::XMLNsPointer_t dabc::Xml::NewNS(XMLNodePointer_t xmlnode, const char *reference, const char *name)
 {
    // create namespace attribute for xmlnode.
    // namespace attribute will be always the first in list of node attributes
@@ -635,11 +635,11 @@ dabc::XMLNsPointer_t dabc::Xml::GetNS(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-const char* dabc::Xml::GetNSName(XMLNsPointer_t ns)
+const char *dabc::Xml::GetNSName(XMLNsPointer_t ns)
 {
    // return name id of namespace
 
-   const char* nsname = GetAttrName((XMLAttrPointer_t)ns);
+   const char *nsname = GetAttrName((XMLAttrPointer_t)ns);
 
    if (nsname && (strncmp(nsname,"xmlns:",6) == 0)) nsname += 6;
 
@@ -647,7 +647,7 @@ const char* dabc::Xml::GetNSName(XMLNsPointer_t ns)
 }
 
 //______________________________________________________________________________
-const char* dabc::Xml::GetNSReference(XMLNsPointer_t ns)
+const char *dabc::Xml::GetNSReference(XMLNsPointer_t ns)
 {
    // return reference id of namespace
 
@@ -693,7 +693,7 @@ void dabc::Xml::AddChildFirst(XMLNodePointer_t parent, XMLNodePointer_t child)
 
 
 //______________________________________________________________________________
-bool dabc::Xml::AddComment(XMLNodePointer_t xmlnode, const char* comment)
+bool dabc::Xml::AddComment(XMLNodePointer_t xmlnode, const char *comment)
 {
    // Adds comment line to the node
 
@@ -709,7 +709,7 @@ bool dabc::Xml::AddComment(XMLNodePointer_t xmlnode, const char* comment)
 }
 
 //______________________________________________________________________________
-bool dabc::Xml::AddDocComment(XMLDocPointer_t xmldoc, const char* comment)
+bool dabc::Xml::AddDocComment(XMLDocPointer_t xmldoc, const char *comment)
 {
    // add comment line to the top of the document
 
@@ -726,7 +726,7 @@ bool dabc::Xml::AddDocComment(XMLDocPointer_t xmldoc, const char* comment)
 }
 
 //______________________________________________________________________________
-bool dabc::Xml::AddRawLine(XMLNodePointer_t xmlnode, const char* line)
+bool dabc::Xml::AddRawLine(XMLNodePointer_t xmlnode, const char *line)
 {
    // Add just line into xml file
    // Line should has correct xml syntax that later it can be decoded by xml parser
@@ -743,7 +743,7 @@ bool dabc::Xml::AddRawLine(XMLNodePointer_t xmlnode, const char* line)
 }
 
 //______________________________________________________________________________
-bool dabc::Xml::AddDocRawLine(XMLDocPointer_t xmldoc, const char* line)
+bool dabc::Xml::AddDocRawLine(XMLDocPointer_t xmldoc, const char *line)
 {
    // Add just line on the top of xml document
    // Line should has correct xml syntax that later it can be decoded by xml parser
@@ -762,12 +762,12 @@ bool dabc::Xml::AddDocRawLine(XMLDocPointer_t xmldoc, const char* line)
 
 //______________________________________________________________________________
 bool dabc::Xml::AddStyleSheet(XMLNodePointer_t xmlnode,
-                                 const char* href,
-                                 const char* type,
-                                 const char* title,
+                                 const char *href,
+                                 const char *type,
+                                 const char *title,
                                  int alternate,
-                                 const char* media,
-                                 const char* charset)
+                                 const char *media,
+                                 const char *charset)
 {
    // Adds style sheet definition to the specified node
    // Creates <?xml-stylesheet alternate="yes" title="compact" href="small-base.css" type="text/css"?>
@@ -779,7 +779,7 @@ bool dabc::Xml::AddStyleSheet(XMLNodePointer_t xmlnode,
 
    if (!xmlnode || !href || !type) return false;
 
-   const char* nodename = "xml-stylesheet";
+   const char *nodename = "xml-stylesheet";
    int nodenamelen = strlen(nodename);
 
    SXmlNode_t* node = (SXmlNode_t*) AllocateNode(nodenamelen, xmlnode);
@@ -803,12 +803,12 @@ bool dabc::Xml::AddStyleSheet(XMLNodePointer_t xmlnode,
 
 //______________________________________________________________________________
 bool dabc::Xml::AddDocStyleSheet(XMLDocPointer_t xmldoc,
-                                    const char* href,
-                                    const char* type,
-                                    const char* title,
+                                    const char *href,
+                                    const char *type,
+                                    const char *title,
                                     int alternate,
-                                    const char* media,
-                                    const char* charset)
+                                    const char *media,
+                                    const char *charset)
 {
    // Add style sheet definition on the top of document
 
@@ -889,7 +889,7 @@ void dabc::Xml::UnlinkFreeNode(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-const char* dabc::Xml::GetNodeName(XMLNodePointer_t xmlnode)
+const char *dabc::Xml::GetNodeName(XMLNodePointer_t xmlnode)
 {
    // returns name of xmlnode
 
@@ -897,14 +897,14 @@ const char* dabc::Xml::GetNodeName(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-const char* dabc::Xml::GetNodeContent(XMLNodePointer_t xmlnode)
+const char *dabc::Xml::GetNodeContent(XMLNodePointer_t xmlnode)
 {
    // get contents (if any) of xml node
 
    if (!xmlnode) return nullptr;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
    if (!node->fChild) return nullptr;
-   const char* childname = SXmlNode_t::Name(node->fChild);
+   const char *childname = SXmlNode_t::Name(node->fChild);
    if (!childname || (*childname != 0)) return nullptr;
    return childname + 1;
 }
@@ -985,7 +985,7 @@ void dabc::Xml::CleanNode(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-dabc::XMLDocPointer_t dabc::Xml::NewDoc(const char* version)
+dabc::XMLDocPointer_t dabc::Xml::NewDoc(const char *version)
 {
    // creates new xml document with provided version
 
@@ -1004,7 +1004,7 @@ dabc::XMLDocPointer_t dabc::Xml::NewDoc(const char* version)
 }
 
 //______________________________________________________________________________
-void dabc::Xml::AssignDtd(XMLDocPointer_t xmldoc, const char* dtdname, const char* rootname)
+void dabc::Xml::AssignDtd(XMLDocPointer_t xmldoc, const char *dtdname, const char *rootname)
 {
    // assignes dtd filename to document
 
@@ -1030,7 +1030,7 @@ void dabc::Xml::FreeDoc(XMLDocPointer_t xmldoc)
 }
 
 //______________________________________________________________________________
-void dabc::Xml::SaveDoc(XMLDocPointer_t xmldoc, const char* filename, int layout)
+void dabc::Xml::SaveDoc(XMLDocPointer_t xmldoc, const char *filename, int layout)
 {
    // store document content to file
    // if layout<=0, no any spaces or newlines will be placed between
@@ -1082,7 +1082,7 @@ dabc::XMLNodePointer_t dabc::Xml::DocGetRootElement(XMLDocPointer_t xmldoc)
 }
 
 //______________________________________________________________________________
-dabc::XMLDocPointer_t dabc::Xml::ParseFile(const char* filename, bool showerr)
+dabc::XMLDocPointer_t dabc::Xml::ParseFile(const char *filename, bool showerr)
 {
    // parses content of file and tries to produce xml structures
 
@@ -1093,7 +1093,7 @@ dabc::XMLDocPointer_t dabc::Xml::ParseFile(const char* filename, bool showerr)
 }
 
 //______________________________________________________________________________
-dabc::XMLDocPointer_t dabc::Xml::ParseString(const char* xmlstring, bool showerr)
+dabc::XMLDocPointer_t dabc::Xml::ParseString(const char *xmlstring, bool showerr)
 {
    // parses content of string and tries to produce xml structures
 
@@ -1139,7 +1139,7 @@ dabc::XMLDocPointer_t dabc::Xml::ParseStream(XmlInputStream* inp, bool showerr)
 }
 
 //______________________________________________________________________________
-bool dabc::Xml::ValidateVersion(XMLDocPointer_t xmldoc, const char* version)
+bool dabc::Xml::ValidateVersion(XMLDocPointer_t xmldoc, const char *version)
 {
    // check that first node is xml processing instruction with correct xml version number
 
@@ -1151,7 +1151,7 @@ bool dabc::Xml::ValidateVersion(XMLDocPointer_t xmldoc, const char* version)
    if (((SXmlNode_t*) vernode)->fType!=kXML_PI_NODE) return false;
    if (strcmp(GetNodeName(vernode), "xml") != 0) return false;
 
-   const char* value = GetAttr(vernode,"version");
+   const char *value = GetAttr(vernode,"version");
    if (!value) return false;
    if (!version) version = "1.0";
 
@@ -1175,7 +1175,7 @@ void dabc::Xml::SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int l
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::Xml::ReadSingleNode(const char* src)
+dabc::XMLNodePointer_t dabc::Xml::ReadSingleNode(const char *src)
 {
    // read single xml node from provided string
 
@@ -1197,7 +1197,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadSingleNode(const char* src)
 }
 
 //______________________________________________________________________________
-char* dabc::Xml::Makestr(const char* str)
+char* dabc::Xml::Makestr(const char *str)
 {
    // creates char* variable with copy of provided string
 
@@ -1210,7 +1210,7 @@ char* dabc::Xml::Makestr(const char* str)
 }
 
 //______________________________________________________________________________
-char* dabc::Xml::Makenstr(const char* str, int len)
+char* dabc::Xml::Makenstr(const char *str, int len)
 {
    // creates char* variable with copy of len symbols from provided string
 
@@ -1271,14 +1271,14 @@ dabc::XMLAttrPointer_t dabc::Xml::AllocateAttr(int namelen, int valuelen, XMLNod
 }
 
 //______________________________________________________________________________
-dabc::XMLNsPointer_t dabc::Xml::FindNs(XMLNodePointer_t xmlnode, const char* name)
+dabc::XMLNsPointer_t dabc::Xml::FindNs(XMLNodePointer_t xmlnode, const char *name)
 {
    // define if namespace of that name exists for xmlnode
 
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
    while (node) {
       if (node->fNs) {
-         const char* nsname = SXmlAttr_t::Name(node->fNs) + 6;
+         const char *nsname = SXmlAttr_t::Name(node->fNs) + 6;
          if (strcmp(nsname, name) == 0) return node->fNs;
       }
       node = node->fParent;
@@ -1303,7 +1303,7 @@ void dabc::Xml::TruncateNsExtension(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-void dabc::Xml::UnpackSpecialCharacters(char* target, const char* source, int srclen)
+void dabc::Xml::UnpackSpecialCharacters(char* target, const char *source, int srclen)
 {
    // unpack special symbols, used in xml syntax to code characters
    // these symbols: '<' - &lt, '>' - &gt, '&' - &amp, '"' - &quot, ' - &apos;
@@ -1425,7 +1425,7 @@ void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int lay
    out->Put('>');
 
    // go to next line only if no content inside
-   const char* content = GetNodeContent(xmlnode);
+   const char *content = GetNodeContent(xmlnode);
    if (!content && (layout > 0))
       out->Put('\n');
 

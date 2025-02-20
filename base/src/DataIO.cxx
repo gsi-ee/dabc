@@ -180,7 +180,7 @@ bool dabc::FileInput::TakeNextFileName()
    if (fFilesList.NumChilds() == 0) {
       if (!fLoop || !InitFilesList()) return false;
    }
-   const char* nextname = fFilesList.GetChild(0).GetName();
+   const char *nextname = fFilesList.GetChild(0).GetName();
    if (nextname) fCurrentName = nextname;
    fFilesList.GetChild(0).Destroy();
    return !fCurrentName.empty();

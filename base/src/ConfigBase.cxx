@@ -24,74 +24,74 @@
 
 namespace dabc {
 
-   const char* xmlRootNode         = "dabc";
-   const char* xmlVersionAttr      = "version";
-   const char* xmlContext          = "Context";
-   const char* xmlApplication      = "Application";
-   const char* xmlAppDfltName      = "App";
-   const char* xmlVariablesNode    = "Variables";
-   const char* xmlNameAttr         = "name";
-   const char* xmlHostAttr         = "host";
-   const char* xmlPortAttr         = "port";
-   const char* xmlClassAttr        = "class";
-   const char* xmlDeviceAttr       = "device";
-   const char* xmlThreadAttr       = "thread";
-   const char* xmlUseacknAttr      = "useackn";
-   const char* xmlOptionalAttr     = "optional";
-   const char* xmlPoolAttr         = "pool";
-   const char* xmlTimeoutAttr      = "timeout";
-   const char* xmlAutoAttr         = "auto";
-   const char* xmlReconnectAttr    = "reconnect";
-   const char* xmlNumReconnAttr    = "numreconn";
-   const char* xmlValueAttr        = "value";
-   const char* xmlRunNode          = "Run";
-   const char* xmlUserNode         = "User";
-   const char* xmlSshUser          = "ssh_user";
-   const char* xmlSshPort          = "ssh_port";
-   const char* xmlSshInit          = "ssh_init";
-   const char* xmlSshTest          = "ssh_test";
-   const char* xmlSshTimeout       = "ssh_timeout";
-   const char* xmlDABCSYS          = "DABCSYS";
-   const char* xmlDABCUSERDIR      = "DABCUSERDIR";
-   const char* xmlDABCWORKDIR      = "DABCWORKDIR";
-   const char* xmlDABCNODEID       = "DABCNODEID";
-   const char* xmlDABCNUMNODES     = "DABCNUMNODES";
-   const char* xmlActive           = "active";
-   const char* xmlCopyCfg          = "copycfg";
-   const char* xmlStdOut           = "stdout";
-   const char* xmlErrOut           = "errout";
-   const char* xmlNullOut          = "nullout";
-   const char* xmlDebugger         = "debugger";
-   const char* xmlWorkDir          = "workdir";
-   const char* xmlDebuglevel       = "debuglevel";
-   const char* xmlNoDebugPrefix    = "nodebugprefix";
-   const char* xmlLogfile          = "logfile";
-   const char* xmlLoglimit         = "loglimit";
-   const char* xmlLoglevel         = "loglevel";
-   const char* xmlSysloglevel      = "sysloglevel";
-   const char* xmlSyslog           = "syslog";
-   const char* xmlRunTime          = "runtime";
-   const char* xmlHaltTime         = "halttime";
-   const char* xmlThrdStopTime     = "thrdstoptime";
-   const char* xmlNormalMainThrd   = "normalmainthrd";
-   const char* xmlAffinity         = "affinity";
-   const char* xmlThreadsLayout    = "threads_layout";
-   const char* xmlTaskset          = "taskset";
-   const char* xmlLDPATH           = "LD_LIBRARY_PATH";
-   const char* xmlUserLib          = "lib";
-   const char* xmlInitFunc         = "func";
-   const char* xmlRunFunc          = "runfunc";
-   const char* xmlCpuInfo          = "cpuinfo";
-   const char* xmlSocketHost       = "sockethost";
-   const char* xmlUseControl       = "control";
-   const char* xmlMasterProcess    = "master";
-   const char* xmlPublisher        = "publisher";
+   const char *xmlRootNode         = "dabc";
+   const char *xmlVersionAttr      = "version";
+   const char *xmlContext          = "Context";
+   const char *xmlApplication      = "Application";
+   const char *xmlAppDfltName      = "App";
+   const char *xmlVariablesNode    = "Variables";
+   const char *xmlNameAttr         = "name";
+   const char *xmlHostAttr         = "host";
+   const char *xmlPortAttr         = "port";
+   const char *xmlClassAttr        = "class";
+   const char *xmlDeviceAttr       = "device";
+   const char *xmlThreadAttr       = "thread";
+   const char *xmlUseacknAttr      = "useackn";
+   const char *xmlOptionalAttr     = "optional";
+   const char *xmlPoolAttr         = "pool";
+   const char *xmlTimeoutAttr      = "timeout";
+   const char *xmlAutoAttr         = "auto";
+   const char *xmlReconnectAttr    = "reconnect";
+   const char *xmlNumReconnAttr    = "numreconn";
+   const char *xmlValueAttr        = "value";
+   const char *xmlRunNode          = "Run";
+   const char *xmlUserNode         = "User";
+   const char *xmlSshUser          = "ssh_user";
+   const char *xmlSshPort          = "ssh_port";
+   const char *xmlSshInit          = "ssh_init";
+   const char *xmlSshTest          = "ssh_test";
+   const char *xmlSshTimeout       = "ssh_timeout";
+   const char *xmlDABCSYS          = "DABCSYS";
+   const char *xmlDABCUSERDIR      = "DABCUSERDIR";
+   const char *xmlDABCWORKDIR      = "DABCWORKDIR";
+   const char *xmlDABCNODEID       = "DABCNODEID";
+   const char *xmlDABCNUMNODES     = "DABCNUMNODES";
+   const char *xmlActive           = "active";
+   const char *xmlCopyCfg          = "copycfg";
+   const char *xmlStdOut           = "stdout";
+   const char *xmlErrOut           = "errout";
+   const char *xmlNullOut          = "nullout";
+   const char *xmlDebugger         = "debugger";
+   const char *xmlWorkDir          = "workdir";
+   const char *xmlDebuglevel       = "debuglevel";
+   const char *xmlNoDebugPrefix    = "nodebugprefix";
+   const char *xmlLogfile          = "logfile";
+   const char *xmlLoglimit         = "loglimit";
+   const char *xmlLoglevel         = "loglevel";
+   const char *xmlSysloglevel      = "sysloglevel";
+   const char *xmlSyslog           = "syslog";
+   const char *xmlRunTime          = "runtime";
+   const char *xmlHaltTime         = "halttime";
+   const char *xmlThrdStopTime     = "thrdstoptime";
+   const char *xmlNormalMainThrd   = "normalmainthrd";
+   const char *xmlAffinity         = "affinity";
+   const char *xmlThreadsLayout    = "threads_layout";
+   const char *xmlTaskset          = "taskset";
+   const char *xmlLDPATH           = "LD_LIBRARY_PATH";
+   const char *xmlUserLib          = "lib";
+   const char *xmlInitFunc         = "func";
+   const char *xmlRunFunc          = "runfunc";
+   const char *xmlCpuInfo          = "cpuinfo";
+   const char *xmlSocketHost       = "sockethost";
+   const char *xmlUseControl       = "control";
+   const char *xmlMasterProcess    = "master";
+   const char *xmlPublisher        = "publisher";
 
-   const char* xmlTrueValue         = "true";
-   const char* xmlFalseValue        = "false";
+   const char *xmlTrueValue         = "true";
+   const char *xmlFalseValue        = "false";
 }
 
-dabc::ConfigBase::ConfigBase(const char* fname) :
+dabc::ConfigBase::ConfigBase(const char *fname) :
    fDoc(nullptr),
    fVersion(-1),
    fCmdVariables(nullptr),
@@ -148,7 +148,7 @@ dabc::XMLNodePointer_t dabc::ConfigBase::Variables()
    return fVariables;
 }
 
-void dabc::ConfigBase::AddCmdVariable(const char* name, const char* value)
+void dabc::ConfigBase::AddCmdVariable(const char *name, const char *value)
 {
    if (!fCmdVariables) fCmdVariables = Xml::NewChild(nullptr, nullptr, "CmdVariables", nullptr);
 
@@ -157,7 +157,7 @@ void dabc::ConfigBase::AddCmdVariable(const char* name, const char* value)
 }
 
 
-bool dabc::ConfigBase::IsNodeName(XMLNodePointer_t node, const char* name)
+bool dabc::ConfigBase::IsNodeName(XMLNodePointer_t node, const char *name)
 {
    if (!node || !name) return false;
 
@@ -166,19 +166,19 @@ bool dabc::ConfigBase::IsNodeName(XMLNodePointer_t node, const char* name)
    return !n ? false : strcmp(n,name) == 0;
 }
 
-const char* dabc::ConfigBase::GetAttr(XMLNodePointer_t node, const char* attr, const char* defvalue)
+const char *dabc::ConfigBase::GetAttr(XMLNodePointer_t node, const char *attr, const char *defvalue)
 {
-   const char* res = Xml::GetAttr(node, attr);
+   const char *res = Xml::GetAttr(node, attr);
    return res ? res : defvalue;
 }
 
-int dabc::ConfigBase::GetIntAttr(XMLNodePointer_t node, const char* attr, int defvalue)
+int dabc::ConfigBase::GetIntAttr(XMLNodePointer_t node, const char *attr, int defvalue)
 {
-   const char* res = GetAttr(node, attr, nullptr);
+   const char *res = GetAttr(node, attr, nullptr);
    return res ? std::stoi(res) : defvalue;
 }
 
-dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const char* name)
+dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const char *name)
 {
    if (!node) return nullptr;
    XMLNodePointer_t child = Xml::GetChild(node);
@@ -191,9 +191,9 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const 
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindItemMatch(XMLNodePointer_t& lastmatch,
                                                        XMLNodePointer_t node,
-                                                       const char* sub1,
-                                                       const char* sub2,
-                                                       const char* sub3)
+                                                       const char *sub1,
+                                                       const char *sub2,
+                                                       const char *sub3)
 {
    if (!sub1) return nullptr;
 
@@ -228,11 +228,11 @@ bool dabc::ConfigBase::NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mas
 
    while (xmlattr) {
 
-      const char* attrname = Xml::GetAttrName(xmlattr);
+      const char *attrname = Xml::GetAttrName(xmlattr);
 
-      const char* value = Xml::GetAttr(node, attrname);
+      const char *value = Xml::GetAttr(node, attrname);
 
-      const char* maskvalue = Xml::GetAttr(mask, attrname);
+      const char *maskvalue = Xml::GetAttr(mask, attrname);
 
       if (IsWildcard(maskvalue)) isanywildcard = true;
 
@@ -252,9 +252,9 @@ bool dabc::ConfigBase::NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mas
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
                                                    XMLNodePointer_t node,
-                                                   const char* sub1,
-                                                   const char* sub2,
-                                                   const char* sub3)
+                                                   const char *sub1,
+                                                   const char *sub2,
+                                                   const char *sub3)
 {
    if (!node) return nullptr;
 
@@ -283,12 +283,12 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
 std::string dabc::ConfigBase::GetNodeValue(XMLNodePointer_t node)
 {
    if (!node) return std::string();
-   const char* value = Xml::GetAttr(node, xmlValueAttr);
+   const char *value = Xml::GetAttr(node, xmlValueAttr);
    if (!value) value = Xml::GetNodeContent(node);
    return ResolveEnv(value ? value : "");
 }
 
-std::string dabc::ConfigBase::GetAttrValue(XMLNodePointer_t node, const char* name)
+std::string dabc::ConfigBase::GetAttrValue(XMLNodePointer_t node, const char *name)
 {
    const char *res = Xml::GetAttr(node, name);
    if (!res)
@@ -303,9 +303,9 @@ std::string dabc::ConfigBase::GetAttrValue(XMLNodePointer_t node, const char* na
 
 std::string dabc::ConfigBase::Find1(XMLNodePointer_t node,
                                     const std::string &dflt,
-                                    const char* sub1,
-                                    const char* sub2,
-                                    const char* sub3)
+                                    const char *sub1,
+                                    const char *sub2,
+                                    const char *sub3)
 {
    XMLNodePointer_t res = FindMatch(nullptr, node, sub1, sub2, sub3);
    if (!res) {
@@ -321,9 +321,9 @@ std::string dabc::ConfigBase::Find1(XMLNodePointer_t node,
 
 std::string dabc::ConfigBase::FindN(XMLNodePointer_t node,
                                     XMLNodePointer_t& prev,
-                                    const char* sub1,
-                                    const char* sub2,
-                                    const char* sub3)
+                                    const char *sub1,
+                                    const char *sub2,
+                                    const char *sub3)
 {
    XMLNodePointer_t res = FindMatch(prev, node, sub1, sub2, sub3);
    prev = res;
@@ -350,7 +350,7 @@ std::string dabc::ConfigBase::NodeName(unsigned id)
 {
    XMLNodePointer_t contnode = FindContext(id);
    if (!contnode) return std::string("");
-   const char* host = Xml::GetAttr(contnode, xmlHostAttr);
+   const char *host = Xml::GetAttr(contnode, xmlHostAttr);
    if (!host) return std::string("");
    return ResolveEnv(host);
 }
@@ -359,7 +359,7 @@ int dabc::ConfigBase::NodePort(unsigned id)
 {
    XMLNodePointer_t contnode = FindContext(id);
    if (!contnode) return 0;
-   const char* sbuf = Xml::GetAttr(contnode, xmlPortAttr);
+   const char *sbuf = Xml::GetAttr(contnode, xmlPortAttr);
    if (!sbuf) return 0;
    std::string s = ResolveEnv(sbuf);
    if (s.empty()) return 0;
@@ -381,14 +381,14 @@ std::string dabc::ConfigBase::ContextName(unsigned id)
    XMLNodePointer_t contnode = FindContext(id);
    std::string oldhost = envHost;
    envHost = NodeName(id);
-   const char* name = Xml::GetAttr(contnode, xmlNameAttr);
+   const char *name = Xml::GetAttr(contnode, xmlNameAttr);
    std::string res = name ? ResolveEnv(name) : "";
    if (res.empty()) res = envHost;
    envHost = oldhost;
    return res;
 }
 
-bool dabc::ConfigBase::IsWildcard(const char* str)
+bool dabc::ConfigBase::IsWildcard(const char *str)
 {
    if (!str) return false;
 
@@ -407,10 +407,10 @@ bool dabc::ConfigBase::IsContextNode(XMLNodePointer_t node)
 
    if (!IsNodeName(node, xmlContext)) return false;
 
-   const char* host = Xml::GetAttr(node, xmlHostAttr);
+   const char *host = Xml::GetAttr(node, xmlHostAttr);
    if (IsWildcard(host)) return false;
 
-   const char* name = Xml::GetAttr(node, xmlNameAttr);
+   const char *name = Xml::GetAttr(node, xmlNameAttr);
 
    if (IsWildcard(name)) return false;
 
@@ -520,13 +520,13 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string &arg, int id)
    return name;
 }
 
-std::string dabc::ConfigBase::GetEnv(const char* name)
+std::string dabc::ConfigBase::GetEnv(const char *name)
 {
    const char *env = std::getenv(name);
    return std::string(env ? env : "");
 }
 
-std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char* topcfgfile, const char* topworkdir)
+std::string dabc::ConfigBase::SshArgs(unsigned id, const char *skind, const char *topcfgfile, const char *topworkdir)
 {
    if (!skind) skind = "test";
 

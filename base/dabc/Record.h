@@ -279,7 +279,7 @@ namespace dabc {
       public:
          RecordField();
          RecordField(const RecordField& src);
-         RecordField(const char* v) { constructor(); SetStr(v); }
+         RecordField(const char *v) { constructor(); SetStr(v); }
          RecordField(const std::string &v) { constructor(); SetStr(v); }
          RecordField(const int& v) { constructor(); SetInt(v); }
          RecordField(const int64_t& v) { constructor(); SetInt(v); }
@@ -343,7 +343,7 @@ namespace dabc {
          bool SetUInt(uint64_t v);
          bool SetDouble(double v);
          bool SetStr(const std::string &v);
-         bool SetStr(const char* v);
+         bool SetStr(const char *v);
          bool SetStrVect(const std::vector<std::string>& vect);
          bool SetBuffer(const Buffer& buf);
          bool SetReference(const Reference& ref);
@@ -368,7 +368,7 @@ namespace dabc {
          static bool NeedJsonReformat(const std::string &str);
          static std::string JsonReformat(const std::string &str);
 
-         static bool StrToStrVect(const char* str, std::vector<std::string>& vect, bool verbose = true);
+         static bool StrToStrVect(const char *str, std::vector<std::string>& vect, bool verbose = true);
    };
 
    class RecordFieldsMap {
@@ -481,7 +481,7 @@ namespace dabc {
 
          virtual ~RecordContainer();
 
-         const char* ClassName() const override { return "Record"; }
+         const char *ClassName() const override { return "Record"; }
 
          void Print(int lvl = 0) override;
 

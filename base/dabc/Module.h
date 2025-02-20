@@ -254,7 +254,7 @@ namespace dabc {
 
       public:
 
-         const char* ClassName() const override { return "Module"; }
+         const char *ClassName() const override { return "Module"; }
 
          std::string GetInfoParName() const;
 

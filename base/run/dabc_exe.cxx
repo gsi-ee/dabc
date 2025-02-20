@@ -53,7 +53,7 @@ bool CreateManagerControl(dabc::Configuration& cfg)
 }
 
 
-int command_shell(const char* node)
+int command_shell(const char *node)
 {
    dabc::CreateManager("cmd", 0);
 
@@ -100,7 +100,7 @@ int main(int numc, char* args[])
    int cnt = 2;
    while (cnt<numc) {
 
-      const char* arg = args[cnt++];
+      const char *arg = args[cnt++];
 
       if (strcmp(arg,"-slow-time") == 0) {
          dabc::TimeStamp::SetUseSlow();
@@ -119,7 +119,7 @@ int main(int numc, char* args[])
       if (strcmp(arg,"-norun") == 0) {
          //dorun = false;
       } else {
-         const char* separ = strchr(arg,'=');
+         const char *separ = strchr(arg,'=');
          if (separ && (separ != arg)) {
             std::string argname, argvalue;
             argname.append(arg, separ - arg);

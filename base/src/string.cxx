@@ -139,7 +139,7 @@ std::string dabc::number_to_str(unsigned long num, int prec, int select)
 
 
 
-bool dabc::str_to_int(const char* val, int* res)
+bool dabc::str_to_int(const char *val, int* res)
 {
    if (!val || !res) return false;
 
@@ -159,7 +159,7 @@ bool dabc::str_to_int(const char* val, int* res)
    return sscanf(val, "%d", res) == 1;
 }
 
-bool dabc::str_to_lint(const char* val, long* res)
+bool dabc::str_to_lint(const char *val, long* res)
 {
    if (!val || !res) return false;
 
@@ -181,7 +181,7 @@ bool dabc::str_to_lint(const char* val, long* res)
 }
 
 
-bool dabc::str_to_llint(const char* val, long long* res)
+bool dabc::str_to_llint(const char *val, long long* res)
 {
    if (!val || !res) return false;
 
@@ -203,7 +203,7 @@ bool dabc::str_to_llint(const char* val, long long* res)
 }
 
 
-bool dabc::str_to_uint(const char* val, unsigned* res)
+bool dabc::str_to_uint(const char *val, unsigned* res)
 {
    if (!val || !res) return false;
 
@@ -219,7 +219,7 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
    return sscanf(val, "%u", res) == 1;
 }
 
-bool dabc::str_to_luint(const char* val, long unsigned* res)
+bool dabc::str_to_luint(const char *val, long unsigned* res)
 {
    if (!val || !res) return false;
 
@@ -235,7 +235,7 @@ bool dabc::str_to_luint(const char* val, long unsigned* res)
    return sscanf(val, "%lu", res) == 1;
 }
 
-bool dabc::str_to_lluint(const char* val, long long unsigned* res)
+bool dabc::str_to_lluint(const char *val, long long unsigned* res)
 {
    if (!val || !res) return false;
 
@@ -251,7 +251,7 @@ bool dabc::str_to_lluint(const char* val, long long unsigned* res)
 }
 
 
-bool dabc::str_to_double(const char* val, double* res)
+bool dabc::str_to_double(const char *val, double* res)
 {
    if (!val || !res) return false;
 
@@ -264,7 +264,7 @@ bool dabc::str_to_double(const char* val, double* res)
    return false;
 }
 
-bool dabc::str_to_bool(const char* val, bool* res)
+bool dabc::str_to_bool(const char *val, bool* res)
 {
    if (!val || !res) return false;
    if (strcmp(val, xmlTrueValue) == 0) { *res = true; return true; }

@@ -44,7 +44,7 @@ namespace dabc {
 
       public:
          Url();
-         Url(const char* url);
+         Url(const char *url);
          Url(const std::string &url);
          virtual ~Url();
 

@@ -127,7 +127,7 @@ namespace dabc {
          void TransportCleanup() override;
 
       public:
-         const char* ClassName() const override { return "NetworkTransport"; }
+         const char *ClassName() const override { return "NetworkTransport"; }
 
          NetworkTransport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport,
                           bool useackn, WorkerAddon* addon);

@@ -58,8 +58,8 @@ namespace dabc {
             fConnId = req.GetConnId();
          }
 
-         const char* ConnId() const { return fConnId.c_str(); }
-         bool IsConnId(const char* id) { return fConnId.compare(id) == 0; }
+         const char *ConnId() const { return fConnId.c_str(); }
+         bool IsConnId(const char *id) { return fConnId.compare(id) == 0; }
    };
 
    // this class is used to perform initial protocol
@@ -273,7 +273,7 @@ void dabc::SocketDevice::DestroyRec(NewConnectRec* rec, bool res)
    delete rec;
 }
 
-dabc::NewConnectRec* dabc::SocketDevice::_FindRec(const char* connid)
+dabc::NewConnectRec* dabc::SocketDevice::_FindRec(const char *connid)
 {
    for (unsigned n=0; n<fConnRecs.size();n++) {
       NewConnectRec* rec = (NewConnectRec*) fConnRecs.at(n);
@@ -513,7 +513,7 @@ void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolAddon *proc, const 
    proc->fRec = rec;
 }
 
-bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char* inmsg)
+bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char *inmsg)
 {
    NewConnectRec* rec = proc->fRec;
 

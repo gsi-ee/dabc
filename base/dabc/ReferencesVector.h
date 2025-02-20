@@ -87,7 +87,7 @@ namespace dabc {
 
 
          /** \brief Simple search of object by name, no any subfolder structures */
-         Object* FindObject(const char* name, int len = -1) const;
+         Object* FindObject(const char *name, int len = -1) const;
 
          /** \brief Return true if vector has pointer on the object */
          bool HasObject(Object* ptr);

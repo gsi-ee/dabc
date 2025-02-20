@@ -38,7 +38,7 @@ namespace dabc {
 
          virtual ~FileInterface() {}
 
-         virtual Handle fopen(const char* fname, const char* mode, const char* = nullptr) { return (Handle) ::fopen(fname, mode); }
+         virtual Handle fopen(const char *fname, const char *mode, const char * = nullptr) { return (Handle) ::fopen(fname, mode); }
 
          virtual void fclose(Handle f) { if (f) ::fclose((FILE*)f); }
 
@@ -59,15 +59,15 @@ namespace dabc {
 
          /** Produce list of files, object must be explicitly destroyed with ref.Destroy call
           * One could decide if files or directories should be listed */
-         virtual Object* fmatch(const char* fmask, bool select_files = true);
+         virtual Object* fmatch(const char *fmask, bool select_files = true);
 
-         virtual bool mkdir(const char* path);
+         virtual bool mkdir(const char *path);
 
          /** Method returns file-specific int parameter */
          virtual int GetFileIntPar(Handle /* h */, const char * /* parname */) { return 0; }
 
          /** Method returns file-specific string parameter */
-         virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int /* sbuflen */)
+         virtual bool GetFileStrPar(Handle h, const char *parname, char* sbuf, int /* sbuflen */)
          {
             (void) h;
             (void) parname;
@@ -137,7 +137,7 @@ namespace dabc {
          bool eof() const { return isReading() ? io->feof(fd) : true; }
 
          /** Return integer file parameter */
-         int GetIntPar(const char* parname) { return io ? io->GetFileIntPar(fd, parname) : 0; }
+         int GetIntPar(const char *parname) { return io ? io->GetFileIntPar(fd, parname) : 0; }
 
          /** Return string file parameter */
          bool GetStrPar(const char *parname, char *sbuf, int sbuflen) { return io ? io->GetFileStrPar(fd, parname, sbuf, sbuflen) : false; }
@@ -193,7 +193,7 @@ namespace dabc {
             Close();
          }
 
-         bool OpenReading(const char* fname)
+         bool OpenReading(const char *fname)
          {
             if (isOpened()) return false;
 
@@ -223,7 +223,7 @@ namespace dabc {
             return true;
          }
 
-         bool OpenWriting(const char* fname)
+         bool OpenWriting(const char *fname)
          {
             if (isOpened()) return false;
 

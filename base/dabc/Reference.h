@@ -135,14 +135,14 @@ namespace dabc {
          Reference GetParentRef() const { return dabc::Reference(GetParent()); }
 
          /** \brief Return name of referenced object, if object not assigned, returns "---" */
-         const char* GetName() const;
+         const char *GetName() const;
 
          /** \brief Return class name of referenced object, if object not assigned, returns "---" */
-         const char* ClassName() const;
+         const char *ClassName() const;
 
          /** \brief Returns true if object name is the same as specified one.
           * If object not assigned, always return false. */
-         bool IsName(const char* name) const;
+         bool IsName(const char *name) const;
 
          /** \brief Return pointer on the object */
          inline Object* operator()() const { return fObj; }
@@ -168,10 +168,10 @@ namespace dabc {
 
          /** \brief Searches for child in referenced object.
           * If object null, always return null reference */
-         Reference FindChild(const char* name) const;
+         Reference FindChild(const char *name) const;
 
          /** Remove child with given name and return reference on that child */
-         bool RemoveChild(const char* name, bool cleanup = true);
+         bool RemoveChild(const char *name, bool cleanup = true);
 
          /** \brief Remove all childs in referenced object
           * If cleanup true (default) and object is owner, all objects will be destroyed */

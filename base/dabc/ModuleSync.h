@@ -195,7 +195,7 @@ namespace dabc {
       public:
 
          /** Returns class name */
-         const char* ClassName() const override { return "ModuleSync"; }
+         const char *ClassName() const override { return "ModuleSync"; }
 
    };
 }

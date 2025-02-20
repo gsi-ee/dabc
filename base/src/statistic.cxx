@@ -30,7 +30,7 @@ dabc::CpuStatistic::CpuStatistic(bool withmem) :
    fVmPeak(0),
    fNumThreads(0)
 {
-   const char* cpu_stat_file = "/proc/stat";
+   const char *cpu_stat_file = "/proc/stat";
 
    fStatFp = fopen (cpu_stat_file, "r");
    if (!fStatFp)
@@ -78,7 +78,7 @@ bool dabc::CpuStatistic::Measure()
 
       if (strncmp (buffer, "cpu", 3) != 0) break;
 
-      const char* info = buffer;
+      const char *info = buffer;
 
       while ((*info!=' ') && (*info != 0)) info++;
       if (*info == 0) break;
@@ -251,7 +251,7 @@ void dabc::Ratemeter::DoMeasure(double interval_sec, long npoints, double firstt
    firstoper = firsttm;
 }
 
-void dabc::Ratemeter::SaveRatesInFile(const char* fname, Ratemeter** rates, int nrates, bool withsum)
+void dabc::Ratemeter::SaveRatesInFile(const char *fname, Ratemeter** rates, int nrates, bool withsum)
 {
    if (nrates<=0) return;
 
@@ -286,7 +286,7 @@ void dabc::Ratemeter::SaveRatesInFile(const char* fname, Ratemeter** rates, int 
    fclose(f);
 }
 
-void dabc::Ratemeter::SaveInFile(const char* fname)
+void dabc::Ratemeter::SaveInFile(const char *fname)
 {
    Ratemeter* rate = this;
    SaveRatesInFile(fname, &rate, 1, false);
@@ -367,7 +367,7 @@ double dabc::Average::Dev() const
    return sqrt(sum2/num - Mean()*Mean());
 }
 
-void dabc::Average::Show(const char* name, bool showextr)
+void dabc::Average::Show(const char *name, bool showextr)
 {
    if (showextr)
       DOUT0("%s = %f +- %f (min = %f, max = %f)",name,Mean(), Dev(), min, max);

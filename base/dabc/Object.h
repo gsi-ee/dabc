@@ -37,63 +37,63 @@ namespace dabc {
    class ReferencesVector;
    class HierarchyContainer;
 
-   extern const char* xmlDeviceNode;
-   extern const char* xmlThreadNode;
-   extern const char* xmlMemoryPoolNode;
-   extern const char* xmlModuleNode;
-   extern const char* xmlConnectionNode;
+   extern const char *xmlDeviceNode;
+   extern const char *xmlThreadNode;
+   extern const char *xmlMemoryPoolNode;
+   extern const char *xmlModuleNode;
+   extern const char *xmlConnectionNode;
 
-   extern const char* xmlQueueAttr;
-   extern const char* xmlBindAttr;
-   extern const char* xmlSignalAttr;
-   extern const char* xmlRateAttr;
-   extern const char* xmlLoopAttr;
-   extern const char* xmlInputQueueSize;
-   extern const char* xmlOutputQueueSize;
-   extern const char* xmlInlineDataSize;
+   extern const char *xmlQueueAttr;
+   extern const char *xmlBindAttr;
+   extern const char *xmlSignalAttr;
+   extern const char *xmlRateAttr;
+   extern const char *xmlLoopAttr;
+   extern const char *xmlInputQueueSize;
+   extern const char *xmlOutputQueueSize;
+   extern const char *xmlInlineDataSize;
 
-   extern const char* xmlPoolName;
-   extern const char* xmlWorkPool;
-   extern const char* xmlFixedLayout;
-   extern const char* xmlCleanupTimeout;
-   extern const char* xmlBufferSize;
-   extern const char* xmlNumBuffers;
-   extern const char* xmlNumSegments;
-   extern const char* xmlAlignment;
-   extern const char* xmlShowInfo;
+   extern const char *xmlPoolName;
+   extern const char *xmlWorkPool;
+   extern const char *xmlFixedLayout;
+   extern const char *xmlCleanupTimeout;
+   extern const char *xmlBufferSize;
+   extern const char *xmlNumBuffers;
+   extern const char *xmlNumSegments;
+   extern const char *xmlAlignment;
+   extern const char *xmlShowInfo;
 
-   extern const char* xmlNumInputs;
-   extern const char* xmlNumOutputs;
-   extern const char* xmlInputPrefix;
-   extern const char* xmlInputMask;
-   extern const char* xmlOutputPrefix;
-   extern const char* xmlOutputMask;
+   extern const char *xmlNumInputs;
+   extern const char *xmlNumOutputs;
+   extern const char *xmlInputPrefix;
+   extern const char *xmlInputMask;
+   extern const char *xmlOutputPrefix;
+   extern const char *xmlOutputMask;
 
-   extern const char* xmlUseAcknowledge;
-   extern const char* xmlFlushTimeout;
-   extern const char* xmlConnTimeout;
+   extern const char *xmlUseAcknowledge;
+   extern const char *xmlFlushTimeout;
+   extern const char *xmlConnTimeout;
 
    // list of parameters, taken from URL
    // this parameters can be (should be) used in many places, which
    // allows to specify them through standardized URL syntax
-   extern const char* xmlProtocol;
-   extern const char* xmlHostName;
-   extern const char* xmlFileName;     // used as file name option in separate xml node
-   extern const char* xmlFileNumber;   // used as file number option in separate xml node
-   extern const char* xmlFileSizeLimit; // used as separate xml node
-   extern const char* xml_maxsize;      // used as option in file url
-   extern const char* xml_number;       // used as option in file url
-   extern const char* xml_flush;        // used as flush attribute in url
+   extern const char *xmlProtocol;
+   extern const char *xmlHostName;
+   extern const char *xmlFileName;     // used as file name option in separate xml node
+   extern const char *xmlFileNumber;   // used as file number option in separate xml node
+   extern const char *xmlFileSizeLimit; // used as separate xml node
+   extern const char *xml_maxsize;      // used as option in file url
+   extern const char *xml_number;       // used as option in file url
+   extern const char *xml_flush;        // used as flush attribute in url
 
-   extern const char* xmlMcastAddr;
-   extern const char* xmlMcastPort;
-   extern const char* xmlMcastRecv;
+   extern const char *xmlMcastAddr;
+   extern const char *xmlMcastPort;
+   extern const char *xmlMcastRecv;
 
-   extern const char* typeThread;
-   extern const char* typeDevice;
-   extern const char* typeSocketDevice;
-   extern const char* typeSocketThread;
-   extern const char* typeApplication;
+   extern const char *typeThread;
+   extern const char *typeDevice;
+   extern const char *typeSocketDevice;
+   extern const char *typeSocketThread;
+   extern const char *typeApplication;
 
    /** \brief Base class for most of the DABC classes.
     *
@@ -151,7 +151,7 @@ namespace dabc {
          /** \brief Set object state value */
          inline void SetState(EState st) { fObjectFlags = (fObjectFlags & ~flStateMask) | (unsigned) st ; }
 
-         static Reference SearchForChild(Reference& ref, const char* name, bool firsttime, bool force) throw();
+         static Reference SearchForChild(Reference& ref, const char *name, bool firsttime, bool force) throw();
 
          /** Method set cleanup bit that object will be cleaned up in all registered objects
           * Used only by manager therefore private */
@@ -292,10 +292,10 @@ namespace dabc {
          bool IsParent(Object* obj) const;
 
          /** \brief Returns name of the object, __thread safe__ */
-         const char* GetName() const { return fObjectName.c_str(); }
+         const char *GetName() const { return fObjectName.c_str(); }
 
          /** \brief Checks if object name is same as provided string, __thread safe__ */
-         bool IsName(const char* str) const { return fObjectName.compare(str) == 0; }
+         bool IsName(const char *str) const { return fObjectName.compare(str) == 0; }
 
          /** \brief Checks if object name is same as provided string, __thread safe__ */
          bool IsName(const std::string &str) const { return fObjectName.compare(str) == 0; }
@@ -307,7 +307,7 @@ namespace dabc {
           *                  if len == 0, method will return false.
           *                  if  len < 0, str will be supposed normal null-terminated string
           * \returns   true if object name equal to provided string */
-         bool IsName(const char* str, int len) const;
+         bool IsName(const char *str, int len) const;
 
          /** Check if object name match to the mask */
          bool IsNameMatch(const std::string &mask) const;
@@ -376,13 +376,13 @@ namespace dabc {
          bool GetAllChildRef(ReferencesVector* vect) const;
 
          /** \brief returns pointer on child object with given name */
-         Object* FindChild(const char* name) const;
+         Object* FindChild(const char *name) const;
 
          //TODO: one need method reverse to FindChild - MakePath()
          // one should be able to produce string which can be used to find specified object
 
          /** \brief returns reference on child object with given name */
-         Reference FindChildRef(const char* name, bool force = false) const throw();
+         Reference FindChildRef(const char *name, bool force = false) const throw();
 
          /** \brief Return folder of specified name, no special symbols allowed.
           *
@@ -416,7 +416,7 @@ namespace dabc {
          /**  \brief Returns class name of the object instance.
           *
           * In some cases class name used to correctly locate object in xml file */
-         virtual const char* ClassName() const { return "Object"; }
+         virtual const char *ClassName() const { return "Object"; }
 
          /** \brief Method to locate object in xml file
           *

@@ -126,7 +126,7 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const void *src, BufferSize_t sz)
    return sz;
 }
 
-dabc::BufferSize_t dabc::Pointer::copyfromstr(const char* str, unsigned len) throw()
+dabc::BufferSize_t dabc::Pointer::copyfromstr(const char *str, unsigned len) throw()
 {
    return str ? copyfrom(str, len ? len : strlen(str)) : 0;
 }

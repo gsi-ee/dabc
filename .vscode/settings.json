@@ -8,6 +8,7 @@
       "span": "cpp",
       "vector": "cpp",
       "first.C": "cpp",
-      "histo.C": "cpp"
+      "histo.C": "cpp",
+      "cstring": "cpp"
    }
 }

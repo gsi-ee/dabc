@@ -27,58 +27,58 @@ unsigned dabc::Object::gNumCreated = 0;
 namespace dabc {
 
 
-   const char* xmlDeviceNode        = "Device";
-   const char* xmlThreadNode        = "Thread";
-   const char* xmlMemoryPoolNode    = "MemoryPool";
-   const char* xmlModuleNode        = "Module";
-   const char* xmlConnectionNode    = "Connection";
+   const char *xmlDeviceNode        = "Device";
+   const char *xmlThreadNode        = "Thread";
+   const char *xmlMemoryPoolNode    = "MemoryPool";
+   const char *xmlModuleNode        = "Module";
+   const char *xmlConnectionNode    = "Connection";
 
-   const char* xmlQueueAttr         = "queue";
-   const char* xmlBindAttr          = "bind";
-   const char* xmlSignalAttr        = "signal";
-   const char* xmlRateAttr          = "rate";
-   const char* xmlLoopAttr          = "loop";
-   const char* xmlInputQueueSize    = "InputQueueSize";
-   const char* xmlOutputQueueSize   = "OutputQueueSize";
-   const char* xmlInlineDataSize    = "InlineDataSize";
+   const char *xmlQueueAttr         = "queue";
+   const char *xmlBindAttr          = "bind";
+   const char *xmlSignalAttr        = "signal";
+   const char *xmlRateAttr          = "rate";
+   const char *xmlLoopAttr          = "loop";
+   const char *xmlInputQueueSize    = "InputQueueSize";
+   const char *xmlOutputQueueSize   = "OutputQueueSize";
+   const char *xmlInlineDataSize    = "InlineDataSize";
 
-   const char* xmlPoolName          = "PoolName";
-   const char* xmlWorkPool          = "Pool";
-   const char* xmlFixedLayout       = "FixedLayout";
-   const char* xmlCleanupTimeout    = "CleanupTimeout";
-   const char* xmlBufferSize        = "BufferSize";
-   const char* xmlNumBuffers        = "NumBuffers";
-   const char* xmlAlignment         = "Alignment";
-   const char* xmlShowInfo          = "ShowInfo";
+   const char *xmlPoolName          = "PoolName";
+   const char *xmlWorkPool          = "Pool";
+   const char *xmlFixedLayout       = "FixedLayout";
+   const char *xmlCleanupTimeout    = "CleanupTimeout";
+   const char *xmlBufferSize        = "BufferSize";
+   const char *xmlNumBuffers        = "NumBuffers";
+   const char *xmlAlignment         = "Alignment";
+   const char *xmlShowInfo          = "ShowInfo";
 
-   const char* xmlNumInputs         = "NumInputs";
-   const char* xmlNumOutputs        = "NumOutputs";
-   const char* xmlInputPrefix       = "Input";
-   const char* xmlInputMask         = "Input%u";
-   const char* xmlOutputPrefix      = "Output";
-   const char* xmlOutputMask        = "Output%u";
-   const char* xmlUseAcknowledge    = "UseAcknowledge";
-   const char* xmlFlushTimeout      = "FlushTimeout";
-   const char* xmlConnTimeout       = "ConnTimeout";
+   const char *xmlNumInputs         = "NumInputs";
+   const char *xmlNumOutputs        = "NumOutputs";
+   const char *xmlInputPrefix       = "Input";
+   const char *xmlInputMask         = "Input%u";
+   const char *xmlOutputPrefix      = "Output";
+   const char *xmlOutputMask        = "Output%u";
+   const char *xmlUseAcknowledge    = "UseAcknowledge";
+   const char *xmlFlushTimeout      = "FlushTimeout";
+   const char *xmlConnTimeout       = "ConnTimeout";
 
-   const char* xmlMcastAddr         = "McastAddr";
-   const char* xmlMcastPort         = "McastPort";
-   const char* xmlMcastRecv         = "McastRecv";
+   const char *xmlMcastAddr         = "McastAddr";
+   const char *xmlMcastPort         = "McastPort";
+   const char *xmlMcastRecv         = "McastRecv";
 
-   const char* xmlProtocol          = "Protocol";
-   const char* xmlHostName          = "HostName";
-   const char* xmlFileName          = "FileName";
-   const char* xmlFileNumber        = "FileNumber";
-   const char* xmlFileSizeLimit     = "FileSizeLimit";
-   const char* xml_maxsize          = "maxsize";
-   const char* xml_number           = "number";
-   const char* xml_flush            = "flush";
+   const char *xmlProtocol          = "Protocol";
+   const char *xmlHostName          = "HostName";
+   const char *xmlFileName          = "FileName";
+   const char *xmlFileNumber        = "FileNumber";
+   const char *xmlFileSizeLimit     = "FileSizeLimit";
+   const char *xml_maxsize          = "maxsize";
+   const char *xml_number           = "number";
+   const char *xml_flush            = "flush";
 
-   const char* typeThread           = "dabc::Thread";
-   const char* typeDevice           = "dabc::Device";
-   const char* typeSocketDevice     = "dabc::SocketDevice";
-   const char* typeSocketThread     = "dabc::SocketThread";
-   const char* typeApplication      = "dabc::Application";
+   const char *typeThread           = "dabc::Thread";
+   const char *typeDevice           = "dabc::Device";
+   const char *typeSocketDevice     = "dabc::SocketDevice";
+   const char *typeSocketThread     = "dabc::SocketThread";
+   const char *typeApplication      = "dabc::Application";
 
 
 #ifdef DABC_EXTRA_CHECKS
@@ -200,7 +200,7 @@ void dabc::Object::SetLogging(bool on)
    return SetFlag(flLogging, on);
 }
 
-bool dabc::Object::IsName(const char* str, int len) const
+bool dabc::Object::IsName(const char *str, int len) const
 {
    if ((len == 0) || !str) return false;
    if (len < 0) return fObjectName.compare(str) == 0;
@@ -727,19 +727,19 @@ bool dabc::Object::GetAllChildRef(ReferencesVector* vect) const
 }
 
 
-dabc::Object* dabc::Object::FindChild(const char* name) const
+dabc::Object* dabc::Object::FindChild(const char *name) const
 {
    return FindChildRef(name, false)();
 }
 
-dabc::Reference dabc::Object::FindChildRef(const char* name, bool force) const throw()
+dabc::Reference dabc::Object::FindChildRef(const char *name, bool force) const throw()
 {
    Reference ref(const_cast<Object*> (this));
 
    return SearchForChild(ref, name, true, force);
 }
 
-dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, bool firsttime, bool force) throw()
+dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char *name, bool firsttime, bool force) throw()
 {
    if (ref.null()) return ref;
 
@@ -776,7 +776,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
          return SearchForChild(ref, name + 2, false, force);
    }
 
-   const char* ptok = name;
+   const char *ptok = name;
    while (*ptok != 0) {
       if (*ptok == '/') break;
       ptok++;
@@ -883,7 +883,7 @@ void dabc::Object::SetName(const char *name)
 }
 
 
-void dabc::Object::SetNameDirect(const char* name)
+void dabc::Object::SetNameDirect(const char *name)
 {
    LockGuard guard(fObjectMutex);
 
@@ -938,7 +938,7 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::
    if (fullnamearg.empty() && prnt.null())
       return ConstructorPair();
 
-   const char* fullname = fullnamearg.empty() ? "---" : fullnamearg.c_str();
+   const char *fullname = fullnamearg.empty() ? "---" : fullnamearg.c_str();
    bool isrootfolder = false, isskipparent = false;
    while (*fullname=='/') {
       isrootfolder = true;
@@ -954,7 +954,7 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::
       if (prnt.null()) prnt = dabc::mgr;
    }
 
-   const char* slash = strrchr(fullname, '/');
+   const char *slash = strrchr(fullname, '/');
 
    ConstructorPair pair;
 
@@ -1122,7 +1122,7 @@ void dabc::Object::InspectGarbageCollector()
 #include <cstdio>
 #include <map>
 
-void dabc::Object::DebugObject(const char* classname, Object* instance, int kind)
+void dabc::Object::DebugObject(const char *classname, Object* instance, int kind)
 {
 
    typedef std::list<dabc::Object*> obj_list;

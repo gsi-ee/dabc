@@ -1362,7 +1362,7 @@ bool dabc::Manager::DoCleanupApplication()
    return true;
 }
 
-void dabc::Manager::Sleep(double tmout, const char* prefix)
+void dabc::Manager::Sleep(double tmout, const char *prefix)
 {
    if (tmout<=0.) return;
 
@@ -2260,7 +2260,7 @@ dabc::DataInput* dabc::ManagerRef::CreateDataInput(const std::string &kind)
    return (dabc::DataInput *) cmd.GetPtr("DataInput");
 }
 
-void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
+void dabc::ManagerRef::Sleep(double tmout, const char *prefix)
 {
    if (GetObject())
       GetObject()->Sleep(tmout, prefix);

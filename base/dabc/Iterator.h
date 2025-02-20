@@ -53,8 +53,8 @@ namespace dabc {
           * \param[in] lvl  - level of parent, 0 - top-level folder, 1 - first-level folder and so on
           * \returns pointer on parent object */
          Object* parent(unsigned lvl);
-         const char* fullname() const { return fFullName.c_str(); }
-         const char* name() const { return fCurrent() ? fCurrent()->GetName() : "none"; }
+         const char *fullname() const { return fFullName.c_str(); }
+         const char *name() const { return fCurrent() ? fCurrent()->GetName() : "none"; }
 
          template<class T>
          bool next_cast(T* &ptr, bool goinside = true)

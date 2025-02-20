@@ -24,7 +24,7 @@
 
 std::string dabc::Configuration::fLocalHost = "";
 
-dabc::Configuration::Configuration(const char* fname) :
+dabc::Configuration::Configuration(const char *fname) :
    ConfigBase(fname),
    fSelected(nullptr),
    fMgrHost(),
@@ -224,13 +224,13 @@ std::string dabc::Configuration::ThreadsLayout()
 }
 
 
-std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
+std::string dabc::Configuration::GetUserPar(const char *name, const char *dflt)
 {
    if (!fSelected) return std::string("");
    return Find1(fSelected, dflt ? dflt : "", xmlUserNode, name);
 }
 
-int dabc::Configuration::GetUserParInt(const char* name, int dflt)
+int dabc::Configuration::GetUserParInt(const char *name, int dflt)
 {
    std::string sres = GetUserPar(name);
    if (sres.empty()) return dflt;
@@ -252,7 +252,7 @@ std::string dabc::Configuration::ConetextAppClass()
    if (!node)
       node = FindMatch(nullptr, fSelected, xmlApplication);
 
-   const char* res = Xml::GetAttr(node, xmlClassAttr);
+   const char *res = Xml::GetAttr(node, xmlClassAttr);
 
    return std::string(res ? res : "");
 }
@@ -275,7 +275,7 @@ bool dabc::Configuration::LoadLibs()
     return true;
 }
 
-bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char* nodename, bool check_name_for_multicast)
+bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char *nodename, bool check_name_for_multicast)
 {
    do {
 
@@ -283,11 +283,11 @@ bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char* n
       if (!prev) break;
 
       // if creation node marked with auto="false" attribute, than creation is disabled
-      const char* autoattr = Xml::GetAttr(prev, xmlAutoAttr);
+      const char *autoattr = Xml::GetAttr(prev, xmlAutoAttr);
       if (autoattr && strcmp(autoattr,xmlFalseValue) == 0) continue;
 
       if (!check_name_for_multicast) break;
-      const char* nameattr = Xml::GetAttr(prev, xmlNameAttr);
+      const char *nameattr = Xml::GetAttr(prev, xmlNameAttr);
       if (!nameattr || (strpbrk(nameattr,"*?") == nullptr)) break;
 
    } while (prev);

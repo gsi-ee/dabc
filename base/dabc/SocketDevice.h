@@ -55,11 +55,11 @@ namespace dabc {
 
          void DestroyRec(NewConnectRec* rec, bool res);
 
-         NewConnectRec* _FindRec(const char* connid);
+         NewConnectRec* _FindRec(const char *connid);
 
-         void ServerProtocolRequest(SocketProtocolAddon* proc, const char* inmsg, char* outmsg);
+         void ServerProtocolRequest(SocketProtocolAddon* proc, const char *inmsg, char* outmsg);
 
-         bool ProtocolCompleted(SocketProtocolAddon* proc, const char* inmsg);
+         bool ProtocolCompleted(SocketProtocolAddon* proc, const char *inmsg);
 
          void RemoveProtocolAddon(SocketProtocolAddon* proc, bool res);
 
@@ -74,7 +74,7 @@ namespace dabc {
          };
 
          std::string RequiredThrdClass() const override { return typeSocketThread; }
-         const char* ClassName() const override { return dabc::typeSocketDevice; }
+         const char *ClassName() const override { return dabc::typeSocketDevice; }
 
          SocketDevice(const std::string &name, Command cmd);
          virtual ~SocketDevice();

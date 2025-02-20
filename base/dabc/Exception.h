@@ -68,7 +68,7 @@ namespace dabc {
          Exception(ExceptionKind _kind, const std::string &info, const std::string &item) throw();
          virtual ~Exception() throw();
 
-         const char* what() const throw() override;
+         const char *what() const throw() override;
 
          ExceptionKind kind() const { return fKind; }
          const std::string ItemName() const throw() { return fItem; }

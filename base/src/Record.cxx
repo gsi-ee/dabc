@@ -182,8 +182,8 @@ void dabc::HStore::SetField(const char *field, const char *value)
       buf.append(dabc::format(" %s=", field));
       int vlen = strlen(value);
 
-      const char* v = value;
-      const char* stop = value+vlen;
+      const char *v = value;
+      const char *stop = value+vlen;
 
       if ((vlen > 1) && (value[0] == '\"') && (value[vlen-1] == '\"')) {
          v++; stop--;
@@ -984,18 +984,18 @@ dabc::Reference dabc::RecordField::AsReference() const
    return *valueRef;
 }
 
-bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& vect, bool verbose)
+bool dabc::RecordField::StrToStrVect(const char *str, std::vector<std::string>& vect, bool verbose)
 {
    int len = strlen(str);
 
    if ((len<2) || (str[0]!='[') || (str[len-1]!=']')) return false;
 
-   const char* pos = str + 1;
+   const char *pos = str + 1;
 
    while (*pos != 0) {
       while (*pos==' ') pos++; // exclude possible spaces in the begin
       if ((*pos=='\'') || (*pos == '\"')) {
-         const char* p1 = strchr(pos+1, *pos);
+         const char *p1 = strchr(pos+1, *pos);
          if (!p1) {
             if (verbose) EOUT("Error syntax in array %s after char:%u - closing quote not found ", str, (unsigned) (pos - str));
             vect.clear();
@@ -1004,7 +1004,7 @@ bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& 
          vect.emplace_back(std::string(pos+1, p1 - pos - 1));
          pos = p1 + 1;
       } else {
-         const char* p1 = strpbrk(pos+1, ",]");
+         const char *p1 = strpbrk(pos+1, ",]");
          if (!p1) {
             if (verbose) EOUT("Error syntax in array %s after char:%u - ',' or ']' not found ", str, (unsigned) (pos - str));
             vect.clear();
@@ -1145,7 +1145,7 @@ bool dabc::RecordField::SetStr(const std::string &v)
    return modified();
 }
 
-bool dabc::RecordField::SetStr(const char* v)
+bool dabc::RecordField::SetStr(const char *v)
 {
    if (cannot_modify()) return false;
 
@@ -1355,7 +1355,7 @@ void dabc::RecordField::SetArrStrDirect(int64_t size, char* arr, bool owner)
       valueStr = arr;
    } else {
       int fullsize = 0;
-      const char* p = arr;
+      const char *p = arr;
       for (unsigned n=0;n<size;n++) {
          int len = strlen(p);
          fullsize += len+1;

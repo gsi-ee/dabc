@@ -77,7 +77,7 @@ namespace dabc {
 
          virtual ~CommandContainer();
 
-         const char* ClassName() const override { return "Command"; }
+         const char *ClassName() const override { return "Command"; }
    };
 
    /** \brief Represents command with its arguments
@@ -125,7 +125,7 @@ namespace dabc {
 
          // set of methods to keep old interface, it is preferable to use field methods
 
-         bool SetStr(const std::string &name, const char* value) { return !value ? RemoveField(name) : SetField(name, value); }
+         bool SetStr(const std::string &name, const char *value) { return !value ? RemoveField(name) : SetField(name, value); }
          bool SetStr(const std::string &name, const std::string &value) { return SetField(name, value); }
          std::string GetStr(const std::string &name, const std::string &dflt = "") const { return GetField(name).AsStr(dflt); }
 
@@ -213,7 +213,7 @@ namespace dabc {
          int GetPriority() const;
 
          /** \brief Show on debug output content of command */
-         void Print(int lvl=0, const char* from = nullptr) const;
+         void Print(int lvl=0, const char *from = nullptr) const;
 
          /** Replied on the command.
           * Only non-negative value should be set as result value.
@@ -266,19 +266,19 @@ namespace dabc {
 
          /** Name of the parameter, used to specified command receiver.
           * It can contain full url, including node name and item name  */
-         static const char* ReceiverParName() { return "_Receiver_"; }
+         static const char *ReceiverParName() { return "_Receiver_"; }
 
          /** Name of the parameter, used to keep command result */
-         static const char* ResultParName() { return "_Result_"; }
+         static const char *ResultParName() { return "_Result_"; }
 
          /** Name of the parameter, used to keep command priority */
-         static const char* PriorityParName() { return "_Priority_"; }
+         static const char *PriorityParName() { return "_Priority_"; }
    };
 
 
 #define DABC_COMMAND(cmd_class, cmd_name) \
    public: \
-      static const char* CmdName() { return cmd_name; } \
+      static const char *CmdName() { return cmd_name; } \
       cmd_class() : dabc::Command(CmdName()) {} \
       cmd_class(const dabc::Command &src) : dabc::Command(src) \
         { if (!src.IsName(CmdName())) throw dabc::Exception(dabc::ex_Command, "Wrong command name in assignment constructor", src.GetName()); } \

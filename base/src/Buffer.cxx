@@ -336,7 +336,7 @@ dabc::BufferSize_t dabc::Buffer::CopyFrom(const Buffer& srcbuf, BufferSize_t len
 }
 
 
-dabc::BufferSize_t dabc::Buffer::CopyFromStr(const char* src, unsigned len) throw()
+dabc::BufferSize_t dabc::Buffer::CopyFromStr(const char *src, unsigned len) throw()
 {
    return Pointer(*this).copyfromstr(src, len);
 }

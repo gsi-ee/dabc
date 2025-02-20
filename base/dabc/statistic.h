@@ -92,9 +92,9 @@ namespace dabc {
 
         int GetNumOper() const { return numoper; }
 
-        void SaveInFile(const char* fname);
+        void SaveInFile(const char *fname);
 
-        static void SaveRatesInFile(const char* fname, Ratemeter** rates, int nrates, bool withsum = false);
+        static void SaveRatesInFile(const char *fname, Ratemeter** rates, int nrates, bool withsum = false);
 
      protected:
         double firstoper{0}, lastoper{0};
@@ -128,7 +128,7 @@ namespace dabc {
          double Max() const { return max; }
          double Min() const { return min; }
          double Dev() const;
-         void Show(const char* name, bool showextr = false);
+         void Show(const char *name, bool showextr = false);
       protected:
          long num{0};
          double sum1{0};

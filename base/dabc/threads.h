@@ -361,7 +361,7 @@ namespace dabc {
           *   - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
           *           first element in string corresponds to first processor
           *   -string like "+M" where M is processor number in special processors set, before SetDfltAffinity("-N") should be called  (M<N)  */
-         bool SetAffinity(const char* aff);
+         bool SetAffinity(const char *aff);
 
          /** \brief Provides thread affinity in form of "xxxooooo".
           *
@@ -414,7 +414,7 @@ namespace dabc {
           *             reserved for special purposes, these processors could be
           *             later assigned with SetAffinity("+M") call (M<N)
           * \returns true if successful */
-         static bool SetDfltAffinity(const char* aff = nullptr);
+         static bool SetDfltAffinity(const char *aff = nullptr);
 
          /** \brief Returns default affinity mask in form "xxxooosss".
           *

@@ -62,7 +62,7 @@ std::string dabc::ConnectionObject::DefaultFiledName() const
    return "state";
 }
 
-const char* dabc::ConnectionObject::GetStateName(EState state)
+const char *dabc::ConnectionObject::GetStateName(EState state)
 {
    switch (state) {
       case sInit: return "Init";
@@ -128,40 +128,40 @@ void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
 {
    if (!node || null()) return;
 
-   const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
+   const char *thrdname = Xml::GetAttr(node, xmlThreadAttr);
    if (thrdname) {
       SetAllowedField(xmlThreadAttr);
       SetConnThread(thrdname);
    }
 
-   const char* useackn = Xml::GetAttr(node, xmlUseacknAttr);
+   const char *useackn = Xml::GetAttr(node, xmlUseacknAttr);
    if (useackn) {
       SetAllowedField(xmlUseacknAttr);
       SetUseAckn(strcmp(useackn, xmlTrueValue) == 0);
    }
 
-   const char* isserver = Xml::GetAttr(node, "server");
+   const char *isserver = Xml::GetAttr(node, "server");
    if (isserver) {
       SetAllowedField("server");
       SetServerSide(strcmp(isserver, xmlTrueValue) == 0);
    }
 
-   const char* optional = Xml::GetAttr(node, xmlOptionalAttr);
+   const char *optional = Xml::GetAttr(node, xmlOptionalAttr);
    if (optional) {
       SetAllowedField(xmlOptionalAttr);
       SetOptional(strcmp(optional, xmlTrueValue) == 0);
    }
 
-   const char* poolname = Xml::GetAttr(node, xmlPoolAttr);
+   const char *poolname = Xml::GetAttr(node, xmlPoolAttr);
    if (poolname) SetPoolName(poolname);
 
-   const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
+   const char *devname = Xml::GetAttr(node, xmlDeviceAttr);
    if (devname) {
       SetAllowedField(xmlDeviceAttr);
       SetConnDevice(devname);
    }
 
-   const char* tmout = Xml::GetAttr(node, xmlTimeoutAttr);
+   const char *tmout = Xml::GetAttr(node, xmlTimeoutAttr);
    double tmout_val = 10.;
    if (tmout && str_to_double(tmout, &tmout_val)) {
       SetAllowedField(xmlTimeoutAttr);

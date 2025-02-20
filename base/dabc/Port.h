@@ -175,7 +175,7 @@ namespace dabc {
 
       public:
 
-         const char* ClassName() const override { return "Port"; }
+         const char *ClassName() const override { return "Port"; }
 
          virtual bool IsInput() const { return false; }
          virtual bool IsOutput() const { return false; }
@@ -282,7 +282,7 @@ namespace dabc {
 
       public:
 
-         const char* ClassName() const override { return "InputPort"; }
+         const char *ClassName() const override { return "InputPort"; }
 
          bool IsInput() const override { return true; }
    };
@@ -326,7 +326,7 @@ namespace dabc {
 
       public:
 
-         const char* ClassName() const override { return "OutputPort"; }
+         const char *ClassName() const override { return "OutputPort"; }
 
          bool IsOutput() const override { return true; }
 
@@ -397,7 +397,7 @@ namespace dabc {
 
       public:
 
-         const char* ClassName() const override { return "PoolHandle"; }
+         const char *ClassName() const override { return "PoolHandle"; }
 
          bool IsInput() const override { return true; }
    };

@@ -25,18 +25,18 @@
 #include "dabc/ConfigBase.h"
 #include "dabc/ReferencesVector.h"
 
-const char* dabc::prop_version = "_version";
-const char* dabc::prop_kind = "_kind";
-const char* dabc::prop_realname = "_realname"; // real object name
-const char* dabc::prop_masteritem = "_master";
-const char* dabc::prop_producer = "_producer";
-const char* dabc::prop_error = "_error";
-const char* dabc::prop_auth = "_auth";
-const char* dabc::prop_hash = "hash";
-const char* dabc::prop_history = "_history";
-const char* dabc::prop_time = "time";
-const char* dabc::prop_more = "_more";
-const char* dabc::prop_view = "_view";
+const char *dabc::prop_version = "_version";
+const char *dabc::prop_kind = "_kind";
+const char *dabc::prop_realname = "_realname"; // real object name
+const char *dabc::prop_masteritem = "_master";
+const char *dabc::prop_producer = "_producer";
+const char *dabc::prop_error = "_error";
+const char *dabc::prop_auth = "_auth";
+const char *dabc::prop_hash = "hash";
+const char *dabc::prop_history = "_history";
+const char *dabc::prop_time = "time";
+const char *dabc::prop_more = "_more";
+const char *dabc::prop_view = "_view";
 
 
 uint64_t dabc::HistoryContainer::StoreSize(uint64_t version, int hlimit)

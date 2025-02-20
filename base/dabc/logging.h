@@ -86,11 +86,11 @@ namespace dabc {
          inline int GetDebugLevel() const { return fDebugLevel; }
          inline int GetFileLevel() const { return fFileLevel; }
 
-         void SetPrefix(const char* prefix = nullptr) { fPrefix = prefix ? prefix : ""; }
-         const char* GetPrefix() { return fPrefix.c_str(); }
+         void SetPrefix(const char *prefix = nullptr) { fPrefix = prefix ? prefix : ""; }
+         const char *GetPrefix() { return fPrefix.c_str(); }
 
-         virtual void LogFile(const char* fname);
-         virtual void Syslog(const char* prefix);
+         virtual void LogFile(const char *fname);
+         virtual void Syslog(const char *prefix);
 
          void ShowStat(bool tofile = true);
 
@@ -103,7 +103,7 @@ namespace dabc {
 
          static inline Logger* Instance() { return gDebug; }
 
-         static inline void Debug(int level, const char* filename, unsigned linenumber, const char* funcname, const char* message)
+         static inline void Debug(int level, const char *filename, unsigned linenumber, const char *funcname, const char *message)
          {
             if (Instance() && (level <= Instance()->fLevel))
                Instance()->DoOutput(level, filename, linenumber, funcname, message);
@@ -113,7 +113,7 @@ namespace dabc {
 
          static Logger* gDebug;
 
-         virtual void DoOutput(int level, const char* filename, unsigned linenumber, const char* funcname, const char* message);
+         virtual void DoOutput(int level, const char *filename, unsigned linenumber, const char *funcname, const char *message);
 
          void _ExtendLines(unsigned max);
 
@@ -194,7 +194,7 @@ namespace dabc {
 
    extern void SetDebugLevel(int level = 0);
    extern void SetFileLevel(int level = 0);
-   extern void SetDebugPrefix(const char* prefix = nullptr);
+   extern void SetDebugPrefix(const char *prefix = nullptr);
 
    extern Logger* lgr();
 };

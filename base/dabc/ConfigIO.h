@@ -47,11 +47,11 @@ namespace dabc {
          bool             fCurrStrict{false};  ///< must have strict syntax match
          int              fCgfId{0};       ///< special ID which can be used ${}# formula
 
-         XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char* name);
+         XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char *name);
 
          static Object* GetObjParent(Object* obj, int lvl);
 
-         std::string ResolveEnv(const char* value);
+         std::string ResolveEnv(const char *value);
 
       public:
          ConfigIO(Configuration* cfg, int id = -1);
@@ -60,10 +60,10 @@ namespace dabc {
 
          virtual ~ConfigIO() {}
 
-         bool FindItem(const char* name);
+         bool FindItem(const char *name);
 
          /** \brief Check if item, found by FindItem routine, has attribute with specified value */
-         bool CheckAttr(const char* name, const char* value);
+         bool CheckAttr(const char *name, const char *value);
 
          bool ReadRecordField(Object* obj, const std::string &name, RecordField* field, RecordFieldsMap* fieldsmap);
    };

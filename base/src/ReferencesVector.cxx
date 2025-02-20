@@ -171,7 +171,7 @@ bool dabc::ReferencesVector::Clear(bool isowner) throw()
    return true;
 }
 
-dabc::Object* dabc::ReferencesVector::FindObject(const char* name, int len) const
+dabc::Object* dabc::ReferencesVector::FindObject(const char *name, int len) const
 {
    for (unsigned n = 0; n < fVector->size(); n++) {
       dabc::Object* obj = fVector->at(n).GetObject();

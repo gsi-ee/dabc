@@ -22,8 +22,8 @@
 
 int main(int numc, char* args[])
 {
-   const char* configuration = nullptr;
-   const char* workdir = nullptr;
+   const char *configuration = nullptr;
+   const char *workdir = nullptr;
    unsigned configid = 0;
 
    if(numc > 1) configuration = args[1];
@@ -34,7 +34,7 @@ int main(int numc, char* args[])
    int cnt = 2;
    while (cnt<numc) {
 
-      const char* arg = args[cnt++];
+      const char *arg = args[cnt++];
 
       if (strcmp(arg,"-id") == 0) {
          if (cnt < numc)
@@ -51,7 +51,7 @@ int main(int numc, char* args[])
          std::cout.flush();
       } else
       if (strcmp(arg,"-mode") == 0) {
-         const char* kind = (cnt < numc) ? args[cnt++] : "start";
+         const char *kind = (cnt < numc) ? args[cnt++] : "start";
          std::string res = cfg.SshArgs(configid, kind, configuration, workdir);
          if (res.empty()) return 7;
          std::cout << res << std::endl;

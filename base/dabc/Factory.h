@@ -86,7 +86,7 @@ namespace dabc {
 
          static bool CreateManager(const std::string &name = "mgr", Configuration *cfg = nullptr);
 
-         const char* ClassName() const override { return "Factory"; }
+         const char *ClassName() const override { return "Factory"; }
 
       protected:
 

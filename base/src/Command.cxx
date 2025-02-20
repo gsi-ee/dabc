@@ -189,7 +189,7 @@ void dabc::Command::AddValuesFrom(const dabc::Command& cmd, bool canoverwrite)
       GetObject()->Fields().CopyFrom(cmd.GetObject()->Fields(), canoverwrite);
 }
 
-void dabc::Command::Print(int lvl, const char* from) const
+void dabc::Command::Print(int lvl, const char *from) const
 {
    Record::Print(lvl, from);
 }

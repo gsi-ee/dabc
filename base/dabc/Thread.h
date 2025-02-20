@@ -348,7 +348,7 @@ namespace dabc {
          bool Stop(double timeout_sec = 10);
          bool Sync(double timeout_sec = -1);
 
-         const char* ClassName() const override { return typeThread; }
+         const char *ClassName() const override { return typeThread; }
 
          virtual bool CompatibleClass(const std::string &clname) const;
 

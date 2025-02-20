@@ -211,9 +211,9 @@ namespace dabc {
          Publisher(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Publisher();
 
-         static const char* DfltName() { return "/publ"; }
+         static const char *DfltName() { return "/publ"; }
 
-         const char* ClassName() const override { return "Publisher"; }
+         const char *ClassName() const override { return "Publisher"; }
    };
 
    // ==============================================================

@@ -250,10 +250,10 @@ namespace dabc {
          std::string OnlyTimeAsString(const char *separ = nullptr, bool localtime = false) const;
 
          /** \brief Set only date part from the string */
-         bool SetOnlyDate(const char* sbuf);
+         bool SetOnlyDate(const char *sbuf);
 
          /** \brief Set only time part of DateTime */
-         bool SetOnlyTime(const char* sbuf);
+         bool SetOnlyTime(const char *sbuf);
 
          /** \brief Return distance in seconds to provided date */
          double DistanceTo(const DateTime& src) const;

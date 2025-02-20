@@ -94,7 +94,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
       }
 
 
-      const char* ClassName() const  override { return "Thread"; }
+      const char *ClassName() const  override { return "Thread"; }
 
       int ExecuteCommand(Command cmd) override
       {

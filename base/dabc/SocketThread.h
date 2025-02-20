@@ -101,7 +101,7 @@ namespace dabc {
          SocketAddon(int fd = -1);
          virtual ~SocketAddon();
 
-         const char* ClassName() const override { return "SocketAddon"; }
+         const char *ClassName() const override { return "SocketAddon"; }
          std::string RequiredThrdClass() const override { return typeSocketThread; }
 
          inline int Socket() const { return fSocket; }
@@ -172,7 +172,7 @@ namespace dabc {
          long           fRecvSize;
 #endif
 
-         const char* ClassName() const override { return "SocketIOAddon"; }
+         const char *ClassName() const override { return "SocketIOAddon"; }
 
          bool IsDatagramSocket() const { return fDatagramSocket; }
 
@@ -267,7 +267,7 @@ namespace dabc {
             fConnId = connid;
          }
 
-         const char* ClassName() const override { return "SocketConnectAddon"; }
+         const char *ClassName() const override { return "SocketConnectAddon"; }
 
    };
 
@@ -297,7 +297,7 @@ namespace dabc {
          bool RecreateSocket();
 
       public:
-         SocketServerAddon(int serversocket, const char* hostname = nullptr, int portnum = -1, struct addrinfo *info = nullptr);
+         SocketServerAddon(int serversocket, const char *hostname = nullptr, int portnum = -1, struct addrinfo *info = nullptr);
          virtual ~SocketServerAddon() {}
 
          void ProcessEvent(const EventId&) override;
@@ -306,7 +306,7 @@ namespace dabc {
          int ServerPortNumber() const { return fServerPortNumber; }
          std::string ServerId() { return dabc::format("%s:%d", fServerHostName.c_str(), fServerPortNumber); }
 
-         const char* ClassName() const override { return "SocketServerAddon"; }
+         const char *ClassName() const override { return "SocketServerAddon"; }
 
    };
 
@@ -329,7 +329,7 @@ namespace dabc {
 
          double ProcessTimeout(double) override;
 
-         const char* ClassName() const override { return "SocketClientAddon"; }
+         const char *ClassName() const override { return "SocketClientAddon"; }
 
       protected:
          virtual void OnConnectionEstablished(int fd);
@@ -397,7 +397,7 @@ namespace dabc {
          SocketThread(Reference parent, const std::string &name, Command cmd);
          virtual ~SocketThread();
 
-         const char* ClassName() const override { return typeSocketThread; }
+         const char *ClassName() const override { return typeSocketThread; }
          bool CompatibleClass(const std::string &clname) const override;
 
          static bool SetNonBlockSocket(int fd);

@@ -107,7 +107,7 @@ bool dabc::SocketCommandClient::EnsureRecvBuffer(unsigned strsize)
    return true;
 }
 
-void dabc::SocketCommandClient::CloseClient(bool iserr, const char* msg)
+void dabc::SocketCommandClient::CloseClient(bool iserr, const char *msg)
 {
    if (msg) {
       if (iserr)

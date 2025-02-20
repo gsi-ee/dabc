@@ -82,7 +82,7 @@ namespace dabc {
          static std::string MakeName(const PortRef& inpport, const PortRef& outport);
 
       public:
-         const char* ClassName() const override { return "Transport"; }
+         const char *ClassName() const override { return "Transport"; }
 
          Transport(dabc::Command cmd, const PortRef& inpport = nullptr, const PortRef& outport = nullptr);
          virtual ~Transport();

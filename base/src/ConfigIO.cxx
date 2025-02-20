@@ -39,7 +39,7 @@ dabc::ConfigIO::ConfigIO(const ConfigIO& src) :
 {
 }
 
-bool dabc::ConfigIO::FindItem(const char* name)
+bool dabc::ConfigIO::FindItem(const char *name)
 {
    if (!fCurrItem) return false;
 
@@ -60,7 +60,7 @@ bool dabc::ConfigIO::FindItem(const char* name)
    return false;
 }
 
-bool dabc::ConfigIO::CheckAttr(const char* name, const char* value)
+bool dabc::ConfigIO::CheckAttr(const char *name, const char *value)
 {
    // make extra check - if fCurrChld != 0 something was wrong already
    if (fCurrChld || !fCurrItem) return false;
@@ -70,7 +70,7 @@ bool dabc::ConfigIO::CheckAttr(const char* name, const char* value)
    if (!value) {
       res = Xml::HasAttr(fCurrItem, name);
    } else {
-      const char* attr = Xml::GetAttr(fCurrItem, name);
+      const char *attr = Xml::GetAttr(fCurrItem, name);
 
       std::string sattr = attr ? fCfg->ResolveEnv(attr) : std::string("");
 
@@ -110,18 +110,18 @@ dabc::Object* dabc::ConfigIO::GetObjParent(Object* obj, int lvl)
    return obj;
 }
 
-dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const char* name)
+dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const char *name)
 {
    if (!node || !name || (strlen(name) == 0)) return node;
 
-   const char* pos = strchr(name, '/');
+   const char *pos = strchr(name, '/');
    if (!pos) return fCfg->FindChild(node, name);
 
    std::string subname(name, pos-name);
    return FindSubItem(fCfg->FindChild(node, subname.c_str()), pos+1);
 }
 
-std::string dabc::ConfigIO::ResolveEnv(const char* value)
+std::string dabc::ConfigIO::ResolveEnv(const char *value)
 {
    if (!value || (*value == 0)) return std::string();
 
@@ -210,7 +210,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
             XMLNodePointer_t itemnode = FindSubItem(fCurrItem, itemname.c_str());
 
             if (field) {
-               const char* attrvalue = nullptr;
+               const char *attrvalue = nullptr;
                if (itemnode) attrvalue = Xml::GetAttr(itemnode, "value");
                if (!attrvalue) attrvalue = Xml::GetAttr(fCurrItem, itemname.c_str());
 
@@ -224,7 +224,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
 
                   for (XMLNodePointer_t child = Xml::GetChild(itemnode); child != nullptr; child = Xml::GetNext(child)) {
                      if (strcmp(Xml::GetNodeName(child), "item") != 0) continue;
-                     const char* arritemvalue = Xml::GetAttr(child,"value");
+                     const char *arritemvalue = Xml::GetAttr(child,"value");
                      if (arritemvalue)
                         arr.emplace_back(ResolveEnv(arritemvalue));
                   }
@@ -239,8 +239,8 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
                isany = true;
 
                for (XMLAttrPointer_t attr = Xml::GetFirstAttr(itemnode); attr != nullptr; attr = Xml::GetNextAttr(attr)) {
-                  const char* attrname = Xml::GetAttrName(attr);
-                  const char* attrvalue = Xml::GetAttrValue(attr);
+                  const char *attrname = Xml::GetAttrName(attr);
+                  const char *attrvalue = Xml::GetAttrValue(attr);
                   if (!attrname || !attrvalue) continue;
 
                   if (!fieldsmap->HasField(attrname))
@@ -251,8 +251,8 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, R
 
                   if (strcmp(Xml::GetNodeName(child), "dabc:field") != 0) continue;
 
-                  const char* attrname = Xml::GetAttr(child,"name");
-                  const char* attrvalue = Xml::GetAttr(child,"value");
+                  const char *attrname = Xml::GetAttr(child,"name");
+                  const char *attrvalue = Xml::GetAttr(child,"value");
                   if (!attrname || !attrvalue) continue;
 
                   if (!fieldsmap->HasField(attrname))

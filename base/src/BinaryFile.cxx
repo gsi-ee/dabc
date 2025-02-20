@@ -26,11 +26,11 @@
 #include "dabc/Object.h"
 #include "dabc/logging.h"
 
-bool dabc::FileInterface::mkdir(const char* path)
+bool dabc::FileInterface::mkdir(const char *path)
 {
    if (!path || (*path == 0)) return false;
 
-   const char* part = path;
+   const char *part = path;
 
    // we should ensure that part is exists
    while (part) {
@@ -57,14 +57,14 @@ bool dabc::FileInterface::mkdir(const char* path)
 }
 
 
-dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
+dabc::Object* dabc::FileInterface::fmatch(const char *fmask, bool select_files)
 {
    if (!fmask || (*fmask == 0)) return nullptr;
 
    std::string pathname;
-   const char* fname = nullptr;
+   const char *fname = nullptr;
 
-   const char* slash = strrchr(fmask, '/');
+   const char *slash = strrchr(fmask, '/');
 
    if (!slash) {
       pathname = ".";
@@ -82,7 +82,7 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask, bool select_files)
    struct stat buf;
 
    for (int n=0;n<len;n++) {
-      const char* item = namelist[n]->d_name;
+      const char *item = namelist[n]->d_name;
       // exclude all files/directory names starting with .
       // we exclude all hidden files or directory likes '.' and '..'
       if (!item || (*item == '.')) continue;

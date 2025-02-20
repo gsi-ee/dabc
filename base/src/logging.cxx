@@ -51,7 +51,7 @@ namespace dabc {
          unsigned         fDropCnt; // number of dropped messages
          bool             fShown;   // used in statistic output
 
-         LoggerEntry(const char* fname, const char* funcname, unsigned line, int lvl) :
+         LoggerEntry(const char *fname, const char *funcname, unsigned line, int lvl) :
             fFileName(fname),
             fFuncName(funcname),
             fLine(line),
@@ -84,7 +84,7 @@ namespace dabc {
             }
          }
 
-         LoggerEntry *GetFile(const char* filename, const char* funcname, int lvl)
+         LoggerEntry *GetFile(const char *filename, const char *funcname, int lvl)
          {
             for (auto entry : fFiles)
                if (entry->fFileName.compare(filename) == 0)
@@ -202,7 +202,7 @@ void dabc::Logger::_ExtendLines(unsigned max)
    fMaxLine = max;
 }
 
-void dabc::Logger::LogFile(const char* fname)
+void dabc::Logger::LogFile(const char *fname)
 {
    LockGuard lock(fMutex);
 
@@ -217,7 +217,7 @@ void dabc::Logger::LogFile(const char* fname)
    }
 }
 
-void dabc::Logger::Syslog(const char* prefix)
+void dabc::Logger::Syslog(const char *prefix)
 {
    LockGuard lock(fMutex);
 
@@ -299,7 +299,7 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
          str += dabc::format(" [Drop %u]", entry->fDropCnt);
 }
 
-void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber, const char* funcname, const char* message)
+void dabc::Logger::DoOutput(int level, const char *filename, unsigned linenumber, const char *funcname, const char *message)
 {
    TimeStamp now = dabc::Now();
 
@@ -460,7 +460,7 @@ void dabc::SetFileLevel(int level)
    dabc::Logger::Instance()->SetFileLevel(level);
 }
 
-void dabc::SetDebugPrefix(const char* prefix)
+void dabc::SetDebugPrefix(const char *prefix)
 {
     dabc::Logger::Instance()->SetPrefix(prefix);
 }

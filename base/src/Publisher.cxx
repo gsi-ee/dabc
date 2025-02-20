@@ -954,7 +954,7 @@ bool dabc::PublisherRef::OwnCommand(int id, const std::string &path, const std::
 }
 
 
-std::string dabc::PublisherRef::UserInterfaceKind(const char* uri, std::string& path, std::string& fname)
+std::string dabc::PublisherRef::UserInterfaceKind(const char *uri, std::string& path, std::string& fname)
 {
    if (null()) return "__error__";
 

@@ -51,7 +51,7 @@ namespace dabc {
 
    class CmdDeletePool : public Command {
       public:
-         static const char* CmdName() { return "DeletePool"; }
+         static const char *CmdName() { return "DeletePool"; }
 
          CmdDeletePool(const std::string &name) : Command(CmdName())
             { SetStr("PoolName", name); }
@@ -60,9 +60,9 @@ namespace dabc {
 
    class CmdModule : public Command {
       public:
-         static const char* ModuleArg() { return "Module"; }
+         static const char *ModuleArg() { return "Module"; }
 
-         CmdModule(const char* cmdname, const std::string &module) : Command(cmdname)
+         CmdModule(const char *cmdname, const std::string &module) : Command(cmdname)
          {
             SetStr(ModuleArg(), module);
          }
@@ -70,7 +70,7 @@ namespace dabc {
 
    class CmdCreateModule : public CmdModule {
       public:
-         static const char* CmdName() { return "CreateModule"; }
+         static const char *CmdName() { return "CreateModule"; }
 
          CmdCreateModule(const std::string &classname, const std::string &modulename, const std::string &thrdname = "") :
             CmdModule(CmdName(), modulename)
@@ -82,21 +82,21 @@ namespace dabc {
 
    class CmdStartModule : public CmdModule {
       public:
-         static const char* CmdName() { return "StartModule"; }
+         static const char *CmdName() { return "StartModule"; }
 
          CmdStartModule(const std::string &modulename = "*") : CmdModule(CmdName(), modulename) {}
    };
 
    class CmdStopModule : public CmdModule {
       public:
-         static const char* CmdName() { return "StopModule"; }
+         static const char *CmdName() { return "StopModule"; }
 
          CmdStopModule(const std::string &modulename = "*") : CmdModule(CmdName(), modulename) {}
    };
 
    class CmdDeleteModule : public CmdModule {
       public:
-         static const char* CmdName() { return "DeleteModule"; }
+         static const char *CmdName() { return "DeleteModule"; }
 
          CmdDeleteModule(const std::string &modulename) : CmdModule(CmdName(), modulename) {}
    };
@@ -120,7 +120,7 @@ namespace dabc {
 
    class CmdCreateDevice : public Command {
       public:
-         static const char* CmdName() { return "CreateDevice"; }
+         static const char *CmdName() { return "CreateDevice"; }
 
          CmdCreateDevice(const std::string &devclass, const std::string &devname) :
             Command(CmdName())
@@ -132,7 +132,7 @@ namespace dabc {
 
    class CmdDestroyDevice : public Command {
       public:
-         static const char* CmdName() { return "DestroyDevice"; }
+         static const char *CmdName() { return "DestroyDevice"; }
 
          CmdDestroyDevice(const std::string &devname) :
             Command(CmdName())
@@ -143,9 +143,9 @@ namespace dabc {
 
    class CmdCreateThread : public Command {
       public:
-         static const char* CmdName() { return "CreateThread"; }
+         static const char *CmdName() { return "CreateThread"; }
 
-         static const char* ThrdNameArg() { return "ThrdName"; }
+         static const char *ThrdNameArg() { return "ThrdName"; }
 
          CmdCreateThread(const std::string &thrdname, const std::string &thrdclass = "",  const std::string &devname = "") :
             Command(CmdName())
@@ -179,8 +179,8 @@ namespace dabc {
 
       DABC_COMMAND(CmdCreateTransport, "CreateTransport");
 
-      static const char* PortArg() { return "PortName"; }
-      static const char* KindArg() { return "TransportKind"; }
+      static const char *PortArg() { return "PortName"; }
+      static const char *KindArg() { return "TransportKind"; }
 
       CmdCreateTransport(const std::string &portname, const std::string &transportkind, const std::string &thrdname = "") :
          Command(CmdName())
@@ -217,8 +217,8 @@ namespace dabc {
 
       DABC_COMMAND(CmdSetParameter, "SetParameter");
 
-      static const char* ParName() { return "ParName"; }
-      static const char* ParValue() { return "ParValue"; }
+      static const char *ParName() { return "ParName"; }
+      static const char *ParValue() { return "ParValue"; }
 
       CmdSetParameter(const std::string &parname) :
          Command(CmdName())
@@ -244,8 +244,8 @@ namespace dabc {
 
       DABC_COMMAND(CmdGetNodesState, "CmdGetNodesState")
 
-      static const char* States() { return "States"; }
-      static const char* NodeId() { return "NodeId"; }
+      static const char *States() { return "States"; }
+      static const char *NodeId() { return "NodeId"; }
 
       static void SetState(std::string& sbuf, unsigned node, bool on)
       {
@@ -431,7 +431,7 @@ namespace dabc {
 
          /** Perform sleeping with event loop running.
           *  If prefix specified, output on terminal is performed */
-         void Sleep(double tmout, const char* prefix = nullptr);
+         void Sleep(double tmout, const char *prefix = nullptr);
 
          std::string GetLastCreatedDevName();
 
@@ -461,7 +461,7 @@ namespace dabc {
          Manager(const std::string &managername, Configuration *cfg = nullptr);
          virtual ~Manager();
 
-         const char* ClassName() const  override { return "Manager"; }
+         const char *ClassName() const  override { return "Manager"; }
 
           // candidates for protected
 
@@ -472,13 +472,13 @@ namespace dabc {
 
          // -------------- generic folder structure of manager
 
-         static const char* FactoriesFolderName() { return "Factories"; }
-         static const char* ThreadsFolderName() { return "Threads"; }
+         static const char *FactoriesFolderName() { return "Factories"; }
+         static const char *ThreadsFolderName() { return "Threads"; }
 
-         static const char* MgrThrdName()       { return "ManagerThrd"; }
-         static const char* AppThrdName()       { return "AppThrd"; }
-         static const char* ConnMgrName()       { return "/ConnMgr"; }
-         static const char* CmdChlName()        { return "/CommandChl"; }
+         static const char *MgrThrdName()       { return "ManagerThrd"; }
+         static const char *AppThrdName()       { return "AppThrd"; }
+         static const char *ConnMgrName()       { return "/ConnMgr"; }
+         static const char *CmdChlName()        { return "/CommandChl"; }
 
 
          /** Return nodes id of local node */
@@ -678,7 +678,7 @@ namespace dabc {
 
          /** Sleep for specified time, keep thread event loop running
           * See Manager::Sleep() method for more details */
-         void Sleep(double tmout, const char* prefix = nullptr);
+         void Sleep(double tmout, const char *prefix = nullptr);
 
          /** \brief Run manager main loop
           * \details should be called either from manager thread or from main process */

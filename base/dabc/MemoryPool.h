@@ -122,7 +122,7 @@ namespace dabc {
          MemoryPool(const std::string &name, bool withmanager = false);
          virtual ~MemoryPool();
 
-         const char* ClassName() const  override { return "MemoryPool"; }
+         const char *ClassName() const  override { return "MemoryPool"; }
 
          inline Mutex* GetPoolMutex() const { return ObjectMutex(); }
 

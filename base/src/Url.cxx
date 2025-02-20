@@ -23,7 +23,7 @@ dabc::Url::Url()
    SetUrl(std::string());
 }
 
-dabc::Url::Url(const char* url)
+dabc::Url::Url(const char *url)
 {
    SetUrl(std::string(url ? url : ""));
 }
