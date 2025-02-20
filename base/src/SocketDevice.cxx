@@ -416,7 +416,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
       if (typ == "Server") {
          DOUT2("SocketDevice:: create server protocol for socket %d connid %s", fd, connid.c_str());
 
-         SocketProtocolAddon* proto = new SocketProtocolAddon(fd, this, nullptr);
+         auto proto = new SocketProtocolAddon(fd, this, nullptr);
 
          thread().MakeWorkerFor(proto, connid);
 
@@ -466,7 +466,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
       if (fDebugMode)
          DOUT0("scktdev: handle redirected socket %d", fd);
 
-      SocketProtocolAddon *proto = new SocketProtocolAddon(fd, this, nullptr, buf.SegmentPtr());
+      auto proto = new SocketProtocolAddon(fd, this, nullptr, buf.SegmentPtr());
 
       thread().MakeWorkerFor(proto, fCmdChannelId);
 
@@ -544,7 +544,7 @@ bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char
 
       ConnectionRequestFull req = dabc::mgr.FindPar(rec->fReqItem);
 
-      SocketNetworkInetrface* addon = new SocketNetworkInetrface(fd);
+      auto addon = new SocketNetworkInetrface(fd);
 
       res = dabc::NetworkTransport::Make(req, addon, ThreadName());
 

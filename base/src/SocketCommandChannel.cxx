@@ -143,7 +143,7 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
 
       fState = stWorking;
 
-      SocketIOAddon* addon = new SocketIOAddon(fd);
+      auto addon = new SocketIOAddon(fd);
       addon->SetDeliverEventsToWorker(true);
 
       DOUT2("SocketCommand - create client side fd:%d worker:%s for:%s", fd, GetName(), fRemoteHostName.c_str());
@@ -629,7 +629,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
          return dabc::cmd_false;
       }
 
-      SocketIOAddon* io = new SocketIOAddon(fd);
+      auto io = new SocketIOAddon(fd);
       io->SetDeliverEventsToWorker(true);
 
       worker = new SocketCommandClient(this, worker_name, io, fDebugMode);

@@ -562,7 +562,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string &name, const std::stri
 
       bool hidden = (kind == "cmddef");
 
-      ParameterContainer* cont = new ParameterContainer(this, name, kind, hidden);
+      auto cont = new ParameterContainer(this, name, kind, hidden);
 
       ConfigIO io(dabc::mgr()->cfg());
 

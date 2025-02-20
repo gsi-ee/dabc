@@ -113,13 +113,14 @@ unsigned dabc::Module::CreateTimer(const std::string &name, double period_sec, b
 
    bool systimer = !IsValidTimer(fSysTimerIndex) && (name.find("Sys") == 0);
 
-   dabc::Timer *timer = new Timer(this, systimer, name, period_sec, synchron);
+   auto timer = new Timer(this, systimer, name, period_sec, synchron);
 
    AddModuleItem(timer);
 
    timer->SetItemSubId(fTimers.size());
 
-   if (systimer) fSysTimerIndex = timer->ItemSubId();
+   if (systimer)
+      fSysTimerIndex = timer->ItemSubId();
 
    fTimers.emplace_back(timer);
 
@@ -205,7 +206,7 @@ unsigned dabc::Module::CreateUserItem(const std::string &name)
    unsigned indx = FindUserItem(name);
    if (IsValidUserItem(indx)) return indx;
 
-   ModuleItem* item = new ModuleItem(mitUser, this, name);
+   auto item = new ModuleItem(mitUser, this, name);
 
    AddModuleItem(item);
 
@@ -613,7 +614,7 @@ unsigned dabc::Module::CreatePoolHandle(const std::string &poolname, unsigned qu
       return (unsigned) -1;
    }
 
-   PoolHandle* handle = new PoolHandle(this, pool, poolname, queue);
+   auto handle = new PoolHandle(this, pool, poolname, queue);
 
    AddModuleItem(handle);
 
@@ -705,7 +706,7 @@ unsigned dabc::Module::CreateInput(const std::string &name, unsigned queue)
 
    if (queue == 0) return (unsigned) -1;
 
-   InputPort* port = new InputPort(this, name, queue);
+   auto port = new InputPort(this, name, queue);
 
    AddModuleItem(port);
 
@@ -728,7 +729,7 @@ unsigned dabc::Module::CreateOutput(const std::string &name, unsigned queue)
 
    if (queue == 0) return (unsigned) -1;
 
-   OutputPort* port = new OutputPort(this, name, queue);
+   auto port = new OutputPort(this, name, queue);
 
    AddModuleItem(port);
 

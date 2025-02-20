@@ -84,15 +84,15 @@ namespace dabc {
             }
          }
 
-         LoggerEntry* GetFile(const char* filename, const char* funcname, int lvl)
+         LoggerEntry *GetFile(const char* filename, const char* funcname, int lvl)
          {
             for (auto entry : fFiles)
                if (entry->fFileName.compare(filename) == 0)
                   return entry;
 
-            LoggerEntry* f = new LoggerEntry(filename, funcname, fLine, lvl);
-            fFiles.push_front(f);
-            return f;
+            auto entry = new LoggerEntry(filename, funcname, fLine, lvl);
+            fFiles.push_front(entry);
+            return entry;
          }
    };
 

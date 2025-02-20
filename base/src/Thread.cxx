@@ -1453,8 +1453,9 @@ bool dabc::ThreadRef::_ActivateAddonTimeout(unsigned workerid, int priority, dou
 
 bool dabc::ThreadRef::MakeWorkerFor(WorkerAddon* addon, const std::string &name)
 {
-   if (null()) return false;
-   Worker* worker = new Worker(nullptr, name.empty() ? "dummy" : name.c_str());
+   if (null())
+      return false;
+   auto worker = new Worker(nullptr, name.empty() ? "dummy" : name.c_str());
    worker->AssignAddon(addon);
    return worker->AssignToThread(*this);
 }

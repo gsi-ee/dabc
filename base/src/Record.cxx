@@ -1442,7 +1442,7 @@ void dabc::RecordFieldsMap::ClearChangeFlags()
 
 dabc::RecordFieldsMap *dabc::RecordFieldsMap::Clone()
 {
-   dabc::RecordFieldsMap *res = new dabc::RecordFieldsMap;
+   auto res = new dabc::RecordFieldsMap;
 
    for (auto &entry: fMap)
       res->Field(entry.first).SetValue(entry.second);
