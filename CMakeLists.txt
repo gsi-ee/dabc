@@ -25,6 +25,15 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
+if (DABC_LEGACY_INSTALL)
+  set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_PREFIX}/plugins)
+  set(DABC_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
+else()
+  set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins)
+  set(DABC_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/dabc)
+endif()
+
+
 #--- Load some basic macros ---
 include(DabcBuildOptions)
 include(DabcConfiguration)
@@ -38,13 +47,6 @@ option(DABC_LEGACY_INSTALL "Install plugins out of tree" OFF)
 option(DABC_BUILD_APPLICATIONS "Build example applications" ON)
 cmake_dependent_option(DABC_INSTALL_APPLICATIONS "Install example applications" ON "DABC_BUILD_APPLICATIONS" OFF)
 
-if (DABC_LEGACY_INSTALL)
-  set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_PREFIX}/plugins)
-  set(DABC_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
-else()
-  set(DABC_INSTALL_PLUGINDIR ${CMAKE_INSTALL_DATAROOTDIR}/dabc/plugins)
-  set(DABC_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/dabc)
-endif()
 
 add_subdirectory(base)
 
