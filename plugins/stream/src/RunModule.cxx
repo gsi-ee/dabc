@@ -71,10 +71,11 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    fFileUrl = cmd.GetStr("fileurl");
 
-   if ((fParallel>=0) && !fInitFunc) {
+   if ((fParallel >= 0) && !fInitFunc) {
       // first generate and load init func
 
-      if (fParallel>999) fParallel=999;
+      if (fParallel > 999)
+         fParallel = 999;
 
       // ensure that all histos on all branches present
       hadaq::TdcProcessor::SetAllHistos(true);

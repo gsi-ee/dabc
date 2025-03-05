@@ -116,6 +116,7 @@ http::Server::Server(const std::string &server_name, dabc::Command cmd) :
 
    std::string plugins_dir = dabc::Configuration::GetPluginsDir();
    if (!plugins_dir.empty()) {
+      AddLocation(plugins_dir, "dabc_plugins/");
       AddLocation(plugins_dir + "/http", "httpsys/", "dabc_", "/files/");
       fOwnJsRootSys = fJsRootSys = plugins_dir + "/http/js";
       fHttpSys = plugins_dir + "/http";

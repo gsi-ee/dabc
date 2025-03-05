@@ -74,7 +74,7 @@ fesa::Player::Player(const std::string &name, dabc::Command cmd) :
    // this is just emulation, later one need list of real variables
    dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("BeamProfile");
    item.SetField(dabc::prop_kind, "FESA.2D");
-   item.SetField("_autoload", "dabcsys/plugins/fesa/fesa.js");
+   item.SetField("_autoload", "dabc_plugins/fesa/fesa.js");
    item.SetField("_can_draw", true);
 
 
@@ -145,7 +145,7 @@ void fesa::Player::ProcessTimerEvent(unsigned)
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
       dabc::Hierarchy item2 = fWorkerHierarchy.CreateHChild("BeamProfile2");
       item2.SetField(dabc::prop_kind, "FESA.2D");
-      item2.SetField("_autoload", "dabcsys/plugins/fesa/fesa.js");
+      item2.SetField("_autoload", "dabc_plugins/fesa/fesa.js");
       item2.SetField("_can_draw", true);
    }
 
