@@ -95,7 +95,7 @@ namespace dabc {
          int  WithPublisher();
 
          /** Method is used to find xml nodes like Module, MemoryPool, Connection in
-          * the xml file which should be used for autocreation */
+          * the xml file which should be used for auto-creation */
          bool NextCreationNode(XMLNodePointer_t& prev, const char *nodename, bool check_name_for_multicast);
 
          std::string GetUserPar(const char *name, const char *dflt = nullptr);
@@ -106,6 +106,8 @@ namespace dabc {
          bool LoadLibs();
 
          static std::string GetLocalHost() { return fLocalHost; }
+
+         static std::string GetPluginsDir();
 
    };
 

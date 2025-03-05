@@ -18,7 +18,10 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <fnmatch.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
+#include "dabc/defines.h"
 #include "dabc/Manager.h"
 #include "dabc/Factory.h"
 
@@ -294,4 +297,44 @@ bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char *n
 
    return prev != nullptr;
 }
+
+
+/** Returns location of plugins directory
+ * First of all install dir for plusing is checked
+ * If not exists - DABCSYS and plugins */
+std::string dabc::Configuration::GetPluginsDir()
+{
+   static std::string plugins_dir;
+
+   if (plugins_dir.empty()) {
+      const char *dabcsys = std::getenv("DABCSYS");
+      if (dabcsys) {
+         auto dir = dabc::format("%s/plugins", dabcsys);
+         struct stat info;
+         if ((stat(dir.c_str(), &info ) == 0) && ( info.st_mode & S_IFDIR ))
+            plugins_dir = dir;
+      }
+   }
+
+#if defined(DABC_INSTALL_PREFIX) && defined(DABC_INSTALL_PLUGINDIR)
+
+   if (plugins_dir.empty()) {
+      std::string prefix = DABC_INSTALL_PREFIX;
+      std::string subdir = DABC_INSTALL_PLUGINDIR;
+      if (!prefix.empty() && !subdir.empty()) {
+         std::string dir = prefix;
+         if (dir[dir.length() - 1] != '/')
+            dir.append("/");
+         dir.append(subdir);
+         struct stat info;
+         if ((stat(dir.c_str(), &info ) == 0) && ( info.st_mode & S_IFDIR ))
+            plugins_dir = dir;
+      }
+   }
+
+#endif
+
+   return plugins_dir;
+}
+
 
