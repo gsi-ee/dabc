@@ -18,6 +18,7 @@
 #include <cstring>
 #include <cstdlib>
 
+#include "dabc/Configuration.h"
 #include "dabc/Url.h"
 #include "dabc/Publisher.h"
 
@@ -109,14 +110,15 @@ http::Server::Server(const std::string &server_name, dabc::Command cmd) :
 
    const char *dabcsys = std::getenv("DABCSYS");
    if (dabcsys) {
-
       AddLocation(dabcsys, "dabcsys/");
       AddLocation(dabcsys, "${DABCSYS}/");
-      AddLocation(dabc::format("%s/plugins/http", dabcsys), "httpsys/", "dabc_", "/files/");
+   }
 
-      fOwnJsRootSys = fJsRootSys = dabc::format("%s/plugins/http/js", dabcsys);
-
-      fHttpSys = dabc::format("%s/plugins/http", dabcsys);
+   std::string plugins_dir = dabc::Configuration::GetPluginsDir();
+   if (!plugins_dir.empty()) {
+      AddLocation(plugins_dir + "/http", "httpsys/", "dabc_", "/files/");
+      fOwnJsRootSys = fJsRootSys = plugins_dir + "/http/js";
+      fHttpSys = plugins_dir + "/http";
    }
 
    std::string urlopt = cmd.GetStr("urlopt");
@@ -125,7 +127,7 @@ http::Server::Server(const std::string &server_name, dabc::Command cmd) :
       url.SetOptions(urlopt);
       unsigned cnt = 0;
 
-      while (cnt<100) {
+      while (cnt < 100) {
          std::string name = dabc::format("loc%u", cnt++);
          if (!url.HasOption(name+"d") || !url.HasOption(name+"a")) break;
          AddLocation(url.GetOptionStr(name+"d"), url.GetOptionStr(name+"a"), url.GetOptionStr(name+"n"), url.GetOptionStr(name+"s"));
