@@ -255,7 +255,7 @@ mbs::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
 
    dabc::Hierarchy ui = fHierarchy.CreateHChild("ControlGUI");
    ui.SetField(dabc::prop_kind, "DABC.HTML");
-   ui.SetField("_UserFilePath", "${DABCSYS}/plugins/mbs/htm/");
+   ui.SetField("_UserFilePath", "dabc_plugins/mbs/htm/");
    ui.SetField("_UserFileMain", "main.htm");
 
    CreateTimer("update", 5.);

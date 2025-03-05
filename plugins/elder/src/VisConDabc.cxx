@@ -51,35 +51,35 @@ void elderdabc::VisConDabc::SetTop(dabc::Hierarchy& top, bool withcmds)
    fCondFolder=top.CreateHChild("Conditions");
 
    // JAM24 - same as in fesa plugin?
-   //fCondFolder.SetField("_autoload", "dabcsys/plugins/elder/elder.js");
+   //fCondFolder.SetField("_autoload", "dabc_plugins/elder/elder.js");
 
    if (!withcmds) return;
 
 //   dabc::Hierarchy h = fTop.CreateHChild("Control/Clear");
 //   h.SetField("_kind","Command");
 //   h.SetField("_title", "Clear all histograms in the server");
-//   h.SetField("_icon", "dabcsys/plugins/elder/icons/clear.png");
+//   h.SetField("_icon", "dabc_plugins/elder/icons/clear.png");
 //   h.SetField("_fastcmd", "true");
 //   h.SetField("_numargs", "0");
 //
 //   h = fTop.CreateHChild("Control/Save");
 //   h.SetField("_kind","Command");
 //   h.SetField("_title", "Save all histograms in the dabc.root file");
-//   h.SetField("_icon", "dabcsys/plugins/elder/icons/save.png");
+//   h.SetField("_icon", "dabc_plugins/elder/icons/save.png");
 //   h.SetField("_fastcmd", "true");
 //   h.SetField("_numargs", "0");
 
 //   h = fTop.CreateHChild("Control/Start");
 //   h.SetField("_kind","Command");
 //   h.SetField("_title", "Start processing of data");
-//   h.SetField("_icon", "dabcsys/plugins/elder/icons/start.png");
+//   h.SetField("_icon", "dabc_plugins/elder/icons/start.png");
 //   h.SetField("_fastcmd", "true");
 //   h.SetField("_numargs", "0");
 //
 //   h = fTop.CreateHChild("Control/Stop");
 //   h.SetField("_kind","Command");
 //   h.SetField("_title", "Stop processing of data");
-//   h.SetField("_icon", "dabcsys/plugins/elder/icons/stop.png");
+//   h.SetField("_icon", "dabc_plugins/elder/icons/stop.png");
 //   h.SetField("_fastcmd", "true");
 //   h.SetField("_numargs", "0");
 
@@ -804,7 +804,7 @@ elderdabc::C1handle elderdabc::VisConDabc::MakeC1(const char *name, double left,
    //h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
 //   h.SetField("_make_request", "DABC.ReqH"); // provide proper request
 //   h.SetField("_after_request", "ELDER.ConvertC"); // convert object into elder condition display, added in elder.js
-   h.SetField("_autoload", "dabcsys/plugins/elder/htm/elder.js");
+   h.SetField("_autoload", "dabc_plugins/elder/htm/elder.js");
    if(histogram_name)
       h.SetField("linked_histogram",histogram_name);
    else
@@ -853,7 +853,7 @@ elderdabc::C2handle elderdabc::VisConDabc::MakeC2Win(const char *name,
       //h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
 //      h.SetField("_make_request", "DABC.ReqH"); // provide proper request
 //      h.SetField("_after_request", "ELDER.ConvertC");  // convert object into elder condition display, added in elder.js
-      h.SetField("_autoload", "dabcsys/plugins/elder/htm/elder.js");
+      h.SetField("_autoload", "dabc_plugins/elder/htm/elder.js");
       if(histogram_name)
          h.SetField("linked_histogram",histogram_name);
       else
@@ -903,7 +903,7 @@ elderdabc::C2handle elderdabc::VisConDabc::MakeC2Poly(const char *name,
       //h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
 //      h.SetField("_make_request", "DABC.ReqH"); // provide proper request
 //      h.SetField("_after_request", "ELDER.ConvertC");  // convert object into elder condition display, added in elder.js
-      h.SetField("_autoload", "dabcsys/plugins/elder/htm/elder.js");
+      h.SetField("_autoload", "dabc_plugins/elder/htm/elder.js");
       if(histogram_name)
          h.SetField("linked_histogram",histogram_name);
       else

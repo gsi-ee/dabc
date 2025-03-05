@@ -68,7 +68,7 @@ dofi::TerminalModule::TerminalModule (const std::string &name, dabc::Command cmd
 
    dabc::Hierarchy ui = fWorkerHierarchy.CreateHChild("UI");
    ui.SetField(dabc::prop_kind, "DABC.HTML");
-   ui.SetField("_UserFilePath", "${DABCSYS}/plugins/dofi/htm/");
+   ui.SetField("_UserFilePath", "dabc_plugins/dofi/htm/");
    ui.SetField("_UserFileMain", "main.htm");
 
    CreateTimer("update", 1.);
