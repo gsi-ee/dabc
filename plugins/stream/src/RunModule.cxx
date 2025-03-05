@@ -15,6 +15,7 @@
 
 #include "stream/RunModule.h"
 
+#include "dabc/Configuration.h"
 #include "dabc/Manager.h"
 #include "dabc/Factory.h"
 #include "dabc/Iterator.h"
@@ -80,10 +81,18 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
       // ensure that all histos on all branches present
       hadaq::TdcProcessor::SetAllHistos(true);
 
-      const char *dabcsys = std::getenv("DABCSYS");
+      std::string libs_dir = dabc::Configuration::GetLibsDir();
+      std::string plugin_dir = dabc::Configuration::GetPluginsDir();
       const char *streamsys = std::getenv("STREAMSYS");
-      if (!dabcsys) {
-         EOUT("DABCSYS variable not set, cannot run stream framework");
+
+      if (libs_dir.empty()) {
+         EOUT("DABC lib dir is empty, check DABCSYS variable or DABC installation");
+         dabc::mgr.StopApplication();
+         return;
+      }
+
+      if (plugin_dir.empty()) {
+         EOUT("DABC plugin dir is empty, check DABCSYS or DABC installation");
          dabc::mgr.StopApplication();
          return;
       }
@@ -109,10 +118,10 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
       const char *ldflags = "-Wl,--no-as-needed";
 #endif
 
-      std::string exec = dabc::format("%s %s/plugins/stream/src/stream_engine.cpp -O2 -fPIC -Wall -std=c++11 -I. -I%s/include %s %s"
-            " -shared -Wl,-soname,librunstream.so %s -Wl,-rpath,%s/lib -Wl,-rpath,%s/lib  -o librunstream.so",
-            compiler, dabcsys, streamsys, extra_include.c_str(),
-            (second ? "-D_SECOND_ " : ""), ldflags, dabcsys, streamsys);
+      std::string exec = dabc::format("%s %s/stream/src/stream_engine.cpp -O2 -fPIC -Wall -std=c++11 -I. -I%s/include %s %s"
+            " -shared -Wl,-soname,librunstream.so %s -Wl,-rpath,%s -Wl,-rpath,%s/lib  -o librunstream.so",
+            compiler, plugin_dir.c_str(), streamsys, extra_include.c_str(),
+            (second ? "-D_SECOND_ " : ""), ldflags, libs_dir.c_str(), streamsys);
 
       std::system("rm -f ./librunstream.so");
 
