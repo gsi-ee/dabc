@@ -107,6 +107,8 @@ namespace dabc {
 
          static std::string GetLocalHost() { return fLocalHost; }
 
+         static std::string GetLibsDir();
+
          static std::string GetPluginsDir();
 
    };

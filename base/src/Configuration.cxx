@@ -299,6 +299,47 @@ bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char *n
 }
 
 
+static bool isDirExists(const std::string& dirname)
+{
+   struct stat info;
+   return ((stat(dirname.c_str(), &info ) == 0) && ( info.st_mode & S_IFDIR ));
+}
+
+/** Returns location of libs directory */
+std::string dabc::Configuration::GetLibsDir()
+{
+   static std::string libs_dir;
+
+   if (libs_dir.empty()) {
+      const char *dabcsys = std::getenv("DABCSYS");
+      if (dabcsys) {
+         auto dir = dabc::format("%s/lib", dabcsys);
+         if (isDirExists(dir))
+         libs_dir = dir;
+      }
+   }
+
+#if defined(DABC_INSTALL_PREFIX) && defined(DABC_INSTALL_LIBDIR)
+
+   if (libs_dir.empty()) {
+      std::string prefix = DABC_INSTALL_PREFIX;
+      std::string subdir = DABC_INSTALL_LIBDIR;
+      if (!prefix.empty() && !subdir.empty()) {
+         std::string dir = prefix;
+         if (dir[dir.length() - 1] != '/')
+            dir.append("/");
+         dir.append(subdir);
+         if (isDirExists(dir))
+         libs_dir = dir;
+      }
+   }
+
+#endif
+
+   return libs_dir;
+}
+
+
 /** Returns location of plugins directory
  * First of all install dir for plusing is checked
  * If not exists - DABCSYS and plugins */
@@ -310,8 +351,7 @@ std::string dabc::Configuration::GetPluginsDir()
       const char *dabcsys = std::getenv("DABCSYS");
       if (dabcsys) {
          auto dir = dabc::format("%s/plugins", dabcsys);
-         struct stat info;
-         if ((stat(dir.c_str(), &info ) == 0) && ( info.st_mode & S_IFDIR ))
+         if (isDirExists(dir))
             plugins_dir = dir;
       }
    }
@@ -326,8 +366,7 @@ std::string dabc::Configuration::GetPluginsDir()
          if (dir[dir.length() - 1] != '/')
             dir.append("/");
          dir.append(subdir);
-         struct stat info;
-         if ((stat(dir.c_str(), &info ) == 0) && ( info.st_mode & S_IFDIR ))
+         if (isDirExists(dir))
             plugins_dir = dir;
       }
    }
