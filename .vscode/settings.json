@@ -59,6 +59,7 @@
       "text_encoding": "cpp",
       "__bit_reference": "cpp",
       "__split_buffer": "cpp",
-      "locale": "cpp"
+      "locale": "cpp",
+      "second.C": "cpp"
    }
 }
