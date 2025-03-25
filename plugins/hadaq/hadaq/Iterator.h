@@ -79,7 +79,8 @@ namespace hadaq {
          /** Used for ready HLD events */
          bool NextEvent();
 
-         bool IsNormalEvent() const;
+         bool IsNormalEvent() const { return fBufType == mbt_HadaqEvents; }
+         bool IsHadTu() const { return fBufType == mbt_HadaqTransportUnit; }
 
          /** Depending from buffer type calls NextHadTu() or NextEvent() */
          bool NextSubeventsBlock();

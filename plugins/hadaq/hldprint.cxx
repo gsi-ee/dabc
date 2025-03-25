@@ -571,6 +571,7 @@ int main(int argc, char* argv[])
 
 
    hadaq::RawEvent *evnt = nullptr;
+   hadaq::HadTu *tu = nullptr;
 
    std::map<unsigned,SubevStat> idstat;     // events id statistic
    std::map<unsigned,SubevStat> substat;    // sub-events statistic
@@ -588,7 +589,8 @@ int main(int argc, char* argv[])
 
    ref = hadaq::ReadoutHandle::Connect(src, buffer_size);
 
-   if (ref.null()) return 1;
+   if (ref.null())
+      return 1;
 
    idstat.clear();
    substat.clear();
@@ -602,6 +604,7 @@ int main(int argc, char* argv[])
       bool next_block = ref.NextSubEventsBlock(maxage > 0 ? maxage/2. : 1., maxage);
 
       evnt = ref.GetEvent();
+      tu = ref.GetTu();
 
       cnt0++;
 
@@ -641,7 +644,10 @@ int main(int argc, char* argv[])
          }
 
          cnt++;
-         currsz += evnt->GetSize();
+         if (evnt)
+            currsz += evnt->GetSize();
+         else if (tu)
+            currsz += tu->GetSize();
          lastevtm = curr;
       } else if (curr - lastevtm > tmout) {
          /*printf("TIMEOUT %ld\n", cnt0);*/
@@ -691,11 +697,14 @@ int main(int argc, char* argv[])
          print_header = true;
          if (evnt)
             evnt->Dump();
+         else if (tu)
+            printf("TU placeholder\n");
       }
 
       char errbuf[100];
 
       while (auto sub = ref.NextSubEvent()) {
+
          bool print_sub_header = false;
          if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);

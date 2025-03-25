@@ -70,7 +70,7 @@ void hadaq::ReadIterator::Close()
 
 bool hadaq::ReadIterator::NextHadTu()
 {
-   if (fBufType != mbt_HadaqTransportUnit ) {
+   if (fBufType != mbt_HadaqTransportUnit) {
       EOUT("NextHadTu only allowed for buffer type mbt_HadaqTransportUnit. Check your code!");
       return false;
    }
@@ -147,12 +147,6 @@ bool hadaq::ReadIterator::NextEvent()
 
    return true;
 }
-
-bool hadaq::ReadIterator::IsNormalEvent() const
-{
-   return fBufType == mbt_HadaqEvents;
-}
-
 
 bool hadaq::ReadIterator::NextSubeventsBlock()
 {

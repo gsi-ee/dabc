@@ -61,10 +61,13 @@ namespace hadaq {
       bool Disconnect() { return mbs::ReadoutHandle::Disconnect(); }
 
       /** Retrieve next event from the server */
-      hadaq::RawEvent* NextEvent(double tm = 1.0, double maxage = -1.);
+      hadaq::RawEvent *NextEvent(double tm = 1.0, double maxage = -1.);
 
       /** Get current event pointer */
-      hadaq::RawEvent* GetEvent();
+      hadaq::RawEvent *GetEvent();
+
+      /** Get current Tu pointer - if any */
+      hadaq::HadTu *GetTu();
 
       /** Retrieve next event or hadtu or partial subevent from Input combiner */
       bool NextSubEventsBlock(double tm = 1.0, double maxage = -1.);

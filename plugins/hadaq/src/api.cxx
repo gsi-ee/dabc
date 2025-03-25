@@ -97,6 +97,18 @@ hadaq::RawEvent *hadaq::ReadoutHandle::GetEvent()
    return ExtractFromMbs(mbs::ReadoutHandle::GetEvent());
 }
 
+hadaq::HadTu *hadaq::ReadoutHandle::GetTu()
+{
+   if (null())
+      return nullptr;
+
+   if (GetObject()->fIter2.IsHadTu())
+      return GetObject()->fIter2.hadtu();
+
+   return nullptr;
+}
+
+
 bool hadaq::ReadoutHandle::NextSubEventsBlock(double tmout, double maxage)
 {
    if (null())
