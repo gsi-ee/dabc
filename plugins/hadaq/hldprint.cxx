@@ -32,12 +32,13 @@ int usage(const char *errstr = nullptr)
    if (errstr)
       printf("Error: %s\n\n", errstr);
 
-   printf("Utility for printing HLD events. 15.10.2024. S.Linev\n");
+   printf("Utility for printing HLD events. 25.03.2025. S.Linev\n");
    printf("   hldprint source [args]\n");
    printf("Following sources are supported:\n");
    printf("   hld://path/file.hld         - HLD file reading\n");
    printf("   file.hld                    - HLD file reading (file extension MUST be '.hld')\n");
    printf("   file.hll                    - list of HLD files (file extension MUST be '.hll')\n");
+   printf("   file.bin                    - DABC binary file produced with rawdump.xml (file extension MUST be '.bin')\n");
    printf("   dabcnode                    - DABC stream server\n");
    printf("   dabcnode:port               - DABC stream server with custom port\n");
    printf("   mbss://dabcnode/Transport   - DABC transport server\n");
@@ -541,18 +542,22 @@ int main(int argc, char* argv[])
 
    printf("Try to open %s\n", argv[1]);
 
-   bool ishld = false;
+   bool isfile = false;
    std::string src = argv[1];
    if (((src.find(".hld") != std::string::npos) || (src.find(".hll") != std::string::npos)) && (src.find("hld://") != 0)) {
       src = std::string("hld://") + src;
-      ishld = true;
+      isfile = true;
    } else if ((src.find("hld://") == 0) || (src.find(".hld") != std::string::npos) || (src.find(".hll") != std::string::npos)) {
-      ishld = true;
+      isfile = true;
+   } else if ((src.find(".bin") != std::string::npos) && (src.find("bin://") != 0)) {
+      src = std::string("bin://") + src;
+      isfile = true;
    }
 
-   if (tmout < 0) tmout = ishld ? 0.5 : 5.;
+   if (tmout < 0)
+      tmout = isfile ? 0.5 : 5.;
 
-   if (!ishld) {
+   if (!isfile) {
 
       dabc::Url url(src);
 
