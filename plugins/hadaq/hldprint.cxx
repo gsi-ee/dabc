@@ -576,7 +576,7 @@ int main(int argc, char* argv[])
    std::map<unsigned,SubevStat> idstat;     // events id statistic
    std::map<unsigned,SubevStat> substat;    // sub-events statistic
    std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
-   long cnt = 0, cnt0 = 0, maxcnt = -1, mincnt = -1, lastcnt = 0, printcnt = 0;
+   long cnt = 0, maxcnt = -1, mincnt = -1, lastcnt = 0, printcnt = 0;
    uint32_t minseqnr = 0, maxseqnr = 0;
    uint64_t lastsz = 0, currsz = 0, minsz = 10000000000, numminsz = 0, maxsz = 0, nummaxsz = 0;
    dabc::TimeStamp last, first, lastevtm;
@@ -595,18 +595,19 @@ int main(int argc, char* argv[])
    idstat.clear();
    substat.clear();
    subsubstat.clear();
-   cnt = cnt0 = lastcnt = printcnt = 0;
+   cnt = lastcnt = printcnt = 0;
    lastsz = currsz = 0;
    last = first = lastevtm = dabc::Now();
 
+   // main loop over events
    while (!dabc::CtrlCPressed()) {
 
-      bool next_block = ref.NextSubEventsBlock(maxage > 0 ? maxage/2. : 1., maxage);
-
-      evnt = ref.GetEvent();
-      tu = ref.GetTu();
-
-      cnt0++;
+      bool next_block = false;
+      if (!tu) {
+         next_block = ref.NextSubEventsBlock(maxage > 0 ? maxage/2. : 1., maxage);
+         evnt = ref.GetEvent();
+         tu = ref.GetTu();
+      }
 
       if (debug_delay > 0)
          dabc::Sleep(debug_delay);
@@ -671,7 +672,7 @@ int main(int argc, char* argv[])
             continue;
       }
 
-      if (!next_block)
+      if (!evnt && !tu)
          continue;
 
       if (skip > 0) {
@@ -697,13 +698,20 @@ int main(int argc, char* argv[])
          print_header = true;
          if (evnt)
             evnt->Dump();
-         else if (tu)
+         else if (tu && next_block)
             tu->Dump();
       }
 
       char errbuf[100];
 
-      while (auto sub = ref.NextSubEvent()) {
+      int maxnumsub = tu ? 1 : 100000;
+
+      while (maxnumsub-- > 0) {
+         auto sub = ref.NextSubEvent();
+         if (!sub) {
+            tu = nullptr;
+            break;
+         }
 
          bool print_sub_header = false;
          if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
@@ -725,7 +733,7 @@ int main(int argc, char* argv[])
             if (sub->GetId() == onlymonitor) {
                if (evnt)
                   evnt->Dump();
-               else if (tu)
+               else if (tu && next_block)
                   tu->Dump();
                sub->Dump(printraw);
                if (!printraw)
@@ -846,7 +854,7 @@ int main(int argc, char* argv[])
                      print_header = true;
                      if (evnt)
                         evnt->Dump();
-                     else if (tu)
+                     else if (tu && next_block)
                         tu->Dump();
                   }
 
