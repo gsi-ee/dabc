@@ -307,7 +307,6 @@ int main(int argc, char* argv[])
       } else if (evnt) {
          sz = evnt->GetEventLen();
          trignr = evnt->GetTrigNumber();
-
       } else if (curr - lastevtm > tmout) {
          break;
       }

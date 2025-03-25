@@ -77,7 +77,8 @@ namespace dogma {
 
          bool IsData() const { return !fEvPtr.null(); }
 
-         bool IsTu() const;
+         bool IsTu() const { return fBufType == mbt_DogmaTransportUnit; }
+         bool IsEvent() const { return fBufType == mbt_DogmaEvents; }
 
          /** Used for raw data from TRBs */
          bool NextTu();
@@ -87,8 +88,6 @@ namespace dogma {
 
          /** Used for ready HLD events */
          bool NextEvent();
-
-         bool IsEvent() const;
 
          dogma::DogmaEvent* evnt() const { return (dogma::DogmaEvent*) fEvPtr(); }
          unsigned evntsize() const { return evnt() ? evnt()->GetEventLen() : 0; }

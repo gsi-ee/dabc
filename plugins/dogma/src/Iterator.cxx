@@ -66,12 +66,6 @@ void dogma::ReadIterator::Close()
    fBufType = dabc::mbt_Null;
 }
 
-bool dogma::ReadIterator::IsTu() const
-{
-   return fBufType == mbt_DogmaTransportUnit;
-}
-
-
 bool dogma::ReadIterator::NextTu()
 {
    if (fBufType != mbt_DogmaTransportUnit) {
@@ -109,11 +103,6 @@ bool dogma::ReadIterator::NextTu()
    fRawPtr.reset();
 
    return true;
-}
-
-bool dogma::ReadIterator::IsEvent() const
-{
-   return fBufType == mbt_DogmaEvents;
 }
 
 bool dogma::ReadIterator::NextEvent()

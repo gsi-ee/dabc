@@ -63,14 +63,14 @@ namespace hadaq {
       /** Retrieve next event from the server */
       hadaq::RawEvent *NextEvent(double tm = 1.0, double maxage = -1.);
 
+      /** Retrieve next event or hadtu or partial subevent from Input combiner */
+      bool NextSubEventsBlock(double tm = 1.0, double maxage = -1.);
+
       /** Get current event pointer */
       hadaq::RawEvent *GetEvent();
 
       /** Get current Tu pointer - if any */
       hadaq::HadTu *GetTu();
-
-      /** Retrieve next event or hadtu or partial subevent from Input combiner */
-      bool NextSubEventsBlock(double tm = 1.0, double maxage = -1.);
 
       /** Retrieve next subevent from the block */
       hadaq::RawSubevent *NextSubEvent();
