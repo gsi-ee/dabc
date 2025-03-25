@@ -35,6 +35,9 @@ namespace hadaq {
 
          hadaq::ReadIterator fIter2;   ///< iterator over HADAQ buffers
 
+         hadaq::RawEvent *fEv1 = nullptr;
+         hadaq::RawSubevent *fSub1 = nullptr;
+
          int AcceptBuffer(dabc::Buffer& buf) override;
 
       public:
@@ -62,6 +65,12 @@ namespace hadaq {
 
       /** Get current event pointer */
       hadaq::RawEvent* GetEvent();
+
+      /** Retrieve next event or hadtu or partial subevent from Input combiner */
+      bool NextSubEventsBlock(double tm = 1.0, double maxage = -1.);
+
+      /** Retrieve next subevent from the block */
+      hadaq::RawSubevent *NextSubEvent();
    };
 
 }

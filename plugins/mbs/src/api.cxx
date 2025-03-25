@@ -126,7 +126,8 @@ void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
 
 bool mbs::ReadoutModule::GetEventInTime(double maxage)
 {
-   if ((maxage <= 0) || fCurBufTm.null()) return true;
+   if ((maxage <= 0) || fCurBufTm.null())
+      return true;
    return !fCurBufTm.Expired(maxage);
 }
 

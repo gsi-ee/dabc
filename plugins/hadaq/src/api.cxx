@@ -43,10 +43,10 @@ hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string &src, int b
    return DoConnect(newurl, "hadaq::ReadoutModule", bufsz_mb);
 }
 
-
 hadaq::RawEvent *hadaq::ReadoutHandle::NextEvent(double tmout, double maxage)
 {
-   if (null()) return nullptr;
+   if (null())
+      return nullptr;
 
    bool intime = GetObject()->GetEventInTime(maxage);
 
@@ -66,22 +66,78 @@ hadaq::RawEvent *hadaq::ReadoutHandle::NextEvent(double tmout, double maxage)
    return nullptr;
 }
 
-hadaq::RawEvent *hadaq::ReadoutHandle::GetEvent()
+
+hadaq::RawEvent *ExtractFromMbs(mbs::EventHeader *mbsev)
 {
-   if (null()) return nullptr;
-
-   if (GetObject()->fIter2.evnt()) return GetObject()->fIter2.evnt();
-
-   mbs::EventHeader *mbsev = mbs::ReadoutHandle::GetEvent();
-
-   if (!mbsev) return nullptr;
+   if (!mbsev)
+      return nullptr;
 
    mbs::SubeventHeader *mbssub = mbsev->NextSubEvent(nullptr);
 
    if (mbssub && (mbssub->FullSize() == mbsev->SubEventsSize())) {
-      hadaq::RawEvent *raw = (hadaq::RawEvent*) mbssub->RawData();
+      hadaq::RawEvent *raw = (hadaq::RawEvent *)mbssub->RawData();
 
-      if (raw && (raw->GetSize() == mbssub->RawDataSize())) return raw;
+      if (raw && (raw->GetSize() == mbssub->RawDataSize()))
+         return raw;
    }
+   return nullptr;
+}
+
+hadaq::RawEvent *hadaq::ReadoutHandle::GetEvent()
+{
+   if (null())
+      return nullptr;
+
+   if (GetObject()->fEv1)
+      return GetObject()->fEv1;
+
+   if (GetObject()->fIter2.IsNormalEvent() && GetObject()->fIter2.evnt())
+      return GetObject()->fIter2.evnt();
+
+   return ExtractFromMbs(mbs::ReadoutHandle::GetEvent());
+}
+
+bool hadaq::ReadoutHandle::NextSubEventsBlock(double tmout, double maxage)
+{
+   if (null())
+      return false;
+
+   GetObject()->fEv1 = nullptr;
+   GetObject()->fSub1 = nullptr;
+
+   bool intime = GetObject()->GetEventInTime(maxage);
+
+   // check that HADAQ event can be produced
+   // while hadaq events can be read only from file, ignore maxage parameter here
+   if (intime && GetObject()->fIter2.NextSubeventsBlock())
+      return true;
+
+   // this is a case, when hadaq event packed into MBS event
+   if (mbs::ReadoutHandle::NextEvent(tmout, maxage)) {
+      GetObject()->fEv1 = ExtractFromMbs(mbs::ReadoutHandle::GetEvent());
+      GetObject()->fSub1 = nullptr;
+      return GetObject()->fEv1 != nullptr;
+   }
+
+   // check again that HADAQ event can be produced
+   if (GetObject()->fIter2.NextSubeventsBlock())
+      return true;
+
+   return false;
+}
+
+hadaq::RawSubevent *hadaq::ReadoutHandle::NextSubEvent()
+{
+   if (null())
+      return nullptr;
+
+   if (GetObject()->fEv1) {
+      GetObject()->fSub1 = GetObject()->fEv1->NextSubevent(GetObject()->fSub1);
+      return GetObject()->fSub1;
+   }
+
+   if (GetObject()->fIter2.NextSubEvent())
+      return GetObject()->fIter2.subevnt();
+
    return nullptr;
 }

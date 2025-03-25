@@ -79,6 +79,8 @@ namespace hadaq {
          /** Used for ready HLD events */
          bool NextEvent();
 
+         bool IsNormalEvent() const;
+
          /** Depending from buffer type calls NextHadTu() or NextEvent() */
          bool NextSubeventsBlock();
 
@@ -94,7 +96,7 @@ namespace hadaq {
          hadaq::HadTu* hadtu() const { return (hadaq::HadTu*) fEvPtr(); }
 
          bool AssignEventPointer(dabc::Pointer& ptr);
-         hadaq::RawSubevent* subevnt() const { return (hadaq::RawSubevent*) fSubPtr(); }
+         hadaq::RawSubevent *subevnt() const { return (hadaq::RawSubevent*) fSubPtr(); }
          void* rawdata() const { return fRawPtr(); }
          uint32_t rawdatasize() const { return fRawPtr.fullsize(); }
 

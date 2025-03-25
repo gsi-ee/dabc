@@ -42,7 +42,8 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
 {
    Close();
 
-   if (buf.null()) return false;
+   if (buf.null())
+      return false;
 
    fBufType = buf.GetTypeId();
 
@@ -74,7 +75,8 @@ bool hadaq::ReadIterator::NextHadTu()
       return false;
    }
 
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null())
+      return false;
 
    if (fFirstEvent)
       fFirstEvent = false;
@@ -108,7 +110,8 @@ bool hadaq::ReadIterator::NextHadTu()
 
 bool hadaq::ReadIterator::NextEvent()
 {
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null())
+      return false;
 
    if (fBufType != mbt_HadaqEvents) {
       EOUT("NextEvent only allowed for buffer type mbt_HadaqEvents. Check your code!");
@@ -144,6 +147,12 @@ bool hadaq::ReadIterator::NextEvent()
 
    return true;
 }
+
+bool hadaq::ReadIterator::IsNormalEvent() const
+{
+   return fBufType == mbt_HadaqEvents;
+}
+
 
 bool hadaq::ReadIterator::NextSubeventsBlock()
 {
