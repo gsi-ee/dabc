@@ -698,7 +698,7 @@ int main(int argc, char* argv[])
          if (evnt)
             evnt->Dump();
          else if (tu)
-            printf("TU placeholder\n");
+            tu->Dump();
       }
 
       char errbuf[100];
@@ -725,6 +725,8 @@ int main(int argc, char* argv[])
             if (sub->GetId() == onlymonitor) {
                if (evnt)
                   evnt->Dump();
+               else if (tu)
+                  tu->Dump();
                sub->Dump(printraw);
                if (!printraw)
                   PrintMonitorData(sub);
@@ -844,6 +846,8 @@ int main(int argc, char* argv[])
                      print_header = true;
                      if (evnt)
                         evnt->Dump();
+                     else if (tu)
+                        tu->Dump();
                   }
 
                   if (!print_sub_header) {

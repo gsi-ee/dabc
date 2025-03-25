@@ -187,6 +187,8 @@ namespace hadaq {
          void SetSize(uint32_t bytes) { SetValue(&tuSize, bytes); }
 
          void SetDecoding(uint32_t decod) { SetValue(&tuDecoding, decod); }
+
+         void Dump();
    };
 
    // ======================================================================

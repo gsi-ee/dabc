@@ -19,10 +19,19 @@
 #include <sys/time.h>
 #include <ctime>
 
+
+void hadaq::HadTu::Dump()
+{
+   if (GetSize() != GetPaddedSize())
+      printf("*** Tu size %u+%u\n", (unsigned) GetSize(), (unsigned) (GetPaddedSize() - GetSize()));
+   else
+      printf("*** Tu size %u\n", (unsigned) GetSize());
+}
+
 void hadaq::RawEvent::Dump()
 {
    char sbuf[50];
-   if (GetSize()!=GetPaddedSize())
+   if (GetSize() != GetPaddedSize())
       snprintf(sbuf,sizeof(sbuf), "%u+%u", (unsigned) GetSize(), (unsigned) (GetPaddedSize() - GetSize()));
    else
       snprintf(sbuf,sizeof(sbuf),"%u", (unsigned) GetSize());
