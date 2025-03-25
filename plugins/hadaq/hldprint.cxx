@@ -75,6 +75,7 @@ int usage(const char *errstr = nullptr)
    printf("   -fullid value           - printout only events with specified fullid (default all)\n");
    printf("   -rate                   - display only events and data rate\n");
    printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
+   printf("   -trignumdump            - print only trigger nummers from events or TU (default off)\n");
    print_tdc_arguments();
    printf("   -again [N=1]            - repeat same printout N times, only for debug purposes\n\n");
    printf("Example - display only data from TDC 0x1226:\n\n");
@@ -365,7 +366,7 @@ void PrintMonitorData(hadaq::RawSubevent *sub)
    }
 }
 
-bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false,
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dotriggerdump = false,
      dominsz = false, domaxsz = false, autoid = false, only_errors = false;
 unsigned idrange = 0xff, onlynew = 0, onlyctdc = 0, onlyraw = 0, onlymdc = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 std::vector<unsigned> hubs, tdcs, ctdcs, ctsids, newtdcs, mdcs;
@@ -520,6 +521,8 @@ int main(int argc, char* argv[])
          printsub = true;
       } else if (strcmp(argv[n], "-stat") == 0) {
          dostat = true;
+      } else if (strcmp(argv[n], "-trignumdump") == 0) {
+         dotriggerdump = true;
       } else if (strcmp(argv[n], "-minsz") == 0) {
          dominsz = true;
       } else if (strcmp(argv[n], "-maxsz") == 0) {
@@ -582,7 +585,7 @@ int main(int argc, char* argv[])
    std::map<unsigned,SubevStat> substat;    // sub-events statistic
    std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
    long cnt = 0, maxcnt = -1, mincnt = -1, lastcnt = 0, printcnt = 0;
-   uint32_t minseqnr = 0, maxseqnr = 0;
+   uint32_t minseqnr = 0, maxseqnr = 0, lasttringnum = 0xffffffff;
    uint64_t lastsz = 0, currsz = 0, minsz = 10000000000, numminsz = 0, maxsz = 0, nummaxsz = 0;
    dabc::TimeStamp last, first, lastevtm;
 
@@ -625,7 +628,8 @@ int main(int argc, char* argv[])
             idstat[evnt->GetId()].accumulate(evnt->GetSize());
 
          // ignore events which are not match with specified id
-         if ((fullid != 0) && evnt && (evnt->GetId() != fullid)) continue;
+         if ((fullid != 0) && evnt && (evnt->GetId() != fullid))
+            continue;
 
          if (dominsz && evnt) {
             if (evnt->GetSize() < minsz) {
@@ -648,6 +652,9 @@ int main(int argc, char* argv[])
                nummaxsz++;
             }
          }
+
+         if (dotriggerdump && evnt)
+            printf("%x\n", evnt->GetSeqNr());
 
          cnt++;
          if (evnt)
@@ -716,6 +723,21 @@ int main(int argc, char* argv[])
          if (!sub) {
             tu = nullptr;
             break;
+         }
+
+         if (dotriggerdump && tu) {
+            unsigned num = sub->GetTrigNr() >> 8;
+            long diff = 1;
+
+            if (lasttringnum != 0xffffffff) {
+               diff = num;
+               diff -= lasttringnum;
+            }
+            if (diff == 1)
+               printf("%x\n", num);
+            else
+               printf("%x diff %ld\n", num, diff);
+            lasttringnum = num;
          }
 
          bool print_sub_header = false;
