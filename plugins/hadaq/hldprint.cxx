@@ -599,23 +599,26 @@ int main(int argc, char* argv[])
 
    while (!dabc::CtrlCPressed()) {
 
-      evnt = ref.NextEvent(maxage > 0 ? maxage/2. : 1., maxage);
+      bool next_block = ref.NextSubEventsBlock(maxage > 0 ? maxage/2. : 1., maxage);
+
+      evnt = ref.GetEvent();
 
       cnt0++;
 
-      if (debug_delay > 0) dabc::Sleep(debug_delay);
+      if (debug_delay > 0)
+         dabc::Sleep(debug_delay);
 
       dabc::TimeStamp curr = dabc::Now();
 
-      if (evnt) {
+      if (next_block) {
 
-         if (dostat)
+         if (dostat && evnt)
             idstat[evnt->GetId()].accumulate(evnt->GetSize());
 
          // ignore events which are not match with specified id
-         if ((fullid != 0) && (evnt->GetId() != fullid)) continue;
+         if ((fullid != 0) && evnt && (evnt->GetId() != fullid)) continue;
 
-         if (dominsz) {
+         if (dominsz && evnt) {
             if (evnt->GetSize() < minsz) {
                minsz = evnt->GetSize();
                minseqnr = evnt->GetSeqNr();
@@ -626,7 +629,7 @@ int main(int argc, char* argv[])
             }
          }
 
-         if (domaxsz) {
+         if (domaxsz && evnt) {
             if (evnt->GetSize() > maxsz) {
                maxsz = evnt->GetSize();
                maxseqnr = evnt->GetSeqNr();
@@ -658,14 +661,19 @@ int main(int argc, char* argv[])
          }
 
          // when showing rate, only with statistic one need to analyze event
-         if (!dostat) continue;
+         if (!dostat)
+            continue;
       }
 
-      if (!evnt) continue;
+      if (!next_block)
+         continue;
 
-      if (skip > 0) { skip--; continue; }
+      if (skip > 0) {
+         skip--;
+         continue;
+      }
 
-      if (dofind) {
+      if (dofind && evnt) {
          if (find_eventid) {
             if (evnt->GetSeqNr() != find_eventid) continue;
          } else {
@@ -681,13 +689,13 @@ int main(int argc, char* argv[])
 
       if (!showrate && !dostat && !only_errors && (onlymonitor == 0)) {
          print_header = true;
-         evnt->Dump();
+         if (evnt)
+            evnt->Dump();
       }
 
       char errbuf[100];
 
-      hadaq::RawSubevent* sub = nullptr;
-      while ((sub = evnt->NextSubevent(sub)) != nullptr) {
+      while (auto sub = ref.NextSubEvent()) {
          bool print_sub_header = false;
          if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
@@ -706,7 +714,8 @@ int main(int argc, char* argv[])
 
          if (onlymonitor != 0) {
             if (sub->GetId() == onlymonitor) {
-               evnt->Dump();
+               if (evnt)
+                  evnt->Dump();
                sub->Dump(printraw);
                if (!printraw)
                   PrintMonitorData(sub);
@@ -824,7 +833,8 @@ int main(int argc, char* argv[])
                if (as_raw || as_tdc || as_ctdc || as_new || as_mdc || as_adc) {
                   if (!print_header) {
                      print_header = true;
-                     evnt->Dump();
+                     if (evnt)
+                        evnt->Dump();
                   }
 
                   if (!print_sub_header) {
