@@ -50,6 +50,7 @@ int usage(const char *errstr = nullptr)
    printf("   -rate                   - display only events and data rate\n");
    printf("   -stat                   - count statistics\n");
    printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
+   printf("   -trignumdump            - print only trigger nummers from events or TU (default off)\n");
    print_tdc_arguments();
    return errstr ? 1 : 0;
 }
@@ -62,7 +63,7 @@ struct TuStat {
    dogma::DogmaTu *tu{nullptr}; // current tu
 };
 
-bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dotriggerdump = false, dominsz = false, domaxsz = false, autoid = false;
 unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 int buffer_size = 4;
 
@@ -179,8 +180,24 @@ void print_stat()
    for (auto &pairs : tu_stats) {
       printf("  addr:%04x cnt:%d min_diff:%ld max_diff:%ld\n", (unsigned) pairs.first, pairs.second.cnt, (long) pairs.second.min_diff, (long) pairs.second.max_diff);
    }
-
 }
+
+uint32_t lasttringnum = 0xffffffff;
+
+void print_trigger_num(uint32_t num)
+{
+   long diff = 1;
+   if (lasttringnum != 0xffffffff) {
+      diff = num;
+      diff -= lasttringnum;
+   }
+   if (diff == 1)
+      printf("%06x\n", num);
+   else
+      printf("%06x diff %ld\n", num, diff);
+   lasttringnum = num;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -214,6 +231,8 @@ int main(int argc, char* argv[])
          printsub = true;
       } else if (strcmp(argv[n], "-stat") == 0) {
          dostat = true;
+      } else if (strcmp(argv[n], "-trignumdump") == 0) {
+         dotriggerdump = true;
       } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &tdcmask);
          tdcs.emplace_back(tdcmask);
@@ -352,23 +371,31 @@ int main(int argc, char* argv[])
          }
 
          // when showing rate, only with statistic one need to analyze event
-         if (!dostat) continue;
+         if (!dostat)
+            continue;
       }
 
-      if (!tu && !evnt) continue;
+      if (!tu && !evnt)
+         continue;
 
-      if (skip > 0) { skip--; continue; }
+      if (skip > 0) {
+         skip--;
+         continue;
+      }
 
       printcnt++;
 
-      if (dostat) {
+      if (dotriggerdump)
+         print_trigger_num(tu ? tu->GetTrigNumber() : evnt->GetSeqId());
+      else if (dostat) {
          stat_evnt(evnt);
       } else if (tu)
          print_tu(tu);
       else if (evnt)
          print_evnt(evnt);
 
-      if ((number > 0) && (printcnt >= number)) break;
+      if ((number > 0) && (printcnt >= number))
+         break;
    }
 
    if (showrate) {
