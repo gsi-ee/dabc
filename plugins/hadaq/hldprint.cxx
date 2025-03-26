@@ -366,11 +366,12 @@ void PrintMonitorData(hadaq::RawSubevent *sub)
    }
 }
 
-bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dotriggerdump = false,
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false,
      dominsz = false, domaxsz = false, autoid = false, only_errors = false;
 unsigned idrange = 0xff, onlynew = 0, onlyctdc = 0, onlyraw = 0, onlymdc = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 std::vector<unsigned> hubs, tdcs, ctdcs, ctsids, newtdcs, mdcs;
-int buffer_size = 4;
+int buffer_size = 4, dotriggerdump = 0;
+uint32_t lasttringnum = 0xffffffff;
 
 bool is_cts(unsigned id)
 {
@@ -441,6 +442,26 @@ bool is_adc(unsigned id)
 {
    return ((adcmask != 0) && ((id & idrange) <= (adcmask & idrange)) && ((id & ~idrange) == (adcmask & ~idrange)));
 }
+
+void print_trigger_num(uint32_t num, uint32_t sz)
+{
+   long diff = 1;
+
+   if (lasttringnum != 0xffffffff) {
+      diff = num;
+      diff -= lasttringnum;
+   }
+   printf("%06x", (unsigned) num);
+   if (dotriggerdump == 2)
+      printf(" %04x", (unsigned) sz);
+
+   if (diff == 1)
+      printf("\n");
+   else
+      printf(" diff %ld\n", diff);
+   lasttringnum = num;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -521,8 +542,10 @@ int main(int argc, char* argv[])
          printsub = true;
       } else if (strcmp(argv[n], "-stat") == 0) {
          dostat = true;
+      } else if (strcmp(argv[n], "-trignumdumpsz") == 0) {
+         dotriggerdump = 2;
       } else if (strcmp(argv[n], "-trignumdump") == 0) {
-         dotriggerdump = true;
+         dotriggerdump = 1;
       } else if (strcmp(argv[n], "-minsz") == 0) {
          dominsz = true;
       } else if (strcmp(argv[n], "-maxsz") == 0) {
@@ -585,7 +608,7 @@ int main(int argc, char* argv[])
    std::map<unsigned,SubevStat> substat;    // sub-events statistic
    std::map<unsigned,SubevStat> subsubstat; // sub-sub-events statistic
    long cnt = 0, maxcnt = -1, mincnt = -1, lastcnt = 0, printcnt = 0;
-   uint32_t minseqnr = 0, maxseqnr = 0, lasttringnum = 0xffffffff;
+   uint32_t minseqnr = 0, maxseqnr = 0;
    uint64_t lastsz = 0, currsz = 0, minsz = 10000000000, numminsz = 0, maxsz = 0, nummaxsz = 0;
    dabc::TimeStamp last, first, lastevtm;
 
@@ -654,7 +677,7 @@ int main(int argc, char* argv[])
          }
 
          if (dotriggerdump && evnt)
-            printf("%x\n", evnt->GetSeqNr());
+            print_trigger_num(evnt->GetSeqNr(), evnt->GetSize());
 
          cnt++;
          if (evnt)
@@ -725,20 +748,8 @@ int main(int argc, char* argv[])
             break;
          }
 
-         if (dotriggerdump && tu) {
-            unsigned num = sub->GetTrigNr() >> 8;
-            long diff = 1;
-
-            if (lasttringnum != 0xffffffff) {
-               diff = num;
-               diff -= lasttringnum;
-            }
-            if (diff == 1)
-               printf("%x\n", num);
-            else
-               printf("%x diff %ld\n", num, diff);
-            lasttringnum = num;
-         }
+         if (dotriggerdump && tu)
+            print_trigger_num(sub->GetTrigNr() >> 8, sub->GetSize());
 
          bool print_sub_header = false;
          if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
