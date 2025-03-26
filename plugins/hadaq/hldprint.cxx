@@ -446,7 +446,6 @@ bool is_adc(unsigned id)
 void print_trigger_num(uint32_t num, uint32_t sz)
 {
    long diff = 1;
-
    if (lasttringnum != 0xffffffff) {
       diff = num;
       diff -= lasttringnum;
@@ -729,7 +728,7 @@ int main(int argc, char* argv[])
 
       bool print_header = false;
 
-      if (!showrate && !dostat && !only_errors && (onlymonitor == 0)) {
+      if (!showrate && !dostat && !only_errors && (onlymonitor == 0) && !dotriggerdump) {
          print_header = true;
          if (evnt)
             evnt->Dump();
@@ -752,7 +751,7 @@ int main(int argc, char* argv[])
             print_trigger_num(sub->GetTrigNr() >> 8, sub->GetSize());
 
          bool print_sub_header = false;
-         if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors) {
+         if ((onlytdc == 0) && (onlyctdc == 0) && (onlynew == 0) && (onlyraw == 0) && (onlymdc == 0) && (onlymonitor == 0) && !showrate && !dostat && !only_errors && !dotriggerdump) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
          }
@@ -794,8 +793,9 @@ int main(int argc, char* argv[])
 
             errbuf[0] = 0;
             if (maxhhublen > 0) {
-               if (datalen >= maxhhublen) datalen = maxhhublen-1;
-               maxhhublen -= (datalen+1);
+               if (datalen >= maxhhublen)
+                  datalen = maxhhublen-1;
+               maxhhublen -= (datalen + 1);
             } else {
                lasthhubid = 0;
             }
@@ -872,7 +872,7 @@ int main(int argc, char* argv[])
                }
             }
 
-            if (!dostat && !showrate) {
+            if (!dostat && !showrate && !dotriggerdump) {
                // do raw printout when necessary
 
                unsigned errmask = 0;
