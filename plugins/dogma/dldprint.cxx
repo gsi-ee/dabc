@@ -63,9 +63,9 @@ struct TuStat {
    dogma::DogmaTu *tu{nullptr}; // current tu
 };
 
-bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dotriggerdump = false, dominsz = false, domaxsz = false, autoid = false;
+bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
 unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
-int buffer_size = 4;
+int buffer_size = 4, dotriggerdump = 0;
 
 std::vector<unsigned> tdcs;
 
@@ -184,17 +184,21 @@ void print_stat()
 
 uint32_t lasttringnum = 0xffffffff;
 
-void print_trigger_num(uint32_t num)
+void print_trigger_num(uint32_t num, uint32_t sz)
 {
    long diff = 1;
    if (lasttringnum != 0xffffffff) {
       diff = num;
       diff -= lasttringnum;
    }
+   printf("%06x", (unsigned) num);
+   if (dotriggerdump == 2)
+      printf(" %04x", (unsigned) sz);
+
    if (diff == 1)
-      printf("%06x\n", num);
+      printf("\n");
    else
-      printf("%06x diff %ld\n", num, diff);
+      printf(" diff %ld\n", diff);
    lasttringnum = num;
 }
 
@@ -231,8 +235,10 @@ int main(int argc, char* argv[])
          printsub = true;
       } else if (strcmp(argv[n], "-stat") == 0) {
          dostat = true;
+      } else if (strcmp(argv[n], "-trignumdumpsz") == 0) {
+         dotriggerdump = 2;
       } else if (strcmp(argv[n], "-trignumdump") == 0) {
-         dotriggerdump = true;
+         dotriggerdump = 1;
       } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &tdcmask);
          tdcs.emplace_back(tdcmask);
@@ -386,7 +392,7 @@ int main(int argc, char* argv[])
       printcnt++;
 
       if (dotriggerdump)
-         print_trigger_num(tu ? tu->GetTrigNumber() : evnt->GetSeqId());
+         print_trigger_num(tu ? tu->GetTrigNumber() : evnt->GetSeqId(), tu ? tu->GetSize() : evnt->GetEventLen());
       else if (dostat) {
          stat_evnt(evnt);
       } else if (tu)
