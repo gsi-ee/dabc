@@ -134,6 +134,12 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    auto comb = dynamic_cast<dogma::CombinerModule*> (m());
    if (!comb) return;
 
+   dabc::MemoryPoolRef pool = dabc::mgr.FindPool(dabc::xmlWorkPool);
+   if (!pool.null()) {
+      fMemorySize = pool.GetTotalSize();
+      fMemoryUsage = pool.GetUsedRatio();
+   }
+
    double delta = fLastTm.SpentTillNow(true);
 
    delta = (delta > 0.001) ? 1./delta : 0.;
@@ -167,7 +173,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
 
    if (fDoShow) {
       if (delta > 0) {
-         unsigned nlines = comb->fCfg.size() + 4;
+         unsigned nlines = comb->fCfg.size() + 5;
          if (fServPort >= 0) nlines++;
          if (fFilePort >= 0) nlines++;
          for (unsigned n = 0; n < nlines; n++)
@@ -195,6 +201,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    fTotalDroppedData = comb->fAllDroppedData;
 
    s += "---------------------------------------------\n";
+   s += dabc::format("Memory pool: %8s Used: %4.1f%s\n", dabc::size_to_str(fMemorySize).c_str(), fMemoryUsage*100., "%");
    s += dabc::format("Events:%8s   Rate:%12s %s Data: %10s  Rate:%6.3f MB/s%s\n",
                         dabc::number_to_str(fTotalBuildEvents, 1).c_str(),
                         rate_to_str(rate1).c_str(), s1.c_str(),
