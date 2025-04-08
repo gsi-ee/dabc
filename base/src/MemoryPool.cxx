@@ -643,6 +643,19 @@ double dabc::MemoryPool::GetUsedRatio() const
    return sum1>0. ? sum2/sum1 : 0.;
 }
 
+uint64_t dabc::MemoryPool::GetTotalSize() const
+{
+   LockGuard lock(ObjectMutex());
+
+   if (!fMem)
+      return 0;
+
+   uint64_t sum1 = 0;
+   for (unsigned n = 0; n < fMem->fNumber; n++)
+      sum1 += fMem->fArr[n].size;
+
+   return sum1;
+}
 
 int dabc::MemoryPool::ExecuteCommand(Command cmd)
 {

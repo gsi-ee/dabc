@@ -179,6 +179,9 @@ namespace dabc {
          /** Return relative usage of memory pool buffers */
          double GetUsedRatio() const;
 
+         /** Return total size of all buffers in the pull */
+         uint64_t GetTotalSize() const;
+
          /** \brief Return maximum buffer size in the pool */
          unsigned GetMaxBufSize() const;
 
@@ -249,6 +252,13 @@ namespace dabc {
       {
          return GetObject() ? GetObject()->GetUsedRatio() : 0.;
       }
+
+      /** Return total size of all memory pool */
+      uint64_t GetTotalSize() const
+      {
+         return GetObject() ? GetObject()->GetTotalSize() : 0;
+      }
+
 
       /** Return maximum buffer size in the pool */
       unsigned GetMaxBufSize() const
