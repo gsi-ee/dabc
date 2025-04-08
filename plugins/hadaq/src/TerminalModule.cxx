@@ -135,6 +135,12 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
    auto comb = dynamic_cast<hadaq::CombinerModule*> (m());
    if (!comb) return;
 
+   dabc::MemoryPoolRef pool = dabc::mgr.FindPool(dabc::xmlWorkPool);
+   if (!pool.null()) {
+      fMemorySize = pool.GetTotalSize();
+      fMemoryUsage = pool.GetUsedRatio();
+   }
+
    double delta = fLastTm.SpentTillNow(true);
 
    delta = (delta > 0.01) ? 1./delta : 0.;
@@ -168,7 +174,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
 
    if (fDoShow) {
       if (delta > 0) {
-         unsigned nlines = comb->fCfg.size() + 4;
+         unsigned nlines = comb->fCfg.size() + 5;
          if (fServPort >= 0)
             nlines++;
          if (fFilePort >= 0)
@@ -198,12 +204,13 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
    fTotalDroppedData = comb->fAllDroppedData;
 
    s += "---------------------------------------------\n";
+   s += dabc::format("Memory pool: %8s Used: %4.1f%s\n", dabc::size_to_str(fMemorySize).c_str(), fMemoryUsage*100., "%");
    s += dabc::format("Events:%8s   Rate:%12s %s Data: %10s  Rate:%6.3f MB/s%s\n",
                         dabc::number_to_str(fTotalBuildEvents, 1).c_str(),
                         rate_to_str(rate1).c_str(), s1.c_str(),
                         dabc::size_to_str(fTotalRecvBytes).c_str(),
                         rate2/1024./1024., s2.c_str());
-   s += dabc::format("Dropped:%7s   Rate:%12s  %s Data: %10s  Rate:%6.3f MB/s%s",
+   s += dabc::format("Dropped:%7s   Rate:%12s %s Data: %10s  Rate:%6.3f MB/s%s",
                         dabc::number_to_str(fTotalDiscEvents, 1).c_str(),
                         rate_to_str(rate3).c_str(), s3.c_str(),
                         dabc::size_to_str(fTotalDroppedData).c_str(),

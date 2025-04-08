@@ -45,6 +45,8 @@ namespace hadaq {
          uint64_t        fTotalRecvBytes{0};
          uint64_t        fTotalDiscEvents{0};
          uint64_t        fTotalDroppedData{0};
+         uint64_t        fMemorySize = 0;
+         double          fMemoryUsage = 0.;
 
          bool            fDoClear{false};       ///< clear terminal when start module
          bool            fDoShow{false};        ///< perform output
