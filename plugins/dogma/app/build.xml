@@ -75,10 +75,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
        <OutputPort name="Output1" url="dld://debug.dld?maxsize=2000"/>
 
-       <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
-             transport runs in own thread to exclude blocking of other transports if file operation hangs -->
-       <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/-->
-
        <!--  this is example of HLD file storage - RFIO -->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
 
