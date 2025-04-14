@@ -75,7 +75,7 @@ namespace aqua {
          ClientOutput(dabc::Url& url);
          virtual ~ClientOutput();
 
-         bool Write_Init() override;
+         bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) override;
          unsigned Write_Check() override;
          unsigned Write_Buffer(dabc::Buffer& buf) override;
          unsigned Write_Complete() override;

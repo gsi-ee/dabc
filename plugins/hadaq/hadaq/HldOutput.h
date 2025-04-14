@@ -53,7 +53,7 @@ namespace hadaq {
          HldOutput(const dabc::Url& url);
          virtual ~HldOutput();
 
-         bool Write_Init() override;
+         bool Write_Init(const dabc::WorkerRef &wrk, const dabc::Command &cmd) override;
 
          bool Write_Retry() override;
 

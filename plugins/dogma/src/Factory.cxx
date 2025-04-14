@@ -76,6 +76,8 @@ dabc::Module* dogma::Factory::CreateTransport(const dabc::Reference& port, const
 
    dabc::PortRef portref = port;
 
+   DOUT0("DOGMA ask to create transport %s\n", url.GetProtocol().c_str());
+
    if (!portref.IsInput() || url.GetFullName().empty() || (url.GetProtocol() != "dogma"))
       return dabc::Factory::CreateTransport(port, typ, cmd);
 

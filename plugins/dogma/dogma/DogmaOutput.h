@@ -50,7 +50,7 @@ namespace dogma {
          DogmaOutput(const dabc::Url& url);
          ~DogmaOutput() override;
 
-         bool Write_Init() override;
+         bool Write_Init(const dabc::WorkerRef &wrk, const dabc::Command &cmd) override;
 
          bool Write_Retry() override;
 

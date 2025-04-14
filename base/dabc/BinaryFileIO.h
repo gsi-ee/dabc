@@ -70,11 +70,11 @@ namespace dabc {
          bool CloseFile();
          bool StartNewFile();
       public:
-      
+
          BinaryFileOutput(const dabc::Url& url);
          virtual ~BinaryFileOutput();
 
-         bool Write_Init() override;
+         bool Write_Init(const WorkerRef& wrk, const Command& cmd) override;
          unsigned Write_Buffer(Buffer& buf) override;
    };
 

@@ -110,7 +110,7 @@ bool aqua::ClientOutput::ConnectAquaServer()
 }
 
 
-bool aqua::ClientOutput::Write_Init()
+bool aqua::ClientOutput::Write_Init(const dabc::WorkerRef &, const dabc::Command &)
 {
    if (fState != oReady)
       if (ConnectAquaServer()) fState = oReady;

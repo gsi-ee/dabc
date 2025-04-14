@@ -49,9 +49,10 @@ mbs::LmdOutput::~LmdOutput()
    CloseFile();
 }
 
-bool mbs::LmdOutput::Write_Init()
+bool mbs::LmdOutput::Write_Init(const dabc::WorkerRef &wrk, const dabc::Command &cmd)
 {
-   if (!dabc::FileOutput::Write_Init()) return false;
+   if (!dabc::FileOutput::Write_Init(wrk, cmd))
+      return false;
 
    return StartNewFile();
 }

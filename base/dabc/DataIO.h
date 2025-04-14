@@ -81,7 +81,6 @@ namespace dabc {
           * \returns        false when method fails */
          virtual bool Read_Init(const WorkerRef &wrk, const Command &cmd);
 
-
          /** \brief Defines required buffer size for next operation
           *
           * \returns
@@ -183,8 +182,12 @@ namespace dabc {
 
          /** \brief This is generic virtual method to initialize output
           * before real work is started.
-          * If returns false, object is immediately deleted */
-         virtual bool Write_Init() { return true; }
+          * If returns false, object is immediately deleted
+          * \param[in] wrk  reference on input port
+          * \param[in] cmd  reference on command object
+          * \returns        false when method fails */
+         virtual bool Write_Init(const WorkerRef &wrk, const Command &cmd);
+
 
          /** Check if output can be done.
           * Return values:
@@ -323,9 +326,9 @@ namespace dabc {
 
          std::string ProvideInfo() override;
 
-         bool Write_Init() override;
+         bool Write_Init(const WorkerRef& wrk, const Command& cmd) override;
 
-         bool Write_Stat(dabc::Command cmd) override;
+         bool Write_Stat(Command cmd) override;
    };
 
 }

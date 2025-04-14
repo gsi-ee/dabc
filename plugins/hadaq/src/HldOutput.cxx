@@ -82,9 +82,10 @@ hadaq::HldOutput::~HldOutput()
    CloseFile();
 }
 
-bool hadaq::HldOutput::Write_Init()
+bool hadaq::HldOutput::Write_Init(const dabc::WorkerRef &wrk, const dabc::Command &cmd)
 {
-   if (!dabc::FileOutput::Write_Init()) return false;
+   if (!dabc::FileOutput::Write_Init(wrk, cmd))
+      return false;
 
    if (fRunSlave) {
       // use parameters only in slave mode

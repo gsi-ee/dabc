@@ -52,7 +52,8 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
    if (!inpport.null()) {
 
       unsigned trqueue = inpport.Cfg("TransportQueue", cmd).AsUInt(1);
-      if (trqueue < inpport.QueueCapacity()) trqueue = inpport.QueueCapacity();
+      if (trqueue < inpport.QueueCapacity())
+         trqueue = inpport.QueueCapacity();
 
       poolname = inpport.Cfg(dabc::xmlPoolName, cmd).AsStr(poolname);
 
@@ -68,7 +69,8 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
    if (!outport.null()) {
 
       unsigned trqueue = outport.Cfg("TransportQueue", cmd).AsUInt(1);
-      if (trqueue < outport.QueueCapacity()) trqueue = outport.QueueCapacity();
+      if (trqueue < outport.QueueCapacity())
+         trqueue = outport.QueueCapacity();
 
       poolname = outport.Cfg(dabc::xmlPoolName, cmd).AsStr(poolname);
 
@@ -88,7 +90,8 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
    }
 
 
-   if (fIsInputTransport && poolname.empty()) poolname = dabc::xmlWorkPool;
+   if (fIsInputTransport && poolname.empty())
+      poolname = dabc::xmlWorkPool;
 
 //   DOUT0("Create transport inp %s out %s poolname %s", DBOOL(fIsInputTransport), DBOOL(fIsOutputTransport), poolname.c_str());
 

@@ -63,9 +63,9 @@ dogma::DogmaOutput::~DogmaOutput()
    CloseFile();
 }
 
-bool dogma::DogmaOutput::Write_Init()
+bool dogma::DogmaOutput::Write_Init(const dabc::WorkerRef &wrk, const dabc::Command &cmd)
 {
-   if (!dabc::FileOutput::Write_Init())
+   if (!dabc::FileOutput::Write_Init(wrk, cmd))
       return false;
 
    return StartNewFile();

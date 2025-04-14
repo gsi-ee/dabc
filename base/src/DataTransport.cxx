@@ -907,7 +907,7 @@ void dabc::OutputTransport::ProcessTimerEvent(unsigned)
       ChangeState(outReady);
 
    if (fOutState == outRetry) {
-      if (fOutput && fOutput->Write_Init())
+      if (fOutput && fOutput->Write_Init(nullptr, nullptr))
          ChangeState(outReady);
       else {
          ShootTimer("SysTimer", fRetryPeriod);
