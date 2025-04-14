@@ -260,7 +260,8 @@ bool dabc::FileOutput::Write_Init(const dabc::WorkerRef &wrk, const dabc::Comman
       while ((fname[pos]>='0') && (fname[pos] <= '9')) pos--;
       fname.erase(0, pos+1);
 
-      while ((fname.length()>1) && fname[0]=='0') fname.erase(0, 1);
+      while ((fname.length() > 1) && fname[0]=='0')
+         fname.erase(0, 1);
 
       int number = 0;
       if ((fname.length()>0) && dabc::str_to_int(fname.c_str(), &number)) {
@@ -285,7 +286,7 @@ std::string dabc::FileOutput::ProduceFileName(const std::string &suffix)
    size_t len = fname.length();
    size_t pos = fname.rfind(fFileExtens);
 
-   if (pos == (len-fFileExtens.length())) {
+   if (pos == (len - fFileExtens.length())) {
       fname.insert(pos, suffix);
    } else {
       fname += suffix;
