@@ -2,11 +2,16 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
+14.04.2025
+1. Add "dirs" parameter to all files output - for hld, dld and lmd. Created files will be alternating. Like:
+    <OutputPort name="Output1" url="dld://debug.dld?maxsize=10" dirs="[dir1/,dir2/,dir3/,dir4/]"/>
+
+
 06.05.2024
 1. First implementation of runtime plugin for ELDER analysis framework (by Michael Reese). Requires external elder installation.
    May read data directly from MBS via stream server socket, or from list mode data files using the olmd plugin. [JAM]
 2. Added new plugin OLMD for reading original formatted lmd files. In contrast to the mbs plugin, it will use internally the full MBS event api libraries,
-   like in Go4 framework. This allows to handle all lmd files that were written by MBS DAQ. [JAM]      
+   like in Go4 framework. This allows to handle all lmd files that were written by MBS DAQ. [JAM]
 
 
 20.12.2023
