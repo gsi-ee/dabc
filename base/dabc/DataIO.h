@@ -294,6 +294,9 @@ namespace dabc {
          int                  fSizeLimitMB{0};
          std::string          fFileExtens;
 
+         std::vector<std::string> fFileDirs;
+         unsigned                 fFileDirsCounter{0};
+
          dabc::FileInterface *fIO{nullptr};
 
          int                  fCurrentFileNumber{0};
@@ -314,7 +317,7 @@ namespace dabc {
 
          FileOutput(const dabc::Url& url, const std::string &ext = "");
 
-         std::string ProduceFileName(const std::string &suffix);
+         std::string ProduceFileName(unsigned ndir, const std::string &suffix);
 
          int GetSizeLimitMB() const { return fSizeLimitMB; }
 

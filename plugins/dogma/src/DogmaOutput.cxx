@@ -103,7 +103,9 @@ bool dogma::DogmaOutput::StartNewFile()
    } else if (fRfio || fLtsm) {
       auto runid = dabc::CreateHadaqRunId();
       std::string suffix = dabc::HadaqFileSuffix(runid, fEBNumber);
-      ProduceFileName(suffix);
+      ProduceFileName(fFileDirsCounter++, suffix);
+      if (fFileDirsCounter >= fFileDirs.size())
+         fFileDirsCounter = 0;
    } else  {
       ProduceNewFileName();
    }

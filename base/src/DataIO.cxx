@@ -241,35 +241,50 @@ bool dabc::FileOutput::Write_Init(const dabc::WorkerRef &wrk, const dabc::Comman
    if (!DataOutput::Write_Init(wrk, cmd))
       return false;
 
-   if (!fIO) fIO = new FileInterface;
 
-   std::string mask = ProduceFileName("*");
+   if (!fIO)
+      fIO = new FileInterface;
 
-   dabc::Reference lst = fIO->fmatch(mask.c_str());
+   if (!wrk.null()) {
+      fFileDirs = wrk.Cfg("dirs", cmd).AsStrVect();
+      printf("Get dirs size %u\n", (unsigned) fFileDirs.size());
+      if (fFileDirs.empty())
+         fFileDirs.push_back("");
+   }
+   fFileDirsCounter = 0;
 
    int maxnumber = -1;
 
-   for (unsigned cnt=0; cnt < lst.NumChilds(); cnt++) {
+   for (unsigned ndir = 0; ndir < fFileDirs.size(); ++ndir) {
 
-      std::string fname = lst.GetChild(cnt).GetName();
+      std::string mask = ProduceFileName(ndir, "*");
 
-//      DOUT0("Test file %s", fname.c_str());
+      dabc::Reference lst = fIO->fmatch(mask.c_str());
 
-      fname.erase(fname.length()-fFileExtens.length(), fFileExtens.length());
-      size_t pos = fname.length() - 1;
-      while ((fname[pos]>='0') && (fname[pos] <= '9')) pos--;
-      fname.erase(0, pos+1);
+      for (unsigned cnt = 0; cnt < lst.NumChilds(); cnt++) {
 
-      while ((fname.length() > 1) && fname[0]=='0')
-         fname.erase(0, 1);
+         std::string fname = lst.GetChild(cnt).GetName();
 
-      int number = 0;
-      if ((fname.length()>0) && dabc::str_to_int(fname.c_str(), &number)) {
-         if (number>maxnumber) maxnumber = number;
+         //      DOUT0("Test file %s", fname.c_str());
+
+         fname.erase(fname.length() - fFileExtens.length(), fFileExtens.length());
+         size_t pos = fname.length() - 1;
+         while ((fname[pos] >= '0') && (fname[pos] <= '9'))
+            pos--;
+         fname.erase(0, pos + 1);
+
+         while ((fname.length() > 1) && fname[0] == '0')
+            fname.erase(0, 1);
+
+         int number = 0;
+         if ((fname.length() > 0) && dabc::str_to_int(fname.c_str(), &number)) {
+            if (number > maxnumber)
+               maxnumber = number;
+         }
       }
-   }
 
-   lst.Destroy();
+      lst.Destroy();
+   }
 
    if (fCurrentFileNumber <= maxnumber) {
       fCurrentFileNumber = maxnumber + 1;
@@ -279,9 +294,11 @@ bool dabc::FileOutput::Write_Init(const dabc::WorkerRef &wrk, const dabc::Comman
    return true;
 }
 
-std::string dabc::FileOutput::ProduceFileName(const std::string &suffix)
+std::string dabc::FileOutput::ProduceFileName(unsigned ndir, const std::string &suffix)
 {
    std::string fname = fFileName;
+   if (ndir < fFileDirs.size())
+      fname = fFileDirs[ndir] + fname;
 
    size_t len = fname.length();
    size_t pos = fname.rfind(fFileExtens);
@@ -299,7 +316,10 @@ std::string dabc::FileOutput::ProduceFileName(const std::string &suffix)
 
 void dabc::FileOutput::ProduceNewFileName()
 {
-   fCurrentFileName = ProduceFileName(dabc::format("_%04d", fCurrentFileNumber++));
+   fCurrentFileName = ProduceFileName(fFileDirsCounter++, dabc::format("_%04d", fCurrentFileNumber++));
+   if (fFileDirsCounter >= fFileDirs.size())
+      fFileDirsCounter = 0;
+
    fCurrentFileSize = 0;
 }
 
