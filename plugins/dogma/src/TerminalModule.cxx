@@ -238,8 +238,9 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
             state = std::string(" State: ") + state;
          else
             state.clear();
-         s += dabc::format("File:  %8s   Curr:  %10s  Data: %10s  Name: %s%s\n",
+         s += dabc::format("File: %8s Queue: %u  Curr:  %10s  Data: %10s  Name: %s%s\n",
                            dabc::number_to_str(fLastFileCmd.GetDouble("OutputFileEvents"),1).c_str(),
+                           (unsigned) fLastFileCmd.GetUInt("InputQueue", 0),
                            dabc::size_to_str(fLastFileCmd.GetDouble("OutputCurrFileSize")).c_str(),
                            dabc::size_to_str(fLastFileCmd.GetDouble("OutputFileSize")).c_str(),
                            fLastFileCmd.GetStr("OutputCurrFileName").c_str(),
