@@ -817,6 +817,13 @@ bool dabc::Module::SetPortLoopLength(const std::string &name, unsigned cnt)
    return true;
 }
 
+unsigned dabc::Module::GetPortLoopLength(const std::string &name)
+{
+   PortRef port = FindPort(name);
+   return port.null() ? 0 : (unsigned) port()->GetMaxLoopLength();
+}
+
+
 void dabc::Module::ProcessEvent(const EventId& evid)
 {
    switch (evid.GetCode()) {

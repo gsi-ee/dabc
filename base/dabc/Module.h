@@ -177,6 +177,7 @@ namespace dabc {
          bool SetPortSignaling(const std::string &name, Port::EventsProducing signal);
          bool SetPortRatemeter(const std::string &name, const Parameter& ref);
          bool SetPortLoopLength(const std::string &name, unsigned cnt);
+         unsigned GetPortLoopLength(const std::string &name);
 
          unsigned FindTimer(const std::string &name);
          bool IsValidTimer(unsigned indx) const { return indx < fTimers.size(); }

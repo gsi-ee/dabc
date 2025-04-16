@@ -59,7 +59,9 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
       CreateOutput("Output", trqueue);
 
-      SetPortLoopLength(OutputName(), 1);
+      unsigned loop = inpport.Cfg(dabc::xmlLoopAttr, cmd).AsUInt(1);
+
+      SetPortLoopLength(OutputName(), loop);
 
       fTransportInfoName = inpport.InfoParName();
 
@@ -76,7 +78,9 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
       CreateInput("Input", trqueue);
 
-      SetPortLoopLength(InputName(), 1);
+      unsigned loop = outport.Cfg(dabc::xmlLoopAttr, cmd).AsUInt(1);
+
+      SetPortLoopLength(InputName(), loop);
 
       if (fTransportInfoName.empty())
          fTransportInfoName = outport.InfoParName();
