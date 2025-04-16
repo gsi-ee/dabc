@@ -490,14 +490,14 @@ void dogma::CombinerModule::UpdateBnetInfo()
             }
 
             inp.fHubLastSize = info->fTotalRecvBytes;
-            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s errbits:%s ",
+            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s magic:%s drop:%s lost:%s errbits:%s ",
                        info->fNPort,
                        rate,
                        dabc::size_to_str(info->fTotalRecvBytes).c_str(),
                        dabc::number_to_str(info->fTotalRecvPacket,1).c_str(),
                        dabc::number_to_str(info->fTotalProducedBuffers).c_str(),
                        info->GetDiscardString().c_str(),
-                       info->GetDiscard32String().c_str(),
+                       info->GetDiscardMagicString().c_str(),
                        dabc::number_to_str(inp.fDroppedTrig,0).c_str(),
                        dabc::number_to_str(inp.fLostTrig,0).c_str(),
                        dabc::number_to_str(inp.fErrorBitsCnt,0).c_str());

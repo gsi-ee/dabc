@@ -175,7 +175,7 @@ bool dogma::UdpAddon::ReadUdp()
       if (res != msgsize) {
          errmsg = dabc::format("Send buffer %ld differ from message size %ld - ignore it", (long) res, (long) msgsize);
       } else if (!tu->IsMagic()) {
-         fTotalDiscard32Packet++;
+         fTotalDiscardMagic++;
          errmsg = "Magic number not match";
       }
 

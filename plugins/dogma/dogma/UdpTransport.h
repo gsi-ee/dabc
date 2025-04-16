@@ -43,7 +43,7 @@ namespace dogma {
 
       uint64_t           fTotalRecvPacket{0};
       uint64_t           fTotalDiscardPacket{0};
-      uint64_t           fTotalDiscard32Packet{0};
+      uint64_t           fTotalDiscardMagic{0};
       uint64_t           fTotalArtificialLosts{0};
       uint64_t           fTotalArtificialSkip{0};
       uint64_t           fTotalRecvBytes{0};
@@ -54,7 +54,7 @@ namespace dogma {
       {
          fTotalRecvPacket = 0;
          fTotalDiscardPacket = 0;
-         fTotalDiscard32Packet = 0;
+         fTotalDiscardMagic = 0;
          fTotalArtificialLosts = 0;
          fTotalArtificialSkip = 0;
          fTotalRecvBytes = 0;
@@ -74,13 +74,13 @@ namespace dogma {
          return res;
       }
 
-      std::string GetDiscard32String()
+      std::string GetDiscardMagicString()
       {
 
-         std::string res = dabc::number_to_str(fTotalDiscard32Packet);
+         std::string res = dabc::number_to_str(fTotalDiscardMagic);
 
          if (fTotalArtificialSkip > 0)
-            res = std::string("#") + dabc::number_to_str(fTotalArtificialSkip);
+            res += std::string("#") + dabc::number_to_str(fTotalArtificialSkip);
 
          return res;
       }
