@@ -77,6 +77,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fSkipEmpty = Cfg("SkipEmpty", cmd).AsBool(true);
 
+   fAllowDropBuffers = Cfg("AllowDropBuffers", cmd).AsBool(false);
+
    fBNETCalibrDir = Cfg("CalibrDir", cmd).AsStr();
    fBNETCalibrPackScript = Cfg("CalibrPack", cmd).AsStr();
 
@@ -264,13 +266,13 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
    }
 }
 
-void dogma::CombinerModule::AccountDroppedData(unsigned sz, bool lost_full_event)
+void dogma::CombinerModule::AccountDroppedData(unsigned sz, unsigned lost_events)
 {
    fDataDroppedRateCnt += sz;
    fRunDroppedData += sz;
    fAllDroppedData += sz;
 
-   fLostEventRateCnt += lost_full_event ? 1. : 1./fCfg.size();
+   fLostEventRateCnt += lost_events > 0 ? 1. * lost_events : 1. / fCfg.size();
 }
 
 void dogma::CombinerModule::StartEventsBuilding()
@@ -353,17 +355,28 @@ bool dogma::CombinerModule::FlushOutputBuffer()
    }
 
    int dest = DestinationPort(fLastTrigNr);
+
+   bool drop_buffer = false;
+
    if (dest < 0) {
-      if (!CanSendToAllOutputs()) return false;
+      if (!CanSendToAllOutputs()) {
+         if (fAllowDropBuffers)
+            drop_buffer = true;
+         else
+            return false;
+      }
    } else {
-      if (!CanSend(dest)) return false;
+      if (!CanSend(dest))
+         return false;
    }
 
    dabc::Buffer buf = fOut.Close();
 
    // if (fBNETsend) DOUT0("%s FLUSH buffer", GetName());
 
-   if (dest < 0)
+   if (drop_buffer)
+      AccountDroppedData(buf.GetTotalSize(), dogma::ReadIterator::NumEvents(buf));
+   else if (dest < 0)
       SendToAllOutputs(buf);
    else
       Send(dest, buf);

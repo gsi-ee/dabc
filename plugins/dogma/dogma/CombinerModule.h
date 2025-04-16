@@ -169,6 +169,7 @@ namespace dogma {
          // pid_t              fPID; ///<  process id of combiner module
          bool               fIsTerminating;
          bool               fSkipEmpty;     ///< skip empty subevents in final event, default true
+         bool               fAllowDropBuffers = false;  ///< allow drop buffers when file output blocked
 
          bool               fRunToOracle;
 
@@ -294,7 +295,7 @@ namespace dogma {
 
          void StartEventsBuilding();
 
-         void AccountDroppedData(unsigned sz, bool lost_full_event = false);
+         void AccountDroppedData(unsigned sz, unsigned lost_events = 0);
 
          void ProcessConnectEvent(const std::string &name, bool on) override;
 
