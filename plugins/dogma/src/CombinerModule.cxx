@@ -272,8 +272,24 @@ void dogma::CombinerModule::AccountDroppedData(unsigned sz, unsigned lost_events
    fRunDroppedData += sz;
    fAllDroppedData += sz;
 
-   fRunDiscEvents += lost_events;
-   fAllDiscEvents += lost_events;
+   if (lost_events > 0) {
+      fRunDiscEvents += lost_events;
+      fAllDiscEvents += lost_events;
+
+      // events were accounted as normal - decrement all counters again
+      if (fRunBuildEvents >= lost_events)
+         fRunBuildEvents -= lost_events;
+
+      if (fAllBuildEvents >= lost_events)
+         fAllBuildEvents -= lost_events;
+
+      if (fRunRecvBytes >= sz)
+         fRunRecvBytes -= sz;
+      if (fAllRecvBytes >= sz)
+         fAllRecvBytes -= sz;
+      if (fDataRateCnt >= sz)
+         fDataRateCnt -= sz;
+   }
 
    fLostEventRateCnt += lost_events > 0 ? 1. * lost_events : 1. / fCfg.size();
 }
