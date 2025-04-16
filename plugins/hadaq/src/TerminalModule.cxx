@@ -239,10 +239,11 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned)
          std::string state = fLastFileCmd.GetStr("OutputState");
          if (state!="Ready") state = std::string(" State: ") + state;
                         else state.clear();
-         s += dabc::format("File:  %8s   Curr:  %10s  Data: %10s  Name: %s%s\n",
+         s += dabc::format("File: %8s Data: %10s Queue: %u  Curr:  %10s    Name: %s%s\n",
                            dabc::number_to_str(fLastFileCmd.GetDouble("OutputFileEvents"),1).c_str(),
-                           dabc::size_to_str(fLastFileCmd.GetDouble("OutputCurrFileSize")).c_str(),
                            dabc::size_to_str(fLastFileCmd.GetDouble("OutputFileSize")).c_str(),
+                           (unsigned) fLastFileCmd.GetUInt("InputQueue"),
+                           dabc::size_to_str(fLastFileCmd.GetDouble("OutputCurrFileSize")).c_str(),
                            fLastFileCmd.GetStr("OutputCurrFileName").c_str(),
                            state.c_str());
       }

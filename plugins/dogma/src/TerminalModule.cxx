@@ -238,11 +238,11 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
             state = std::string(" State: ") + state;
          else
             state.clear();
-         s += dabc::format("File: %8s Queue: %u  Curr:  %10s  Data: %10s  Name: %s%s\n",
+         s += dabc::format("File: %8s Data: %10s Queue: %u  Curr:  %10s    Name: %s%s\n",
                            dabc::number_to_str(fLastFileCmd.GetDouble("OutputFileEvents"),1).c_str(),
-                           (unsigned) fLastFileCmd.GetUInt("InputQueue", 0),
-                           dabc::size_to_str(fLastFileCmd.GetDouble("OutputCurrFileSize")).c_str(),
                            dabc::size_to_str(fLastFileCmd.GetDouble("OutputFileSize")).c_str(),
+                           (unsigned) fLastFileCmd.GetUInt("InputQueue"),
+                           dabc::size_to_str(fLastFileCmd.GetDouble("OutputCurrFileSize")).c_str(),
                            fLastFileCmd.GetStr("OutputCurrFileName").c_str(),
                            state.c_str());
       }
@@ -267,7 +267,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
         }
       }
 
-   s += "inp port     pkt      data    MB/s   disc  err32   bufs  qu errbits drop  lost";
+   s += "inp port     pkt      data    MB/s   disc  magic   bufs  qu errbits drop  lost";
    if (istdccal) s += "    TRB         TDC               progr   state";
    if (fRingSize>0) s += "   triggers";
    s += "\n";
