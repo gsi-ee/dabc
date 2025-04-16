@@ -184,7 +184,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
       } else {
          fprintf(stdout,"DOGMA terminal info:\n"
                         "  disc  - all discarded packets in the UDP receiver\n"
-                        "  err32 - 32-byte header does not match with 32-bytes footer\n"
+                        "  magic - number of UDP packets discarded because of magic ID mismatch\n"
                         "  errbits - error bits not 0 and not 1\n"
                         "  bufs  - number of produced buffers\n"
                         "  qu    - input queue of combiner module\n"
@@ -267,7 +267,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
         }
       }
 
-   s += "inp port     pkt      data    MB/s   disc  magic   bufs  qu errbits drop  lost";
+   s += "inp port     pkt      data    MB/s   disc  magic   bufs  qu  drop  lost";
    if (istdccal) s += "    TRB         TDC               progr   state";
    if (fRingSize>0) s += "   triggers";
    s += "\n";
@@ -284,7 +284,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    ditem.SetField("LostEventsRate", rate3);
    ditem.SetField("LostDataRate", rate4);
 
-   std::vector<int64_t> ports, recvbytes, inperrbits, inpdrop, inplost;
+   std::vector<int64_t> ports, recvbytes, inpdrop, inplost;
    std::vector<double> inprates;
 
    for (unsigned n=0;n<comb->fCfg.size();n++) {
@@ -317,13 +317,11 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
          inprates.emplace_back(rate);
       }
 
-      sbuf.append(dabc::format(" %3d %6s %5s %5s",
+      sbuf.append(dabc::format(" %3d %5s %5s",
                    cfg.fNumCanRecv,
-                   dabc::number_to_str(cfg.fErrorBitsCnt,0).c_str(),
                    dabc::number_to_str(cfg.fDroppedTrig,0).c_str(),
                    dabc::number_to_str(cfg.fLostTrig,0).c_str()));
 
-      inperrbits.emplace_back(cfg.fErrorBitsCnt);
       inpdrop.emplace_back(cfg.fDroppedTrig);
       inplost.emplace_back(cfg.fLostTrig);
 
@@ -360,7 +358,6 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    ditem.SetField("inputs", ports);
    ditem.SetField("inprecv", recvbytes);
    ditem.SetField("inprates", inprates);
-   ditem.SetField("inperrbits", inperrbits);
    ditem.SetField("inpdrop", inpdrop);
    ditem.SetField("inplost", inplost);
 

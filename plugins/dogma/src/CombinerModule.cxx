@@ -525,7 +525,7 @@ void dogma::CombinerModule::UpdateBnetInfo()
             }
 
             inp.fHubLastSize = info->fTotalRecvBytes;
-            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s magic:%s drop:%s lost:%s errbits:%s ",
+            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s magic:%s drop:%s lost:%s ",
                        info->fNPort,
                        rate,
                        dabc::size_to_str(info->fTotalRecvBytes).c_str(),
@@ -534,8 +534,7 @@ void dogma::CombinerModule::UpdateBnetInfo()
                        info->GetDiscardString().c_str(),
                        info->GetDiscardMagicString().c_str(),
                        dabc::number_to_str(inp.fDroppedTrig,0).c_str(),
-                       dabc::number_to_str(inp.fLostTrig,0).c_str(),
-                       dabc::number_to_str(inp.fErrorBitsCnt,0).c_str());
+                       dabc::number_to_str(inp.fLostTrig,0).c_str());
 
             sinfo += inp.TriggerRingAsStr(16);
          }
@@ -852,11 +851,6 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
       cfg.fDataError = 0;
-
-      uint32_t errorBits = 0;
-
-      if ((errorBits != 0) && (errorBits != 1))
-         cfg.fErrorBitsCnt++;
 
       int diff = fTriggerNumStep;
       if (cfg.fLastTrigNr != kNoTrigger)
@@ -1446,7 +1440,6 @@ int dogma::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
       if (fBNETsend && !fIsTerminating) {
          for (unsigned n = 0; n < NumInputs(); n++) {
-            fCfg[n].fErrorBitsCnt = 0;
             fCfg[n].fDroppedTrig = 0;
             fCfg[n].fLostTrig = 0;
             fCfg[n].fHubSizeTmCnt = 0;

@@ -15,6 +15,8 @@
 
 #include "dogma/UdpTransport.h"
 
+#include "dabc/Manager.h"
+
 #include <cerrno>
 #include <cmath>
 #include <unistd.h>
@@ -321,7 +323,7 @@ int dogma::UdpTransport::ExecuteCommand(dabc::Command cmd)
          int fd = dogma::UdpAddon::OpenUdp(addon->fHostName, addon->fNPort, addon->fRecvBufLen);
          if (fd <= 0) {
             EOUT("Cannot recreate UDP socket for port %d", addon->fNPort);
-            exit(7);
+            dabc::mgr.StopApplication();
          }
          addon->SetSocket(fd);
          addon->ClearCounters();

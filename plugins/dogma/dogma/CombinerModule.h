@@ -60,7 +60,6 @@ namespace dogma {
          uint32_t fLastTrigNr{0};   ///< keeps previous trigger sequence number - used to control data lost
          uint32_t fTrigTag{0};      ///< keeps current trigger tag
          uint32_t fTrigType{0};     ///< current subevent trigger type
-         unsigned fErrorBitsCnt{0}; ///< number of subevents with non-zero error bits
          unsigned fHubId{0};        ///< subevent id from given input
          unsigned fUdpPort{0};      ///< if configured, port id
          float fQueueLevel{0.};     ///<  current input queue fill level
