@@ -79,6 +79,10 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fAllowDropBuffers = Cfg("AllowDropBuffers", cmd).AsBool(false);
 
+   // check bad inputs
+   if (fAllowDropBuffers)
+      CreateTimer("BadInputs", 1.);
+
    fBNETCalibrDir = Cfg("CalibrDir", cmd).AsStr();
    fBNETCalibrPackScript = Cfg("CalibrPack", cmd).AsStr();
 
@@ -233,9 +237,28 @@ void dogma::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 
 void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
 {
-   if (TimerName(timer) == "BnetTimer") {
+   std::string timer_name = TimerName(timer);
+
+   if (timer_name == "BnetTimer") {
       UpdateBnetInfo();
       return;
+   }
+
+   if (timer_name == "BadInputs") {
+      for (auto &cfg : fCfg) {
+         // lost rate in 1000..1000000
+         // datarate in 1M..100M
+
+         if ((cfg.fLastLostTrig > 0) && (cfg.fLastTotalDataSize > 0) &&
+            (cfg.fLostTrig > cfg.fLastLostTrig + 1000) && (cfg.fLostTrig < cfg.fLastLostTrig + 1000000) &&
+            (cfg.fTotalDataSize > cfg.fLastTotalDataSize + 1000000) && (cfg.fTotalDataSize < cfg.fLastTotalDataSize + 100000000))
+               cfg.fBadStateCount++;
+            else
+               cfg.fBadStateCount = 0;
+
+         cfg.fLastLostTrig = cfg.fLostTrig;
+         cfg.fLastTotalDataSize = cfg.fTotalDataSize;
+      }
    }
 
    if ((fFlushTimeout > 0) && (++fFlushCounter > 2)) {
@@ -859,6 +882,8 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       if (diff >= 2*fTriggerNumStep)
          cfg.fLostTrig += diff / fTriggerNumStep - 1;
+
+      cfg.fTotalDataSize += cfg.data_size;
 
       // printf("Input%u Trig:%6x Tag:%2x diff:%d %s\n", ninp, cfg.fTrigNr, cfg.fTrigTag, diff, diff != 1 ? "ERROR" : "");
    }

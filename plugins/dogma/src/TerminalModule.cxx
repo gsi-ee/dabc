@@ -268,6 +268,8 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
       }
 
    s += "inp port     pkt      data    MB/s   disc  magic   bufs  qu  drop  lost";
+   if (comb->fAllowDropBuffers)
+      s+= "  bad";
    if (istdccal) s += "    TRB         TDC               progr   state";
    if (fRingSize>0) s += "   triggers";
    s += "\n";
@@ -321,6 +323,9 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
                    cfg.fNumCanRecv,
                    dabc::number_to_str(cfg.fDroppedTrig,0).c_str(),
                    dabc::number_to_str(cfg.fLostTrig,0).c_str()));
+
+      if (comb->fAllowDropBuffers)
+         sbuf.append(dabc::format(" %4u", cfg.fBadStateCount));
 
       inpdrop.emplace_back(cfg.fDroppedTrig);
       inplost.emplace_back(cfg.fLostTrig);

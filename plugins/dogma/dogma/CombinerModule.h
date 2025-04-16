@@ -69,6 +69,7 @@ namespace dogma {
          void *fInfo{nullptr};      ///< Direct pointer on transport info, used only for debugging
          int fQueueCapacity{0};     ///< capacity of input queue
          int fNumCanRecv{0};        ///< Number buffers can be received
+         uint64_t fTotalDataSize{0}; ///< total amount of data received
          unsigned fLostTrig{0};     ///< number of lost triggers (never received by the combiner)
          unsigned fDroppedTrig{0};  ///< number of dropped triggers (received but dropped by the combiner)
          uint32_t  fTrigNumRing[DOGMA_RINGSIZE]; ///< values of last seen TU ID
@@ -87,6 +88,9 @@ namespace dogma {
          uint64_t    fHubPrevSize{0}; ///< last size
          int         fHubSizeTmCnt{0}; ///< count how many time data was the same
          dabc::TimeStamp fLastDataTm; ///< time when subevent was used from the input
+         uint64_t fLastTotalDataSize{0}; ///< total amount of data received
+         unsigned fLastLostTrig{0};     ///< number of lost triggers (never received by the combiner)
+         unsigned fBadStateCount{0}; ///< counter of bad state
 
          InputCfg()
          {
