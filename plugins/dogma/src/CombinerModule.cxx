@@ -245,6 +245,8 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
    }
 
    if (timer_name == "BadInputs") {
+
+      int num_really_bad = 0;
       for (auto &cfg : fCfg) {
          // lost rate in 1000..1000000
          // datarate in 1M..100M
@@ -258,7 +260,15 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
 
          cfg.fLastLostTrig = cfg.fLostTrig;
          cfg.fLastTotalDataSize = cfg.fTotalDataSize;
+
+         if (cfg.fBadStateCount > 10)
+            num_really_bad++;
       }
+
+      if ((num_really_bad > 2) && fLastDropTm.Expired((fEventBuildTimeout > 0) ? 1.5*fEventBuildTimeout : 5.))
+         DropAllInputBuffers(true);
+
+      return;
    }
 
    if ((fFlushTimeout > 0) && (++fFlushCounter > 2)) {
@@ -891,7 +901,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
    return true;
 }
 
-bool dogma::CombinerModule::DropAllInputBuffers()
+bool dogma::CombinerModule::DropAllInputBuffers(bool reinit_transports)
 {
    DOUT0("DropAllInputBuffers()...");
 
@@ -901,6 +911,12 @@ bool dogma::CombinerModule::DropAllInputBuffers()
 
    if (fBNETsend)
       fCheckBNETProblems = chkActive; // activate testing again
+
+   if (reinit_transports)
+      for (unsigned n = 0; n < NumInputs(); n++) {
+         dabc::Command subcmd("ReinitTransport");
+         SubmitCommandToTransport(InputName(n), subcmd);
+      }
 
    unsigned maxnumsubev = 0, droppeddata = 0;
 
@@ -917,6 +933,7 @@ bool dogma::CombinerModule::DropAllInputBuffers()
 
       fCfg[ninp].Reset();
       fCfg[ninp].Close();
+      fCfg[ninp].ResetCounters();
       while (SkipInputBuffers(ninp, 100)); // drop input port queue buffers until no more there
    }
 
@@ -1470,6 +1487,8 @@ int dogma::CombinerModule::ExecuteCommand(dabc::Command cmd)
             fCfg[n].fHubSizeTmCnt = 0;
             fCfg[n].fHubLastSize = 0;
             fCfg[n].fHubPrevSize = 0;
+            fCfg[n].fTotalDataSize = 0;
+            fCfg[n].ResetCounters();
             dabc::Command subcmd("ResetTransportStat");
             SubmitCommandToTransport(InputName(n), subcmd);
          }

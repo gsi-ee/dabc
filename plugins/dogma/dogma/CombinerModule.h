@@ -127,6 +127,13 @@ namespace dogma {
             fResortIndx = -1;
          }
 
+         void ResetCounters()
+         {
+            fLastTotalDataSize = 0;
+            fLastLostTrig = 0;
+            fBadStateCount = 0;
+         }
+
          std::string TriggerRingAsStr(int RingSize)
          {
             std::string sbuf;
@@ -282,7 +289,7 @@ namespace dogma {
          bool ShiftToNextBuffer(unsigned ninp);
 
          /* cleanup input buffers in case of too large eventnumber mismatch*/
-         bool DropAllInputBuffers();
+         bool DropAllInputBuffers(bool reinit_transports = false);
 
          //uint32_t CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
 
