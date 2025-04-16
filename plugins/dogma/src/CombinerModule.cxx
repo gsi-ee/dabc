@@ -272,6 +272,9 @@ void dogma::CombinerModule::AccountDroppedData(unsigned sz, unsigned lost_events
    fRunDroppedData += sz;
    fAllDroppedData += sz;
 
+   fRunDiscEvents += lost_events;
+   fAllDiscEvents += lost_events;
+
    fLostEventRateCnt += lost_events > 0 ? 1. * lost_events : 1. / fCfg.size();
 }
 
