@@ -69,14 +69,13 @@ namespace dogma {
          std::string res = dabc::number_to_str(fTotalDiscardPacket);
 
          if (fTotalArtificialLosts > 0)
-            res = std::string("*") + dabc::number_to_str(fTotalArtificialLosts);
+            res += std::string("*") + dabc::number_to_str(fTotalArtificialLosts);
 
          return res;
       }
 
       std::string GetDiscardMagicString()
       {
-
          std::string res = dabc::number_to_str(fTotalDiscardMagic);
 
          if (fTotalArtificialSkip > 0)
