@@ -283,6 +283,9 @@ void dogma::CombinerModule::AccountDroppedData(unsigned sz, unsigned lost_events
       if (fAllBuildEvents >= lost_events)
          fAllBuildEvents -= lost_events;
 
+      if (fEventRateCnt >= lost_events)
+         fEventRateCnt -= lost_events;
+
       if (fRunRecvBytes >= sz)
          fRunRecvBytes -= sz;
       if (fAllRecvBytes >= sz)
