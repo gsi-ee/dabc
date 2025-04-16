@@ -31,10 +31,12 @@
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
 #define DEFAULT_MTU 0xFFF0
 
-dogma::UdpAddon::UdpAddon(int fd, int nport, int mtu, bool debug, bool print, int maxloop, double reduce, double lost) :
+dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, int mtu, bool debug, bool print, int maxloop, double reduce, double lost) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
+   fHostName(host),
+   fRecvBufLen(rcvbuflen),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
    fMtuBuffer(nullptr),
    fSkipCnt(0),
@@ -309,22 +311,32 @@ dogma::UdpTransport::~UdpTransport()
 int dogma::UdpTransport::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("ResetTransportStat")) {
-      UdpAddon *addon = dynamic_cast<UdpAddon *> (fAddon());
+      auto addon = dynamic_cast<UdpAddon *> (fAddon());
       if (addon) addon->ClearCounters();
       return dabc::cmd_true;
-   }
-
-   if (cmd.IsName("GetDogmaTransportInfo")) {
+   } else if (cmd.IsName("ReinitTransport")) {
+      auto addon = dynamic_cast<UdpAddon *> (fAddon());
+      if (addon) {
+         addon->CloseSocket();
+         int fd = dogma::UdpAddon::OpenUdp(addon->fHostName, addon->fNPort, addon->fRecvBufLen);
+         if (fd <= 0) {
+            EOUT("Cannot recreate UDP socket for port %d", addon->fNPort);
+            exit(7);
+         }
+         addon->SetSocket(fd);
+         addon->ClearCounters();
+      }
+      return dabc::cmd_true;
+   } else if (cmd.IsName("GetDogmaTransportInfo")) {
       TransportInfo *info = (TransportInfo *) (dynamic_cast<UdpAddon*> (fAddon()));
       cmd.SetPtr("Info", info);
       cmd.SetUInt("UdpPort", info ? info->fNPort : 0);
       return dabc::cmd_true;
-   }
-
-   if (cmd.IsName("TdcCalibrations") || cmd.IsName("CalibrRefresh")) {
+   } else if (cmd.IsName("TdcCalibrations") || cmd.IsName("CalibrRefresh")) {
       // ignore this command
       return dabc::cmd_true;
    }
+
 
    return dabc::Transport::ExecuteCommand(cmd);
 }

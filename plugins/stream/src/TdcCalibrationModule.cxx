@@ -646,9 +646,10 @@ bool stream::TdcCalibrationModule::retransmit()
 
 int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (fOwnProcMgr && fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
+   if (fOwnProcMgr && fProcMgr && fProcMgr->ExecuteHCommand(cmd))
+      return dabc::cmd_true;
 
-   if (cmd.IsName("ResetTransportStat")) {
+   if (cmd.IsName("ResetTransportStat") || cmd.IsName("ReinitTransport")) {
       fNumBufProcessed = 0;
       fNumBufSkiped = 0;
 

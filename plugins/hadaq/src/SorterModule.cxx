@@ -294,7 +294,7 @@ int hadaq::SorterModule::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    }
 
-   if (cmd.IsName("ResetTransportStat")) {
+   if (cmd.IsName("ResetTransportStat") || cmd.IsName("ReinitTransport")) {
       // redirect command to real transport
       if (SubmitCommandToTransport(InputName(), cmd))
          return dabc::cmd_postponed;

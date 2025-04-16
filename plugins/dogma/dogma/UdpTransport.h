@@ -96,7 +96,9 @@ namespace dogma {
          friend class UdpTransport;
 
          dabc::Pointer      fTgtPtr;             ///< pointer used to read data
-         unsigned           fMTU{0};             ///< maximal size of packet expected from TRB
+         std::string        fHostName;           ///< host name used to create UDP socket
+         int                fRecvBufLen{100000}; ///< recv buf len
+         unsigned           fMTU{0};             ///< maximal size of packet expected from DOG
          void*              fMtuBuffer{nullptr}; ///< buffer used to skip packets when no normal buffer is available
          int                fSkipCnt{0};         ///< counter used to control buffers skipping
          int                fSendCnt{0};         ///< counter of send buffers since last timeout active
@@ -121,7 +123,7 @@ namespace dogma {
          bool CloseBuffer();
 
       public:
-         UdpAddon(int fd, int nport, int mtu, bool debug, bool print, int maxloop, double reduce, double lost);
+         UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, int mtu, bool debug, bool print, int maxloop, double reduce, double lost);
           ~UdpAddon() override;
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
