@@ -76,7 +76,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=dogma_iter&subid=0x25"/>
 
        <!--  this is example of DLD file storage - local, set NumOutputs=2 -->
-       <OutputPort name="Output1" queue="20" url="dld://debug.dld?maxsize=2000"/>
+       <OutputPort name="Output1" queue="20" loop="10" url="dld://debug.dld?maxsize=2000"/>
 
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->
