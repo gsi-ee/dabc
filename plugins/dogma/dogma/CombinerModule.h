@@ -180,6 +180,8 @@ namespace dogma {
          bool               fIsTerminating;
          bool               fSkipEmpty;     ///< skip empty subevents in final event, default true
          bool               fAllowDropBuffers = false;  ///< allow drop buffers when file output blocked
+         double             fBadDataRateLimit = 0; ///< data rate limit to detect bad inputs
+         double             fBadEventsLostLimit = 0; ///< lost events limit to detect bad inputs
 
          bool               fRunToOracle;
 

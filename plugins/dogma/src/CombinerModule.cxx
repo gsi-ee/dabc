@@ -78,9 +78,11 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fSkipEmpty = Cfg("SkipEmpty", cmd).AsBool(true);
 
    fAllowDropBuffers = Cfg("AllowDropBuffers", cmd).AsBool(false);
+   fBadDataRateLimit = Cfg("BadDataRateLimit", cmd).AsDouble(1e6);
+   fBadEventsLostLimit = Cfg("BadEventsLostLimit", cmd).AsDouble(1000.);
 
    // check bad inputs
-   if (fAllowDropBuffers)
+   if (fAllowDropBuffers && fBadDataRateLimit > 0 && fBadEventsLostLimit > 0)
       CreateTimer("BadInputs", 1.);
 
    fBNETCalibrDir = Cfg("CalibrDir", cmd).AsStr();
@@ -248,12 +250,12 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
 
       int num_really_bad = 0;
       for (auto &cfg : fCfg) {
-         // lost rate in 1000..1000000
-         // datarate in 1M..100M
+         // lost events rate >fBadEventsLostLimit    <fBadEventsLostLimit*100
+         // datarate >fBadDataRateLimit
 
          if ((cfg.fLastLostTrig > 0) && (cfg.fLastTotalDataSize > 0) &&
-            (cfg.fLostTrig > cfg.fLastLostTrig + 1000) && (cfg.fLostTrig < cfg.fLastLostTrig + 1000000) &&
-            (cfg.fTotalDataSize > cfg.fLastTotalDataSize + 1000000) && (cfg.fTotalDataSize < cfg.fLastTotalDataSize + 100000000))
+            (cfg.fLostTrig > cfg.fLastLostTrig + fBadEventsLostLimit) && (cfg.fLostTrig < cfg.fLastLostTrig + fBadEventsLostLimit*100.) &&
+            (cfg.fTotalDataSize > cfg.fLastTotalDataSize + fBadDataRateLimit) && (cfg.fTotalDataSize < cfg.fLastTotalDataSize + fBadDataRateLimit*100.))
                cfg.fBadStateCount++;
             else
                cfg.fBadStateCount = 0;

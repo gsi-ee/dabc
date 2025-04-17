@@ -254,7 +254,8 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    if (comb->fCfg.size() != fCalibr.size())
       fCalibr.resize(comb->fCfg.size(), CalibrRect());
 
-   bool istdccal = false;
+   bool istdccal = false,
+        show_bad = comb->fAllowDropBuffers && comb->fBadDataRateLimit > 0 && comb->fBadEventsLostLimit > 0;
    for (unsigned n=0;n<comb->fCfg.size();n++)
       if (comb->fCfg[n].fCalibr.length()>0) {
         istdccal = true;
@@ -268,7 +269,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
       }
 
    s += "inp port     pkt      data    MB/s   disc  magic   bufs  qu  drop  lost";
-   if (comb->fAllowDropBuffers)
+   if (show_bad)
       s+= "  bad";
    if (istdccal) s += "    TRB         TDC               progr   state";
    if (fRingSize>0) s += "   triggers";
@@ -324,7 +325,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
                    dabc::number_to_str(cfg.fDroppedTrig,0).c_str(),
                    dabc::number_to_str(cfg.fLostTrig,0).c_str()));
 
-      if (comb->fAllowDropBuffers)
+      if (show_bad)
          sbuf.append(dabc::format(" %4u", cfg.fBadStateCount));
 
       inpdrop.emplace_back(cfg.fDroppedTrig);

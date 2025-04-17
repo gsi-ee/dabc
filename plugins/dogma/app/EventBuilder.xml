@@ -89,7 +89,11 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <SkipEmpty value="true"/>
 
        <!-- when true, let drop buffers when file in Output1 blocks-->
-       <AllowDropBuffers value="false"/>
+       <AllowDropBuffers value="true"/>
+
+       <!-- when specified with AllowDropBuffers, detect bad inputs by minimal data rate and minimal lost event rate. Reset readout after 10 sec of bad condition -->
+       <BadDataRateLimit value="1000000"/>
+       <BadEventsLostLimit value="1000"/>
 
        <!-- when true, extra debug output produced every second -->
        <ExtraDebug value="false"/>
