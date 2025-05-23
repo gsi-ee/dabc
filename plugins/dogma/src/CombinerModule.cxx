@@ -926,9 +926,22 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          res = iter.NextSubeventsBlock();
 
       if (!res || !iter.IsData()) {
-         if(!ShiftToNextBuffer(ninp))
+
+         iter.Close();
+         if(!CanRecv(ninp))
             return false;
-         res = iter.NextSubeventsBlock();
+
+         dabc::Buffer buf = Recv(ninp);
+         fNumReadBuffers++;
+
+         if (buf.GetTypeId() == dabc::mbt_EOF) {
+            ProcessEOF(ninp);
+            return false;
+         }
+
+         res = iter.Reset(buf);
+         if (res)
+            res = iter.NextSubeventsBlock();
          if (!res)
             return false;
       }
