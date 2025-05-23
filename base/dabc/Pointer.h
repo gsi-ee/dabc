@@ -129,8 +129,25 @@ namespace dabc {
                fPtr = nullptr;
                fRawSize = 0;
             }
-            if (pos>0) shift(pos);
-            if (fullsz>0) setfullsize(fullsz);
+            if (pos > 0)
+               shift(pos);
+            if (fullsz > 0)
+               setfullsize(fullsz);
+         }
+
+         inline void reset_owner(Buffer& src)
+         {
+            fSegm = 0;
+            fBuf << src;
+            fFullSize = fBuf.GetTotalSize();
+
+            if (fFullSize > 0) {
+               fPtr = (unsigned char*) fBuf.SegmentPtr(0);
+               fRawSize = fBuf.SegmentSize(0);
+            } else {
+               fPtr = nullptr;
+               fRawSize = 0;
+            }
          }
 
          inline void reset()

@@ -62,6 +62,27 @@ bool dogma::ReadIterator::Reset(const dabc::Buffer& buf)
    return true;
 }
 
+bool dogma::ReadIterator::ResetOwner(dabc::Buffer& buf)
+{
+   Close();
+
+   if (buf.null())
+      return false;
+
+   fBufType = buf.GetTypeId();
+
+   if ((fBufType != mbt_DogmaEvents) && (fBufType != mbt_DogmaTransportUnit) && (fBufType != mbt_DogmaSubevents)) {
+      EOUT("Buffer format %u not supported", (unsigned) fBufType);
+      return false;
+   }
+
+   fEvPtr.reset_owner(buf);
+   fFirstEvent = true;
+
+   return true;
+}
+
+
 void dogma::ReadIterator::Close()
 {
    fEvPtr.reset();
@@ -165,8 +186,10 @@ bool dogma::ReadIterator::NextSubeventsBlock()
 
    if (fBufType == mbt_DogmaSubevents) {
       // here only subevents
-      if (!fFirstEvent) fEvPtr.reset();
-      if (fEvPtr.null()) return false;
+      if (!fFirstEvent)
+         fEvPtr.reset();
+      if (fEvPtr.null())
+         return false;
       fFirstEvent = false;
       fSubPtr = nullptr;
       fSubPtrLen = 0;

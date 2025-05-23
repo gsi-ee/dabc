@@ -963,7 +963,8 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
          // grd.Next("reset");
 
-         res = iter.Reset(buf);
+         // can assign buffer directly
+         res = iter.ResetOwner(buf);
 
          // grd.Next("block2");
 

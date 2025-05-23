@@ -94,6 +94,8 @@ namespace dogma {
           * end of iterator usage */
          bool Reset(const dabc::Buffer& buf);
 
+         bool ResetOwner(dabc::Buffer& buf);
+
          /** Reset iterator - forget pointer on buffer */
          bool Reset() { Close(); return true; }
 
