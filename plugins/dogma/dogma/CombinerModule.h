@@ -253,6 +253,7 @@ namespace dogma {
          bool               fEvnumDiffStatistics;
 
          bool               fExtraDebug;   ///< when true, extra debug output is created
+         std::string        fExtraDebugProfiler; ///< information from profiler
          dabc::TimeStamp    fLastDebugTm;  ///< timer used to generate rare debugs output
          dabc::TimeStamp    fLastDropTm;   ///< timer used to avoid too often drop of data
          dabc::TimeStamp    fLastProcTm;   ///< last time when event building was called

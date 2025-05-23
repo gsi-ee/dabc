@@ -196,6 +196,9 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       item.SetField("value", "Init");
    }
 
+   if (fExtraDebug)
+      CreateTimer("DebugTimer", 1.); // check BNET values
+
    fNumReadBuffers = 0;
 }
 
@@ -243,6 +246,14 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    if (timer_name == "BnetTimer") {
       UpdateBnetInfo();
+      return;
+   }
+
+   if (timer_name == "DebugTimer") {
+      fBldProfiler.MakeStatistic();
+
+      fExtraDebugProfiler = fBldProfiler.Format();
+
       return;
    }
 
@@ -986,7 +997,7 @@ bool dogma::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
 
 
-   // dabc::ProfilerGuard grd(fBldProfiler, "bld", 0);
+   dabc::ProfilerGuard grd(fBldProfiler, "bld", 0);
 
    fBldCalls++;
 
@@ -1004,7 +1015,7 @@ bool dogma::CombinerModule::BuildEvent()
    bool incomplete_data = false, any_data = false, must_have_data = false;
    int missing_inp = -1;
 
-   // grd.Next("shft");
+   grd.Next("shft");
 
    for (auto &cfg : fCfg) {
 
@@ -1073,7 +1084,7 @@ bool dogma::CombinerModule::BuildEvent()
       }
    } // for ninp
 
-   // grd.Next("drp");
+   grd.Next("drp");
 
    // for must_have channels we always build event with maximum trigger id = newest event, discarding incomplete older events
    int diff0 = (incomplete_data || !must_have_data) ? 0 : CalcTrigNumDiff(mineventid_must_have, maxeventid_must_have);
@@ -1125,7 +1136,7 @@ bool dogma::CombinerModule::BuildEvent()
         return false; // retry on next set of buffers
      }
 
-   // grd.Next("chkcomp");
+   grd.Next("chkcomp");
 
    if (incomplete_data || !any_data) {
       if (fExtraDebug && fLastDebugTm.Expired(currTm, 0.5)) {
@@ -1193,7 +1204,7 @@ bool dogma::CombinerModule::BuildEvent()
 
    } // for fCfg
 
-   // grd.Next("buf");
+   grd.Next("buf");
 
    // here all inputs should be aligned to buildevid
 
@@ -1264,7 +1275,7 @@ bool dogma::CombinerModule::BuildEvent()
    if (canBuildEvent) {
       // EVENT BUILDING STARTS HERE
 
-      // grd.Next("compl");
+      grd.Next("compl");
 
       fOut.NewEvent(sequencenumber, buildtype, buildevid);
 
@@ -1277,7 +1288,7 @@ bool dogma::CombinerModule::BuildEvent()
       if (dataError) fRunDataErrors++;
       if (tagError) fRunTagErrors++;
 
-      // grd.Next("main");
+      grd.Next("main");
 
       // third input loop: build output event from all not empty subevents
       for (auto &cfg : fCfg) {
@@ -1301,7 +1312,7 @@ bool dogma::CombinerModule::BuildEvent()
          cfg.fLastEvtBuildTrigId = (cfg.fTrigNr << 8) | (cfg.fTrigTag & 0xff);
       } // for ninp
 
-      // grd.Next("after");
+      grd.Next("after");
 
       fOut.FinishEvent();
 
@@ -1368,7 +1379,7 @@ bool dogma::CombinerModule::BuildEvent()
       fLastBuildTm.GetNow();
    } else {
 
-      // grd.Next("lostl", 14);
+      grd.Next("lostl", 14);
       fLostEventRateCnt += 1;
       // Par(fLostEventRateName).SetValue(1);
       fRunDiscEvents += 1;
@@ -1378,7 +1389,7 @@ bool dogma::CombinerModule::BuildEvent()
    std::string debugmask;
    debugmask.resize(fCfg.size(), ' ');
 
-   // grd.Next("shift", 15);
+   grd.Next("shift", 15);
 
    // bool fatal = !fCfg[1].has_data || (fCfg[1].fTrigNr != buildevid);
 

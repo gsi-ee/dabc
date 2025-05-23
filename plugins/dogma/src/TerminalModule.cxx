@@ -218,7 +218,11 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    else
       s += "\n";
 
-   if (fServPort >= 0) {
+   if (comb->fExtraDebug) {
+      s += "Profiler: ";
+      s += comb->fExtraDebugProfiler;
+      s += "\n";
+   } else if (fServPort >= 0) {
       if (fLastServCmd.null()) {
          s += dabc::format("Server: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fServPort);
       } else {
