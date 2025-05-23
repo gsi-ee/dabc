@@ -218,9 +218,9 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    else
       s += "\n";
 
-   if (comb->fExtraDebug) {
-      s += "Profiler: ";
-      s += comb->fExtraDebugProfiler;
+   if (comb->fProfiler) {
+      s += "Building: ";
+      s += comb->fBldProfilerInfo;
       s += "\n";
    } else if (fServPort >= 0) {
       if (fLastServCmd.null()) {
@@ -233,9 +233,9 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
       s += "\n";
    }
 
-   if (comb->fExtraDebug) {
+   if (comb->fProfiler) {
       s += "Shifter: ";
-      s += comb->fExtraDebugProfiler2;
+      s += comb->fShiftProfilerInfo;
       s += "\n";
    } else if (fFilePort >= 0) {
       if (fLastFileCmd.null()) {

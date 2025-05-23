@@ -252,9 +252,7 @@ namespace dogma {
             if false, do not account it (for multiple event builder mode)*/
          bool               fEvnumDiffStatistics;
 
-         bool               fExtraDebug;   ///< when true, extra debug output is created
-         std::string        fExtraDebugProfiler; ///< information from profiler
-         std::string        fExtraDebugProfiler2; ///< information from shift profiler
+         bool               fExtraDebug;   ///< when >0 fill profiles, >1 extra debug output is created
          dabc::TimeStamp    fLastDebugTm;  ///< timer used to generate rare debugs output
          dabc::TimeStamp    fLastDropTm;   ///< timer used to avoid too often drop of data
          dabc::TimeStamp    fLastProcTm;   ///< last time when event building was called
@@ -269,8 +267,12 @@ namespace dogma {
          long               fOutCalls{0};   ///< number of output processing calls
          long               fBufCalls{0};   ///< number of buffer processing calls
          long               fTimerCalls{0}; ///< number of timer events calls
+
+         bool               fProfiler;   ///< when >0 fill profiles, >1 extra debug output is created
          dabc::Profiler     fBldProfiler;   ///< profiler of build event performance
+         std::string        fBldProfilerInfo; ///< information from build profiler
          dabc::Profiler     fShiftProfiler;   ///< profiler of shift event performance
+         std::string        fShiftProfilerInfo; ///< information from shift profiler
 
          bool BuildEvent();
 

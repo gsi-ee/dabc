@@ -72,7 +72,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fBNETNumRecv = Cfg("BNET_NUMRECEIVERS", cmd).AsInt(1);
    fBNETNumSend = Cfg("BNET_NUMSENDERS", cmd).AsInt(1);
 
-   fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
+   fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(false);
+   fProfiler = Cfg("Profiler", cmd).AsBool(false);
 
    fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
 
@@ -197,8 +198,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       item.SetField("value", "Init");
    }
 
-   if (fExtraDebug)
-      CreateTimer("DebugTimer", 1.); // check BNET values
+   if (fProfiler)
+      CreateTimer("ProfilerTimer", 1.); // check profiler values
 
    fNumReadBuffers = 0;
 }
@@ -250,14 +251,14 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
       return;
    }
 
-   if (timer_name == "DebugTimer") {
+   if (timer_name == "ProfilerTimer") {
       fBldProfiler.MakeStatistic();
 
-      fExtraDebugProfiler = fBldProfiler.Format();
+      fBldProfilerInfo = fBldProfiler.Format();
 
       fShiftProfiler.MakeStatistic();
 
-      fExtraDebugProfiler2 = fShiftProfiler.Format();
+      fShiftProfilerInfo = fShiftProfiler.Format();
 
       return;
    }
