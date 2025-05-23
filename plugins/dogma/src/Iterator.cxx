@@ -207,13 +207,13 @@ bool dogma::ReadIterator::NextSubEvent()
       // this function is used both in hadtu and in event mode. Check out mode:
       dabc::BufferSize_t headsize = 0, containersize = 0;
       if (fBufType == mbt_DogmaTransportUnit) {
-         headsize = 0;
+         // headsize = 0;
          containersize = tu()->GetSize();
       } else if (fBufType == mbt_DogmaEvents) {
          headsize = sizeof(dogma::DogmaEvent);
          containersize = evnt()->GetEventLen();
       } else if (fBufType == mbt_DogmaSubevents) {
-         headsize = 0;
+         // headsize = 0;
          containersize = fEvPtr.fullsize();
       } else {
          EOUT("NextSubEvent not allowed for buffer type %u. Check your code!", (unsigned) fBufType);
