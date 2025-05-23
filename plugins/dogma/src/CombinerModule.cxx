@@ -944,28 +944,28 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
          iter.Close();
 
-         grd.Next("canrecv");
+         // grd.Next("canrecv");
 
          if(!CanRecv(ninp))
             return false;
 
-         grd.Next("dorecv");
+         // grd.Next("dorecv");
 
          dabc::Buffer buf = Recv(ninp);
          fNumReadBuffers++;
 
-         grd.Next("afterrecv");
+         // grd.Next("afterrecv");
 
          if (buf.GetTypeId() == dabc::mbt_EOF) {
             ProcessEOF(ninp);
             return false;
          }
 
-         grd.Next("reset");
+         // grd.Next("reset");
 
          res = iter.Reset(buf);
 
-         grd.Next("block2");
+         // grd.Next("block2");
 
          if (res)
             res = iter.NextSubeventsBlock();
@@ -973,7 +973,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
             return false;
       }
 
-      grd.Next("subev2", 15);
+      grd.Next("subev2");
 
       if (!iter.NextSubEvent())
          return false;
