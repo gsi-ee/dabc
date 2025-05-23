@@ -42,13 +42,34 @@ namespace dogma {
 
    class ReadIterator {
       protected:
+         dabc::Buffer   fBuffer;
+         unsigned       fBufType = dabc::mbt_Null;
          bool           fFirstEvent = false;
-         dabc::Pointer  fEvPtr;
+         unsigned char *fEvPtr = nullptr;
+         unsigned       fEvPtrLen = 0;
          unsigned char *fSubPtr = nullptr;
          unsigned       fSubPtrLen = 0;
          unsigned char *fRawPtr = nullptr;
          unsigned       fRawPtrLen = 0;
-         unsigned       fBufType = dabc::mbt_Null;
+
+
+         inline void ResetEvPtr()
+         {
+            fEvPtr = nullptr;
+            fEvPtrLen = 0;
+            fBuffer.Release();
+            fBufType = dabc::mbt_Null;
+         }
+
+         inline void ShiftEvPtr(unsigned len)
+         {
+            if (len >= fEvPtrLen) {
+               ResetEvPtr();
+            } else {
+               fEvPtr += len;
+               fEvPtrLen -= len;
+            }
+         }
 
          inline void ShiftSubPtr(unsigned len)
          {
@@ -81,7 +102,8 @@ namespace dogma {
          {
             fFirstEvent = false;
             fBufType = mbt_DogmaEvents;
-            fEvPtr.reset(evnt, evnt->GetEventLen());
+            fEvPtr = (unsigned char *) evnt;
+            fEvPtrLen = evnt->GetEventLen();
          }
 
          ReadIterator(const ReadIterator& src);
@@ -101,7 +123,7 @@ namespace dogma {
 
          void Close();
 
-         bool IsData() const { return !fEvPtr.null(); }
+         bool IsData() const { return fEvPtr != nullptr; }
 
          bool IsTu() const { return fBufType == mbt_DogmaTransportUnit; }
          bool IsEvent() const { return fBufType == mbt_DogmaEvents; }
@@ -109,14 +131,14 @@ namespace dogma {
          /** Used for raw data from TRBs */
          bool NextTu();
 
-         dogma::DogmaTu* tu() const { return (dogma::DogmaTu*) fEvPtr(); }
-         unsigned tusize() const { return tu() ? tu()->GetSize() : 0; }
+         inline dogma::DogmaTu* tu() const { return (dogma::DogmaTu*) fEvPtr; }
+         inline unsigned tusize() const { return tu() ? tu()->GetSize() : 0; }
 
          /** Used for ready HLD events */
          bool NextEvent();
 
-         dogma::DogmaEvent* evnt() const { return (dogma::DogmaEvent*) fEvPtr(); }
-         unsigned evntsize() const { return evnt() ? evnt()->GetEventLen() : 0; }
+         inline dogma::DogmaEvent* evnt() const { return (dogma::DogmaEvent*) fEvPtr; }
+         inline unsigned evntsize() const { return evnt() ? evnt()->GetEventLen() : 0; }
 
          /** Depending from buffer type calls NextHadTu() or NextEvent() */
          bool NextSubeventsBlock();
@@ -128,7 +150,7 @@ namespace dogma {
          bool NextSubEvent();
 
          /** Returns size used by current event plus rest */
-         unsigned remained_size() const { return fEvPtr.fullsize(); }
+         unsigned remained_size() const { return fEvPtrLen; }
 
          bool AssignEventPointer(dabc::Pointer& ptr);
          dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr; }

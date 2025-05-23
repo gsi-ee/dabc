@@ -16,28 +16,33 @@
 #include "dogma/Iterator.h"
 
 #include "dabc/logging.h"
+#include "dabc/Manager.h"
 
 
 dogma::ReadIterator::ReadIterator(const ReadIterator& src) :
+   fBuffer(src.fBuffer),
+   fBufType(src.fBufType),
    fFirstEvent(src.fFirstEvent),
    fEvPtr(src.fEvPtr),
+   fEvPtrLen(src.fEvPtrLen),
    fSubPtr(src.fSubPtr),
    fSubPtrLen(src.fSubPtrLen),
    fRawPtr(src.fRawPtr),
-   fRawPtrLen(src.fRawPtrLen),
-   fBufType(src.fBufType)
+   fRawPtrLen(src.fRawPtrLen)
 {
 }
 
 dogma::ReadIterator& dogma::ReadIterator::operator=(const ReadIterator& src)
 {
+   fBuffer = src.fBuffer;
+   fBufType = src.fBufType;
    fFirstEvent = src.fFirstEvent;
    fEvPtr = src.fEvPtr;
+   fEvPtrLen = src.fEvPtrLen;
    fSubPtr = src.fSubPtr;
    fSubPtrLen = src.fSubPtrLen;
    fRawPtr = src.fRawPtr;
    fRawPtrLen = src.fRawPtrLen;
-   fBufType = src.fBufType;
 
    return *this;
 }
@@ -49,15 +54,25 @@ bool dogma::ReadIterator::Reset(const dabc::Buffer& buf)
    if (buf.null())
       return false;
 
-   fBufType = buf.GetTypeId();
+   if (buf.NumSegments() > 1) {
+      EOUT("Cannot work with segmented buffer - exit");
+      dabc::mgr.StopApplication();
+      return false;
+   }
+
+   fBuffer = buf;
+
+   fBufType = fBuffer.GetTypeId();
 
    if ((fBufType != mbt_DogmaEvents) && (fBufType != mbt_DogmaTransportUnit) && (fBufType != mbt_DogmaSubevents)) {
       EOUT("Buffer format %u not supported", (unsigned) fBufType);
       return false;
    }
 
-   fEvPtr = buf;
    fFirstEvent = true;
+
+   fEvPtr = (unsigned char *) fBuffer.SegmentPtr(0);
+   fEvPtrLen = fBuffer.SegmentSize(0);
 
    return true;
 }
@@ -69,15 +84,25 @@ bool dogma::ReadIterator::ResetOwner(dabc::Buffer& buf)
    if (buf.null())
       return false;
 
-   fBufType = buf.GetTypeId();
+   if (buf.NumSegments() > 1) {
+      EOUT("Cannot work with segmented buffer - exit");
+      dabc::mgr.StopApplication();
+      return false;
+   }
+
+   fBuffer << buf;
+
+   fBufType = fBuffer.GetTypeId();
 
    if ((fBufType != mbt_DogmaEvents) && (fBufType != mbt_DogmaTransportUnit) && (fBufType != mbt_DogmaSubevents)) {
       EOUT("Buffer format %u not supported", (unsigned) fBufType);
       return false;
    }
 
-   fEvPtr.reset_owner(buf);
    fFirstEvent = true;
+
+   fEvPtr = (unsigned char *) fBuffer.SegmentPtr(0);
+   fEvPtrLen = fBuffer.SegmentSize(0);
 
    return true;
 }
@@ -85,13 +110,12 @@ bool dogma::ReadIterator::ResetOwner(dabc::Buffer& buf)
 
 void dogma::ReadIterator::Close()
 {
-   fEvPtr.reset();
+   ResetEvPtr();
    fSubPtr = nullptr;
    fSubPtrLen = 0;
    fRawPtr = nullptr;
    fRawPtrLen = 0;
    fFirstEvent = false;
-   fBufType = dabc::mbt_Null;
 }
 
 bool dogma::ReadIterator::NextTu()
@@ -101,29 +125,23 @@ bool dogma::ReadIterator::NextTu()
       return false;
    }
 
-   if (fEvPtr.null())
+   if (!fEvPtr)
       return false;
 
    if (fFirstEvent)
       fFirstEvent = false;
    else
-      fEvPtr.shift(tu()->GetSize());
+      ShiftEvPtr(tu()->GetSize());
 
-   if (fEvPtr.fullsize() < sizeof(dogma::DogmaTu)) {
-      fEvPtr.reset();
+   if (fEvPtrLen < sizeof(dogma::DogmaTu)) {
+      ResetEvPtr();
       return false;
    }
 
-   if (fEvPtr.rawsize() < sizeof(dogma::DogmaTu)) {
-      EOUT("Raw size less than transport unit header - not supported !!!!");
-      fEvPtr.reset();
-      return false;
-   }
-
-   if (fEvPtr.fullsize() < tu()->GetSize()) {
+   if (fEvPtrLen < tu()->GetSize()) {
       EOUT("Error in DOGMA format - declared event size %u smaller than actual portion in buffer %u",
-            (unsigned) tu()->GetSize(), (unsigned) fEvPtr.fullsize());
-      fEvPtr.reset();
+            (unsigned) tu()->GetSize(), (unsigned) fEvPtrLen);
+      ResetEvPtr();
       return false;
    }
 
@@ -137,7 +155,8 @@ bool dogma::ReadIterator::NextTu()
 
 bool dogma::ReadIterator::NextEvent()
 {
-   if (fEvPtr.null()) return false;
+   if (!fEvPtr)
+      return false;
 
    if (fBufType != mbt_DogmaEvents) {
       EOUT("NextEvent only allowed for buffer type mbt_DogmaEvents. Check your code!");
@@ -147,24 +166,17 @@ bool dogma::ReadIterator::NextEvent()
    if (fFirstEvent)
       fFirstEvent = false;
    else
-      fEvPtr.shift(evnt()->GetEventLen());
+      ShiftEvPtr(evnt()->GetEventLen());
 
-   if (fEvPtr.fullsize() < sizeof(dogma::DogmaEvent)) {
-      fEvPtr.reset();
+   if (fEvPtrLen < sizeof(dogma::DogmaEvent)) {
+      ResetEvPtr();
       return false;
    }
 
-   if (fEvPtr.rawsize() < sizeof(dogma::DogmaEvent)) {
-      EOUT("Raw size less than event header - not supported !!!!");
-
-      fEvPtr.reset();
-      return false;
-   }
-
-   if (fEvPtr.fullsize() < evnt()->GetEventLen()) {
+   if (fEvPtrLen < evnt()->GetEventLen()) {
       EOUT("Error in DOGMA format - declared event size %u bigger than actual portion in buffer %u",
-            (unsigned) evnt()->GetEventLen(), (unsigned) fEvPtr.fullsize());
-      fEvPtr.reset();
+            (unsigned) evnt()->GetEventLen(), (unsigned) fEvPtrLen);
+      ResetEvPtr();
       return false;
    }
 
@@ -186,9 +198,11 @@ bool dogma::ReadIterator::NextSubeventsBlock()
 
    if (fBufType == mbt_DogmaSubevents) {
       // here only subevents
-      if (!fFirstEvent)
-         fEvPtr.reset();
-      if (fEvPtr.null())
+      if (!fFirstEvent) {
+         fEvPtr = nullptr;
+         fEvPtrLen = 0;
+      }
+      if (!fEvPtr)
          return false;
       fFirstEvent = false;
       fSubPtr = nullptr;
@@ -226,11 +240,11 @@ unsigned dogma::ReadIterator::blocksize() const
 
 bool dogma::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
 {
-   if (fEvPtr.null()) {
+   if (!fEvPtr) {
       ptr.reset();
       return false;
    }
-   ptr.reset(fEvPtr, 0, evnt()->GetEventLen());
+   ptr.reset(fEvPtr, evnt()->GetEventLen());
    return true;
 }
 
@@ -238,7 +252,7 @@ bool dogma::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
 bool dogma::ReadIterator::NextSubEvent()
 {
    if (!fSubPtr) {
-      if (fEvPtr.null())
+      if (!fEvPtr)
          return false;
       // this function is used both in hadtu and in event mode. Check out mode:
       dabc::BufferSize_t headsize = 0, containersize = 0;
@@ -250,7 +264,7 @@ bool dogma::ReadIterator::NextSubEvent()
          containersize = evnt()->GetEventLen();
       } else if (fBufType == mbt_DogmaSubevents) {
          // headsize = 0;
-         containersize = fEvPtr.fullsize();
+         containersize = fEvPtrLen;
       } else {
          EOUT("NextSubEvent not allowed for buffer type %u. Check your code!", (unsigned) fBufType);
          return false;
@@ -263,7 +277,7 @@ bool dogma::ReadIterator::NextSubEvent()
          EOUT("DOGMA format error - tu container fullsize %u too small", (unsigned) containersize);
          return false;
       }
-      fSubPtr = (unsigned char *) fEvPtr();
+      fSubPtr = fEvPtr;
       fSubPtrLen = containersize;
       if (headsize > 0)
          ShiftSubPtr(headsize);
@@ -293,9 +307,9 @@ bool dogma::ReadIterator::NextSubEvent()
 
 unsigned dogma::ReadIterator::rawdata_maxsize() const
 {
-   unsigned sz0 = fEvPtr.rawsize(), sz1 = 0;
-   if (fSubPtr)
-      sz1 = fSubPtr - (unsigned char *) fEvPtr();
+   unsigned sz0 = fEvPtrLen, sz1 = 0;
+   if (fSubPtr && fEvPtr)
+      sz1 = fSubPtr - fEvPtr;
    return sz0 > sz1 ? sz0 - sz1 : 0;
 }
 
@@ -303,7 +317,8 @@ unsigned dogma::ReadIterator::NumEvents(const dabc::Buffer& buf)
 {
    ReadIterator iter(buf);
    unsigned cnt = 0;
-   while (iter.NextEvent()) cnt++;
+   while (iter.NextEvent())
+      cnt++;
    return cnt;
 }
 

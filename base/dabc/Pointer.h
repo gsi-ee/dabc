@@ -122,7 +122,7 @@ namespace dabc {
             fBuf = src;
             fFullSize = fBuf.GetTotalSize();
 
-            if (fFullSize>0) {
+            if (fFullSize > 0) {
                fPtr = (unsigned char*) fBuf.SegmentPtr(0);
                fRawSize = fBuf.SegmentSize(0);
             } else {
