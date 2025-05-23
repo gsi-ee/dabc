@@ -46,6 +46,7 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fSpecialFired = false;
    fLastEventRate = 0.;
    fBldProfiler.Reserve(50);
+   fShiftProfiler.Reserve(50);
 
    fRunRecvBytes = 0;
    fRunBuildEvents = 0;
@@ -254,6 +255,10 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
 
       fExtraDebugProfiler = fBldProfiler.Format();
 
+      fShiftProfiler.MakeStatistic();
+
+      fExtraDebugProfiler2 = fShiftProfiler.Format();
+
       return;
    }
 
@@ -286,7 +291,7 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    if ((fFlushTimeout > 0) && (++fFlushCounter > 2)) {
       fFlushCounter = 0;
-      dabc::ProfilerGuard grd(fBldProfiler, "flush", 30);
+      // dabc::ProfilerGuard grd(fBldProfiler, "flush", 30);
       FlushOutputBuffer();
    }
 
@@ -458,7 +463,7 @@ void dogma::CombinerModule::UpdateBnetInfo()
 {
    fBldProfiler.MakeStatistic();
 
-   dabc::ProfilerGuard grd(fBldProfiler, "info", 20);
+   // dabc::ProfilerGuard grd(fBldProfiler, "info", 20);
 
    if (fBNETrecv) {
 
@@ -909,9 +914,13 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
    if (cfg.fResort)
       return ShiftToNextSubEventFull(ninp, fast, dropped);
 
+   dabc::ProfilerGuard grd(fShiftProfiler, "start", 0);
+
    // account when subevent exists but intentionally dropped
    if (dropped && cfg.has_data)
       cfg.fDroppedTrig++;
+
+   grd.Next("reset");
 
    cfg.Reset(fast);
 
@@ -919,32 +928,52 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    auto &iter = cfg.fIter;
 
+   grd.Next("subev1");
+
    bool res = iter.NextSubEvent();
    if (!res || !iter.subevnt()) {
+
+      grd.Next("block1");
 
       if (iter.IsData())
          res = iter.NextSubeventsBlock();
 
+      grd.Next("check");
+
       if (!res || !iter.IsData()) {
 
          iter.Close();
+
+         grd.Next("canrecv");
+
          if(!CanRecv(ninp))
             return false;
 
+         grd.Next("dorecv");
+
          dabc::Buffer buf = Recv(ninp);
          fNumReadBuffers++;
+
+         grd.Next("afterrecv");
 
          if (buf.GetTypeId() == dabc::mbt_EOF) {
             ProcessEOF(ninp);
             return false;
          }
 
+         grd.Next("reset");
+
          res = iter.Reset(buf);
+
+         grd.Next("block2");
+
          if (res)
             res = iter.NextSubeventsBlock();
          if (!res)
             return false;
       }
+
+      grd.Next("subev2", 15);
 
       if (!iter.NextSubEvent())
          return false;
@@ -953,6 +982,8 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
    // no need to analyze data
    if (fast)
       return true;
+
+   grd.Next("fill", 20);
 
    // this is selected subevent
    cfg.subevnt = iter.subevnt();
@@ -965,6 +996,8 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
    cfg.fTrigTag = 0;
 
    // DOUT5("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
+
+   grd.Next("ring");
 
    cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
    cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;

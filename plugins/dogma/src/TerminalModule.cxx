@@ -233,7 +233,11 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
       s += "\n";
    }
 
-   if (fFilePort >= 0) {
+   if (comb->fExtraDebug) {
+      s += "Shifter: ";
+      s += comb->fExtraDebugProfiler2;
+      s += "\n";
+   } else if (fFilePort >= 0) {
       if (fLastFileCmd.null()) {
          s += dabc::format("File: missing, failed or not found on %s/Output%d\n", fFileModuleName.empty() ? fModuleName.c_str() : fFileModuleName.c_str(), fFilePort);
       } else {
