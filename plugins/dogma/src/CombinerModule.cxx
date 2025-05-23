@@ -659,8 +659,6 @@ void dogma::CombinerModule::UpdateBnetInfo()
 
 void dogma::CombinerModule::ProcessConnectEvent(const std::string &name, bool on)
 {
-   printf("ProcessConnectEvent %s ninp %u on %s\n", name.c_str(), NumInputs(), DBOOL(on));
-
    if (on) return;
 
    for (unsigned n = 0; n < NumInputs(); ++n)
@@ -739,10 +737,8 @@ bool dogma::CombinerModule::ShiftToNextTu(unsigned ninp)
       if (iter.IsData())
          res = iter.NextSubeventsBlock();
 
-      if (res && iter.IsData()) {
-         // DOUT0("CombinerModule::ShiftToNextTu %u OK", ninp);
+      if (res && iter.IsData())
          return true;
-      }
 
       if(!ShiftToNextBuffer(ninp))
          return false;
@@ -806,11 +802,9 @@ bool dogma::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 }
 
 
-bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
+bool dogma::CombinerModule::ShiftToNextSubEventFull(unsigned ninp, bool fast, bool dropped)
 {
    if (fBNETrecv) return ShiftToNextEvent(ninp, fast, dropped);
-
-   // DOUT0("CombinerModule::ShiftToNextSubEvent %d ", ninp);
 
    auto &cfg = fCfg[ninp];
 
@@ -837,11 +831,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       if (doshift) res = iter.NextSubEvent();
       doshift = true;
 
-      // DOUT0("CombinerModule::ShiftToNextSubEvent %d res %s", ninp, DBOOL(res));
-
       if (!res || !iter.subevnt()) {
-         DOUT5("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp);
-
          // retry in next hadtu container
          if (ShiftToNextTu(ninp)) continue;
 
@@ -890,7 +880,7 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fHubId = cfg.subevnt->GetAddr();
       cfg.fTrigTag = 0;
 
-      DOUT5("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
+      // DOUT5("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
 
       cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
       cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
@@ -907,12 +897,69 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          cfg.fLostTrig += diff / fTriggerNumStep - 1;
 
       cfg.fTotalDataSize += cfg.data_size;
-
-      // printf("Input%u Trig:%6x Tag:%2x diff:%d %s\n", ninp, cfg.fTrigNr, cfg.fTrigTag, diff, diff != 1 ? "ERROR" : "");
    }
 
    return true;
 }
+
+bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
+{
+   auto &cfg = fCfg[ninp];
+
+   // account when subevent exists but intentionally dropped
+   if (dropped && cfg.has_data)
+      cfg.fDroppedTrig++;
+
+   cfg.Reset(fast);
+
+   // if (fast) DOUT0("FAST DROP on inp %d", ninp);
+
+   auto &iter = cfg.fIter;
+
+   bool res = iter.NextSubEvent();
+   if (!res || !iter.subevnt()) {
+      // retry in next hadtu container
+      if (!ShiftToNextTu(ninp))
+         return false;
+      if (!iter.NextSubEvent())
+         return false;
+   }
+
+   // no need to analyze data
+   if (fast)
+      return true;
+
+   // this is selected subevent
+   cfg.subevnt = iter.subevnt();
+   cfg.has_data = true;
+   cfg.data_size = cfg.subevnt->GetSize();
+
+   cfg.fTrigNr = cfg.subevnt->GetTrigNumber() & fTriggerRangeMask;
+   cfg.fTrigType = cfg.subevnt->GetTrigType();
+   cfg.fHubId = cfg.subevnt->GetAddr();
+   cfg.fTrigTag = 0;
+
+   // DOUT5("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
+
+   cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+   cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
+
+   cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
+   cfg.fDataError = 0;
+
+   int diff = fTriggerNumStep;
+   if (cfg.fLastTrigNr != kNoTrigger)
+      diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
+   cfg.fLastTrigNr = cfg.fTrigNr;
+
+   if (diff >= 2*fTriggerNumStep)
+      cfg.fLostTrig += diff / fTriggerNumStep - 1;
+
+   cfg.fTotalDataSize += cfg.data_size;
+
+   return true;
+}
+
 
 bool dogma::CombinerModule::DropAllInputBuffers(bool reinit_transports)
 {
