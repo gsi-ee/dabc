@@ -202,15 +202,16 @@ bool dogma::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
 bool dogma::ReadIterator::NextSubEvent()
 {
    if (fSubPtr.null()) {
-      if (fEvPtr.null()) return false;
+      if (fEvPtr.null())
+         return false;
       // this function is used both in hadtu and in event mode. Check out mode:
       dabc::BufferSize_t headsize = 0, containersize = 0;
-      if (fBufType == mbt_DogmaEvents) {
-         headsize = sizeof(dogma::DogmaEvent);
-         containersize = evnt()->GetEventLen();
-      } else if (fBufType == mbt_DogmaTransportUnit) {
+      if (fBufType == mbt_DogmaTransportUnit) {
          headsize = 0;
          containersize = tu()->GetSize();
+      } else if (fBufType == mbt_DogmaEvents) {
+         headsize = sizeof(dogma::DogmaEvent);
+         containersize = evnt()->GetEventLen();
       } else if (fBufType == mbt_DogmaSubevents) {
          headsize = 0;
          containersize = fEvPtr.fullsize();
@@ -220,14 +221,15 @@ bool dogma::ReadIterator::NextSubEvent()
       }
 
       if (containersize == 0)
-         return false; // typical problem of artifical generated events
+         return false; // typical problem of artificial generated events
 
       if (containersize < headsize) {
          EOUT("DOGMA format error - tu container fullsize %u too small", (unsigned) containersize);
          return false;
       }
       fSubPtr.reset(fEvPtr, 0, containersize);
-      fSubPtr.shift(headsize);
+      if (headsize > 0)
+         fSubPtr.shift(headsize);
    } else {
       fSubPtr.shift(subevnt()->GetSize());
    }
