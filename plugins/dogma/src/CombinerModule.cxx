@@ -906,6 +906,9 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 {
    auto &cfg = fCfg[ninp];
 
+   if (cfg.fResort)
+      return ShiftToNextSubEventFull(ninp, fast, dropped);
+
    // account when subevent exists but intentionally dropped
    if (dropped && cfg.has_data)
       cfg.fDroppedTrig++;
@@ -918,9 +921,18 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    bool res = iter.NextSubEvent();
    if (!res || !iter.subevnt()) {
-      // retry in next hadtu container
-      if (!ShiftToNextTu(ninp))
-         return false;
+
+      if (iter.IsData())
+         res = iter.NextSubeventsBlock();
+
+      if (!res || !iter.IsData()) {
+         if(!ShiftToNextBuffer(ninp))
+            return false;
+         res = iter.NextSubeventsBlock();
+         if (!res)
+            return false;
+      }
+
       if (!iter.NextSubEvent())
          return false;
    }
