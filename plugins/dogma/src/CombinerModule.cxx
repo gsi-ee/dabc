@@ -1402,6 +1402,8 @@ bool dogma::CombinerModule::BuildEvent()
          debugmask[cfg.ninp] = 'x';
       }
 
+   grd.Next("done", 16);
+
    if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
       DOUT1("Did building as usual mask %s canBuild = %5s maxdist = %5.3f s", debugmask.c_str(), DBOOL(canBuildEvent), fMaxProcDist);
       fLastDebugTm = currTm;
