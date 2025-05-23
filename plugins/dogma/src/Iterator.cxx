@@ -22,7 +22,9 @@ dogma::ReadIterator::ReadIterator(const ReadIterator& src) :
    fFirstEvent(src.fFirstEvent),
    fEvPtr(src.fEvPtr),
    fSubPtr(src.fSubPtr),
+   fSubPtrLen(src.fSubPtrLen),
    fRawPtr(src.fRawPtr),
+   fRawPtrLen(src.fRawPtrLen),
    fBufType(src.fBufType)
 {
 }
@@ -32,7 +34,9 @@ dogma::ReadIterator& dogma::ReadIterator::operator=(const ReadIterator& src)
    fFirstEvent = src.fFirstEvent;
    fEvPtr = src.fEvPtr;
    fSubPtr = src.fSubPtr;
+   fSubPtrLen = src.fSubPtrLen;
    fRawPtr = src.fRawPtr;
+   fRawPtrLen = src.fRawPtrLen;
    fBufType = src.fBufType;
 
    return *this;
@@ -42,7 +46,8 @@ bool dogma::ReadIterator::Reset(const dabc::Buffer& buf)
 {
    Close();
 
-   if (buf.null()) return false;
+   if (buf.null())
+      return false;
 
    fBufType = buf.GetTypeId();
 
@@ -60,8 +65,10 @@ bool dogma::ReadIterator::Reset(const dabc::Buffer& buf)
 void dogma::ReadIterator::Close()
 {
    fEvPtr.reset();
-   fSubPtr.reset();
-   fRawPtr.reset();
+   fSubPtr = nullptr;
+   fSubPtrLen = 0;
+   fRawPtr = nullptr;
+   fRawPtrLen = 0;
    fFirstEvent = false;
    fBufType = dabc::mbt_Null;
 }
@@ -99,8 +106,10 @@ bool dogma::ReadIterator::NextTu()
       return false;
    }
 
-   fSubPtr.reset();
-   fRawPtr.reset();
+   fSubPtr = nullptr;
+   fSubPtrLen = 0;
+   fRawPtr = nullptr;
+   fRawPtrLen = 0;
 
    return true;
 }
@@ -138,8 +147,10 @@ bool dogma::ReadIterator::NextEvent()
       return false;
    }
 
-   fSubPtr.reset();
-   fRawPtr.reset();
+   fSubPtr = nullptr;
+   fSubPtrLen = 0;
+   fRawPtr = nullptr;
+   fRawPtrLen = 0;
 
    return true;
 }
@@ -157,8 +168,10 @@ bool dogma::ReadIterator::NextSubeventsBlock()
       if (!fFirstEvent) fEvPtr.reset();
       if (fEvPtr.null()) return false;
       fFirstEvent = false;
-      fSubPtr.reset();
-      fRawPtr.reset();
+      fSubPtr = nullptr;
+      fSubPtrLen = 0;
+      fRawPtr = nullptr;
+      fRawPtrLen = 0;
       return true;
    }
 
@@ -201,7 +214,7 @@ bool dogma::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
 
 bool dogma::ReadIterator::NextSubEvent()
 {
-   if (fSubPtr.null()) {
+   if (!fSubPtr) {
       if (fEvPtr.null())
          return false;
       // this function is used both in hadtu and in event mode. Check out mode:
@@ -227,26 +240,30 @@ bool dogma::ReadIterator::NextSubEvent()
          EOUT("DOGMA format error - tu container fullsize %u too small", (unsigned) containersize);
          return false;
       }
-      fSubPtr.reset(fEvPtr, 0, containersize);
+      fSubPtr = (unsigned char *) fEvPtr();
+      fSubPtrLen = containersize;
       if (headsize > 0)
-         fSubPtr.shift(headsize);
+         ShiftSubPtr(headsize);
    } else {
-      fSubPtr.shift(subevnt()->GetSize());
+      ShiftSubPtr(subevnt()->GetSize());
    }
 
-   if (fSubPtr.fullsize() < sizeof(dogma::DogmaTu)) {
-      fSubPtr.reset();
+   if (fSubPtrLen < sizeof(dogma::DogmaTu)) {
+      fSubPtr = nullptr;
+      fSubPtrLen = 0;
       return false;
    }
 
    if (subevnt()->GetSize() < sizeof(dogma::DogmaTu)) {
       EOUT("Dogma format error - subevent fullsize %u too small", subevnt()->GetSize());
-      fSubPtr.reset();
+      fSubPtr = nullptr;
+      fSubPtrLen = 0;
       return false;
    }
 
-   fRawPtr.reset(fSubPtr, 0, subevnt()->GetSize());
-   fRawPtr.shift(sizeof(dogma::DogmaTu));
+   fRawPtr = fSubPtr;
+   fRawPtrLen = subevnt()->GetSize();
+   ShiftRawPtr(sizeof(dogma::DogmaTu));
 
    return true;
 }
@@ -254,7 +271,8 @@ bool dogma::ReadIterator::NextSubEvent()
 unsigned dogma::ReadIterator::rawdata_maxsize() const
 {
    unsigned sz0 = fEvPtr.rawsize(), sz1 = 0;
-   if (!fSubPtr.null()) sz1 = fEvPtr.distance_to(fSubPtr);
+   if (fSubPtr)
+      sz1 = fSubPtr - (unsigned char *) fEvPtr();
    return sz0 > sz1 ? sz0 - sz1 : 0;
 }
 

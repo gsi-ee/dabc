@@ -44,9 +44,33 @@ namespace dogma {
       protected:
          bool           fFirstEvent = false;
          dabc::Pointer  fEvPtr;
-         dabc::Pointer  fSubPtr;
-         dabc::Pointer  fRawPtr;
+         unsigned char *fSubPtr = nullptr;
+         unsigned       fSubPtrLen = 0;
+         unsigned char *fRawPtr = nullptr;
+         unsigned       fRawPtrLen = 0;
          unsigned       fBufType = dabc::mbt_Null;
+
+         inline void ShiftSubPtr(unsigned len)
+         {
+            if (len >= fSubPtrLen) {
+               fSubPtr = nullptr;
+               fSubPtrLen = 0;
+            } else {
+               fSubPtr += len;
+               fSubPtrLen -= len;
+            }
+         }
+
+         inline void ShiftRawPtr(unsigned len)
+         {
+            if (len >= fRawPtrLen) {
+               fRawPtr = nullptr;
+               fRawPtrLen = 0;
+            } else {
+               fRawPtr += len;
+               fRawPtrLen -= len;
+            }
+         }
 
       public:
          ReadIterator() {}
@@ -105,9 +129,9 @@ namespace dogma {
          unsigned remained_size() const { return fEvPtr.fullsize(); }
 
          bool AssignEventPointer(dabc::Pointer& ptr);
-         dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr(); }
-         void* rawdata() const { return fRawPtr(); }
-         uint32_t rawdatasize() const { return fRawPtr.fullsize(); }
+         dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr; }
+         void* rawdata() const { return fRawPtr; }
+         uint32_t rawdatasize() const { return fRawPtrLen; }
 
          /** Try to define maximal length for the raw data */
          unsigned rawdata_maxsize() const;
