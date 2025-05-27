@@ -109,10 +109,14 @@ bool dogma::UdpAddon::CloseBuffer()
 
 bool dogma::UdpAddon::ReadUdp()
 {
-   if (!fRunning) return false;
+   if (!fRunning)
+      return false;
 
-   dogma::UdpTransport* tr = dynamic_cast<dogma::UdpTransport*> (fWorker());
-   if (!tr) { EOUT("No transport assigned"); return false; }
+   auto tr = dynamic_cast<dogma::UdpTransport*> (fWorker());
+   if (!tr) {
+      EOUT("No transport assigned");
+      return false;
+   }
 
    if (fDebug) {
       double tm = fLastProcTm.SpentTillNow(true);
@@ -140,7 +144,8 @@ bool dogma::UdpAddon::ReadUdp()
 
    while (cnt-- > 0) {
 
-      if (tgt != fMtuBuffer) tgt = fTgtPtr.ptr();
+      if (tgt != fMtuBuffer)
+         tgt = fTgtPtr.ptr();
 
       /* this was old form which is not necessary - socket is already bind with the port */
       //  socklen_t socklen = sizeof(fSockAddr);
@@ -199,7 +204,7 @@ bool dogma::UdpAddon::ReadUdp()
       if ((fTgtPtr.rawsize() < fMTU) || (fTgtPtr.consumed_size() > fReduce)) {
          CloseBuffer();
          tr->BufferReady();
-         if (!tr->AssignNewBuffer(0,this))
+         if (!tr->AssignNewBuffer(0, this))
             return false;
       }
    }
@@ -303,11 +308,11 @@ dogma::UdpTransport::~UdpTransport()
 int dogma::UdpTransport::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("ResetTransportStat")) {
-      auto addon = dynamic_cast<UdpAddon *> (fAddon());
+      auto addon = static_cast<UdpAddon *>(fAddon());
       if (addon) addon->ClearCounters();
       return dabc::cmd_true;
    } else if (cmd.IsName("ReinitTransport")) {
-      auto addon = dynamic_cast<UdpAddon *> (fAddon());
+      auto addon = static_cast<UdpAddon *>(fAddon());
       if (addon) {
          addon->CloseSocket();
          int fd = dogma::UdpAddon::OpenUdp(addon->fHostName, addon->fNPort, addon->fRecvBufLen);
@@ -328,7 +333,6 @@ int dogma::UdpTransport::ExecuteCommand(dabc::Command cmd)
       // ignore this command
       return dabc::cmd_true;
    }
-
 
    return dabc::Transport::ExecuteCommand(cmd);
 }
@@ -357,7 +361,7 @@ void dogma::UdpTransport::ProcessTimerEvent(unsigned timer)
 {
    std::string name = TimerName(timer);
    if (name == "HeartbeatTimer") {
-      UdpAddon *addon = (UdpAddon *) fAddon();
+      auto addon = static_cast<UdpAddon *>(fAddon());
 
       if (addon) {
          addon->ReadUdp();
@@ -367,7 +371,7 @@ void dogma::UdpTransport::ProcessTimerEvent(unsigned timer)
    } else if (name == "FlushTimer") {
       FlushBuffer(false);
 
-      UdpAddon *addon = (UdpAddon *) fAddon();
+      auto addon = static_cast<UdpAddon *>(fAddon());
 
       if (addon && addon->fDebug && fLastDebugTm.Expired(1.)) {
          DOUT1("UDP %d NumReady:%u CanTake:%u BufAssigned:%s CanSend:%u DoingInp %s maxlooptm = %5.3f", fIdNumber, fNumReadyBufs, NumCanTake(0), DBOOL(fBufAssigned), NumCanSend(0), DBOOL(addon->IsDoingInput()), addon->fMaxProcDist);
@@ -395,7 +399,7 @@ bool dogma::UdpTransport::ProcessBuffer(unsigned pool)
 {
    // check that required element available in the pool
 
-   UdpAddon* addon = (UdpAddon *) fAddon();
+   auto addon = static_cast<UdpAddon *>(fAddon());
 
    if (AssignNewBuffer(pool, addon)) {
       addon->ReadUdp();
@@ -409,9 +413,11 @@ bool dogma::UdpTransport::AssignNewBuffer(unsigned pool, UdpAddon *addon)
 {
    // assign  new buffer to the addon
 
-   if (fBufAssigned || (NumCanTake(pool) <= fNumReadyBufs)) return false;
+   if (fBufAssigned || (NumCanTake(pool) <= fNumReadyBufs))
+      return false;
 
-   if (!addon) addon = (UdpAddon*) fAddon();
+   if (!addon)
+      addon = static_cast<UdpAddon *>(fAddon());
 
    if (addon->HasBuffer()) {
       EOUT("should not happen");
@@ -451,7 +457,7 @@ void dogma::UdpTransport::BufferReady()
 
 void dogma::UdpTransport::FlushBuffer(bool onclose)
 {
-   UdpAddon* addon = dynamic_cast<UdpAddon*> (fAddon());
+   auto addon = static_cast<UdpAddon *>(fAddon());
 
    if (onclose || (fLastSendCnt == addon->fSendCnt)) {
       if (addon->CloseBuffer()) {
