@@ -31,7 +31,7 @@
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
 #define DEFAULT_MTU 0xFFF0
 
-hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce, double lost) :
+hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
@@ -41,8 +41,6 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
    fReduce(reduce < 0.1 ? 0.1 : (reduce > 1. ? 1. : reduce)),
-   fLostRate(lost),
-   fLostCnt(lost>0 ? 1 : -1),
    fDebug(debug),
    fRunning(false),
    fMaxProcDist(0.)
@@ -156,14 +154,6 @@ bool hadaq::NewAddon::ReadUdp()
          if (errno == EAGAIN) break;
          EOUT("Socket error");
          return false;
-      }
-
-      if ((fLostCnt > 0) && (--fLostCnt == 0)) {
-         // artificial drop of received UDP packet
-         fLostCnt = (int) (1 / fLostRate * (0.5 + 1.* rand() / RAND_MAX));
-         if (fLostCnt < 3) fLostCnt = 3;
-         fTotalArtificialLosts++;
-         continue;
       }
 
       hadaq::HadTu* hadTu = (hadaq::HadTu*) tgt;

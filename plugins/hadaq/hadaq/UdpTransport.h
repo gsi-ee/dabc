@@ -44,7 +44,6 @@ namespace hadaq {
       uint64_t           fTotalRecvPacket{0};
       uint64_t           fTotalDiscardPacket{0};
       uint64_t           fTotalDiscard32Packet{0};
-      uint64_t           fTotalArtificialLosts{0};
       uint64_t           fTotalArtificialSkip{0};
       uint64_t           fTotalRecvBytes{0};
       uint64_t           fTotalDiscardBytes{0};
@@ -55,7 +54,6 @@ namespace hadaq {
          fTotalRecvPacket = 0;
          fTotalDiscardPacket = 0;
          fTotalDiscard32Packet = 0;
-         fTotalArtificialLosts = 0;
          fTotalArtificialSkip = 0;
          fTotalRecvBytes = 0;
          fTotalDiscardBytes = 0;
@@ -66,12 +64,7 @@ namespace hadaq {
 
       std::string GetDiscardString()
       {
-         std::string res = dabc::number_to_str(fTotalDiscardPacket);
-
-         if (fTotalArtificialLosts > 0)
-            res = std::string("*") + dabc::number_to_str(fTotalArtificialLosts);
-
-         return res;
+         return dabc::number_to_str(fTotalDiscardPacket);
       }
 
       std::string GetDiscard32String()
@@ -103,8 +96,6 @@ namespace hadaq {
          int                fSendCnt{0};         ///< counter of send buffers since last timeout active
          int                fMaxLoopCnt{0};      ///< maximal number of UDP packets, read at once
          double             fReduce{0};          ///< reduce filled buffer size to let reformat data later
-         double             fLostRate{0};        ///< artificial lost of received UDP packets
-         int                fLostCnt{0};         ///< counter used to drop buffers
          bool               fDebug{false};       ///< when true, produce more debug output
          bool               fRunning{false};     ///< is transport running
          dabc::TimeStamp    fLastProcTm;         ///< last time when udp reading was performed
@@ -121,7 +112,7 @@ namespace hadaq {
          bool CloseBuffer();
 
       public:
-         NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce, double lost);
+         NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce);
          virtual ~NewAddon();
 
          bool HasBuffer() const { return !fTgtPtr.null(); }

@@ -155,16 +155,16 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    int maxloop = url.GetOptionInt("maxloop", 100);
    double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
    double reduce = url.GetOptionDouble("reduce", 1.);
-   double lost_rate = url.GetOptionDouble("lost", 0);
    bool debug = url.HasOption("debug");
    int udp_queue = url.GetOptionInt("upd_queue", 0);
    double heartbeat = url.GetOptionDouble("heartbeat", -1.);
 
-   if (udp_queue>0) cmd.SetInt("TransportQueue", udp_queue);
+   if (udp_queue > 0)
+      cmd.SetInt("TransportQueue", udp_queue);
 
    DOUT0("Start HADAQ UDP transport on %s", url.GetHostNameWithPort().c_str());
 
-   NewAddon* addon = new NewAddon(fd, nport, mtu, debug, maxloop, reduce, lost_rate);
+   NewAddon* addon = new NewAddon(fd, nport, mtu, debug, maxloop, reduce);
 	return new hadaq::NewTransport(cmd, portref, addon, flush, heartbeat);
 }
 
