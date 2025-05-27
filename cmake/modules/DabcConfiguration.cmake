@@ -1,6 +1,4 @@
-set(DABC_DEFINES
-    ""
-    CACHE STRING "DABC definitions" FORCE)
+set(DABC_DEFINES "" CACHE STRING "DABC definitions" FORCE)
 
 # --- JAM22  try  for mbspex lib
 cmake_policy(SET CMP0060 NEW)
@@ -25,9 +23,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Woverloaded-virtual -fsigned-char")
 endif()
 
-set(DABC_CXX_STANDARD
-    "${CMAKE_CXX_STANDARD}"
-    CACHE STRING "DABC cxx standard" FORCE)
+set(DABC_CXX_STANDARD "${CMAKE_CXX_STANDARD}" CACHE STRING "DABC cxx standard" FORCE)
 
 if(debug)
   set(DABC_DEBUGLEVEL ${debug})
@@ -38,6 +34,10 @@ endif()
 
 if(extrachecks)
   set(DABC_EXTRA_CHECKS TRUE)
+endif()
+
+if(profiler)
+  set(DABC_PROFILER TRUE)
 endif()
 
 configure_file(
