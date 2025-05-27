@@ -32,7 +32,7 @@
 #include "dogma/Iterator.h"
 #endif
 
-#define DOGMA_RINGSIZE 100
+#define DOGMA_RINGSIZE 25
 
 namespace dogma {
 
