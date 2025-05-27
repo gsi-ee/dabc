@@ -94,6 +94,7 @@ namespace dogma {
          friend class UdpTransport;
 
          dabc::Pointer      fTgtPtr;             ///< pointer used to read data
+         dabc::BufferSize_t fBufferSize{0};      ///< available buffer size
          std::string        fHostName;           ///< host name used to create UDP socket
          int                fRecvBufLen{100000}; ///< recv buf len
          unsigned           fMTU{0};             ///< maximal size of packet expected from DOG

@@ -214,9 +214,11 @@ bool dogma::UdpAddon::ReadUdp()
 
       PROFILER_BLOCK("buf2")
 
+      auto rawsz = fTgtPtr.rawsize(); // remaining raw size
+
       // when rest size is smaller that mtu, one should close buffer
-      if ((fTgtPtr.rawsize() < fMTU) ||
-          ((fReduce < 1.) && (fTgtPtr.consumed_size() > fReduce))) {
+      // or if filled size bigger than allowed reduced size
+      if ((rawsz < fMTU) || (fBufferSize - rawsz > fBufferSize * fReduce)) {
          CloseBuffer();
          tr->BufferReady();
          if (!tr->AssignNewBuffer(0, this))
@@ -452,6 +454,8 @@ bool dogma::UdpTransport::AssignNewBuffer(unsigned pool, UdpAddon *addon)
    }
 
    unsigned bufsize = (unsigned) buf.SegmentSize(0);
+
+   addon->fBufferSize = bufsize;
 
    addon->fTgtPtr.reset(buf, 0, bufsize);
 
