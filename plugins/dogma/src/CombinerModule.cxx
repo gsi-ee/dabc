@@ -64,7 +64,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fMaxProcDist = 0;
 
    fEBId = Cfg("NodeId", cmd).AsInt(-1);
-   if (fEBId < 0) fEBId = dabc::mgr.NodeId() + 1; // hades eb ids start with 1
+   if (fEBId < 0)
+      fEBId = dabc::mgr.NodeId() + 1; // hades eb ids start with 1
 
    fBNETsend = Cfg("BNETsend", cmd).AsBool(false);
    fBNETrecv = Cfg("BNETrecv", cmd).AsBool(false);
@@ -73,6 +74,9 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fBNETNumSend = Cfg("BNET_NUMSENDERS", cmd).AsInt(1);
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(false);
+   fLessDebug = Cfg("LessDebug", cmd).AsBool(false);
+   if (fLessDebug)
+      fExtraDebug = false;
 
    fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
 
@@ -198,7 +202,8 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    }
 
    #ifdef DABC_PROFILER
-   CreateTimer("ProfilerTimer", 1.); // check profiler values
+   if (!fLessDebug)
+      CreateTimer("ProfilerTimer", 1.); // check profiler values
    #endif
 
    fNumReadBuffers = 0;
@@ -792,8 +797,10 @@ bool dogma::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 
    cfg.fTrigTag = 0;
 
-   cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
-   cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
+   if (!fLessDebug) {
+      cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+      cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
+   }
 
    cfg.fEmpty = (cfg.data_size == 0);
    cfg.fDataError = 0;
@@ -887,10 +894,10 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fHubId = cfg.subevnt->GetAddr();
       cfg.fTrigTag = 0;
 
-      // DOUT5("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
-
-      cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
-      cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
+      if (!fLessDebug) {
+         cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+         cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
+      }
 
       cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
       cfg.fDataError = 0;
@@ -1001,15 +1008,15 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
 
    PROFILER_BLOCK("ring")
 
-   cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
-   cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
+   if (!fLessDebug) {
+      cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+      cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
+   }
 
    cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
    cfg.fDataError = 0;
 
-   int diff = fTriggerNumStep;
-   if (cfg.fLastTrigNr != kNoTrigger)
-      diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
+   int diff = (cfg.fLastTrigNr != kNoTrigger) ? CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr) : fTriggerNumStep;
    cfg.fLastTrigNr = cfg.fTrigNr;
 
    if (diff >= 2*fTriggerNumStep)
@@ -1126,7 +1133,7 @@ bool dogma::CombinerModule::BuildEvent()
    bool request_queue = false;
    if (fExtraDebug)
       request_queue = true;
-   else if (fLastDebugTm.Expired(currTm, 0.2)) {
+   else if (fLastDebugTm.Expired(currTm, fLessDebug ? 1.0 : 0.1)) {
       request_queue = true;
       fLastDebugTm = currTm;
    }
@@ -1267,12 +1274,11 @@ bool dogma::CombinerModule::BuildEvent()
    // which channel is definitely in the data
    unsigned masterchannel = must_have_data ? mast_have_max_inp : min_inp;
 
-   uint32_t buildevid = fCfg[masterchannel].fTrigNr,
-            buildtag = fCfg[masterchannel].fTrigTag,
-            buildtype = fCfg[masterchannel].fTrigType;
+   auto &mastercfg = fCfg[masterchannel];
 
-
-   // printf("build evid = %u\n", buildevid);
+   uint32_t buildevid = mastercfg.fTrigNr,
+            buildtag = mastercfg.fTrigTag,
+            buildtype = mastercfg.fTrigType;
 
    ////////////////////////////////////////////////////////////////////////
    // second input loop: skip all subevents until we reach current trignum

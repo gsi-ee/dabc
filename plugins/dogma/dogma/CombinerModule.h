@@ -251,7 +251,8 @@ namespace dogma {
             if false, do not account it (for multiple event builder mode)*/
          bool               fEvnumDiffStatistics;
 
-         bool               fExtraDebug;   ///< when >0 fill profiles, >1 extra debug output is created
+         bool               fLessDebug;    ///< produce less debug information
+         bool               fExtraDebug;   ///< enable extra debug
          dabc::TimeStamp    fLastDebugTm;  ///< timer used to generate rare debugs output
          dabc::TimeStamp    fLastDropTm;   ///< timer used to avoid too often drop of data
          dabc::TimeStamp    fLastProcTm;   ///< last time when event building was called

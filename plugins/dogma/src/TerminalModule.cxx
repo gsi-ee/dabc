@@ -298,11 +298,11 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    std::vector<int64_t> ports, recvbytes, inpdrop, inplost;
    std::vector<double> inprates;
 
-   for (unsigned n=0;n<comb->fCfg.size();n++) {
+   for (auto &cfg : comb->fCfg) {
+
+      unsigned n = cfg.ninp;
 
       std::string sbuf = dabc::format("%2u", n);
-
-      auto &cfg = comb->fCfg[n];
 
       auto info = (dogma::TransportInfo *) cfg.fInfo;
 
@@ -359,7 +359,8 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
 
       s += sbuf;
 
-      if (fRingSize>0) s += "  " + cfg.TriggerRingAsStr(fRingSize);
+      if ((fRingSize > 0) && !comb->fLessDebug)
+         s += "  " + cfg.TriggerRingAsStr(fRingSize);
 
       s += "\n";
    }
