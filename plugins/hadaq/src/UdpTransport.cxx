@@ -171,7 +171,7 @@ bool hadaq::NewAddon::ReadUdp()
 
       if (!errmsg.empty()) {
          DOUT3("UDP:%d %s", fNPort, errmsg.c_str());
-         if (fDebug && (dabc::lgr()->GetDebugLevel()>2)) {
+         if (fDebug && (dabc::lgr()->GetDebugLevel() > 2)) {
             errmsg = dabc::format("   Packet length %ld", (long) res);
             uint32_t* ptr = (uint32_t*) hadTu;
             for (unsigned n=0;n<res/4;n++) {
@@ -202,12 +202,15 @@ bool hadaq::NewAddon::ReadUdp()
 
       fTgtPtr.shift(hadTu->GetPaddedSize());
 
+      auto rawsz = fTgtPtr.rawsize(); // remaining raw size
+
       // when rest size is smaller that mtu, one should close buffer
-      if ((fTgtPtr.rawsize() < fMTU) ||
-          ((fReduce < 1.) && (fTgtPtr.consumed_size() > fReduce))) {
+      // or if filled size bigger than allowed reduced size
+      if ((rawsz < fMTU) || (fBufferSize - rawsz > fBufferSize * fReduce)) {
          CloseBuffer();
          tr->BufferReady();
-         if (!tr->AssignNewBuffer(0,this)) return false;
+         if (!tr->AssignNewBuffer(0,this))
+            return false;
       }
    }
 
@@ -424,6 +427,7 @@ bool hadaq::NewTransport::AssignNewBuffer(unsigned pool, NewAddon *addon)
 
    unsigned bufsize = (unsigned) buf.SegmentSize(0);
 
+   addon->fBufferSize = bufsize;
    addon->fTgtPtr.reset(buf, 0, bufsize);
 
    fBufAssigned = true;

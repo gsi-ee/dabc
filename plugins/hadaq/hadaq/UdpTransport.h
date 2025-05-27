@@ -90,6 +90,7 @@ namespace hadaq {
          friend class NewTransport;
 
          dabc::Pointer      fTgtPtr;             ///< pointer used to read data
+         dabc::BufferSize_t fBufferSize{0};      ///< assigned buffer size
          unsigned           fMTU{0};             ///< maximal size of packet expected from TRB
          void*              fMtuBuffer{nullptr}; ///< buffer used to skip packets when no normal buffer is available
          int                fSkipCnt{0};         ///< counter used to control buffers skipping
