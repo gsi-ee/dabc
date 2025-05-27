@@ -15,6 +15,8 @@
 
 #include "dabc/Profiler.h"
 
+#ifdef DABC_PROFILER
+
 void dabc::Profiler::MakeStatistic()
 {
 
@@ -61,3 +63,5 @@ std::string dabc::Profiler::Format()
 
    return res;
 }
+
+#endif

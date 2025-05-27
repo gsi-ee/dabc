@@ -16,11 +16,17 @@
 #ifndef DABC_Profiler
 #define DABC_Profiler
 
+#ifndef DABC_defines
+#include "dabc/defines.h"
+#endif
+
 #ifndef DABC_timing
 #include "dabc/timing.h"
 #endif
 
 #include <vector>
+
+#ifdef DABC_PROFILER
 
 namespace dabc {
 
@@ -106,5 +112,49 @@ namespace dabc {
    };
 
 } // namespace dabc
+
+#else
+
+// dummy profiler implementation
+namespace dabc {
+
+   class ProfilerGuard;
+
+   class Profiler {
+
+   public:
+
+      Profiler() { }
+
+      void Reserve(unsigned = 10)
+      {
+      }
+
+      void SetActive(bool = true) {  }
+
+      void MakeStatistic() {}
+
+      std::string Format() { return ""; }
+
+   };
+
+
+   class ProfilerGuard {
+
+   public:
+      ProfilerGuard(Profiler &, const char * = nullptr, unsigned = 0)
+      {
+      }
+
+      void Next(const char * = nullptr, unsigned = 0)
+      {
+      }
+
+   };
+
+} // namespace dabc
+
+
+#endif
 
 #endif
