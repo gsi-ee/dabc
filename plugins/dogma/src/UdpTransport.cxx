@@ -33,7 +33,7 @@
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
 #define DEFAULT_MTU 0xFFF0
 
-dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, int mtu, bool debug, bool print, int maxloop, double reduce, double lost) :
+dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, int mtu, bool debug, bool print, int maxloop, double reduce) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
@@ -45,8 +45,6 @@ dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuf
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
    fReduce(reduce < 0.1 ? 0.1 : (reduce > 1. ? 1. : reduce)),
-   fLostRate(lost),
-   fLostCnt(lost>0 ? 1 : -1),
    fDebug(debug),
    fPrint(print),
    fRunning(false),
@@ -161,14 +159,6 @@ bool dogma::UdpAddon::ReadUdp()
          if (errno == EAGAIN) break;
          EOUT("Socket error");
          return false;
-      }
-
-      if ((fLostCnt > 0) && (--fLostCnt == 0)) {
-         // artificial drop of received UDP packet
-         fLostCnt = (int) (1 / fLostRate * (0.5 + 1.* rand() / RAND_MAX));
-         if (fLostCnt < 3) fLostCnt = 3;
-         fTotalArtificialLosts++;
-         continue;
       }
 
       auto tu = (DogmaTu *) tgt;
