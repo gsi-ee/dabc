@@ -73,7 +73,6 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fBNETNumSend = Cfg("BNET_NUMSENDERS", cmd).AsInt(1);
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(false);
-   fProfiler = Cfg("Profiler", cmd).AsBool(false);
 
    fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
 
@@ -198,8 +197,9 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       item.SetField("value", "Init");
    }
 
-   if (fProfiler)
-      CreateTimer("ProfilerTimer", 1.); // check profiler values
+   #ifdef DABC_PROFILER
+   CreateTimer("ProfilerTimer", 1.); // check profiler values
+   #endif
 
    fNumReadBuffers = 0;
 }
@@ -895,9 +895,8 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
       cfg.fDataError = 0;
 
-      int diff = fTriggerNumStep;
-      if (cfg.fLastTrigNr != kNoTrigger)
-         diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
+      int diff = (cfg.fLastTrigNr != kNoTrigger) ? CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr) : fTriggerNumStep;
+
       cfg.fLastTrigNr = cfg.fTrigNr;
 
       if (diff >= 2*fTriggerNumStep)
@@ -916,13 +915,13 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
    if (cfg.fResort)
       return ShiftToNextSubEvent(ninp, fast, dropped);
 
-   dabc::ProfilerGuard grd(fShiftProfiler, "start", 0);
+   PROFILER_GURAD(fShiftProfiler, "start")
 
    // account when subevent exists but intentionally dropped
    if (dropped && cfg.has_data)
       cfg.fDroppedTrig++;
 
-   grd.Next("reset");
+   PROFILER_BLOCK("reset")
 
    cfg.Reset(fast);
 
@@ -930,45 +929,45 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
 
    auto &iter = cfg.fIter;
 
-   grd.Next("subev1");
+   PROFILER_BLOCK("subev1")
 
    bool res = iter.NextSubEvent();
    if (!res || !iter.subevnt()) {
 
-      grd.Next("block1");
+      PROFILER_BLOCK("block1")
 
       if (iter.IsData())
          res = iter.NextSubeventsBlock();
 
-      grd.Next("check");
+      PROFILER_BLOCK("check")
 
       if (!res || !iter.IsData()) {
 
          iter.Close();
 
-         // grd.Next("canrecv");
+         // PROFILER_BLOCK("canrecv")
 
          if(!CanRecv(ninp))
             return false;
 
-         // grd.Next("dorecv");
+         // PROFILER_BLOCK("dorecv")
 
          dabc::Buffer buf = Recv(ninp);
          fNumReadBuffers++;
 
-         // grd.Next("afterrecv");
+         // PROFILER_BLOCK("afterrecv")
 
          if (buf.GetTypeId() == dabc::mbt_EOF) {
             ProcessEOF(ninp);
             return false;
          }
 
-         // grd.Next("reset");
+         // PROFILER_BLOCK("reset")
 
          // can assign buffer directly
          res = iter.ResetOwner(buf);
 
-         // grd.Next("block2");
+         // PROFILER_BLOCK("block2")
 
          if (res)
             res = iter.NextSubeventsBlock();
@@ -976,7 +975,7 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
             return false;
       }
 
-      grd.Next("subev2");
+      PROFILER_BLOCK("subev2")
 
       if (!iter.NextSubEvent())
          return false;
@@ -986,7 +985,7 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
    if (fast)
       return true;
 
-   grd.Next("fill", 20);
+   PROFILER_BLOCKN("fill", 20)
 
    // this is selected subevent
    cfg.subevnt = iter.subevnt();
@@ -1000,7 +999,7 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
 
    // DOUT5("inp %u event nr %u type %u", ninp, cfg.fTrigNr, cfg.fTrigType);
 
-   grd.Next("ring");
+   PROFILER_BLOCK("ring")
 
    cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
    cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
@@ -1105,7 +1104,7 @@ bool dogma::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
 
 
-   dabc::ProfilerGuard grd(fBldProfiler, "bld", 0);
+   PROFILER_GURAD(fBldProfiler, "bld")
 
    fBldCalls++;
 
@@ -1132,7 +1131,7 @@ bool dogma::CombinerModule::BuildEvent()
       fLastDebugTm = currTm;
    }
 
-   grd.Next("shft");
+   PROFILER_BLOCK("shft")
 
    for (auto &cfg : fCfg) {
 
@@ -1201,7 +1200,7 @@ bool dogma::CombinerModule::BuildEvent()
       }
    } // for ninp
 
-   grd.Next("drp");
+   PROFILER_BLOCK("drp")
 
    // for must_have channels we always build event with maximum trigger id = newest event, discarding incomplete older events
    int diff0 = (incomplete_data || !must_have_data) ? 0 : CalcTrigNumDiff(mineventid_must_have, maxeventid_must_have);
@@ -1253,7 +1252,7 @@ bool dogma::CombinerModule::BuildEvent()
         return false; // retry on next set of buffers
      }
 
-   grd.Next("chkcomp");
+   PROFILER_BLOCK("chkcomp");
 
    if (incomplete_data || !any_data) {
       if (fExtraDebug && fLastDebugTm.Expired(currTm, 0.5)) {
@@ -1321,7 +1320,7 @@ bool dogma::CombinerModule::BuildEvent()
 
    } // for fCfg
 
-   grd.Next("buf");
+   PROFILER_BLOCK("buf");
 
    // here all inputs should be aligned to buildevid
 
@@ -1392,7 +1391,7 @@ bool dogma::CombinerModule::BuildEvent()
    if (canBuildEvent) {
       // EVENT BUILDING STARTS HERE
 
-      grd.Next("compl");
+      PROFILER_BLOCK("compl")
 
       fOut.NewEvent(sequencenumber, buildtype, buildevid);
 
@@ -1405,7 +1404,7 @@ bool dogma::CombinerModule::BuildEvent()
       if (dataError) fRunDataErrors++;
       if (tagError) fRunTagErrors++;
 
-      grd.Next("main");
+      PROFILER_BLOCK("main")
 
       // third input loop: build output event from all not empty subevents
       for (auto &cfg : fCfg) {
@@ -1429,7 +1428,7 @@ bool dogma::CombinerModule::BuildEvent()
          cfg.fLastEvtBuildTrigId = (cfg.fTrigNr << 8) | (cfg.fTrigTag & 0xff);
       } // for ninp
 
-      grd.Next("after");
+      PROFILER_BLOCK("after")
 
       fOut.FinishEvent();
 
@@ -1496,7 +1495,7 @@ bool dogma::CombinerModule::BuildEvent()
       fLastBuildTm.GetNow();
    } else {
 
-      grd.Next("lostl", 14);
+      PROFILER_BLOCKN("lostl", 14)
       fLostEventRateCnt += 1;
       // Par(fLostEventRateName).SetValue(1);
       fRunDiscEvents += 1;
@@ -1506,7 +1505,7 @@ bool dogma::CombinerModule::BuildEvent()
    std::string debugmask;
    debugmask.resize(fCfg.size(), ' ');
 
-   grd.Next("shift", 15);
+   PROFILER_BLOCKN("shift", 15)
 
    // bool fatal = !fCfg[1].has_data || (fCfg[1].fTrigNr != buildevid);
 
@@ -1519,7 +1518,7 @@ bool dogma::CombinerModule::BuildEvent()
          debugmask[cfg.ninp] = 'x';
       }
 
-   grd.Next("done", 16);
+   PROFILER_BLOCKN("done", 16)
 
    if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
       DOUT1("Did building as usual mask %s canBuild = %5s maxdist = %5.3f s", debugmask.c_str(), DBOOL(canBuildEvent), fMaxProcDist);

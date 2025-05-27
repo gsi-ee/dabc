@@ -267,7 +267,6 @@ namespace dogma {
          long               fBufCalls{0};   ///< number of buffer processing calls
          long               fTimerCalls{0}; ///< number of timer events calls
 
-         bool               fProfiler;   ///< when >0 fill profiles, >1 extra debug output is created
          dabc::Profiler     fBldProfiler;   ///< profiler of build event performance
          std::string        fBldProfilerInfo; ///< information from build profiler
          dabc::Profiler     fShiftProfiler;   ///< profiler of shift event performance

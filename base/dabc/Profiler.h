@@ -113,6 +113,12 @@ namespace dabc {
 
 } // namespace dabc
 
+#define PROFILER_GURAD(profiler, name) dabc::ProfilerGuard grd(profiler, name, 0);
+
+#define PROFILER_BLOCK(subname) grd.Next(subname);
+
+#define PROFILER_BLOCKN(subname, N) grd.Next(subname, N);
+
 #else
 
 // dummy profiler implementation
@@ -153,6 +159,12 @@ namespace dabc {
    };
 
 } // namespace dabc
+
+#define PROFILER_GURAD(profiler, name)
+
+#define PROFILER_BLOCK(subname)
+
+#define PROFILER_BLOCKN(subname, N)
 
 
 #endif

@@ -218,7 +218,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    else
       s += "\n";
 
-   if (comb->fProfiler) {
+   if (comb->fBldProfilerInfo.length()) {
       s += "Building: ";
       s += comb->fBldProfilerInfo;
       s += "\n";
@@ -233,7 +233,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
       s += "\n";
    }
 
-   if (comb->fProfiler) {
+   if (comb->fShiftProfilerInfo.length()) {
       s += "Shifter: ";
       s += comb->fShiftProfilerInfo;
       s += "\n";
