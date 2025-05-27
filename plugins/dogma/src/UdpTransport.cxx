@@ -113,7 +113,7 @@ bool dogma::UdpAddon::ReadUdp()
 
    PROFILER_GURAD(fUdpProfiler, "start", 0)
 
-   auto tr = dynamic_cast<dogma::UdpTransport *> (fWorker());
+   auto tr = static_cast<dogma::UdpTransport *> (fWorker());
    if (!tr) {
       EOUT("No transport assigned");
       return false;
@@ -130,7 +130,7 @@ bool dogma::UdpAddon::ReadUdp()
 
    if (fTgtPtr.null()) {
       if (!tr->AssignNewBuffer(0, this)) {
-         if (fSkipCnt++<10) { fTotalArtificialSkip++; return false; }
+         if (fSkipCnt++ < 10) { fTotalArtificialSkip++; return false; }
          tgt = fMtuBuffer;
       }
    }
@@ -175,7 +175,7 @@ bool dogma::UdpAddon::ReadUdp()
          return false;
       }
 
-      auto tu = (DogmaTu *) tgt;
+      auto tu = static_cast<DogmaTu *>(tgt);
       auto msgsize = tu->GetSize(); // trb sender adds a 32 byte control trailer identical to event header
 
       std::string errmsg;
@@ -385,9 +385,10 @@ void dogma::UdpTransport::ProcessTimerEvent(unsigned timer)
       if (addon) {
          addon->ReadUdp();
          addon->SetDoingInput(true);
-
-         addon->fUdpProfiler.MakeStatistic();
-         addon->fProfilerInfo = addon->fUdpProfiler.Format();
+         if (addon->fDebug) {
+            addon->fUdpProfiler.MakeStatistic();
+            addon->fProfilerInfo = addon->fUdpProfiler.Format();
+         }
       }
 
    } else if (name == "FlushTimer") {
