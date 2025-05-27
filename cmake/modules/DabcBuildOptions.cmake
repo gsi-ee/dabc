@@ -87,6 +87,7 @@ dabc_build_option(dogma ON "Enable DOGMA plugin")
 dabc_build_option(dofi ON "Enable DOFI plugin")
 dabc_build_option(mbsroot ON "Enable MBS-ROOT plugin")
 dabc_build_option(olmd ON "Enable Original LMD plugin")
+dabc_build_option(profiler OFF "Time profiler for some components")
 
 # --- The 'all' option switches ON major options ------------------------------
 if(all)
