@@ -63,8 +63,6 @@ void dogma::UdpAddon::ProcessEvent(const dabc::EventId& evnt)
 {
    if (evnt.GetCode() == evntSocketRead) {
 
-      // DOUT0("Addon %d get read event", fNPort);
-
       // ignore events when not waiting for the new data
       if (fRunning) { ReadUdp(); SetDoingInput(true); }
    } else {
@@ -217,7 +215,8 @@ bool dogma::UdpAddon::ReadUdp()
       PROFILER_BLOCK("buf2")
 
       // when rest size is smaller that mtu, one should close buffer
-      if ((fTgtPtr.rawsize() < fMTU) || (fTgtPtr.consumed_size() > fReduce)) {
+      if ((fTgtPtr.rawsize() < fMTU) ||
+          ((fReduce < 1.) && (fTgtPtr.consumed_size() > fReduce))) {
          CloseBuffer();
          tr->BufferReady();
          if (!tr->AssignNewBuffer(0, this))

@@ -203,7 +203,8 @@ bool hadaq::NewAddon::ReadUdp()
       fTgtPtr.shift(hadTu->GetPaddedSize());
 
       // when rest size is smaller that mtu, one should close buffer
-      if ((fTgtPtr.rawsize() < fMTU) || (fTgtPtr.consumed_size() > fReduce)) {
+      if ((fTgtPtr.rawsize() < fMTU) ||
+          ((fReduce < 1.) && (fTgtPtr.consumed_size() > fReduce))) {
          CloseBuffer();
          tr->BufferReady();
          if (!tr->AssignNewBuffer(0,this)) return false;
