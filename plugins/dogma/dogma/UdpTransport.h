@@ -24,6 +24,10 @@
 #include "dabc/Pointer.h"
 #endif
 
+#ifndef DABC_Profiler
+#include "dabc/Profiler.h"
+#endif
+
 #ifndef DABC_DataTransport
 #include "dabc/DataTransport.h"
 #endif
@@ -48,6 +52,7 @@ namespace dogma {
       uint64_t           fTotalRecvBytes{0};
       uint64_t           fTotalDiscardBytes{0};
       uint64_t           fTotalProducedBuffers{0};
+      std::string        fProfilerInfo;
 
       void ClearCounters()
       {
@@ -102,6 +107,7 @@ namespace dogma {
          bool               fRunning{false};     ///< is transport running
          dabc::TimeStamp    fLastProcTm;         ///< last time when udp reading was performed
          double             fMaxProcDist{0};     ///< maximal time between calls to BuildEvent method
+         dabc::Profiler     fUdpProfiler;        ///< profiler for UDP readout
 
          void ProcessEvent(const dabc::EventId&) override;
 

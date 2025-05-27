@@ -360,7 +360,10 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
 
       s += sbuf;
 
-      if ((fRingSize > 0) && !comb->fLessDebug)
+      std::string sinfo = info->fProfilerInfo;
+      if (sinfo.length() > 0 && sinfo.length() < 200)
+         s += "  " + sinfo;
+      else  if ((fRingSize > 0) && !comb->fLessDebug)
          s += "  " + cfg.TriggerRingAsStr(fRingSize);
 
       s += "\n";

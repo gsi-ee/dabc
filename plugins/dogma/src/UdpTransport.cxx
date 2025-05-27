@@ -51,6 +51,7 @@ dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuf
    fMaxProcDist(0.)
 {
    fMtuBuffer = std::malloc(fMTU);
+   fUdpProfiler.Reserve(50);
 }
 
 dogma::UdpAddon::~UdpAddon()
@@ -112,7 +113,9 @@ bool dogma::UdpAddon::ReadUdp()
    if (!fRunning)
       return false;
 
-   auto tr = dynamic_cast<dogma::UdpTransport*> (fWorker());
+   PROFILER_GURAD(fUdpProfiler, "start", 0)
+
+   auto tr = dynamic_cast<dogma::UdpTransport *> (fWorker());
    if (!tr) {
       EOUT("No transport assigned");
       return false;
@@ -124,6 +127,8 @@ bool dogma::UdpAddon::ReadUdp()
    }
 
    void *tgt = nullptr;
+
+   PROFILER_BLOCK("buf1")
 
    if (fTgtPtr.null()) {
       if (!tr->AssignNewBuffer(0, this)) {
@@ -140,9 +145,13 @@ bool dogma::UdpAddon::ReadUdp()
       fSkipCnt = 0;
    }
 
+   PROFILER_BLOCK("loop1")
+
    int cnt = fMaxLoopCnt;
 
    while (cnt-- > 0) {
+
+      PROFILER_BLOCKN("recv", 5)
 
       if (tgt != fMtuBuffer)
          tgt = fTgtPtr.ptr();
@@ -152,6 +161,8 @@ bool dogma::UdpAddon::ReadUdp()
       //  ssize_t res = recvfrom(Socket(), fTgtPtr.ptr(), fMTU, 0, (sockaddr*) &fSockAddr, &socklen);
 
       ssize_t res = recv(Socket(), tgt, fMTU, MSG_DONTWAIT);
+
+      PROFILER_BLOCK("chk")
 
       if (res == 0) {
          DOUT0("UDP:%d Seems to be, socket was closed", fNPort);
@@ -191,6 +202,8 @@ bool dogma::UdpAddon::ReadUdp()
          return false;
       }
 
+      PROFILER_BLOCK("shift")
+
       if (fPrint)
          DOUT0("Event addr: %lu type: 0x%x trignum; %lu, time: %lu paylod: %lu",
             (long unsigned) tu->GetAddr(), (unsigned) tu->GetTrigType(), (long unsigned) tu->GetTrigNumber(), (long unsigned) tu->GetTrigTime(), (long unsigned) tu->GetPayloadLen());
@@ -200,6 +213,9 @@ bool dogma::UdpAddon::ReadUdp()
 
       fTgtPtr.shift(msgsize);
 
+
+      PROFILER_BLOCK("buf2")
+
       // when rest size is smaller that mtu, one should close buffer
       if ((fTgtPtr.rawsize() < fMTU) || (fTgtPtr.consumed_size() > fReduce)) {
          CloseBuffer();
@@ -208,6 +224,8 @@ bool dogma::UdpAddon::ReadUdp()
             return false;
       }
    }
+
+   PROFILER_BLOCK("ret")
 
    return true; // indicate that buffer reading will be finished by callback
 }
@@ -366,6 +384,9 @@ void dogma::UdpTransport::ProcessTimerEvent(unsigned timer)
       if (addon) {
          addon->ReadUdp();
          addon->SetDoingInput(true);
+
+         addon->fUdpProfiler.MakeStatistic();
+         addon->fProfilerInfo = addon->fUdpProfiler.Format();
       }
 
    } else if (name == "FlushTimer") {
