@@ -62,7 +62,6 @@ namespace dogma {
          uint32_t fTrigType{0};     ///< current subevent trigger type
          unsigned fHubId{0};        ///< subevent id from given input
          unsigned fUdpPort{0};      ///< if configured, port id
-         float fQueueLevel{0.};     ///<  current input queue fill level
          uint32_t fLastEvtBuildTrigId{0}; ///< remember id of last build event
          bool fDataError{false};    ///< indicates if subevent has data error bit set in header id
          bool fEmpty{true};         ///< indicates if input has empty data

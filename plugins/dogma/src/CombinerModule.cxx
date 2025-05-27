@@ -1122,6 +1122,15 @@ bool dogma::CombinerModule::BuildEvent()
    bool incomplete_data = false, any_data = false, must_have_data = false;
    int missing_inp = -1;
 
+   // use fLastDebugTm to request used queue size only several times in seconds
+   bool request_queue = false;
+   if (fExtraDebug)
+      request_queue = true;
+   else if (fLastDebugTm.Expired(currTm, 0.2)) {
+      request_queue = true;
+      fLastDebugTm = currTm;
+   }
+
    grd.Next("shft");
 
    for (auto &cfg : fCfg) {
@@ -1414,8 +1423,8 @@ bool dogma::CombinerModule::BuildEvent()
          // DoInputSnapshot(ninp);
          // tag all information about input when using it
          cfg.fLastDataTm = currTm;
-         cfg.fNumCanRecv = NumCanRecv(cfg.ninp);
-         cfg.fQueueLevel = (cfg.fQueueCapacity > 0) ? 1. * cfg.fNumCanRecv / cfg.fQueueCapacity : 0.;
+         if (request_queue)
+            cfg.fNumCanRecv = NumCanRecv(cfg.ninp);
          cfg.fLastEvtBuildTrigId = (cfg.fTrigNr << 8) | (cfg.fTrigTag & 0xff);
       } // for ninp
 
