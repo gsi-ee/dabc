@@ -808,9 +808,10 @@ bool dogma::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 }
 
 
-bool dogma::CombinerModule::ShiftToNextSubEventFull(unsigned ninp, bool fast, bool dropped)
+bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
 {
-   if (fBNETrecv) return ShiftToNextEvent(ninp, fast, dropped);
+   if (fBNETrecv)
+      return ShiftToNextEvent(ninp, fast, dropped);
 
    auto &cfg = fCfg[ninp];
 
@@ -908,12 +909,12 @@ bool dogma::CombinerModule::ShiftToNextSubEventFull(unsigned ninp, bool fast, bo
    return true;
 }
 
-bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
+bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, bool dropped)
 {
    auto &cfg = fCfg[ninp];
 
    if (cfg.fResort)
-      return ShiftToNextSubEventFull(ninp, fast, dropped);
+      return ShiftToNextSubEvent(ninp, fast, dropped);
 
    dabc::ProfilerGuard grd(fShiftProfiler, "start", 0);
 
@@ -1344,7 +1345,7 @@ bool dogma::CombinerModule::BuildEvent()
       if (fOut.IsBuffer() && (!fOut.IsPlaceForEvent(subeventssize) || !CheckDestination(buildevid))) {
          // first we close current buffer
          if (!FlushOutputBuffer()) {
-            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
                std::string sendmask;
                for (unsigned n = 0; n < NumOutputs(); n++)
                   sendmask.append(CanSend(n) ? "o" : "x");

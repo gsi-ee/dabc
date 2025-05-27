@@ -289,10 +289,10 @@ namespace dogma {
          bool ShiftToNextEvent(unsigned ninp, bool fast = false, bool dropped = false);
 
          /** Shifts to next subevent in the input queue */
-         bool ShiftToNextSubEventFull(unsigned ninp, bool fast = false, bool dropped = false);
+         bool ShiftToNextSubEvent(unsigned ninp, bool fast = false, bool dropped = false);
 
          /** Shifts to next subevent in the input queue */
-         bool ShiftToNextSubEvent(unsigned ninp, bool fast = false, bool dropped = false);
+         bool ShiftToNextSubEventDebug(unsigned ninp, bool fast = false, bool dropped = false);
 
          /** Method should be used to skip current buffer from the queue */
          bool ShiftToNextBuffer(unsigned ninp);
