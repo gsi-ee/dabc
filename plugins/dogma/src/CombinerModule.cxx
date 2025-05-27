@@ -223,8 +223,8 @@ void dogma::CombinerModule::ModuleCleanup()
    fIsTerminating = true;
    fOut.Close().Release();
 
-   for (unsigned n=0;n<fCfg.size();n++)
-      fCfg[n].Reset();
+   for (auto &cfg : fCfg)
+      cfg.Reset();
 
    DOUT5("dogma::CombinerModule::ModuleCleanup() after  fCfg[n].Reset()");
 
@@ -240,7 +240,8 @@ void dogma::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 
    dabc::InfoParameter par;
 
-   if (!fInfoName.empty()) par = Par(fInfoName);
+   if (!fInfoName.empty())
+      par = Par(fInfoName);
 
    par.SetValue(info);
    if (forceinfo)

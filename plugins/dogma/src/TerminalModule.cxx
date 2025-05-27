@@ -123,7 +123,8 @@ void dogma::TerminalModule::BeforeModuleStart()
 
 std::string dogma::TerminalModule::rate_to_str(double r)
 {
-   if (r<1e4) return dabc::format("%6.1f ev/s",r);
+   if (r < 1e4)
+      return dabc::format("%6.1f ev/s",r);
    return dabc::format("%5.1f kev/s",r/1e3);
 }
 
@@ -265,7 +266,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
    bool istdccal = false,
         show_bad = comb->fAllowDropBuffers && comb->fBadDataRateLimit > 0 && comb->fBadEventsLostLimit > 0;
    for (unsigned n=0;n<comb->fCfg.size();n++)
-      if (comb->fCfg[n].fCalibr.length()>0) {
+      if (comb->fCfg[n].fCalibr.length() > 0) {
         istdccal = true;
         if (!fCalibr[n].send_request) {
            dabc::Command cmd("GetCalibrState");
