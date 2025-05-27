@@ -88,7 +88,7 @@ namespace dogma {
             tuLenPayload = SWAP_VALUE(new_payload);
          }
 
-         inline uint32_t GetSize() const { return sizeof(DogmaTu) + GetPayloadLen()*4; }
+         inline uint32_t GetSize() const { return sizeof(DogmaTu) + GetPayloadLen() * 4; }
 
          inline uint32_t GetPayload(uint32_t indx) const
          {

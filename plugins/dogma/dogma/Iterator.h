@@ -153,7 +153,7 @@ namespace dogma {
          unsigned remained_size() const { return fEvPtrLen; }
 
          bool AssignEventPointer(dabc::Pointer& ptr);
-         dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu*) fSubPtr; }
+         dogma::DogmaTu* subevnt() const { return (dogma::DogmaTu *) fSubPtr; }
          void* rawdata() const { return fRawPtr; }
          uint32_t rawdatasize() const { return fRawPtrLen; }
 

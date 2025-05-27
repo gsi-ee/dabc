@@ -291,15 +291,19 @@ bool dogma::ReadIterator::NextSubEvent()
       return false;
    }
 
-   if (subevnt()->GetSize() < sizeof(dogma::DogmaTu)) {
-      EOUT("Dogma format error - subevent fullsize %u too small", subevnt()->GetSize());
+   fRawPtrLen = subevnt()->GetSize();
+
+   if (fRawPtrLen < sizeof(dogma::DogmaTu)) {
+      EOUT("Dogma format error - subevent fullsize %u too small", fRawPtrLen);
       fSubPtr = nullptr;
       fSubPtrLen = 0;
+      fRawPtr = nullptr;
+      fRawPtrLen = 0;
       return false;
    }
 
    fRawPtr = fSubPtr;
-   fRawPtrLen = subevnt()->GetSize();
+
    ShiftRawPtr(sizeof(dogma::DogmaTu));
 
    return true;
