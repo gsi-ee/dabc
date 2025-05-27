@@ -19,12 +19,13 @@
 #include <cstdint>
 #include <iostream>
 #include <cstring>
+#include <byteswap.h>
 
 #pragma pack(push, 1)
 
 #define DOGMA_MAGIC 0xecc1701d
 
-#define SWAP32(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
+#define SWAP32(v)  (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
 namespace dogma {
 
@@ -45,12 +46,12 @@ namespace dogma {
 
          inline uint32_t Value(const uint32_t *member) const
          {
-            return IsSwapped() ? SWAP32(*member) : *member;
+            return IsSwapped() ? __bswap_32(*member) : *member;
          }
 
          inline void SetValue(uint32_t *member, uint32_t value)
          {
-            *member = IsSwapped() ? SWAP32(value) : value;
+            *member = IsSwapped() ? __bswap_32(value) : value;
          }
 
       public:
@@ -111,12 +112,12 @@ namespace dogma {
 
          inline uint32_t Value(const uint32_t *member) const
          {
-            return IsSwapped() ? SWAP32(*member) : *member;
+            return IsSwapped() ? __bswap_32(*member) : *member;
          }
 
          inline void SetValue(uint32_t *member, uint32_t value)
          {
-            *member = IsSwapped() ? SWAP32(value) : value;
+            *member = IsSwapped() ? __bswap_32(value) : value;
          }
 
       public:
