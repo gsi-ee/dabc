@@ -231,7 +231,7 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    if ((fFlushTimeout > 0) && (++fFlushCounter > 2)) {
       fFlushCounter = 0;
-      dabc::ProfilerGuard grd(fBldProfiler, "flush", 30);
+      PROFILER_GURAD(fBldProfiler, "flush", 30)
       FlushOutputBuffer();
    }
 
@@ -359,11 +359,12 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 {
    fBldProfiler.MakeStatistic();
 
-   dabc::ProfilerGuard grd(fBldProfiler, "info", 20);
+   PROFILER_GURAD(fBldProfiler, "info", 20)
 
    if (fBNETrecv) {
 
-      if (!fBnetFileCmd.null() && fBnetFileCmd.IsTimedout()) fBnetFileCmd.Reply(dabc::cmd_false);
+      if (!fBnetFileCmd.null() && fBnetFileCmd.IsTimedout())
+         fBnetFileCmd.Reply(dabc::cmd_false);
 
       dabc::Command cmd("GetTransportStatistic");
       if ((NumOutputs() < 2) || !SubmitCommandToTransport(OutputName(1), Assign(cmd))) {
@@ -924,7 +925,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
 
 
-   dabc::ProfilerGuard grd(fBldProfiler, "bld", 0);
+   PROFILER_GURAD(fBldProfiler, "bld", 0)
 
    fBldCalls++;
 
@@ -940,7 +941,7 @@ bool hadaq::CombinerModule::BuildEvent()
    bool incomplete_data = false, any_data = false;
    int missing_inp = -1;
 
-   grd.Next("shft");
+   PROFILER_BLOCK("shft")
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (!fCfg[ninp].has_data)
@@ -977,7 +978,7 @@ bool hadaq::CombinerModule::BuildEvent()
       }
    } // for ninp
 
-   grd.Next("drp");
+   PROFILER_BLOCK("drp")
 
    // we always build event with maximum trigger id = newest event, discard incomplete older events
    int diff0 = incomplete_data ? 0 : CalcTrigNumDiff(mineventid, maxeventid);
@@ -1034,7 +1035,7 @@ bool hadaq::CombinerModule::BuildEvent()
      }
 
 
-   grd.Next("chkcomp");
+   PROFILER_BLOCK("chkcomp")
 
    if (incomplete_data) return false;
 
@@ -1110,7 +1111,7 @@ bool hadaq::CombinerModule::BuildEvent()
       } // while foundsubevent
    } // for ninpt
 
-   grd.Next("buf");
+   PROFILER_BLOCK("buf")
 
    // here all inputs should be aligned to buildevid
 
@@ -1179,7 +1180,7 @@ bool hadaq::CombinerModule::BuildEvent()
    if (hasCompleteEvent) {
       // EVENT BUILDING IS HERE
 
-      grd.Next("compl");
+      PROFILER_BLOCK("compl")
 
       fOut.NewEvent(sequencenumber, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
       fRunBuildEvents++;
@@ -1199,7 +1200,7 @@ bool hadaq::CombinerModule::BuildEvent()
       unsigned currentid = trigtyp | (2 << 12); // DAQVERSION=2 for dabc
       fOut.evnt()->SetId(currentid);
 
-      grd.Next("main");
+      PROFILER_BLOCK("main")
 
       // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
@@ -1212,7 +1213,7 @@ bool hadaq::CombinerModule::BuildEvent()
       } // for ninp
 
 
-      grd.Next("after");
+      PROFILER_BLOCK("after")
 
       fOut.FinishEvent();
 
@@ -1281,7 +1282,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fLastBuildTm.GetNow();
    } else {
-      grd.Next("lostl", 14);
+      PROFILER_BLOCKN("lostl", 14)
       fLostEventRateCnt += 1;
       // Par(fLostEventRateName).SetValue(1);
       fRunDiscEvents += 1;
@@ -1291,7 +1292,7 @@ bool hadaq::CombinerModule::BuildEvent()
    std::string debugmask;
    debugmask.resize(fCfg.size(), ' ');
 
-   grd.Next("shift", 15);
+   PROFILER_BLOCKN("shift", 15)
 
    // FINAL loop: proceed to next subevents
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)

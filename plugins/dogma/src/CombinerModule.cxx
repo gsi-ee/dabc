@@ -292,7 +292,7 @@ void dogma::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    if ((fFlushTimeout > 0) && (++fFlushCounter > 2)) {
       fFlushCounter = 0;
-      // dabc::ProfilerGuard grd(fBldProfiler, "flush", 30);
+      PROFILER_GURAD(fBldProfiler, "flush", 30)
       FlushOutputBuffer();
    }
 
@@ -464,7 +464,7 @@ void dogma::CombinerModule::UpdateBnetInfo()
 {
    fBldProfiler.MakeStatistic();
 
-   // dabc::ProfilerGuard grd(fBldProfiler, "info", 20);
+   PROFILER_GURAD(fBldProfiler, "info", 20)
 
    if (fBNETrecv) {
 
@@ -915,7 +915,7 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
    if (cfg.fResort)
       return ShiftToNextSubEvent(ninp, fast, dropped);
 
-   PROFILER_GURAD(fShiftProfiler, "start")
+   PROFILER_GURAD(fShiftProfiler, "start", 0)
 
    // account when subevent exists but intentionally dropped
    if (dropped && cfg.has_data)
@@ -1104,7 +1104,7 @@ bool dogma::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
 
 
-   PROFILER_GURAD(fBldProfiler, "bld")
+   PROFILER_GURAD(fBldProfiler, "bld", 0)
 
    fBldCalls++;
 

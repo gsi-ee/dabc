@@ -402,7 +402,7 @@ bool stream::TdcCalibrationModule::retransmit()
 {
    // method reads one buffer, calibrate it and send further
 
-   // dabc::ProfilerGuard grd(fProfiler, "checks", 0);
+   // PROFILER_GURAD(fProfiler, "checks", 0);
 
    // nothing to do
    if (CanSend() && CanRecv()) {
@@ -462,7 +462,7 @@ bool stream::TdcCalibrationModule::retransmit()
              (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) || // this is normal operation mode
              (buf.GetTypeId() == hadaq::mbt_HadaqSubevents) || fDummy) { // this could be data after sorting
 
-            // grd.Next("auto");
+            // PROFILER_BLOCK("auto")
 
             // this is special case when TDC should be created
 
@@ -525,7 +525,7 @@ bool stream::TdcCalibrationModule::retransmit()
                fRecheckTdcs = false;
             }
 
-            // grd.Next("buf");
+            // PROFILER_BLOCK("buf")
 
             // from here starts transformation of the data
 
@@ -540,7 +540,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
             std::vector<unsigned> newids;
 
-            // grd.Next("main");
+            // PROFILER_BLOCK("main")
 
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
@@ -603,7 +603,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
             }
 
-            // grd.Next("finish");
+            // PROFILER_BLOCK("finish")
 
             if (!fReplace) {
                resbuf.SetTotalSize(reslen);
