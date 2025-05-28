@@ -74,9 +74,6 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fBNETNumSend = Cfg("BNET_NUMSENDERS", cmd).AsInt(1);
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(false);
-   fLessDebug = Cfg("LessDebug", cmd).AsBool(false);
-   if (fLessDebug)
-      fExtraDebug = false;
 
    fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
 
@@ -202,8 +199,7 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    }
 
    #ifdef DABC_PROFILER
-   if (!fLessDebug)
-      CreateTimer("ProfilerTimer", 1.); // check profiler values
+   CreateTimer("ProfilerTimer", 1.); // check profiler values
    #endif
 
    fNumReadBuffers = 0;
@@ -798,10 +794,8 @@ bool dogma::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 
    cfg.fTrigTag = 0;
 
-   if (!fLessDebug) {
-      cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
-      cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
-   }
+   cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+   cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
 
    cfg.fEmpty = (cfg.data_size == 0);
    cfg.fDataError = 0;
@@ -895,10 +889,8 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fHubId = cfg.subevnt->GetAddr();
       cfg.fTrigTag = 0;
 
-      if (!fLessDebug) {
-         cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
-         cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
-      }
+      cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+      cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
 
       cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
       cfg.fDataError = 0;
@@ -1009,10 +1001,8 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
 
    PROFILER_BLOCK("ring")
 
-   if (!fLessDebug) {
-      cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
-      cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
-   }
+   cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+   cfg.fRingCnt = (cfg.fRingCnt+1) % DOGMA_RINGSIZE;
 
    cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
    cfg.fDataError = 0;
@@ -1116,14 +1106,15 @@ bool dogma::CombinerModule::BuildEvent()
 
    fBldCalls++;
 
+   auto currTm = dabc::TimeStamp::Now();
+
    if (fExtraDebug) {
-      double tm = fLastProcTm.SpentTillNow(true);
-      if (tm > fMaxProcDist) fMaxProcDist = tm;
+      if (!fLastProcTm.null() && (currTm - fLastProcTm > fMaxProcDist))
+         fMaxProcDist = currTm - fLastProcTm;
+      fLastProcTm = currTm;
    }
 
    // DOUT0("dogma::CombinerModule::BuildEvent() starts");
-
-   auto currTm = dabc::TimeStamp::Now();
 
    unsigned min_inp = 0, mast_have_max_inp = 0;
    uint32_t subeventssize = 0, mineventid = 0, maxeventid = 0, mineventid_must_have = 0, maxeventid_must_have = 0;
@@ -1134,7 +1125,7 @@ bool dogma::CombinerModule::BuildEvent()
    bool request_queue = false;
    if (fExtraDebug)
       request_queue = true;
-   else if (fLastDebugTm.Expired(currTm, fLessDebug ? 1.0 : 0.1)) {
+   else if (fLastDebugTm.Expired(currTm, 0.2)) {
       request_queue = true;
       fLastDebugTm = currTm;
    }

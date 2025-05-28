@@ -1037,7 +1037,8 @@ bool hadaq::CombinerModule::BuildEvent()
 
    PROFILER_BLOCK("chkcomp")
 
-   if (incomplete_data) return false;
+   if (incomplete_data)
+      return false;
 
    uint32_t buildtag = fCfg[masterchannel].fTrigTag;
 
