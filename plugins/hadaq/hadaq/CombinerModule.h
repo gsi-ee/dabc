@@ -51,6 +51,7 @@ namespace hadaq {
       protected:
 
       struct InputCfg {
+         unsigned ninp; // duplicated input number
          hadaq::RawSubevent *subevnt{nullptr}; ///< actual subevent
          hadaq::RawEvent  *evnt{nullptr}; ///< actual event
          bool     has_data{false};      ///< when true, input has data (subevent or bunch of sub events)
@@ -62,7 +63,6 @@ namespace hadaq {
          unsigned fErrorBitsCnt{0}; ///< number of subevents with non-zero error bits
          unsigned fHubId{0};     ///< subevent id from given input
          unsigned fUdpPort{0};    ///< if configured, port id
-         float fQueueLevel{0.};      ///<  current input queue fill level
          uint32_t fLastEvtBuildTrigId{0}; ///< remember id of last build event
          bool fDataError{false};        ///< indicates if subevent has data error bit set in header id
          bool fEmpty{true};            ///< indicates if input has empty data
@@ -258,8 +258,6 @@ namespace hadaq {
          bool BuildEvent();
 
          bool FlushOutputBuffer();
-
-         void DoInputSnapshot(unsigned ninp);
 
          void BeforeModuleStart() override;
 

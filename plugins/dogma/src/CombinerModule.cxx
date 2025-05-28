@@ -1418,7 +1418,6 @@ bool dogma::CombinerModule::BuildEvent()
          else
             fOut.AddSubevent(cfg.subevnt);
 
-         // DoInputSnapshot(ninp);
          // tag all information about input when using it
          cfg.fLastDataTm = currTm;
          if (request_queue)

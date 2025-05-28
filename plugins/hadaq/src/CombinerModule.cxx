@@ -105,9 +105,11 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    for (unsigned n = 0; n < NumInputs(); n++) {
       fCfg.emplace_back();
+      fCfg[n].ninp = n;
       fCfg[n].Reset(true);
       fCfg[n].fResort = FindPort(InputName(n)).Cfg("resort").AsBool(false);
-      if (fCfg[n].fResort) DOUT0("Do resort on input %u",n);
+      if (fCfg[n].fResort)
+         DOUT0("Do resort on input %u",n);
    }
 
    fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
@@ -929,17 +931,27 @@ bool hadaq::CombinerModule::BuildEvent()
 
    fBldCalls++;
 
-   if (fExtraDebug) {
-      double tm = fLastProcTm.SpentTillNow(true);
-      if (tm > fMaxProcDist) fMaxProcDist = tm;
-   }
+   auto currTm = dabc::TimeStamp::Now();
 
-   // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
+   if (fExtraDebug) {
+      if (!fLastProcTm.null() && (currTm - fLastProcTm > fMaxProcDist))
+         fMaxProcDist = currTm - fLastProcTm;
+      fLastProcTm = currTm;
+   }
 
    unsigned masterchannel = 0, min_inp = 0;
    uint32_t subeventssize = 0, mineventid = 0, maxeventid = 0, buildevid = 0;
    bool incomplete_data = false, any_data = false;
    int missing_inp = -1;
+
+   // use fLastDebugTm to request used queue size only several times in seconds
+   bool request_queue = false;
+   if (fExtraDebug)
+      request_queue = true;
+   else if (fLastDebugTm.Expired(currTm, 0.2)) {
+      request_queue = true;
+      fLastDebugTm = currTm;
+   }
 
    PROFILER_BLOCK("shft")
 
@@ -1204,22 +1216,25 @@ bool hadaq::CombinerModule::BuildEvent()
       PROFILER_BLOCK("main")
 
       // third input loop: build output event from all not empty subevents
-      for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-         if (fCfg[ninp].fEmpty && fSkipEmpty) continue;
+      for (auto &cfg : fCfg) {
+         if (cfg.fEmpty && fSkipEmpty)
+            continue;
          if (fBNETrecv)
-            fOut.AddAllSubevents(fCfg[ninp].evnt);
+            fOut.AddAllSubevents(cfg.evnt);
          else
-            fOut.AddSubevent(fCfg[ninp].subevnt);
-         DoInputSnapshot(ninp); // record current state of event tag and queue level for control system
-      } // for ninp
+            fOut.AddSubevent(cfg.subevnt);
 
+         // record current state of event tag and queue level for control system
+         if (request_queue)
+            cfg.fNumCanRecv = NumCanRecv(cfg.ninp);
+         cfg.fLastEvtBuildTrigId = (cfg.fTrigNr << 8) | (cfg.fTrigTag & 0xff);
+      }
 
       PROFILER_BLOCK("after")
 
       fOut.FinishEvent();
 
-      int diff = 1;
-      if (fLastTrigNr != kNoTrigger) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+      int diff = (fLastTrigNr != kNoTrigger) ? CalcTrigNumDiff(fLastTrigNr, buildevid) : 1;
 
       //if (fBNETsend && (diff != 1))
       //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);
@@ -1317,17 +1332,6 @@ bool hadaq::CombinerModule::BuildEvent()
    return true; // event is build successfully. try next one
 }
 
-
-void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
-{
-   // copy here input properties at the moment of event building to stats:
-
-   auto &cfg = fCfg[ninp];
-
-   cfg.fNumCanRecv = NumCanRecv(ninp);
-   cfg.fQueueLevel = (cfg.fQueueCapacity > 0) ? 1. * cfg.fNumCanRecv / cfg.fQueueCapacity : 0.;
-   cfg.fLastEvtBuildTrigId = (cfg.fTrigNr << 8) | (cfg.fTrigTag & 0xff);
-}
 
 
 int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
