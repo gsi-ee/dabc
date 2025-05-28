@@ -45,18 +45,6 @@ namespace dogma {
          uint32_t tuLocalTrigTime = 0;
          uint32_t tuLenPayload = 0; // number of 4bytes words
 
-         /*
-         inline uint32_t Value(const uint32_t *member) const
-         {
-            return IsSwapped() ? __bswap_32(*member) : *member;
-         }
-
-         inline void SetValue(uint32_t *member, uint32_t value)
-         {
-            *member = IsSwapped() ? __bswap_32(value) : value;
-         }
-         */
-
       public:
 
          inline bool IsSwapped() const  { return tuMagic != DOGMA_MAGIC; }
@@ -117,18 +105,6 @@ namespace dogma {
          uint32_t tuSeqId = 0;
          uint32_t tuTrigTypeNumber = 0;
          uint32_t tuLenPayload = 0; // paylod len in 4bytes words
-
-         /*
-         inline uint32_t Value(const uint32_t *member) const
-         {
-            return IsSwapped() ? __bswap_32(*member) : *member;
-         }
-
-         inline void SetValue(uint32_t *member, uint32_t value)
-         {
-            *member = IsSwapped() ? __bswap_32(value) : value;
-         }
-         */
 
       public:
 
