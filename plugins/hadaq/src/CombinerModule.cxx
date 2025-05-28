@@ -306,8 +306,7 @@ void hadaq::CombinerModule::BeforeModuleStart()
       fCheckBNETProblems = chkActive;
 
    // direct addon pointers can be used for terminal printout
-   for (unsigned ninp=0;ninp<fCfg.size();ninp++) {
-      fCfg[ninp].fQueueCapacity = InputQueueCapacity(ninp);
+   for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (fBNETrecv) continue;
       dabc::Command cmd("GetHadaqTransportInfo");
       cmd.SetInt("id", ninp);
@@ -960,9 +959,9 @@ bool hadaq::CombinerModule::BuildEvent()
          if (!ShiftToNextSubEvent(ninp)) {
             // could not get subevent data on any channel.
             // let framework do something before next try
-            if (fExtraDebug && fLastDebugTm.Expired(2.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(currTm, 2.)) {
                DOUT1("Fail to build event while input %u is not ready numcanrecv %u maxtm = %5.3f ", ninp, NumCanRecv(ninp), fMaxProcDist);
-               fLastDebugTm.GetNow();
+               fLastDebugTm = currTm;
                fMaxProcDist = 0;
             }
 
@@ -999,7 +998,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
    // check potential error
 
-   if (((fCheckBNETProblems == chkActive) || (fCheckBNETProblems == chkOk)) && (fEventBuildTimeout > 0.) && fLastBuildTm.Expired(fEventBuildTimeout*0.5)) {
+   if (((fCheckBNETProblems == chkActive) || (fCheckBNETProblems == chkOk)) && (fEventBuildTimeout > 0.) && fLastBuildTm.Expired(currTm, fEventBuildTimeout*0.5)) {
 
       if (missing_inp >= 0)
          fBNETProblem = "no_data_" + std::to_string(missing_inp); // no data at input
@@ -1012,8 +1011,8 @@ bool hadaq::CombinerModule::BuildEvent()
    ///////////////////////////////////////////////////////////////////////////////
    // check too large triggertag difference on input channels or very long delay in building,
    // to repair situation, try to flush all input buffers
-   if (fLastDropTm.Expired((fEventBuildTimeout > 0) ? 1.5*fEventBuildTimeout : 5.))
-     if (((fTriggerNrTolerance > 0) && (diff0 > fTriggerNrTolerance)) || ((fEventBuildTimeout > 0) && fLastBuildTm.Expired(fEventBuildTimeout) && any_data && (fCfg.size() > 1))) {
+   if (fLastDropTm.Expired(currTm, (fEventBuildTimeout > 0) ? 1.5*fEventBuildTimeout : 5.))
+     if (((fTriggerNrTolerance > 0) && (diff0 > fTriggerNrTolerance)) || ((fEventBuildTimeout > 0) && fLastBuildTm.Expired(currTm, fEventBuildTimeout) && any_data && (fCfg.size() > 1))) {
 
         std::string msg;
         if ((fTriggerNrTolerance > 0) && (diff0 > fTriggerNrTolerance)) {
@@ -1038,9 +1037,9 @@ bool hadaq::CombinerModule::BuildEvent()
 
         DropAllInputBuffers();
 
-        if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+        if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
            DOUT1("Drop all buffers");
-           fLastDebugTm.GetNow();
+           fLastDebugTm = currTm;
         }
 
         return false; // retry on next set of buffers
@@ -1100,9 +1099,9 @@ bool hadaq::CombinerModule::BuildEvent()
             fAllDroppedData += droppedsize;
 
             if(!ShiftToNextSubEvent(ninp, false, true)) {
-               if (fExtraDebug && fLastDebugTm.Expired(2.)) {
+               if (fExtraDebug && fLastDebugTm.Expired(currTm, 2.)) {
                   DOUT1("Cannot shift data from input %d", ninp);
-                  fLastDebugTm.GetNow();
+                  fLastDebugTm = currTm;
                }
 
                return false;
@@ -1148,13 +1147,13 @@ bool hadaq::CombinerModule::BuildEvent()
       if (fOut.IsBuffer() && (!fOut.IsPlaceForEvent(subeventssize) || !CheckDestination(buildevid))) {
          // first we close current buffer
          if (!FlushOutputBuffer()) {
-            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
                std::string sendmask;
                for (unsigned n=0;n<NumOutputs();n++)
                   sendmask.append(CanSend(n) ? "o" : "x");
 
                DOUT0("FlushOutputBuffer can't send to all %u outputs sendmask = %s", NumOutputs(), sendmask.c_str());
-               fLastDebugTm.GetNow();
+               fLastDebugTm = currTm;
             }
             return false;
          }
@@ -1164,9 +1163,9 @@ bool hadaq::CombinerModule::BuildEvent()
          dabc::Buffer buf = TakeBuffer();
          if (buf.null()) {
 
-            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
                DOUT0("did not have new buffer - wait for it");
-               fLastDebugTm.GetNow();
+               fLastDebugTm = currTm;
             }
 
             return false;
@@ -1175,9 +1174,9 @@ bool hadaq::CombinerModule::BuildEvent()
             SetInfo("Cannot use buffer for output - hard error!!!!", true);
             buf.Release();
             dabc::mgr.StopApplication();
-            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
                DOUT0("Abort application completely");
-               fLastDebugTm.GetNow();
+               fLastDebugTm = currTm;
             }
             return false;
          }
@@ -1272,9 +1271,9 @@ bool hadaq::CombinerModule::BuildEvent()
 
       if (fEvnumDiffStatistics && (diff > 1)) {
 
-         if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+         if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
             DOUT1("Events gap %d", diff-1);
-            fLastDebugTm.GetNow();
+            fLastDebugTm = currTm;
          }
 
          fLostEventRateCnt += (diff-1);
@@ -1296,7 +1295,7 @@ bool hadaq::CombinerModule::BuildEvent()
          fCheckBNETProblems = chkOk; // no problems, event build normally, now wait for error, timeout relative to build time
       }
 
-      fLastBuildTm.GetNow();
+      fLastBuildTm = currTm;
    } else {
       PROFILER_BLOCKN("lostl", 14)
       fLostEventRateCnt += 1;
@@ -1319,9 +1318,9 @@ bool hadaq::CombinerModule::BuildEvent()
          debugmask[ninp] = 'x';
       }
 
-   if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+   if (fExtraDebug && fLastDebugTm.Expired(currTm, 1.)) {
       DOUT1("Did building as usual mask %s complete = %5s maxdist = %5.3f s", debugmask.c_str(), DBOOL(hasCompleteEvent), fMaxProcDist);
-      fLastDebugTm.GetNow();
+      fLastDebugTm = currTm;
       fMaxProcDist = 0;
       // put here update of tid
       // fPID= syscall(SYS_gettid);

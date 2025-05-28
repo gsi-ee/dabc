@@ -399,7 +399,6 @@ void dogma::CombinerModule::BeforeModuleStart()
 
    // direct addon pointers can be used for terminal printout
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-      fCfg[ninp].fQueueCapacity = InputQueueCapacity(ninp);
       if (fBNETrecv)
          continue;
       dabc::Command cmd("GetDogmaTransportInfo");

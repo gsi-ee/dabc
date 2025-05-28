@@ -66,7 +66,6 @@ namespace dogma {
          bool fDataError{false};    ///< indicates if subevent has data error bit set in header id
          bool fEmpty{true};         ///< indicates if input has empty data
          void *fInfo{nullptr};      ///< Direct pointer on transport info, used only for debugging
-         int fQueueCapacity{0};     ///< capacity of input queue
          int fNumCanRecv{0};        ///< Number buffers can be received
          uint64_t fTotalDataSize{0}; ///< total amount of data received
          unsigned fLostTrig{0};     ///< number of lost triggers (never received by the combiner)
@@ -275,8 +274,6 @@ namespace dogma {
          bool BuildEvent();
 
          bool FlushOutputBuffer();
-
-         void DoInputSnapshot(unsigned ninp);
 
          void BeforeModuleStart() override;
 
