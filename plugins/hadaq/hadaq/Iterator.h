@@ -38,11 +38,55 @@ namespace hadaq {
 
    class ReadIterator {
       protected:
-         bool           fFirstEvent{false};
-         dabc::Pointer  fEvPtr;
-         dabc::Pointer  fSubPtr;
-         dabc::Pointer  fRawPtr;
-         unsigned       fBufType{dabc::mbt_Null};
+         dabc::Buffer   fBuffer;
+         unsigned       fBufType = dabc::mbt_Null;
+         bool           fFirstEvent = false;
+         unsigned char *fEvPtr = nullptr;
+         unsigned       fEvPtrLen = 0;
+         unsigned char *fSubPtr = nullptr;
+         unsigned       fSubPtrLen = 0;
+         unsigned char *fRawPtr = nullptr;
+         unsigned       fRawPtrLen = 0;
+
+         inline void ResetEvPtr()
+         {
+            fEvPtr = nullptr;
+            fEvPtrLen = 0;
+            fBuffer.Release();
+            fBufType = dabc::mbt_Null;
+         }
+
+         inline void ShiftEvPtr(unsigned len)
+         {
+            if (len >= fEvPtrLen) {
+               ResetEvPtr();
+            } else {
+               fEvPtr += len;
+               fEvPtrLen -= len;
+            }
+         }
+
+         inline void ShiftSubPtr(unsigned len)
+         {
+            if (len >= fSubPtrLen) {
+               fSubPtr = nullptr;
+               fSubPtrLen = 0;
+            } else {
+               fSubPtr += len;
+               fSubPtrLen -= len;
+            }
+         }
+
+         inline void ShiftRawPtr(unsigned len)
+         {
+            if (len >= fRawPtrLen) {
+               fRawPtr = nullptr;
+               fRawPtrLen = 0;
+            } else {
+               fRawPtr += len;
+               fRawPtrLen -= len;
+            }
+         }
 
       public:
          ReadIterator() {}
@@ -53,12 +97,13 @@ namespace hadaq {
          {
             fFirstEvent = false;
             fBufType = mbt_HadaqEvents;
-            fEvPtr.reset(evnt, evnt->GetPaddedSize());
+            fEvPtr = (unsigned char *) evnt;
+            fEvPtrLen = evnt->GetPaddedSize();
          }
 
-         ReadIterator(const ReadIterator& src);
+         ReadIterator(const ReadIterator &src);
 
-         ReadIterator& operator=(const ReadIterator& src);
+         ReadIterator& operator=(const ReadIterator &src);
 
          ~ReadIterator() { Close(); }
 
@@ -66,12 +111,16 @@ namespace hadaq {
           * end of iterator usage */
          bool Reset(const dabc::Buffer& buf);
 
+         bool ResetOwner(dabc::Buffer& buf);
+
          /** Reset iterator - forget pointer on buffer */
          bool Reset() { Close(); return true; }
 
          void Close();
 
-         bool IsData() const { return !fEvPtr.null(); }
+         bool IsData() const { return fEvPtr != nullptr; }
+         bool IsHadTu() const { return fBufType == mbt_HadaqTransportUnit; }
+         bool IsNormalEvent() const { return fBufType == mbt_HadaqEvents; }
 
          /** Used for raw data from TRBs */
          bool NextHadTu();
@@ -79,27 +128,25 @@ namespace hadaq {
          /** Used for ready HLD events */
          bool NextEvent();
 
-         bool IsNormalEvent() const { return fBufType == mbt_HadaqEvents; }
-         bool IsHadTu() const { return fBufType == mbt_HadaqTransportUnit; }
-
          /** Depending from buffer type calls NextHadTu() or NextEvent() */
          bool NextSubeventsBlock();
 
          /** Used for sub-events iteration inside current block */
          bool NextSubEvent();
 
-         hadaq::RawEvent* evnt() const { return (hadaq::RawEvent*) fEvPtr(); }
+         hadaq::RawEvent* evnt() const { return (hadaq::RawEvent *) fEvPtr; }
          unsigned evntsize() const { return evnt() ? evnt()->GetPaddedSize() : 0; }
 
          /** Returns size used by current event plus rest */
-         unsigned remained_size() const { return fEvPtr.fullsize(); }
+         unsigned remained_size() const { return fEvPtrLen; }
 
-         hadaq::HadTu* hadtu() const { return (hadaq::HadTu*) fEvPtr(); }
+         hadaq::HadTu* hadtu() const { return (hadaq::HadTu *) fEvPtr; }
 
          bool AssignEventPointer(dabc::Pointer& ptr);
-         hadaq::RawSubevent *subevnt() const { return (hadaq::RawSubevent*) fSubPtr(); }
-         void* rawdata() const { return fRawPtr(); }
-         uint32_t rawdatasize() const { return fRawPtr.fullsize(); }
+
+         hadaq::RawSubevent *subevnt() const { return (hadaq::RawSubevent *) fSubPtr; }
+         void* rawdata() const { return fRawPtr; }
+         uint32_t rawdatasize() const { return fRawPtrLen; }
 
          /** Try to define maximal length for the raw data */
          unsigned rawdata_maxsize() const;
