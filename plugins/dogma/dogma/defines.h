@@ -24,8 +24,6 @@
 
 #define DOGMA_MAGIC 0xecc1701d
 
-#define SWAP32(v)  (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
-
 #define SWAP_VALUE(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
 namespace dogma {
@@ -89,7 +87,7 @@ namespace dogma {
 
          void Init(uint32_t type_number)
          {
-            tuMagic = SWAP32(DOGMA_MAGIC);
+            tuMagic = SWAP_VALUE(DOGMA_MAGIC);
             tuAddr = 0;
             SetTrigTypeNumber(type_number);
             tuTrigTime = 0;
@@ -117,7 +115,7 @@ namespace dogma {
 
          void Init(uint32_t seqid, uint32_t trig_type, uint32_t trig_number)
          {
-            tuMagic = SWAP32(DOGMA_MAGIC);
+            tuMagic = SWAP_VALUE(DOGMA_MAGIC);
             tuSeqId = SWAP_VALUE(seqid);
             uint32_t v = (trig_type << 24) | (trig_number & 0xffffff);
             tuTrigTypeNumber = SWAP_VALUE(v);
