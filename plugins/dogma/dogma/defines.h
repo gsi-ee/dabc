@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <iostream>
 #include <cstring>
-#include <byteswap.h>
 
 #pragma pack(push, 1)
 
