@@ -707,12 +707,15 @@ bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
    dabc::Buffer buf;
 
+   bool full_buffer_control = false;
+
    if (cfg.fResortIndx < 0) {
       // normal way to take next buffer
       if(!CanRecv(ninp))
          return false;
       buf = Recv(ninp);
       fNumReadBuffers++;
+      full_buffer_control = true;
    } else {
       // do not try to look further than one more buffer
       if (cfg.fResortIndx > 1)
@@ -722,7 +725,6 @@ bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
    }
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
-      printf("SEE EOF %u\n", ninp);
       if (cfg.fResortIndx < 0)
          ProcessEOF(ninp);
       return false;
@@ -730,7 +732,7 @@ bool dogma::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
    DOUT5("CombinerModule::ShiftToNextBuffer %d type %u size %u", ninp, buf.GetTypeId(), buf.GetTotalSize());
 
-   return iter.Reset(buf);
+   return full_buffer_control ? iter.ResetOwner(buf) : iter.Reset(buf);
 }
 
 bool dogma::CombinerModule::ShiftToNextTu(unsigned ninp)

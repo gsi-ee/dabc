@@ -578,14 +578,19 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
    dabc::Buffer buf;
 
+   bool full_buffer_control = false;
+
    if (cfg.fResortIndx < 0) {
       // normal way to take next buffer
-      if(!CanRecv(ninp)) return false;
+      if(!CanRecv(ninp))
+         return false;
       buf = Recv(ninp);
       fNumReadBuffers++;
+      full_buffer_control = true;
    } else {
       // do not try to look further than one more buffer
-      if (cfg.fResortIndx>1) return false;
+      if (cfg.fResortIndx > 1)
+         return false;
       // when doing resort, try to access buffers from the input queue
       buf = RecvQueueItem(ninp, cfg.fResortIndx++);
    }
@@ -595,7 +600,7 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
       return false;
    }
 
-   return iter.Reset(buf);
+   return full_buffer_control ? iter.ResetOwner(buf) : iter.Reset(buf);
 }
 
 bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
