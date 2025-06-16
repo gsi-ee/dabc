@@ -194,36 +194,37 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
       // special case when event was read not completely
       // or we want to provide only event
 
-      size_t restsize = readsz - checkedsz;
-      if (restsize >= sizeof(hadaq::HadTu)) restsize = hdr->GetPaddedSize();
+      bool not_enough_place_for_next_event = false;
 
-//      printf("tu padded size = %u\n", (unsigned) restsize);
+      size_t restsize = readsz - checkedsz;
+      if (restsize < sizeof(hadaq::HadTu))
+         not_enough_place_for_next_event = true;
+      else {
+         restsize = hdr->GetPaddedSize();
+         not_enough_place_for_next_event = (checkedsz + restsize) > readsz;
+      }
 
       if ((restsize == sizeof(hadaq::RawEvent)) && (((hadaq::RawEvent*)hdr)->GetId() == EvtId_runStop)) {
          // we are not deliver such stop event to the top
-
-         // printf("Find stop event at the file end\n");
          fEOF = true;
          break;
       }
 
-      bool not_enough_place_for_next_event = (checkedsz + restsize) > readsz;
-
-      if (not_enough_place_for_next_event || (onlyevent && (checkedsz>0))) {
-
-         if (not_enough_place_for_next_event && (readsz<maxsz)) fEOF = true;
-
+      if (not_enough_place_for_next_event) {
+         if (readsz < maxsz)
+            fEOF = true;
          // return file pointer to the begin of event
          io->fseek(fd, -(readsz - checkedsz), true);
-
          break;
       }
+
       checkedsz += hdr->GetPaddedSize();
       hdr = (hadaq::HadTu*) ((char*) hdr + hdr->GetPaddedSize());
    }
 
    // detect end of file by such method
-   if ((readsz<maxsz) && (checkedsz == readsz) && !fEOF) fEOF = true;
+   if ((readsz < maxsz) && (checkedsz == readsz) && !fEOF)
+      fEOF = true;
 
    *sz = checkedsz;
 
