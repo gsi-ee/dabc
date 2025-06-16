@@ -69,11 +69,10 @@ void dogma::DogmaFile::Close()
    fEOF = true;
 }
 
-
-
 bool dogma::DogmaFile::WriteBuffer(void* buf, uint32_t bufsize)
 {
-   if (!isWriting() || !buf || (bufsize == 0)) return false;
+   if (!isWriting() || !buf || (bufsize == 0))
+     return false;
 
    if (io->fwrite(buf, bufsize, 1, fd) != 1) {
       fprintf(stderr, "fail to write dogma buffer payload of size %u", (unsigned) bufsize);
@@ -95,13 +94,13 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
    size_t readsz = io->fread(ptr, 1, (onlyevent ? sizeof(dogma::DogmaEvent) : maxsz), fd);
 
    if (readsz < sizeof(dogma::DogmaEvent)) {
-      if (!io->feof(fd)) fprintf(stderr, "Fail to read next portion but no EOF detected\n");
+      if (!io->feof(fd))
+         fprintf(stderr, "Fail to read next portion but no EOF detected\n");
       fEOF = true;
       return false;
    }
 
    auto hdr = (dogma::DogmaEvent *) ptr;
-
 
    if (onlyevent) {
 
@@ -110,11 +109,7 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
          return false;
       }
 
-      // printf("Expect next event of size %u\n", (unsigned) hdr->GetPaddedSize());
-
       readsz = io->fread((char *) ptr + sizeof(dogma::DogmaEvent), 1, hdr->GetPayloadLen()*4, fd);
-
-      // printf("Read size %u expects %u \n", (unsigned) readsz, (unsigned) (hdr->GetPaddedSize() - sizeof(hadaq::HadTu)));
 
       // not possible to read event completely
       if (readsz != hdr->GetPayloadLen()*4) {
@@ -145,7 +140,6 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
       }
 
       if (not_enough_place_for_next_event) {
-
          if (readsz < maxsz)
             fEOF = true;
 
