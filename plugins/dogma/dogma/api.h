@@ -56,10 +56,16 @@ namespace dogma {
       /** Disconnect from MBS server */
       bool Disconnect() { return mbs::ReadoutHandle::Disconnect(); }
 
+      /** Request next portion of data. Returns data kind  */
       unsigned NextPortion(double tm = 1.0, double maxage = -1.);
 
+      /** Returns kind of current data
+       * 0 - nothing
+       * 1 - Tu
+       * 2 - Event */
       unsigned GetKind(bool onlymbs = false);
 
+      /** Returns true if any data exists */
       bool IsData() { return GetKind() != 0; };
 
       /** Get current raw data pointer */
