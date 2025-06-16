@@ -86,9 +86,11 @@ bool dogma::DogmaFile::WriteBuffer(void* buf, uint32_t bufsize)
 
 bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 {
-   if (!isReading() || !ptr || !sz || (*sz < sizeof(dogma::DogmaEvent))) return false;
+   if (!isReading() || !ptr || !sz || (*sz < sizeof(dogma::DogmaEvent)))
+      return false;
 
-   uint64_t maxsz = *sz; *sz = 0;
+   uint64_t maxsz = *sz;
+   *sz = 0;
 
    size_t readsz = io->fread(ptr, 1, (onlyevent ? sizeof(dogma::DogmaEvent) : maxsz), fd);
 
@@ -132,15 +134,20 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
       // special case when event was read not completely
       // or we want to provide only event
 
+      bool not_enough_place_for_next_event = false;
       size_t restsize = readsz - checkedsz;
-      if (restsize >= sizeof(dogma::DogmaEvent))
-         restsize = hdr->GetEventLen();
 
-      bool not_enough_place_for_next_event = (checkedsz + restsize) > readsz;
+      if (restsize < sizeof(dogma::DogmaEvent)) {
+         not_enough_place_for_next_event = true;
+      } else {
+         restsize = hdr->GetEventLen();
+         not_enough_place_for_next_event = (checkedsz + restsize) > readsz;
+      }
 
       if (not_enough_place_for_next_event) {
 
-         if (not_enough_place_for_next_event && (readsz < maxsz)) fEOF = true;
+         if (readsz < maxsz)
+            fEOF = true;
 
          // return file pointer to the begin of event
          io->fseek(fd, -(readsz - checkedsz), true);
@@ -152,7 +159,7 @@ bool dogma::DogmaFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
    }
 
    // detect end of file by such method
-   if ((readsz < maxsz) && (checkedsz == readsz) && !fEOF)
+   if ((readsz < maxsz) && (checkedsz >= readsz) && !fEOF)
       fEOF = true;
 
    *sz = checkedsz;
