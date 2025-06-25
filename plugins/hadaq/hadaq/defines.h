@@ -110,7 +110,7 @@
 
 #define SWAP_VALUE(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
-#define GET_VALUE(v) (tuDecoding > 0xffffff ? SWAP_VALUE(v) : v)
+#define CONV_VALUE(v) (tuDecoding > 0xffffff ? SWAP_VALUE(v) : v)
 
 #pragma pack(push, 1)
 
@@ -167,9 +167,8 @@ namespace hadaq {
                                     ((val & 0xFF000000) >> 24) : val;
          }
 
-
-         uint32_t GetDecoding() const { return GET_VALUE(tuDecoding); }
-         inline uint32_t GetSize() const { return GET_VALUE(tuSize); }
+         uint32_t GetDecoding() const { return CONV_VALUE(tuDecoding); }
+         inline uint32_t GetSize() const { return CONV_VALUE(tuSize); }
 
          inline uint32_t GetPaddedSize() const
          {
@@ -197,7 +196,7 @@ namespace hadaq {
 
          HadTuId() : HadTu(), tuId(0)  {}
 
-         inline uint32_t GetId() const { return GET_VALUE(tuId); }
+         inline uint32_t GetId() const { return CONV_VALUE(tuId); }
          void SetId(uint32_t id) { SetValue(&tuId, id); }
 
          inline bool GetDataError() const { return (GetId() & 0x80000000) != 0; }
@@ -263,7 +262,7 @@ namespace hadaq {
 
             unsigned Alignment() const { return 1 << ( GetDecoding() >> 16 & 0xff); }
 
-            uint32_t GetTrigNr() const { return GET_VALUE(subEvtTrigNr); }
+            uint32_t GetTrigNr() const { return CONV_VALUE(subEvtTrigNr); }
             void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
 
             /* for trb3: each subevent contains trigger type in decoding word*/
@@ -449,16 +448,16 @@ is unique throughout all events ever acquired by the system.
 
          RawEvent() : HadTuId(), evtSeqNr(0), evtDate(0), evtTime(0), evtRunNr(0), evtPad(0) {}
 
-         uint32_t GetSeqNr() const { return GET_VALUE(evtSeqNr); }
+         uint32_t GetSeqNr() const { return CONV_VALUE(evtSeqNr); }
          void SetSeqNr(uint32_t n) { SetValue(&evtSeqNr, n); }
 
-         int32_t GetRunNr() const { return GET_VALUE(evtRunNr); }
+         int32_t GetRunNr() const { return CONV_VALUE(evtRunNr); }
          void SetRunNr(uint32_t n) { SetValue(&evtRunNr, n); }
 
-         int32_t GetDate() const { return GET_VALUE(evtDate); }
+         int32_t GetDate() const { return CONV_VALUE(evtDate); }
          void SetDate(uint32_t d) { SetValue(&evtDate, d); }
 
-         int32_t GetTime() const { return GET_VALUE(evtTime); }
+         int32_t GetTime() const { return CONV_VALUE(evtTime); }
          void SetTime(uint32_t t) { SetValue(&evtTime, t); }
 
          void Init(uint32_t evnt, uint32_t run=0, uint32_t id=EvtId_DABC)
