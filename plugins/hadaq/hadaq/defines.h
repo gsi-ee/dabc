@@ -107,6 +107,11 @@
 //    * evtPad - padding: Makes the event header a multiple of 64 bits long.
 */
 
+
+#define SWAP_VALUE(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
+
+#define GET_VALUE(v) (tuDecoding > 0xffffff ? SWAP_VALUE(v) : v)
+
 #pragma pack(push, 1)
 
 namespace hadaq {
@@ -151,11 +156,6 @@ namespace hadaq {
                                  ((*member & 0xFF00) << 8) |
                                  ((*member & 0xFF0000) >> 8) |
                                  ((*member & 0xFF000000) >> 24) : *member;
-
-            //return IsSwapped() ? ((((uint8_t *) member)[0] << 24) |
-            //                      (((uint8_t *) member)[1] << 16) |
-            //                      (((uint8_t *) member)[2] << 8) |
-            //                      (((uint8_t *) member)[3])) : *member;
          }
 
          /** swapsave method to set value stolen from hadtu.h */
@@ -165,17 +165,11 @@ namespace hadaq {
                                     ((val & 0xFF00) << 8) |
                                     ((val & 0xFF0000) >> 8) |
                                     ((val & 0xFF000000) >> 24) : val;
-
-            // *member = IsSwapped() ?
-            //      ((((uint8_t *) &val)[0] << 24) |
-            //      (((uint8_t *) &val)[1] << 16) |
-            //      (((uint8_t *) &val)[2] << 8) |
-            //      (((uint8_t *) &val)[3])) : val;
          }
 
 
-         uint32_t GetDecoding() const { return Value(&tuDecoding); }
-         inline uint32_t GetSize() const { return Value(&tuSize); }
+         uint32_t GetDecoding() const { return GET_VALUE(tuDecoding); }
+         inline uint32_t GetSize() const { return GET_VALUE(tuSize); }
 
          inline uint32_t GetPaddedSize() const
          {
@@ -203,7 +197,7 @@ namespace hadaq {
 
          HadTuId() : HadTu(), tuId(0)  {}
 
-         inline uint32_t GetId() const { return Value(&tuId); }
+         inline uint32_t GetId() const { return GET_VALUE(tuId); }
          void SetId(uint32_t id) { SetValue(&tuId, id); }
 
          inline bool GetDataError() const { return (GetId() & 0x80000000) != 0; }
@@ -269,7 +263,7 @@ namespace hadaq {
 
             unsigned Alignment() const { return 1 << ( GetDecoding() >> 16 & 0xff); }
 
-            uint32_t GetTrigNr() const { return Value(&subEvtTrigNr); }
+            uint32_t GetTrigNr() const { return GET_VALUE(subEvtTrigNr); }
             void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
 
             /* for trb3: each subevent contains trigger type in decoding word*/
@@ -455,16 +449,16 @@ is unique throughout all events ever acquired by the system.
 
          RawEvent() : HadTuId(), evtSeqNr(0), evtDate(0), evtTime(0), evtRunNr(0), evtPad(0) {}
 
-         uint32_t GetSeqNr() const { return Value(&evtSeqNr); }
+         uint32_t GetSeqNr() const { return GET_VALUE(evtSeqNr); }
          void SetSeqNr(uint32_t n) { SetValue(&evtSeqNr, n); }
 
-         int32_t GetRunNr() const { return Value(&evtRunNr); }
+         int32_t GetRunNr() const { return GET_VALUE(evtRunNr); }
          void SetRunNr(uint32_t n) { SetValue(&evtRunNr, n); }
 
-         int32_t GetDate() const { return Value(&evtDate); }
+         int32_t GetDate() const { return GET_VALUE(evtDate); }
          void SetDate(uint32_t d) { SetValue(&evtDate, d); }
 
-         int32_t GetTime() const { return Value(&evtTime); }
+         int32_t GetTime() const { return GET_VALUE(evtTime); }
          void SetTime(uint32_t t) { SetValue(&evtTime, t); }
 
          void Init(uint32_t evnt, uint32_t run=0, uint32_t id=EvtId_DABC)
