@@ -177,9 +177,9 @@ namespace hadaq {
             return (rest == 0) ? hedsize : (hedsize + 8 - rest);
          }
 
-         void SetSize(uint32_t bytes) { SetValue(&tuSize, bytes); }
+         void SetSize(uint32_t bytes) { tuSize = CONV_VALUE(bytes); }
 
-         void SetDecoding(uint32_t decod) { SetValue(&tuDecoding, decod); }
+         void SetDecoding(uint32_t decod) { tuDecoding = CONV_VALUE(decod); }
 
          void Dump();
    };
@@ -197,7 +197,7 @@ namespace hadaq {
          HadTuId() : HadTu(), tuId(0)  {}
 
          inline uint32_t GetId() const { return CONV_VALUE(tuId); }
-         void SetId(uint32_t id) { SetValue(&tuId, id); }
+         void SetId(uint32_t id) { tuId = CONV_VALUE(id); }
 
          inline bool GetDataError() const { return (GetId() & 0x80000000) != 0; }
 
@@ -263,7 +263,7 @@ namespace hadaq {
             unsigned Alignment() const { return 1 << ( GetDecoding() >> 16 & 0xff); }
 
             uint32_t GetTrigNr() const { return CONV_VALUE(subEvtTrigNr); }
-            void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
+            void SetTrigNr(uint32_t trigger) { subEvtTrigNr = CONV_VALUE(trigger); }
 
             /* for trb3: each subevent contains trigger type in decoding word*/
             uint8_t GetTrigTypeTrb3() const { return (GetDecoding() & 0xF0) >> 4; }
@@ -449,16 +449,16 @@ is unique throughout all events ever acquired by the system.
          RawEvent() : HadTuId(), evtSeqNr(0), evtDate(0), evtTime(0), evtRunNr(0), evtPad(0) {}
 
          uint32_t GetSeqNr() const { return CONV_VALUE(evtSeqNr); }
-         void SetSeqNr(uint32_t n) { SetValue(&evtSeqNr, n); }
+         void SetSeqNr(uint32_t n) { evtSeqNr = CONV_VALUE(n); }
 
          int32_t GetRunNr() const { return CONV_VALUE(evtRunNr); }
-         void SetRunNr(uint32_t n) { SetValue(&evtRunNr, n); }
+         void SetRunNr(uint32_t n) { evtRunNr = CONV_VALUE(n); }
 
          int32_t GetDate() const { return CONV_VALUE(evtDate); }
-         void SetDate(uint32_t d) { SetValue(&evtDate, d); }
+         void SetDate(uint32_t d) { evtDate = CONV_VALUE(d); }
 
          int32_t GetTime() const { return CONV_VALUE(evtTime); }
-         void SetTime(uint32_t t) { SetValue(&evtTime, t); }
+         void SetTime(uint32_t t) { evtTime = CONV_VALUE(t); }
 
          void Init(uint32_t evnt, uint32_t run=0, uint32_t id=EvtId_DABC)
          {
