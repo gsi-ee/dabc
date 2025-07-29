@@ -79,7 +79,7 @@ function(DABC_LINK_LIBRARY libname)
   target_compile_definitions(${libname} PRIVATE ${ARG_DEFINITIONS}
                                                 ${DABC_DEFINES})
 
-  target_link_libraries(${libname} ${ARG_LIBRARIES})
+  target_link_libraries(${libname} PUBLIC ${ARG_LIBRARIES})
 
   if(PROJECT_NAME STREQUAL DABC)
     list(APPEND ARG_DEPENDENCIES copy_headers)
