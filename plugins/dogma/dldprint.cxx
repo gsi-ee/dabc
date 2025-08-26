@@ -21,6 +21,7 @@
 #include <ctime>
 
 #include "dogma/api.h"
+#include "dogma/tdc5.h"
 #include "dabc/Url.h"
 #include "dabc/api.h"
 
@@ -110,11 +111,24 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
             printf("\n%s", i < len-1 ? prefix : "");
       }
    } else if (is_tdc(tu->GetAddr()) || (onlytdc && (onlytdc == tu->GetAddr()))) {
-      std::vector<uint32_t> data(len, 0);
-      for (unsigned i = 0; i < len; ++i)
-         data[i] = tu->GetPayload(i);
-      unsigned errmask = 0;
-      PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask, false, epoch0, coarse0);
+
+      if (tu->GetMagicType() == (DOGMA_MAGIC & 0xff)) {
+         std::vector<uint32_t> data(len, 0);
+         for (unsigned i = 0; i < len; ++i)
+            data[i] = tu->GetPayload(i);
+         unsigned errmask = 0;
+         PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask, false, epoch0, coarse0);
+      } else {
+         tdc5_header h;
+         tdc5_parse_it it;
+         tdc5_time tm;
+         const char *buf = (const char *) tu;
+         int len = (int) tu->GetSize();
+         tdc5_parse_header(&h, &it, buf, len);
+         while (tdc5_parse_next(&tm, &it, buf, len) == 1) {
+
+         } 
+      }
    }
 }
 
@@ -263,7 +277,8 @@ int main(int argc, char* argv[])
       isfile = true;
    }
 
-   if (tmout < 0) tmout = isfile ? 0.1 : 5.;
+   if (tmout < 0) 
+      tmout = isfile ? 0.1 : 5.;
 
    if (!isfile) {
 
