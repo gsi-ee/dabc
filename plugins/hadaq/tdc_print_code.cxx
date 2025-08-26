@@ -685,7 +685,8 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
 
       switch (msg & tdckind_Mask) {
          case tdckind_Reserved:
-            if (prefix>0) printf("%s tdc trailer ttyp:0x%01x rnd:0x%02x err:0x%04x\n", sbeg, (msg >> 24) & 0xF,  (msg >> 16) & 0xFF, msg & 0xFFFF);
+            if (prefix > 0) 
+               printf("%s tdc trailer ttyp:0x%01x rnd:0x%02x err:0x%04x\n", sbeg, (msg >> 24) & 0xF,  (msg >> 16) & 0xFF, msg & 0xFFFF);
             break;
          case tdckind_Header:
             nheader++;
@@ -703,8 +704,9 @@ unsigned PrintTdcDataPlain(unsigned ix, const std::vector<uint32_t> &data, unsig
             dkind = (msg >> 24) & 0x1F;
             dvalue = msg & 0xFFFFFF;
             sbuf[0] = 0;
-            if (dkind == 0x10) rawtime = dvalue; else
-            if (dkind == 0x11) {
+            if (dkind == 0x10) 
+               rawtime = dvalue; 
+            else if (dkind == 0x11) {
                rawtime += (dvalue << 16);
                time_t t = (time_t) rawtime;
                snprintf(sbuf, sizeof(sbuf), "  design 0x%08x %s", rawtime, ctime(&t));
