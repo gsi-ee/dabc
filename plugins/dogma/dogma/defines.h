@@ -45,7 +45,7 @@ namespace dogma {
 
       public:
 
-         inline bool IsMagic() const { return SWAP_VALUE(tuMagic) == DOGMA_MAGIC; }
+         inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) & 0xffffff00) == (DOGMA_MAGIC & 0xffffff00); }
 
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
@@ -104,7 +104,7 @@ namespace dogma {
 
       public:
 
-         inline bool IsMagic() const { return SWAP_VALUE(tuMagic) == DOGMA_MAGIC; }
+         inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) & 0xffffff00) == (DOGMA_MAGIC & 0xffffff00); }
 
          inline uint32_t GetSeqId() const { return SWAP_VALUE(tuSeqId); }
          inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 24; }
