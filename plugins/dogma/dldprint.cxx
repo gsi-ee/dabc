@@ -125,9 +125,9 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
          tdc5_parse_it it;
          tdc5_time tm;
          const char *buf = (const char *) tu;
-         int len = (int) tu->GetSize();
-         tdc5_parse_header(&h, &it, buf, len);
-         while (tdc5_parse_next(&tm, &it, buf, len) == 1) {
+         int fulllen = (int) tu->GetSize();
+         tdc5_parse_header(&h, &it, buf, fulllen);
+         while (tdc5_parse_next(&tm, &it, buf, fulllen) == 1) {
             printf("%s  ch:%02u falling:%1d coarse:%016lu fine:%08u\n", 
                         prefix, (unsigned) tm.channel, tm.is_falling, 
                         (long unsigned) tm.coarse, (unsigned) tm.fine);
