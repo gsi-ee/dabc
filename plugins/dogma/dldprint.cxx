@@ -95,8 +95,9 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
       epoch0 = tu->GetTrigTime() & 0xfffffff;
       coarse0 = tu->GetLocalTrigTime() & 0x7ff;
-      printf("%sTu addr:%06x type:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
-            (unsigned)tu->GetAddr(), (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
+      printf("%sTu addr:%06x magic:%02x trigtype:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
+            (unsigned)tu->GetAddr(), (unsigned)tu->GetMagicType(), 
+            (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
             (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
             (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
    }
@@ -111,14 +112,15 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
             printf("\n%s", i < len-1 ? prefix : "");
       }
    } else if (is_tdc(tu->GetAddr()) || (onlytdc && (onlytdc == tu->GetAddr()))) {
-
       if (tu->GetMagicType() == (DOGMA_MAGIC & 0xff)) {
+         // this is convential TDC
          std::vector<uint32_t> data(len, 0);
          for (unsigned i = 0; i < len; ++i)
             data[i] = tu->GetPayload(i);
          unsigned errmask = 0;
          PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask, false, epoch0, coarse0);
       } else {
+         // here one can check if it is expected magic type
          tdc5_header h;
          tdc5_parse_it it;
          tdc5_time tm;
@@ -126,8 +128,10 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
          int len = (int) tu->GetSize();
          tdc5_parse_header(&h, &it, buf, len);
          while (tdc5_parse_next(&tm, &it, buf, len) == 1) {
-
-         } 
+            printf("%s  ch:%02u falling:%1d coarse:%016lu fine:%08u\n", 
+                        prefix, (unsigned) tm.channel, tm.is_falling, 
+                        (long unsigned) tm.coarse, (unsigned) tm.fine);
+         }
       }
    }
 }
