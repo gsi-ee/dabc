@@ -176,15 +176,25 @@ bool dogma::UdpAddon::ReadUdp()
       }
 
       auto tu = static_cast<DogmaTu *>(tgt);
-      auto msgsize = tu->GetSize(); // trb sender adds a 32 byte control trailer identical to event header
+      uint32_t msgsize = 0;
 
       std::string errmsg;
 
-      if (res != msgsize) {
-         errmsg = dabc::format("Send buffer %ld differ from message size %ld - ignore it", (long) res, (long) msgsize);
-      } else if (!tu->IsMagic()) {
+      if (!tu->IsMagic()) {
          fTotalDiscardMagic++;
          errmsg = "Magic number not match";
+      } else if (tu->IsMagicDefault()) {
+         msgsize = tu->GetSize(); // size must match with number of received bytes
+         if (res != msgsize) 
+            errmsg = dabc::format("Send buffer %u differ from message size %u - ignore it", (unsigned) res, (unsigned) msgsize);
+      } else if (tu->IsMagicTdc5()) {
+         msgsize = tu->SetTdc5PaketLength(res); // total size will be rounded by 4 bytes boundary
+         if ((msgsize < res) || (msgsize > res + 3))
+            errmsg = dabc::format("Failure by coding packet len %u in tu size %u - ignore it", (unsigned) res, (unsigned) msgsize);
+
+      } else {
+         fTotalDiscardMagic++;
+         errmsg = "Magic subtype not match";
       }
 
       if (!errmsg.empty()) {

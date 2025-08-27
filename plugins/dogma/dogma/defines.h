@@ -49,6 +49,10 @@ namespace dogma {
 
          inline uint32_t GetMagicType() const { return SWAP_VALUE(tuMagic) & 0xff; }
 
+         inline bool IsMagicDefault() const { return GetMagicType() == (DOGMA_MAGIC & 0xff); }
+
+         inline bool IsMagicTdc5() const { return GetMagicType() == 0x1c; }
+
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
          inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 24; }
@@ -71,6 +75,31 @@ namespace dogma {
          {
             uint32_t new_payload = (len & 0xffff) | (SWAP_VALUE(tuLenPayload) & 0xffff0000);
             tuLenPayload = SWAP_VALUE(new_payload);
+         }
+
+         inline void SetFrameBits(uint32_t bits)
+         {
+            uint32_t new_payload = ((bits << 16) & 0xff0000) | (SWAP_VALUE(tuLenPayload) & 0xff00ffff);
+            tuLenPayload = SWAP_VALUE(new_payload);
+         }
+
+         inline uint32_t SetTdc5PaketLength(uint32_t sz) 
+         {
+            if (sz < sizeof(DogmaTu))
+               sz = sizeof(DogmaTu);
+            uint32_t sz4 = sz / 4, odd_len = sz - sz4 * 4;
+            if (odd_len > 0) 
+               sz4++;
+            SetPayloadLen(sz4 - sizeof(DogmaTu) / 4);
+            SetFrameBits(odd_len); // store in frame bits extra bytes not match to 4 bytes borders
+            return sz4 * 4;
+         }
+
+         inline uint32_t GetTdc5PaketLength() const
+         {
+            uint32_t sz = GetSize(),
+                     odd_len = GetFrameBits();
+            return (odd_len > 0) && (sz >= 4) ? sz + odd_len - 4 : sz;
          }
 
          inline uint32_t GetSize() const { return sizeof(DogmaTu) + GetPayloadLen() * 4; }
