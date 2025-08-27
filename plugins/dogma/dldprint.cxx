@@ -112,22 +112,22 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
             printf("\n%s", i < len-1 ? prefix : "");
       }
    } else if (is_tdc(tu->GetAddr()) || (onlytdc && (onlytdc == tu->GetAddr()))) {
-      if (tu->GetMagicType() == (DOGMA_MAGIC & 0xff)) {
+      if (tu->IsMagicDefault()) {
          // this is convential TDC
          std::vector<uint32_t> data(len, 0);
          for (unsigned i = 0; i < len; ++i)
             data[i] = tu->GetPayload(i);
          unsigned errmask = 0;
          PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask, false, epoch0, coarse0);
-      } else {
-         // here one can check if it is expected magic type
+      } else if (tu->IsMagicTdc5()) {
+         // this is new TDC5
          tdc5_header h;
          tdc5_parse_it it;
          tdc5_time tm;
          const char *buf = (const char *) tu;
-         int fulllen = (int) tu->GetSize();
-         tdc5_parse_header(&h, &it, buf, fulllen);
-         while (tdc5_parse_next(&tm, &it, buf, fulllen) == 1) {
+         int pktlen = (int) tu->GetTdc5PaketLength();
+         tdc5_parse_header(&h, &it, buf, pktlen);
+         while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
             printf("%s  ch:%02u falling:%1d coarse:%016lu fine:%08u\n", 
                         prefix, (unsigned) tm.channel, tm.is_falling, 
                         (long unsigned) tm.coarse, (unsigned) tm.fine);
