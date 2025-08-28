@@ -1,21 +1,13 @@
 #pragma once
 
-#include <cstdint>
-
-#if defined(__MACH__) /* Apple OSX section */
-// #include <machine/endian.h>
-#include <libkern/OSByteOrder.h>
-#define be32toh(x) OSSwapBigToHostInt32(x)
-#define be64toh(x) OSSwapBigToHostInt64(x)
-#else
+#include <stdint.h>
 #include <endian.h>
-#endif
 
 struct tdc5_parse_it {
 	int i;
 	int cur_chan;
 	int is_first;
-	int64_t last_time;
+	uint64_t last_time;
 	uint8_t block_flags;
 };
 struct tdc5_header {
@@ -41,6 +33,7 @@ inline void tdc5_parse_header(tdc5_header *h, tdc5_parse_it *it, const char *buf
 	h->trig_num = trig_type_num & 0x00ffffff;
 	h->device_id = be32toh(*(uint32_t*)(buf + it->i)); it->i += 4;
 	h->trig_time = be64toh(*(uint64_t*)(buf + it->i)); it->i += 8;
+	it->i += 4; // currently unused
 	it->cur_chan = 0;
 	it->is_first = 1;
 }
@@ -70,19 +63,19 @@ inline int tdc5_parse_next(tdc5_time *res, tdc5_parse_it *it, const char *buf, i
 		}
 
 		// decode times
-		uint32_t raw = be32toh(*(uint32_t*)(buf + it->i));
-		int is_last = raw & 0x80000000;
-		int is_ext = raw & 0x40000000;
-		uint32_t time;
-		raw = raw & 0x3fffffff;
-		time = is_ext ? raw : raw >> 8;
-		int time_len = 3 + is_ext;
-		if (it->i + time_len > n) return -1;
-		it->i += time_len;
+		if (it->i + 3 > n) return -1;
+		uint16_t msbs = be16toh(*(uint16_t*)(buf + it->i)); it->i += 2;
+		int is_last = !!(msbs & 0x8000);
+		int is_ext = !!(msbs & 0x4000);
+		msbs = msbs & 0x3fff;
+		int lsb_time_len = 1 + is_ext;
+		if (it->i + lsb_time_len > n) return -1;
+		uint16_t lsbs = is_ext ? be16toh(*(uint16_t*)(buf + it->i)) : (uint8_t)buf[it->i]; it->i += lsb_time_len;
+		uint32_t time = (msbs << (lsb_time_len * 8)) | lsbs;
 		res->is_falling = time & 1;
 		res->fine = (time >> 1) & 0x1ff;
 		int32_t diff = time >> 10;
-		it->last_time = it->is_first ? -diff : it->last_time + diff;
+		it->last_time = it->is_first ? diff : it->last_time - diff;
 		res->coarse = it->last_time;
 		res->channel = it->cur_chan;
 

@@ -51,7 +51,7 @@ namespace dogma {
 
          inline bool IsMagicDefault() const { return GetMagicType() == (DOGMA_MAGIC & 0xff); }
 
-         inline bool IsMagicTdc5() const { return GetMagicType() == 0x1c; }
+         inline bool IsMagicTdc5() const { return GetMagicType() == 0x1e; }
 
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
