@@ -1,7 +1,16 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+
+#if defined(__MACH__) /* Apple OSX section */
+// #include <machine/endian.h>
+#include <libkern/OSByteOrder.h>
+#define be16toh(x) OSSwapBigToHostInt16(x)
+#define be32toh(x) OSSwapBigToHostInt32(x)
+#define be64toh(x) OSSwapBigToHostInt64(x)
+#else
 #include <endian.h>
+#endif
 
 struct tdc5_parse_it {
 	int i;
