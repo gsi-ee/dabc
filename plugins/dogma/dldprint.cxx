@@ -129,13 +129,31 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
          tdc5_parse_header(&h, &it, buf, pktlen);
 
          double coarse_tmlen = 1000. / Tdc5FreqMhz; // time in nanoseconds
-         const int Tdc5FineMin = 10, Tdc5FineMax = 1000;
+         const int Tdc5FineMin = 19, Tdc5FineMax = 392;
+         double last_rising_tm = 0.;
+         int last_rising_ch = -1;
          printf("%s   Trigger time: %12.9fs\n", prefix,  h.trig_time * coarse_tmlen * 1e-9); // time in seconds
          while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
+            int fine = tm.fine;
+            if (fine < Tdc5FineMin)
+               fine = Tdc5FineMin;
+            else if (fine > Tdc5FineMax)
+               fine = Tdc5FineMax;
             double fulltm = -coarse_tmlen * (tm.coarse + (0. + tm.fine - Tdc5FineMin) / (0. + Tdc5FineMax - Tdc5FineMin));
-            printf("%s   ch:%02u falling:%1d coarse:%04u fine:%03u fulltm:%7.3f\n", 
+            printf("%s   ch:%02u falling:%1d coarse:%04u fine:%03u fulltm:%7.3f", 
                          prefix, (unsigned) tm.channel, tm.is_falling, 
                          (unsigned) tm.coarse, (unsigned) tm.fine, fulltm);
+            if (tm.is_falling && (last_rising_ch == tm.channel))
+               printf("  ToT:%5.3f", fulltm - last_rising_tm);
+
+            printf("\n");
+            if (!tm.is_falling) {
+               last_rising_tm = fulltm;
+               last_rising_ch = tm.channel;
+            } else {
+               last_rising_tm = 0;
+               last_rising_ch = -1;
+            }
          }
       }
    }
