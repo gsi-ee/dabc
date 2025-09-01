@@ -53,6 +53,10 @@ int usage(const char *errstr = nullptr)
    printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
    printf("   -trignumdump            - print only trigger nummers from events or TU (default off)\n");
    print_tdc_arguments();
+   printf("   -fine-min5 value        - minimal fine counter value of TDC v5, used for liner time calibration (default %u)\n", (unsigned) Tdc5FineMin);
+   printf("   -fine-max5 value        - maximal fine counter value of TDC v5, used for liner time calibration (default %u)\n", (unsigned) Tdc5FineMax);
+   printf("   -mhz5 value             - running frequency of TDC v5 (default %5.1f)\n", (double) Tdc5FreqMhz);
+
    return errstr ? 1 : 0;
 }
 
@@ -65,6 +69,8 @@ struct TuStat {
 };
 
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
+double mhz5 = Tdc5FreqMhz, coarse_tmlen5 = 1000. / Tdc5FreqMhz;
+unsigned fine_min5 = Tdc5FineMin, fine_max5 = Tdc5FineMax;
 unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 int buffer_size = 4, dotriggerdump = 0;
 
@@ -128,18 +134,16 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
          int pktlen = (int) tu->GetTdc5PaketLength();
          tdc5_parse_header(&h, &it, buf, pktlen);
 
-         double coarse_tmlen = 1000. / Tdc5FreqMhz; // time in nanoseconds
-         const int Tdc5FineMin = 19, Tdc5FineMax = 392;
          double last_rising_tm = 0.;
          int last_rising_ch = -1;
-         printf("%s   Trigger time: %12.9fs\n", prefix,  h.trig_time * coarse_tmlen * 1e-9); // time in seconds
+         printf("%s   Trigger time: %12.9fs\n", prefix,  h.trig_time * coarse_tmlen5 * 1e-9); // time in seconds
          while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
             int fine = tm.fine;
-            if (fine < Tdc5FineMin)
-               fine = Tdc5FineMin;
-            else if (fine > Tdc5FineMax)
-               fine = Tdc5FineMax;
-            double fulltm = -coarse_tmlen * (tm.coarse + (0. + tm.fine - Tdc5FineMin) / (0. + Tdc5FineMax - Tdc5FineMin));
+            if (fine < fine_min5)
+               fine = fine_min5;
+            else if (fine > fine_max5)
+               fine = fine_max5;
+            double fulltm = -coarse_tmlen5 * (tm.coarse + (0. + fine - fine_min5) / (0. + fine_max5 - fine_min5));
             printf("%s   ch:%02u falling:%1d coarse:%04u fine:%03u fulltm:%7.3f", 
                          prefix, (unsigned) tm.channel, tm.is_falling, 
                          (unsigned) tm.coarse, (unsigned) tm.fine, fulltm);
@@ -283,6 +287,14 @@ int main(int argc, char* argv[])
       } else if ((strcmp(argv[n], "-tdc") == 0) && (n + 1 < argc)) {
          dabc::str_to_uint(argv[++n], &tdcmask);
          tdcs.emplace_back(tdcmask);
+      } else if ((strcmp(argv[n], "-mhz5") == 0) && (n + 1 < argc)) {
+         double mhz5 = 300.;
+         dabc::str_to_double(argv[++n], &mhz5);
+         coarse_tmlen5 = 1000. / mhz5;
+      } else if ((strcmp(argv[n], "-fine-min5") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &fine_min5);
+      } else if ((strcmp(argv[n], "-fine-max5") == 0) && (n + 1 < argc)) {
+         dabc::str_to_uint(argv[++n], &fine_max5);
       } else if (!scan_tdc_arguments(n, argc, argv))
          return usage("Unknown option");
    }

@@ -13,6 +13,8 @@
 #endif
 
 #define Tdc5FreqMhz 300.
+#define Tdc5FineMin 19
+#define Tdc5FineMax 395
 
 struct tdc5_parse_it {
 	int i;
