@@ -65,6 +65,8 @@ namespace dogma {
 
          inline uint32_t GetLocalTrigTime() const { return SWAP_VALUE(tuLocalTrigTime); }
 
+         inline uint64_t GetTdc5TrigTime() const { return (((uint64_t) GetTrigTime()) << 32) | GetLocalTrigTime(); }
+
          inline uint32_t GetPayloadLen() const { return SWAP_VALUE(tuLenPayload) & 0xffff; }
 
          inline uint32_t GetErrorBits() const { return SWAP_VALUE(tuLenPayload) >> 24; }

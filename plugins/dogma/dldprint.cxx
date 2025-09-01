@@ -137,6 +137,10 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
          double last_rising_tm = 0.;
          int last_rising_ch = -1;
          printf("%s   Trigger time: %12.9fs\n", prefix,  h.trig_time * coarse_tmlen5 * 1e-9); // time in seconds
+         
+         // keep for debug purposes
+         if (h.trig_time != tu->GetTdc5TrigTime())
+            printf("%s   DECODING TRIGGER TIME FAILURE 0x%016lx 0x%016lx\n", prefix, (long unsigned) h.trig_time, (long unsigned) tu->GetTdc5TrigTime());
          while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
             int fine = tm.fine;
             if (fine < fine_min5)
