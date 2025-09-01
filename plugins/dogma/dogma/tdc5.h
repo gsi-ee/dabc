@@ -12,6 +12,8 @@
 #include <endian.h>
 #endif
 
+#define Tdc5FreqMhz 300.
+
 struct tdc5_parse_it {
 	int i;
 	int cur_chan;
