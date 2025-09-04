@@ -69,7 +69,8 @@ struct TuStat {
 };
 
 bool printraw = false, printsub = false, showrate = false, reconnect = false, dostat = false, dominsz = false, domaxsz = false, autoid = false;
-double mhz5 = Tdc5FreqMhz, coarse_tmlen5 = 1000. / Tdc5FreqMhz;
+double mhz5 = Tdc5FreqMhz;
+double coarse_tmlen5 = 1000. / mhz5;
 unsigned fine_min5 = Tdc5FineMin, fine_max5 = Tdc5FineMax;
 unsigned idrange = 0xff, onlynew = 0, onlyraw = 0, hubmask = 0, fullid = 0, adcmask = 0, onlymonitor = 0;
 int buffer_size = 4, dotriggerdump = 0;
@@ -102,7 +103,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       epoch0 = tu->GetTrigTime() & 0xfffffff;
       coarse0 = tu->GetLocalTrigTime() & 0x7ff;
       printf("%sTu addr:%06x magic:%02x trigtype:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
-            (unsigned)tu->GetAddr(), (unsigned)tu->GetMagicType(), 
+            (unsigned)tu->GetAddr(), (unsigned)tu->GetMagicType(),
             (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
             (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
             (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
@@ -137,19 +138,19 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
          double last_rising_tm = 0.;
          int last_rising_ch = -1;
          printf("%s   Trigger time: %12.9fs\n", prefix,  h.trig_time * coarse_tmlen5 * 1e-9); // time in seconds
-         
+
          // keep for debug purposes
          if (h.trig_time != tu->GetTdc5TrigTime())
             printf("%s   DECODING TRIGGER TIME FAILURE 0x%016lx 0x%016lx\n", prefix, (long unsigned) h.trig_time, (long unsigned) tu->GetTdc5TrigTime());
          while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
-            int fine = tm.fine;
+            unsigned fine = tm.fine;
             if (fine < fine_min5)
                fine = fine_min5;
             else if (fine > fine_max5)
                fine = fine_max5;
             double fulltm = -coarse_tmlen5 * (tm.coarse + (0. + fine - fine_min5) / (0. + fine_max5 - fine_min5));
-            printf("%s   ch:%02u falling:%1d coarse:%04u fine:%03u fulltm:%7.3f", 
-                         prefix, (unsigned) tm.channel, tm.is_falling, 
+            printf("%s   ch:%02u falling:%1d coarse:%04u fine:%03u fulltm:%7.3f",
+                         prefix, (unsigned) tm.channel, tm.is_falling,
                          (unsigned) tm.coarse, (unsigned) tm.fine, fulltm);
             if (tm.is_falling && (last_rising_ch == tm.channel))
                printf("  ToT:%5.3f", fulltm - last_rising_tm);
@@ -292,7 +293,7 @@ int main(int argc, char* argv[])
          dabc::str_to_uint(argv[++n], &tdcmask);
          tdcs.emplace_back(tdcmask);
       } else if ((strcmp(argv[n], "-mhz5") == 0) && (n + 1 < argc)) {
-         double mhz5 = 300.;
+         mhz5 = 300.;
          dabc::str_to_double(argv[++n], &mhz5);
          coarse_tmlen5 = 1000. / mhz5;
       } else if ((strcmp(argv[n], "-fine-min5") == 0) && (n + 1 < argc)) {
@@ -320,7 +321,7 @@ int main(int argc, char* argv[])
       isfile = true;
    }
 
-   if (tmout < 0) 
+   if (tmout < 0)
       tmout = isfile ? 0.1 : 5.;
 
    if (!isfile) {

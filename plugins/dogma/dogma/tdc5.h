@@ -37,7 +37,7 @@ struct tdc5_time {
 	int is_falling;
 };
 
-inline void tdc5_parse_header(tdc5_header *h, tdc5_parse_it *it, const char *buf, int n)
+inline void tdc5_parse_header(tdc5_header *h, tdc5_parse_it *it, const char *buf, int)
 {
 	it->i = 0;
 	h->magic = be32toh(*(uint32_t*)(buf + it->i)); it->i += 4;
