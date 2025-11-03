@@ -40,6 +40,7 @@ int usage(const char *errstr = nullptr)
    printf("   file.bin                    - DABC binary file reading\n");
    printf("   dabcnode                    - DABC stream server\n");
    printf("   dabcnode:port               - DABC stream server with custom port\n");
+   printf("   dogma://host:port           - raw dogma input via UDP port\n");
    printf("Arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
    printf("   -maxage value           - maximal age time for events, if expired queue are cleaned (default off)\n");
