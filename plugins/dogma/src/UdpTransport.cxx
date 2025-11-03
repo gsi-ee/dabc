@@ -183,6 +183,7 @@ bool dogma::UdpAddon::ReadUdp()
       if (!tu->IsMagic()) {
          fTotalDiscardMagic++;
          errmsg = "Magic number not match";
+         DOUT0("Magic %08x", tu->GetMagic());
       } else if (tu->IsMagicDefault()) {
          msgsize = tu->GetSize(); // size must match with number of received bytes
          if (res != msgsize)
