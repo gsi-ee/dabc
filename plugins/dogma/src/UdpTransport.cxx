@@ -185,7 +185,7 @@ bool dogma::UdpAddon::ReadUdp()
          errmsg = "Magic number not match";
       } else if (tu->IsMagicDefault()) {
          msgsize = tu->GetSize(); // size must match with number of received bytes
-         if (res != msgsize) 
+         if (res != msgsize)
             errmsg = dabc::format("Send buffer %u differ from message size %u - ignore it", (unsigned) res, (unsigned) msgsize);
       } else if (tu->IsMagicTdc5()) {
          msgsize = tu->SetTdc5PaketLength(res); // total size will be rounded by 4 bytes boundary
@@ -195,6 +195,7 @@ bool dogma::UdpAddon::ReadUdp()
       } else {
          fTotalDiscardMagic++;
          errmsg = "Magic subtype not match";
+         DOUT0("Magic %08x", tu->GetMagic());
       }
 
       if (!errmsg.empty()) {

@@ -53,6 +53,8 @@ namespace dogma {
 
          inline bool IsMagicTdc5() const { return GetMagicType() == 0x1e; }
 
+         inline uint32_t GetMagic() const { return SWAP_VALUE(tuMagic); }
+
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
          inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 24; }
@@ -85,12 +87,12 @@ namespace dogma {
             tuLenPayload = SWAP_VALUE(new_payload);
          }
 
-         inline uint32_t SetTdc5PaketLength(uint32_t sz) 
+         inline uint32_t SetTdc5PaketLength(uint32_t sz)
          {
             if (sz < sizeof(DogmaTu))
                sz = sizeof(DogmaTu);
             uint32_t sz4 = sz / 4, odd_len = sz - sz4 * 4;
-            if (odd_len > 0) 
+            if (odd_len > 0)
                sz4++;
             SetPayloadLen(sz4 - sizeof(DogmaTu) / 4);
             SetFrameBits(odd_len); // store in frame bits extra bytes not match to 4 bytes borders
