@@ -102,8 +102,15 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
       epoch0 = tu->GetTrigTime() & 0xfffffff;
       coarse0 = tu->GetLocalTrigTime() & 0x7ff;
-      printf("%sTu addr:%06x magic:%02x trigtype:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n", prefix,
-            (unsigned)tu->GetAddr(), (unsigned)tu->GetMagicType(),
+      printf("%sTu addr:%06x", prefix, (unsigned)tu->GetAddr());
+      if (tu->IsMagic())
+         printf(" magic:%02x", (unsigned) tu->GetMagicType());
+      else if(tu->IsMagicTdc5())
+         printf(" tdc5:%04x", (unsigned) tu->GetMagic() & 0xffff);
+      else
+         printf(" unkn:%08x", (unsigned) tu->GetMagic());
+
+      printf(" trigtype:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n",
             (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
             (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
             (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
