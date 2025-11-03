@@ -180,23 +180,17 @@ bool dogma::UdpAddon::ReadUdp()
 
       std::string errmsg;
 
-      if (!tu->IsMagic()) {
-         fTotalDiscardMagic++;
-         errmsg = "Magic number not match";
-         DOUT0("Magic %08x", tu->GetMagic());
-      } else if (tu->IsMagicDefault()) {
-         msgsize = tu->GetSize(); // size must match with number of received bytes
-         if (res != msgsize)
-            errmsg = dabc::format("Send buffer %u differ from message size %u - ignore it", (unsigned) res, (unsigned) msgsize);
-      } else if (tu->IsMagicTdc5()) {
+      if (tu->IsMagicTdc5()) {
          msgsize = tu->SetTdc5PaketLength(res); // total size will be rounded by 4 bytes boundary
          if ((msgsize < res) || (msgsize > res + 3))
             errmsg = dabc::format("Failure by coding packet len %u in tu size %u - ignore it", (unsigned) res, (unsigned) msgsize);
-
+      } else if (tu->IsMagic() && tu->IsMagicDefault()) {
+         msgsize = tu->GetSize(); // size must match with number of received bytes
+         if (res != msgsize)
+            errmsg = dabc::format("Send buffer %u differ from message size %u - ignore it", (unsigned) res, (unsigned) msgsize);
       } else {
          fTotalDiscardMagic++;
          errmsg = "Magic subtype not match";
-         DOUT0("Magic %08x", tu->GetMagic());
       }
 
       if (!errmsg.empty()) {

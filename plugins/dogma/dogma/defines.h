@@ -24,6 +24,8 @@
 
 #define DOGMA_MAGIC 0xecc1701d
 
+#define TDC5_MAGIC 0x55520000
+
 #define SWAP_VALUE(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
 namespace dogma {
@@ -47,11 +49,11 @@ namespace dogma {
 
          inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) & 0xffffff00) == (DOGMA_MAGIC & 0xffffff00); }
 
+         inline bool IsMagicTdc5() const { return (SWAP_VALUE(tuMagic) & 0xffff0000) == (TDC5_MAGIC & 0xffff0000); }
+
          inline uint32_t GetMagicType() const { return SWAP_VALUE(tuMagic) & 0xff; }
 
          inline bool IsMagicDefault() const { return GetMagicType() == (DOGMA_MAGIC & 0xff); }
-
-         inline bool IsMagicTdc5() const { return GetMagicType() == 0x1e; }
 
          inline uint32_t GetMagic() const { return SWAP_VALUE(tuMagic); }
 
@@ -135,7 +137,7 @@ namespace dogma {
          uint32_t tuMagic = 0;
          uint32_t tuSeqId = 0;
          uint32_t tuTrigTypeNumber = 0;
-         uint32_t tuLenPayload = 0; // paylod len in 4bytes words
+         uint32_t tuLenPayload = 0; // payload len in 4bytes words
 
       public:
 
