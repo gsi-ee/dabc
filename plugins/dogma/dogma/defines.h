@@ -59,7 +59,11 @@ namespace dogma {
 
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
-         inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 24; }
+         inline uint32_t GetTrigType() const
+         {
+            auto v = SWAP_VALUE(tuTrigTypeNumber);
+            return IsMagicTdc5() ? v >> 28 : v >> 24;
+         }
 
          inline uint32_t GetTrigNumber() const { return SWAP_VALUE(tuTrigTypeNumber) & 0xffffff; }
 
