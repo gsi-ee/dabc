@@ -165,12 +165,12 @@ dogma::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       CreateCmdDef("BnetCalibrControl").SetField("_hidden", true);
       CreateCmdDef("BnetCalibrRefresh").SetField("_hidden", true);
    } else {
-      CreateCmdDef("StartHldFile")
-         .AddArg("filename", "string", true, "file.hld")
+      CreateCmdDef("StartDldFile")
+         .AddArg("filename", "string", true, "file.dld")
          .AddArg(dabc::xml_maxsize, "int", false, 1500)
-         .SetArgMinMax(dabc::xml_maxsize, 1, 5000);
-      CreateCmdDef("StopHldFile");
-      CreateCmdDef("RestartHldFile");
+         .SetArgMinMax(dabc::xml_maxsize, 1, 50000);
+      CreateCmdDef("StopDldFile");
+      CreateCmdDef("RestartDldFile");
    }
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
@@ -1544,19 +1544,15 @@ int dogma::CombinerModule::ExecuteCommand(dabc::Command cmd)
 {
    bool do_start = false, do_stop = false;
 
-   if (cmd.IsName("StartDogmaFile")) {
+   if (cmd.IsName("StartDldFile")) {
       do_start = do_stop = true;
-      SetInfo("Execute StartDogmaFile");
-
-      DOUT0("******************* START DOGMA FILE *************");
-   } else if (cmd.IsName("StopDogmaFile")) {
+      SetInfo("Execute StartDldFile");
+   } else if (cmd.IsName("StopDldFile")) {
       do_stop = true;
-      SetInfo("Execute StopDogmaFile");
-      DOUT0("******************* STOP DOGMA FILE *************");
-
-   } else if (cmd.IsName("RestartDogmaFile")) {
+      SetInfo("Execute StopDldFile");
+   } else if (cmd.IsName("RestartDldFile")) {
       if (NumOutputs() < 2) return dabc::cmd_false;
-      SetInfo("Execute RestartDogmaFile");
+      SetInfo("Execute RestartDldFile");
       cmd.ChangeName("RestartTransport");
       SubmitCommandToTransport(OutputName(1), cmd);
       return dabc::cmd_postponed;
@@ -1696,21 +1692,21 @@ int dogma::CombinerModule::ExecuteCommand(dabc::Command cmd)
       if (NumOutputs() > 1)
          res = DisconnectPort(OutputName(1));
 
-      DOUT0("Stop HLD file res = %s", DBOOL(res));
+      DOUT0("Stop DLD file res = %s", DBOOL(res));
    }
 
    if (do_start && res) {
-      std::string fname = cmd.GetStr("filename", "file.dogma");
+      std::string fname = cmd.GetStr("filename", "file.dld");
       int maxsize = cmd.GetInt(dabc::xml_maxsize, 1500);
 
-      std::string url = dabc::format("dogma://%s?%s=%d", fname.c_str(), dabc::xml_maxsize, maxsize);
+      std::string url = dabc::format("dld://%s?%s=%d", fname.c_str(), dabc::xml_maxsize, maxsize);
 
       // we guarantee, that at least two ports will be created
       EnsurePorts(0, 2);
 
       res = dabc::mgr.CreateTransport(OutputName(1, true), url);
 
-      DOUT0("Start HLD file %s res = %s", fname.c_str(), DBOOL(res));
+      DOUT0("Start DLD file %s res = %s", fname.c_str(), DBOOL(res));
    }
 
    return cmd_bool(res);
