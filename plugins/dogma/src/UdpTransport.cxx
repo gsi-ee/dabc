@@ -34,12 +34,13 @@
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
 #define DEFAULT_MTU 0xFFF0
 
-dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, int mtu, bool debug, bool print, int maxloop, double reduce) :
+dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, const std::string &mcast, int mtu, bool debug, bool print, int maxloop, double reduce) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
    fHostName(host),
    fRecvBufLen(rcvbuflen),
+   fMcastAddr(mcast),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
    fMtuBuffer(nullptr),
    fSkipCnt(0),
@@ -355,7 +356,7 @@ int dogma::UdpTransport::ExecuteCommand(dabc::Command cmd)
       auto addon = static_cast<UdpAddon *>(fAddon());
       if (addon) {
          addon->CloseSocket();
-         int fd = dogma::UdpAddon::OpenUdp(addon->fHostName, addon->fNPort, addon->fRecvBufLen);
+         int fd = dogma::UdpAddon::OpenUdp(addon->fHostName, addon->fNPort, addon->fRecvBufLen, addon->fMcastAddr);
          if (fd <= 0) {
             EOUT("Cannot recreate UDP socket for port %d", addon->fNPort);
             dabc::mgr.StopApplication();
