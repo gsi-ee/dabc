@@ -111,6 +111,6 @@ dabc::Module* dogma::Factory::CreateTransport(const dabc::Reference& port, const
 
    DOUT0("Start DOGMA UDP transport on %s", url.GetHostNameWithPort().c_str());
 
-   auto addon = new dogma::UdpAddon(fd, host, nport, rcvbuflen, mtu, debug, print, maxloop, reduce);
+   auto addon = new dogma::UdpAddon(fd, host, nport, rcvbuflen, mcast, mtu, debug, print, maxloop, reduce);
 	return new dogma::UdpTransport(cmd, portref, addon, flush, heartbeat);
 }

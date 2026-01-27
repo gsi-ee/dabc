@@ -97,6 +97,7 @@ namespace dogma {
          dabc::BufferSize_t fBufferSize{0};      ///< available buffer size
          std::string        fHostName;           ///< host name used to create UDP socket
          int                fRecvBufLen{100000}; ///< recv buf len
+         std::string        fMcastAddr;          ///< mcast address
          unsigned           fMTU{0};             ///< maximal size of packet expected from DOG
          void*              fMtuBuffer{nullptr}; ///< buffer used to skip packets when no normal buffer is available
          int                fSkipCnt{0};         ///< counter used to control buffers skipping
@@ -121,7 +122,7 @@ namespace dogma {
          bool CloseBuffer();
 
       public:
-         UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, int mtu, bool debug, bool print, int maxloop, double reduce);
+         UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, const std::string &mcast, int mtu, bool debug, bool print, int maxloop, double reduce);
          ~UdpAddon() override;
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
