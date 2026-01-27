@@ -89,7 +89,9 @@ dabc::Module* dogma::Factory::CreateTransport(const dabc::Reference& port, const
 
    std::string host = url.GetHostName();
    int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
-   int fd = dogma::UdpAddon::OpenUdp(host, nport, rcvbuflen);
+   std::string mcast = url.GetOptionStr("mcast", "");
+
+   int fd = dogma::UdpAddon::OpenUdp(host, nport, rcvbuflen, mcast);
    if (fd <= 0) {
       EOUT("Cannot open UDP socket for %s", url.GetHostNameWithPort().c_str());
       return nullptr;
@@ -104,7 +106,8 @@ dabc::Module* dogma::Factory::CreateTransport(const dabc::Reference& port, const
    int udp_queue = url.GetOptionInt("upd_queue", 0);
    double heartbeat = url.GetOptionDouble("heartbeat", -1.);
 
-   if (udp_queue>0) cmd.SetInt("TransportQueue", udp_queue);
+   if (udp_queue > 0)
+      cmd.SetInt("TransportQueue", udp_queue);
 
    DOUT0("Start DOGMA UDP transport on %s", url.GetHostNameWithPort().c_str());
 

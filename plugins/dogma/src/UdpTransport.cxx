@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
+#include <arpa/inet.h>
 
 
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
@@ -237,10 +238,11 @@ bool dogma::UdpAddon::ReadUdp()
    return true; // indicate that buffer reading will be finished by callback
 }
 
-int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
+int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen, const std::string &mcast)
 {
    int fd = socket(PF_INET, SOCK_DGRAM, 0);
-   if (fd < 0) return -1;
+   if (fd < 0)
+      return -1;
 
    if (!dabc::SocketThread::SetNonBlockSocket(fd)) {
       EOUT("Cannot set non-blocking mode for UDP socket %d", fd);
@@ -269,6 +271,17 @@ int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
       }
    }
 
+   if (mcast.length() > 0) {
+      struct in_addr localInterface;
+      memset(&localInterface, 0, sizeof(localInterface));
+      localInterface.s_addr = inet_addr(mcast.c_str());
+
+      if(setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, (char *)&localInterface, sizeof(localInterface)) < 0)
+         EOUT("Fail to set mcast addr %s to socket", mcast.c_str());
+      else
+         EOUT("MCAST addr %s set OK", mcast.c_str());
+   }
+
    if ((host.length() > 0) && (host != "host")) {
       struct addrinfo hints, *info = nullptr;
 
@@ -281,7 +294,8 @@ int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
 
       getaddrinfo(host.c_str(), service.c_str(), &hints, &info);
 
-      if (info && bind(fd, info->ai_addr, info->ai_addrlen) == 0) return fd;
+      if (info && bind(fd, info->ai_addr, info->ai_addrlen) == 0)
+         return fd;
    }
 
    sockaddr_in addr;
@@ -289,7 +303,8 @@ int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
    addr.sin_family = AF_INET;
    addr.sin_port = htons(nport);
 
-   if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == 0) return fd;
+   if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == 0)
+      return fd;
 
    close(fd);
    return -1;

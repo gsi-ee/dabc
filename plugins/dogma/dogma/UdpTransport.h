@@ -122,11 +122,11 @@ namespace dogma {
 
       public:
          UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, int mtu, bool debug, bool print, int maxloop, double reduce);
-          ~UdpAddon() override;
+         ~UdpAddon() override;
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
 
-         static int OpenUdp(const std::string &host, int nport, int rcvbuflen);
+         static int OpenUdp(const std::string &host, int nport, int rcvbuflen, const std::string &mcast = "");
    };
 
    // ==================================================================================
