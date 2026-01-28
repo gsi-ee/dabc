@@ -272,20 +272,9 @@ int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen, 
       }
    }
 
-   if (mcast.length() > 0) {
-      struct in_addr localInterface;
-      memset(&localInterface, 0, sizeof(localInterface));
-      localInterface.s_addr = inet_addr(mcast.c_str());
-
-      if(setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, (char *)&localInterface, sizeof(localInterface)) < 0)
-         EOUT("Fail to set mcast addr %s to socket", mcast.c_str());
-      else
-         EOUT("MCAST addr %s set OK", mcast.c_str());
-   }
+   struct addrinfo hints, *info = nullptr;
 
    if ((host.length() > 0) && (host != "host")) {
-      struct addrinfo hints, *info = nullptr;
-
       memset(&hints, 0, sizeof(hints));
       hints.ai_flags    = AI_PASSIVE;
       hints.ai_family   = AF_UNSPEC; //AF_INET;
@@ -295,20 +284,46 @@ int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen, 
 
       getaddrinfo(host.c_str(), service.c_str(), &hints, &info);
 
-      if (info && bind(fd, info->ai_addr, info->ai_addrlen) == 0)
-         return fd;
+      if (info && bind(fd, info->ai_addr, info->ai_addrlen) != 0)
+         info = nullptr;
    }
 
-   sockaddr_in addr;
-   memset(&addr, 0, sizeof(addr));
-   addr.sin_family = AF_INET;
-   addr.sin_port = htons(nport);
+   if (!info) {
+      sockaddr_in addr;
+      memset(&addr, 0, sizeof(addr));
+      addr.sin_family = AF_INET;
+      addr.sin_port = htons(nport);
 
-   if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == 0)
-      return fd;
+      if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) != 0) {
+         close(fd);
+         return -1;
+      }
+   }
 
-   close(fd);
-   return -1;
+   if (mcast.length() > 0) {
+      struct ip_mreq command;
+
+      // Join the multicast group
+      command.imr_multiaddr.s_addr = inet_addr (mcast.c_str());
+      if (command.imr_multiaddr.s_addr == (in_addr_t)-1) {
+         EOUT("%s is not valid address", mcast.c_str());
+         close(fd);
+         return -1;
+      }
+
+      if (!info)
+         command.imr_interface.s_addr = htonl (INADDR_ANY);
+      else
+         command.imr_interface.s_addr = inet_addr(host.c_str());
+
+      if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &command, sizeof(command)) < 0) {
+         EOUT("Fail setsockopt IP_ADD_MEMBERSHIP");
+         close(fd);
+         return -1;
+      }
+   }
+
+   return fd;
 }
 
 
