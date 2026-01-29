@@ -188,7 +188,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    double interval = Cfg("AutoSave", cmd).AsDouble(0);
    if (interval > 1) CreateTimer("AutoSave", interval);
 
-   // used to split events processing
+   // used to split events processing, not running by default
    CreateTimer("Processing");
 }
 
@@ -654,8 +654,8 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
    }
 
    if (tname == "Processing") {
-      if (ProcessSomeEvents() && CanRecv())
-         ProcessNextBuffer();
+      if (ProcessSomeEvents())
+         ActivateInput();
       return;
    }
 
