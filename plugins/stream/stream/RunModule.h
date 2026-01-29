@@ -61,7 +61,7 @@ namespace stream {
 
       bool ProcessNextEvent(void* evnt, unsigned evntsize);
 
-      void ProcessSomeEvents();
+      bool ProcessSomeEvents();
 
       bool ProcessNextBuffer();
 

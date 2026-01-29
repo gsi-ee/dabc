@@ -187,6 +187,9 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
    double interval = Cfg("AutoSave", cmd).AsDouble(0);
    if (interval > 1) CreateTimer("AutoSave", interval);
+
+   // used to split events processing
+   CreateTimer("Processing");
 }
 
 stream::RunModule::~RunModule()
@@ -490,6 +493,9 @@ bool stream::RunModule::ProcessNextBuffer()
    if (fProcMgr && !fProcMgr->IsWorking())
       return false;
 
+   if (fProcessing > 0)
+      return false;
+
    dabc::Buffer buf = Recv();
 
    if (fParallel == 0)
@@ -509,31 +515,46 @@ bool stream::RunModule::ProcessNextBuffer()
    if (buf.GetTypeId() == mbs::mbt_MbsEvents) {
       fMbsIter.Reset(buf);
       fProcessing = 1;
-   } else {
-      fHadaqIter.Reset(buf);
+   } else if (fHadaqIter.Reset(buf)) {
       fProcessing = 2;
-   }
+   } else
+      fProcessing = 0;
 
    ProcessSomeEvents();
 
    return true;
 }
 
-void stream::RunModule::ProcessSomeEvents()
+bool stream::RunModule::ProcessSomeEvents()
 {
-   if (fProcessing == 1) {
-      while (fMbsIter.NextEvent()) {
-         if (fMbsIter.NextSubEvent())
-            ProcessNextEvent(fMbsIter.rawdata(), fMbsIter.rawdatasize());
-      }
-   } else if (fProcessing == 2) {
-      while (fHadaqIter.NextEvent()) {
-         ProcessNextEvent(fHadaqIter.evnt(), fHadaqIter.evntsize());
+   bool are_more_events = fProcessing > 0;
+
+   auto tm = dabc::TimeStamp::Now();
+
+   while (are_more_events) {
+      if (fProcessing == 1) {
+         if (fMbsIter.NextEvent()) {
+            if (fMbsIter.NextSubEvent())
+               ProcessNextEvent(fMbsIter.rawdata(), fMbsIter.rawdatasize());
+         } else
+            are_more_events = false;
+      } else if (fProcessing == 2) {
+         if (fHadaqIter.NextEvent())
+            ProcessNextEvent(fHadaqIter.evnt(), fHadaqIter.evntsize());
+         else
+            are_more_events = false;
+      } else
+         break;
+
+      // if loop runs over 1 second, shoot timer to split processing
+      if (tm.Expired(1.)) {
+         ShootTimer("Processing", 0.001);
+         return false;
       }
    }
    fProcessing = 0;
+   return true;
 }
-
 
 void stream::RunModule::GenerateEOF(dabc::Buffer buf)
 {
@@ -629,6 +650,12 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
          GenerateEOF(buf);
       }
 
+      return;
+   }
+
+   if (tname == "Processing") {
+      if (ProcessSomeEvents() && CanRecv())
+         ProcessNextBuffer();
       return;
    }
 
