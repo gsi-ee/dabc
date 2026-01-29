@@ -21,6 +21,8 @@
 #endif
 
 #include "dabc/timing.h"
+#include "hadaq/Iterator.h"
+#include "mbs/Iterator.h"
 
 
 namespace stream {
@@ -48,12 +50,18 @@ namespace stream {
       long unsigned fTotalEvnts{0};
       long unsigned fTotalOutEvnts{0};
       int           fDefaultFill{0};   ///<! default fill color for 1-D histograms
+      mbs::ReadIterator fMbsIter;
+      hadaq::ReadIterator fHadaqIter;
+      int fProcessing{0};
+
 
       int ExecuteCommand(dabc::Command cmd) override;
 
       void OnThreadAssigned() override;
 
       bool ProcessNextEvent(void* evnt, unsigned evntsize);
+
+      void ProcessSomeEvents();
 
       bool ProcessNextBuffer();
 

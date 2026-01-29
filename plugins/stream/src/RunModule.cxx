@@ -507,20 +507,33 @@ bool stream::RunModule::ProcessNextBuffer()
    fTotalSize += buf.GetTotalSize();
 
    if (buf.GetTypeId() == mbs::mbt_MbsEvents) {
-      mbs::ReadIterator iter(buf);
-      while (iter.NextEvent()) {
-         if (iter.NextSubEvent())
-            ProcessNextEvent(iter.rawdata(), iter.rawdatasize());
-      }
+      fMbsIter.Reset(buf);
+      fProcessing = 1;
    } else {
-      hadaq::ReadIterator iter(buf);
-      while (iter.NextEvent()) {
-         ProcessNextEvent(iter.evnt(), iter.evntsize());
-      }
+      fHadaqIter.Reset(buf);
+      fProcessing = 2;
    }
+
+   ProcessSomeEvents();
 
    return true;
 }
+
+void stream::RunModule::ProcessSomeEvents()
+{
+   if (fProcessing == 1) {
+      while (fMbsIter.NextEvent()) {
+         if (fMbsIter.NextSubEvent())
+            ProcessNextEvent(fMbsIter.rawdata(), fMbsIter.rawdatasize());
+      }
+   } else if (fProcessing == 2) {
+      while (fHadaqIter.NextEvent()) {
+         ProcessNextEvent(fHadaqIter.evnt(), fHadaqIter.evntsize());
+      }
+   }
+   fProcessing = 0;
+}
+
 
 void stream::RunModule::GenerateEOF(dabc::Buffer buf)
 {
