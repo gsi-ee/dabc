@@ -447,7 +447,8 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 
    fTotalEvnts++;
 
-   if (fParallel == 0) Par("Events").SetValue(1);
+   if (fParallel == 0)
+      Par("Events").SetValue(1);
 
    // TODO - later we need to use DABC buffer here to allow more complex
    // analysis when many dabc buffers required at the same time to analyze data
@@ -486,11 +487,13 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 
 bool stream::RunModule::ProcessNextBuffer()
 {
-   if (fProcMgr && !fProcMgr->IsWorking()) return false;
+   if (fProcMgr && !fProcMgr->IsWorking())
+      return false;
 
    dabc::Buffer buf = Recv();
 
-   if (fParallel == 0) Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
+   if (fParallel == 0)
+      Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
       if (fParallel < 0) {
@@ -521,7 +524,8 @@ bool stream::RunModule::ProcessNextBuffer()
 
 void stream::RunModule::GenerateEOF(dabc::Buffer buf)
 {
-   if ((fStopMode != -1111) || (fParallel <= 0)) return;
+   if ((fStopMode != -1111) || (fParallel <= 0))
+      return;
 
    DOUT0("Inject EOF to finish parallel jobs");
 
@@ -591,12 +595,14 @@ bool stream::RunModule::ProcessRecv(unsigned)
 
 void stream::RunModule::ProcessTimerEvent(unsigned timer)
 {
-   if (TimerName(timer) == "AutoSave") {
+   std::string tname = TimerName(timer);
+
+   if (tname == "AutoSave") {
       if (fProcMgr) fProcMgr->SaveAllHistograms();
       return;
    }
 
-   if (TimerName(timer) == "KeepAlive") {
+   if (tname == "KeepAlive") {
       // std::string s = dabc::format("numcanrecv %u isconnected %s cansend", NumCanRecv(), DBOOL(IsPortConnected(InputName())));
       // for (unsigned n=0;n<NumOutputs();n++)
       //    s.append(dabc::format(" %u:%u", n, NumCanSend(n)));
@@ -613,8 +619,7 @@ void stream::RunModule::ProcessTimerEvent(unsigned timer)
       return;
    }
 
-
-   hadaq::HldProcessor *hld = dynamic_cast<hadaq::HldProcessor*> (fProcMgr->FindProc("HLD"));
+   auto hld = dynamic_cast<hadaq::HldProcessor*> (fProcMgr->FindProc("HLD"));
    if (!hld) return;
 
    dabc::Hierarchy folder = fWorkerHierarchy.FindChild("Status");
