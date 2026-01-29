@@ -964,7 +964,8 @@ bool dabc::Worker::CanSubmitCommand() const
 
 bool dabc::Worker::Submit(dabc::Command cmd)
 {
-   if (cmd.null()) return false;
+   if (cmd.null())
+      return false;
 
    int priority = cmd.GetPriority();
 
@@ -975,9 +976,12 @@ bool dabc::Worker::Submit(dabc::Command cmd)
       if (!fThread.null())
          if (fWorkerActive || (priority == priorityMagic)) {
 
-            if (priority == priorityMagic) priority = fWorkerPriority; else
-            if (priority == priorityDefault) priority = 0; else
-            if (priority == priorityMinimum) priority = -1;
+            if (priority == priorityMagic)
+               priority = fWorkerPriority;
+            else if (priority == priorityDefault)
+               priority = 0;
+            else if (priority == priorityMinimum)
+               priority = -1;
 
             uint32_t arg = fWorkerCommands.Push(cmd, CommandsQueue::kindSubmit);
 
@@ -1000,7 +1004,8 @@ bool dabc::Worker::Submit(dabc::Command cmd)
 
 bool dabc::Worker::GetCommandReply(dabc::Command& cmd, bool* exe_ready)
 {
-   if (cmd.null()) return false;
+   if (cmd.null())
+      return false;
 
    LockGuard lock(fThreadMutex);
 

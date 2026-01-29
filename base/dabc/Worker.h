@@ -181,7 +181,7 @@ namespace dabc {
 
          /** \brief Method indicates if worker is running in the thread and accepts normal events.
           * All events accepted by the worker will be delivered and processed.
-          * If destruction or halt of the worker starts, no new events can be submitted (execpt command with magic priority)
+          * If destruction or halt of the worker starts, no new events can be submitted (except command with magic priority)
           * In this phase IsWorkerActive() will already return false  */
          inline bool IsWorkerActive() const { return fWorkerActive; }
 
