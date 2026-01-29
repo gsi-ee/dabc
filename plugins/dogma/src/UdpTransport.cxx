@@ -282,7 +282,10 @@ int dogma::UdpAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen, 
 
       std::string service = std::to_string(nport);
 
-      getaddrinfo(host.c_str(), service.c_str(), &hints, &info);
+      if (mcast.length() > 0)
+         getaddrinfo("0.0.0.0", service.c_str(), &hints, &info);
+      else
+         getaddrinfo(host.c_str(), service.c_str(), &hints, &info);
 
       if (info && bind(fd, info->ai_addr, info->ai_addrlen) != 0)
          info = nullptr;
