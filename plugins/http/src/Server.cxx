@@ -147,6 +147,8 @@ http::Server::Server(const std::string &server_name, dabc::Command cmd) :
 
    DOUT1("HTTPSYS = %s", fHttpSys.c_str());
 
+   fTimeout = Cfg("tmout", cmd).AsDouble(5.);
+
    fAutoLoad = Cfg("AutoLoad", cmd).AsStr(""); // AsStr("httpsys/scripts/dabc.js;httpsys/scripts/gauge.js");
    fTopTitle = Cfg("TopTitle", cmd).AsStr("DABC online server");
    fBrowser = Cfg("Browser", cmd).AsStr("");
@@ -360,7 +362,8 @@ bool http::Server::Process(const char *uri, const char *_query,
 
       dabc::WorkerRef wrk = GetPublisher();
 
-      if (wrk.Execute(cmd) != dabc::cmd_true) return false;
+      if (wrk.Execute(cmd) != dabc::cmd_true)
+         return false;
 
       content_str = cmd.GetStr("astext");
 
@@ -395,11 +398,11 @@ bool http::Server::Process(const char *uri, const char *_query,
             if (n>0) content_str.append(",");
 
             dabc::CmdGetBinary cmd(pathname+arr[n], "get.json", opt);
-            cmd.SetTimeout(5.);
+            cmd.SetTimeout(fTimeout);
 
-            if (ref.Execute(cmd) == dabc::cmd_true) {
+            if (ref.Execute(cmd) == dabc::cmd_true)
                content_bin = cmd.GetRawData();
-            }
+
             content_str.append(dabc::format("{ \"item\": \"%s\", \"result\":", arr[n].c_str()));
 
             if (content_bin.null())
@@ -421,7 +424,7 @@ bool http::Server::Process(const char *uri, const char *_query,
    } else {
 
       dabc::CmdGetBinary cmd(pathname, filename, query);
-      cmd.SetTimeout(5.);
+      cmd.SetTimeout(fTimeout);
 
       dabc::WorkerRef ref = GetPublisher();
 
@@ -438,7 +441,8 @@ bool http::Server::Process(const char *uri, const char *_query,
             content_header.append(dabc::format("BVersion: %u\r\n", (unsigned) cmd.GetUInt("BVersion")));
 
          content_bin = cmd.GetRawData();
-         if (content_bin.null()) content_str = cmd.GetStr("StringReply");
+         if (content_bin.null())
+            content_str = cmd.GetStr("StringReply");
       }
 
       // TODO: in some cases empty binary may be not an error
@@ -492,7 +496,7 @@ bool http::Server::Process(const char *uri, const char *_query,
 
       zipbuflen-=18; // ZIP cannot use header and footer
 
-      // WORKAROUD - seems to be, compress places 2 bytes before and 4 bytes after the compressed buffer
+      // WORKAROUND - seems to be, compress places 2 bytes before and 4 bytes after the compressed buffer
 
       // int res = compress((Bytef*)bufcur, &zipbuflen, objptr, objlen);
       // bufcur += zipbuflen;

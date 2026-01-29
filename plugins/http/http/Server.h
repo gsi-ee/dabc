@@ -44,6 +44,7 @@ namespace http {
          std::string fOwnJsRootSys; ///< location of internal JSROOT code, need to read special files
          std::string fJsRootSys;    ///< location of JSROOT code, need to read special files
          int         fDefaultAuth{0};  ///< 0 - false, 1 - true, -1 - ignored
+         double fTimeout = 5.;     ///< default processing timeout, "tmout" parameter from XML
 
          std::string fAutoLoad;    ///< _autoload value in h.json
          std::string fTopTitle;    ///< _toptitle value in h.json
