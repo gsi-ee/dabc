@@ -22,12 +22,13 @@
 
 #include "dogma/api.h"
 #include "dogma/tdc5.h"
+#include "dogma/ur-unpacker.h"
 #include "dabc/Url.h"
 #include "dabc/api.h"
 
 #include "../hadaq/tdc_print_code.cxx"
 
-
+#include <unordered_map>
 
 int usage(const char *errstr = nullptr)
 {
@@ -96,6 +97,16 @@ std::map<uint32_t, TuStat> tu_stats;
 uint32_t ref_addr = 0;
 
 
+std::unordered_map<int, ur_config> cfgs = {{2051,
+   {
+    .coarsetime_len = 18,
+    .finetime_len = 11,
+    .tdc_type = 3,
+    .freq = 150,
+    .has_edge_type = true
+  }}};
+
+
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
@@ -115,12 +126,16 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       }
    } else if (is_tdc(tu->GetAddr()) || (onlytdc && (onlytdc == tu->GetAddr()))) {
       // this is new TDC5
-      tdc5_header h;
-      tdc5_parse_it it;
-      tdc5_time tm;
+
+      ur_context it;
+      ur_header h;
+      ur_time tm;
       const char *buf = (const char *) tu->RawHeader();
       int pktlen = tu->GetRawPacketSize();
-      tdc5_parse_header(&h, &it, buf, pktlen);
+
+      ur_set_config(&it, &cfgs[2051]);
+
+      ur_parse_header(&h, &it, buf, pktlen);
 
       double last_rising_tm = 0.;
       int last_rising_ch = -1;
@@ -129,7 +144,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       // keep for debug purposes
       // if (h.trig_time != tu->GetTdc5TrigTime())
       //   printf("%s   DECODING TRIGGER TIME FAILURE 0x%016lx 0x%016lx\n", prefix, (long unsigned) h.trig_time, (long unsigned) tu->GetTdc5TrigTime());
-      while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
+      while (ur_parse_next(&tm, &it, buf, pktlen) == 1) {
          unsigned fine = tm.fine;
          if (fine < fine_min5)
             fine = fine_min5;
