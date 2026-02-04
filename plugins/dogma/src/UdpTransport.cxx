@@ -160,7 +160,14 @@ bool dogma::UdpAddon::ReadUdp()
       //  socklen_t socklen = sizeof(fSockAddr);
       //  ssize_t res = recvfrom(Socket(), fTgtPtr.ptr(), fMTU, 0, (sockaddr*) &fSockAddr, &socklen);
 
-      ssize_t res = recv(Socket(), tgt, fMTU, MSG_DONTWAIT);
+      sockaddr_in addr;
+      socklen_t socklen = sizeof(addr);
+
+      // frond end sends fields starting from trigger time
+      // so first members need to be initialized ourselfs
+      ssize_t res = recvfrom(Socket(), (char *) tgt + 16, fMTU - 16, MSG_DONTWAIT, (sockaddr *) &addr, &socklen);
+
+      // ssize_t res = recv(Socket(), tgt, fMTU, MSG_DONTWAIT);
 
       PROFILER_BLOCK("chk")
 
@@ -178,21 +185,17 @@ bool dogma::UdpAddon::ReadUdp()
       }
 
       auto tu = static_cast<DogmaTu *>(tgt);
-      uint32_t msgsize = 0;
 
       std::string errmsg;
 
-      if (tu->IsMagicTdc5()) {
-         msgsize = tu->SetTdc5PaketLength(res); // total size will be rounded by 4 bytes boundary
-         if ((msgsize < res) || (msgsize > res + 3))
-            errmsg = dabc::format("Failure by coding packet len %u in tu size %u - ignore it", (unsigned) res, (unsigned) msgsize);
-      } else if (tu->IsMagic() && tu->IsMagicDefault()) {
-         msgsize = tu->GetSize(); // size must match with number of received bytes
-         if (res != msgsize)
-            errmsg = dabc::format("Send buffer %u differ from message size %u - ignore it", (unsigned) res, (unsigned) msgsize);
-      } else {
+      tu->SetMagic();
+      tu->SetAddr(*((uint32_t *) &addr.sin_addr));
+      tu->SetDeviceId(addr.sin_port);
+      tu->SetRawPacketSize(res); // total tu size includes 16 bytes length
+
+      if (addr.sin_port != 2051) {
          fTotalDiscardMagic++;
-         errmsg = "Magic subtype not match";
+         errmsg = "Source port is not recognized";
       }
 
       if (!errmsg.empty()) {
@@ -217,7 +220,7 @@ bool dogma::UdpAddon::ReadUdp()
       fTotalRecvPacket++;
       fTotalRecvBytes += res;
 
-      fTgtPtr.shift(msgsize);
+      fTgtPtr.shift(tu->GetSize());
 
 
       PROFILER_BLOCK("buf2")

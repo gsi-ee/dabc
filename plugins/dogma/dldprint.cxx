@@ -98,79 +98,57 @@ uint32_t ref_addr = 0;
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
-   unsigned epoch0 = 0, coarse0 = 0;
-
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
-      epoch0 = tu->GetTrigTime() & 0xfffffff;
-      coarse0 = tu->GetLocalTrigTime() & 0x7ff;
-      printf("%sTu addr:%06x", prefix, (unsigned)tu->GetAddr());
-      if (tu->IsMagic())
-         printf(" magic:%02x", (unsigned) tu->GetMagicType());
-      else if(tu->IsMagicTdc5())
-         printf(" tdc5:%04x", (unsigned) tu->GetMagic() & 0xffff);
-      else
-         printf(" unkn:%08x", (unsigned) tu->GetMagic());
-
-      printf(" trigtype:%02x trignum:%06x epoch0:%u tc0:%03x err:%02x frame:%02x paylod:%04x size:%u\n",
+      printf("%sTu addr:%08x trigtype:%02x trignum:%06x tm:%lu sz:%u\n",
+            prefix, (unsigned)tu->GetAddr(),
             (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
-            (unsigned)tu->GetTrigTime() & 0xfffffff, (unsigned)tu->GetLocalTrigTime() & 0x7ff,
-            (unsigned)tu->GetErrorBits(), (unsigned)tu->GetFrameBits(), (unsigned)tu->GetPayloadLen(), (unsigned) tu->GetSize());
+            (long unsigned)tu->GetTrigTime(), (unsigned)tu->GetSize());
    }
 
-   unsigned len = tu->GetPayloadLen();
-
    if (printraw) {
+      unsigned len = tu->GetPayloadLen();
       printf("%s", prefix);
       for (unsigned i = 0; i < len; ++i) {
-         printf("  %08x", (unsigned) tu->GetPayload(i));
-         if ((i == len - 1) || (i % 8 == 7))
+         printf(" %02x", (unsigned) tu->GetPayload(i));
+         if ((i == len - 1) || (i % 32 == 31))
             printf("\n%s", i < len-1 ? prefix : "");
       }
    } else if (is_tdc(tu->GetAddr()) || (onlytdc && (onlytdc == tu->GetAddr()))) {
-      if (tu->IsMagicDefault()) {
-         // this is convential TDC
-         std::vector<uint32_t> data(len, 0);
-         for (unsigned i = 0; i < len; ++i)
-            data[i] = tu->GetPayload(i);
-         unsigned errmask = 0;
-         PrintTdcDataPlain(0, data, strlen(prefix) + 3, errmask, false, epoch0, coarse0);
-      } else if (tu->IsMagicTdc5()) {
-         // this is new TDC5
-         tdc5_header h;
-         tdc5_parse_it it;
-         tdc5_time tm;
-         const char *buf = (const char *) tu;
-         int pktlen = (int) tu->GetTdc5PaketLength();
-         tdc5_parse_header(&h, &it, buf, pktlen);
+      // this is new TDC5
+      tdc5_header h;
+      tdc5_parse_it it;
+      tdc5_time tm;
+      const char *buf = (const char *) tu->RawHeader();
+      int pktlen = tu->GetRawPacketSize();
+      tdc5_parse_header(&h, &it, buf, pktlen);
 
-         double last_rising_tm = 0.;
-         int last_rising_ch = -1;
-         printf("%s   Trigger time: %12.9fs\n", prefix,  h.trig_time * coarse_tmlen5 * 1e-9); // time in seconds
+      double last_rising_tm = 0.;
+      int last_rising_ch = -1;
+      printf("%s   Trigger time: %12.9fs\n", prefix,  h.trig_time * coarse_tmlen5 * 1e-9); // time in seconds
 
-         // keep for debug purposes
-         if (h.trig_time != tu->GetTdc5TrigTime())
-            printf("%s   DECODING TRIGGER TIME FAILURE 0x%016lx 0x%016lx\n", prefix, (long unsigned) h.trig_time, (long unsigned) tu->GetTdc5TrigTime());
-         while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
-            unsigned fine = tm.fine;
-            if (fine < fine_min5)
-               fine = fine_min5;
-            else if (fine > fine_max5)
-               fine = fine_max5;
-            double fulltm = -coarse_tmlen5 * (tm.coarse + (0. + fine - fine_min5) / (0. + fine_max5 - fine_min5));
-            printf("%s   ch:%02u falling:%1d coarse:%04u fine:%03u fulltm:%7.3f",
-                         prefix, (unsigned) tm.channel, tm.is_falling,
-                         (unsigned) tm.coarse, (unsigned) tm.fine, fulltm);
-            if (tm.is_falling && (last_rising_ch == tm.channel))
-               printf("  ToT:%5.3f", fulltm - last_rising_tm);
+      // keep for debug purposes
+      // if (h.trig_time != tu->GetTdc5TrigTime())
+      //   printf("%s   DECODING TRIGGER TIME FAILURE 0x%016lx 0x%016lx\n", prefix, (long unsigned) h.trig_time, (long unsigned) tu->GetTdc5TrigTime());
+      while (tdc5_parse_next(&tm, &it, buf, pktlen) == 1) {
+         unsigned fine = tm.fine;
+         if (fine < fine_min5)
+            fine = fine_min5;
+         else if (fine > fine_max5)
+            fine = fine_max5;
+         double fulltm = -coarse_tmlen5 * (tm.coarse + (0. + fine - fine_min5) / (0. + fine_max5 - fine_min5));
+         printf("%s   ch:%02u falling:%1d coarse:%04u fine:%03u fulltm:%7.3f",
+                        prefix, (unsigned) tm.channel, tm.is_falling,
+                        (unsigned) tm.coarse, (unsigned) tm.fine, fulltm);
+         if (tm.is_falling && (last_rising_ch == tm.channel))
+            printf("  ToT:%5.3f", fulltm - last_rising_tm);
 
-            printf("\n");
-            if (!tm.is_falling) {
-               last_rising_tm = fulltm;
-               last_rising_ch = tm.channel;
-            } else {
-               last_rising_tm = 0;
-               last_rising_ch = -1;
-            }
+         printf("\n");
+         if (!tm.is_falling) {
+            last_rising_tm = fulltm;
+            last_rising_ch = tm.channel;
+         } else {
+            last_rising_tm = 0;
+            last_rising_ch = -1;
          }
       }
    }
