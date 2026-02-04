@@ -110,10 +110,10 @@ std::unordered_map<int, ur_config> cfgs = {{2051,
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
-      printf("%sTu addr:%08x trigtype:%02x trignum:%06x tm:%lu sz:%u\n",
+      printf("%sTu addr:%08x trigtype:%02x trignum:%06x rawsz:%u\n",
             prefix, (unsigned)tu->GetAddr(),
             (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
-            (long unsigned)tu->GetTrigTime(), (unsigned)tu->GetSize());
+            (unsigned)tu->GetRawPacketSize());
    }
 
    if (printraw) {
