@@ -133,7 +133,15 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       const char *buf = (const char *) tu->RawHeader();
       int pktlen = tu->GetRawPacketSize();
 
-      ur_set_config(&it, &cfgs[2051]);
+      ur_config cfg_2051 = {
+         .coarsetime_len = 18,
+         .finetime_len = 11,
+         .tdc_type = 3,
+         .freq = 150,
+         .has_edge_type = true
+      };
+
+      ur_set_config(&it, &cfg_2051);
 
       ur_parse_header(&h, &it, buf, pktlen);
 
