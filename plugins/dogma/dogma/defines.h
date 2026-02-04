@@ -36,7 +36,6 @@ namespace dogma {
 
    struct DogmaTu {
       protected:
-         uint32_t tuMagic = 0;
          uint32_t tuAddr = 0;
          uint32_t tuDeviceId = 0;
          uint32_t tuLenPayload = 0; // number of bytes in payload
@@ -45,10 +44,6 @@ namespace dogma {
          uint32_t tuTrigTypeNumber = 0;
 
       public:
-
-         inline uint32_t GetMagic() const { return SWAP_VALUE(tuMagic); }
-
-         inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) == DOGMA_MAGIC); }
 
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
@@ -84,8 +79,6 @@ namespace dogma {
 
          void *RawData() const { return (char *) this + sizeof(DogmaTu); }
 
-         inline void SetMagic() { tuMagic = SWAP_VALUE(DOGMA_MAGIC); }
-
          inline void SetAddr(uint32_t addr) { tuAddr = SWAP_VALUE(addr); }
 
          inline void SetDeviceId(uint32_t id) { tuDeviceId = SWAP_VALUE(id); }
@@ -101,7 +94,6 @@ namespace dogma {
 
          void Init(uint32_t type_number)
          {
-            tuMagic = SWAP_VALUE(DOGMA_MAGIC);
             tuAddr = 0;
             tuDeviceId = 0;
             SetTrigTypeNumber(type_number);
@@ -114,14 +106,11 @@ namespace dogma {
 
    struct DogmaEvent {
       protected:
-         uint32_t tuMagic = 0;
          uint32_t tuSeqId = 0;
          uint32_t tuTrigTypeNumber = 0;
          uint32_t tuLenPayload = 0; // payload len in 4bytes words
 
       public:
-
-         inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) & 0xffffff00) == (DOGMA_MAGIC & 0xffffff00); }
 
          inline uint32_t GetSeqId() const { return SWAP_VALUE(tuSeqId); }
          inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 24; }
@@ -131,7 +120,6 @@ namespace dogma {
 
          void Init(uint32_t seqid, uint32_t trig_type, uint32_t trig_number)
          {
-            tuMagic = SWAP_VALUE(DOGMA_MAGIC);
             tuSeqId = SWAP_VALUE(seqid);
             uint32_t v = (trig_type << 24) | (trig_number & 0xffffff);
             tuTrigTypeNumber = SWAP_VALUE(v);

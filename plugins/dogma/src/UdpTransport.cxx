@@ -165,7 +165,7 @@ bool dogma::UdpAddon::ReadUdp()
 
       // frond end sends fields starting from trigger time
       // so first members need to be initialized ourselfs
-      ssize_t res = recvfrom(Socket(), (char *) tgt + 16, fMTU - 16, MSG_DONTWAIT, (sockaddr *) &addr, &socklen);
+      ssize_t res = recvfrom(Socket(), (char *) tgt + 12, fMTU - 12, MSG_DONTWAIT, (sockaddr *) &addr, &socklen);
 
       // ssize_t res = recv(Socket(), tgt, fMTU, MSG_DONTWAIT);
 
@@ -188,10 +188,9 @@ bool dogma::UdpAddon::ReadUdp()
 
       std::string errmsg;
 
-      tu->SetMagic();
       tu->SetAddr(*((uint32_t *) &addr.sin_addr));
       tu->SetDeviceId(addr.sin_port);
-      tu->SetRawPacketSize(res); // total tu size includes 16 bytes length
+      tu->SetRawPacketSize(res); // total tu size includes extra 12 bytes in header and aligned to 4 bytes boundary
 
       if (addr.sin_port != 2051) {
          fTotalDiscardMagic++;
