@@ -73,7 +73,7 @@ namespace dogma {
          }
 
          // this points on the start of raw header send from front end
-         void *RawHeader() const { return (char *) this + 16; }
+         void *RawHeader() const { return (char *) this + 12; }
 
          uint32_t GetRawPacketSize() const { return GetPayloadLen() + 12; }
 
