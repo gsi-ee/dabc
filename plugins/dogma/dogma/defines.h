@@ -24,113 +24,89 @@
 
 #define DOGMA_MAGIC 0xecc1701d
 
-#define TDC5_MAGIC 0x55520000
-
 #define SWAP_VALUE(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
 namespace dogma {
 
    /** \brief DOGMA transport unit header
     *
-    * used as base for event and subevent
+    * used for subevents transport
     * also common envelope for trd network data packets
     */
 
    struct DogmaTu {
       protected:
          uint32_t tuMagic = 0;
-         uint32_t tuTrigTypeNumber = 0;
          uint32_t tuAddr = 0;
-         uint32_t tuTrigTime = 0;
-         uint32_t tuLocalTrigTime = 0;
-         uint32_t tuLenPayload = 0; // number of 4bytes words
+         uint32_t tuDeviceId = 0;
+         uint32_t tuLenPayload = 0; // number of bytes in payload
+         uint32_t tuTrigTimeHigh = 0;
+         uint32_t tuTrigTimeLow = 0;
+         uint32_t tuTrigTypeNumber = 0;
 
       public:
 
-         inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) & 0xffffff00) == (DOGMA_MAGIC & 0xffffff00); }
-
-         inline bool IsMagicTdc5() const { return (SWAP_VALUE(tuMagic) & 0xffff0000) == (TDC5_MAGIC & 0xffff0000); }
-
-         inline uint32_t GetMagicType() const { return SWAP_VALUE(tuMagic) & 0xff; }
-
-         inline bool IsMagicDefault() const { return GetMagicType() == (DOGMA_MAGIC & 0xff); }
-
          inline uint32_t GetMagic() const { return SWAP_VALUE(tuMagic); }
+
+         inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) == DOGMA_MAGIC); }
 
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
-         inline uint32_t GetTrigType() const
-         {
-            auto v = SWAP_VALUE(tuTrigTypeNumber);
-            return IsMagicTdc5() ? v >> 28 : v >> 24;
-         }
+         inline uint32_t GetDeviceId() const { return SWAP_VALUE(tuDeviceId); }
 
-         inline uint32_t GetTrigNumber() const { return SWAP_VALUE(tuTrigTypeNumber) & 0xffffff; }
+         inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 28; }
+
+         inline uint32_t GetTrigNumber() const { return SWAP_VALUE(tuTrigTypeNumber) & 0xfffffff; }
 
          inline uint32_t GetTrigTypeNumber() const { return SWAP_VALUE(tuTrigTypeNumber); }
 
-         inline uint32_t GetTrigTime() const { return SWAP_VALUE(tuTrigTime); }
+         inline uint64_t GetTrigTime() const { return (((uint64_t) SWAP_VALUE(tuTrigTimeHigh)) << 32) | SWAP_VALUE(tuTrigTimeLow); }
 
-         inline uint32_t GetLocalTrigTime() const { return SWAP_VALUE(tuLocalTrigTime); }
+         inline uint32_t GetPayloadLen() const { return SWAP_VALUE(tuLenPayload); }
 
-         inline uint64_t GetTdc5TrigTime() const { return (((uint64_t) GetTrigTime()) << 32) | GetLocalTrigTime(); }
-
-         inline uint32_t GetPayloadLen() const { return SWAP_VALUE(tuLenPayload) & 0xffff; }
-
-         inline uint32_t GetErrorBits() const { return SWAP_VALUE(tuLenPayload) >> 24; }
-
-         inline uint32_t GetFrameBits() const { return (SWAP_VALUE(tuLenPayload) >> 16) & 0xff; }
-
-         inline void SetPayloadLen(uint32_t len)
+         // size always rounded to 4 bytes and includes header
+         inline uint32_t GetSize() const
          {
-            uint32_t new_payload = (len & 0xffff) | (SWAP_VALUE(tuLenPayload) & 0xffff0000);
-            tuLenPayload = SWAP_VALUE(new_payload);
+            uint32_t len = GetPayloadLen(), cut = len % 4;
+            return sizeof(DogmaTu) + len + (cut > 0 ? 4 - cut : 0);
          }
 
-         inline void SetFrameBits(uint32_t bits)
+         inline uint8_t GetPayload(uint32_t indx) const
          {
-            uint32_t new_payload = ((bits << 16) & 0xff0000) | (SWAP_VALUE(tuLenPayload) & 0xff00ffff);
-            tuLenPayload = SWAP_VALUE(new_payload);
+            uint8_t *beg = (uint8_t *)(&tuLenPayload + 4);
+            return *(beg + indx);
          }
 
-         inline uint32_t SetTdc5PaketLength(uint32_t sz)
-         {
-            if (sz < sizeof(DogmaTu))
-               sz = sizeof(DogmaTu);
-            uint32_t sz4 = sz / 4, odd_len = sz - sz4 * 4;
-            if (odd_len > 0)
-               sz4++;
-            SetPayloadLen(sz4 - sizeof(DogmaTu) / 4);
-            SetFrameBits(odd_len); // store in frame bits extra bytes not match to 4 bytes borders
-            return sz4 * 4;
-         }
+         // this points on the start of raw header send from front end
+         void *RawHeader() const { return (char *) this + 16; }
 
-         inline uint32_t GetTdc5PaketLength() const
-         {
-            uint32_t sz = GetSize(),
-                     odd_len = GetFrameBits();
-            return (odd_len > 0) && (sz >= 4) ? sz + odd_len - 4 : sz;
-         }
-
-         inline uint32_t GetSize() const { return sizeof(DogmaTu) + GetPayloadLen() * 4; }
-
-         inline uint32_t GetPayload(uint32_t indx) const
-         {
-            uint32_t v = *(&tuLenPayload + 1 + indx);
-            return SWAP_VALUE(v);
-         }
+         uint32_t GetRawPacketSize() const { return GetPayloadLen() + 12; }
 
          void *RawData() const { return (char *) this + sizeof(DogmaTu); }
 
+         inline void SetMagic() { tuMagic = SWAP_VALUE(DOGMA_MAGIC); }
+
+         inline void SetAddr(uint32_t addr) { tuAddr = SWAP_VALUE(addr); }
+
+         inline void SetDeviceId(uint32_t id) { tuDeviceId = SWAP_VALUE(id); }
+
          void SetTrigTypeNumber(uint32_t type_number) { tuTrigTypeNumber = SWAP_VALUE(type_number); }
+
+         inline void SetPayloadLen(uint32_t len) { tuLenPayload = SWAP_VALUE(len); }
+
+         inline void SetRawPacketSize(uint32_t sz)
+         {
+            SetPayloadLen(sz > 12 ? sz - 12 : 0);
+         }
 
          void Init(uint32_t type_number)
          {
             tuMagic = SWAP_VALUE(DOGMA_MAGIC);
             tuAddr = 0;
+            tuDeviceId = 0;
             SetTrigTypeNumber(type_number);
-            tuTrigTime = 0;
-            tuLocalTrigTime = 0;
+            tuTrigTimeHigh = 0;
+            tuTrigTimeLow = 0;
             tuLenPayload = 0;
          }
 
@@ -150,6 +126,8 @@ namespace dogma {
          inline uint32_t GetSeqId() const { return SWAP_VALUE(tuSeqId); }
          inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 24; }
          inline uint32_t GetTrigNumber() const { return SWAP_VALUE(tuTrigTypeNumber) & 0xffffff; }
+         inline uint32_t GetPayloadLen() const { return SWAP_VALUE(tuLenPayload) & 0xffff; }
+         inline uint32_t GetEventLen() const { return sizeof(DogmaEvent) + GetPayloadLen() * 4; }
 
          void Init(uint32_t seqid, uint32_t trig_type, uint32_t trig_number)
          {
@@ -160,12 +138,11 @@ namespace dogma {
             tuLenPayload = 0;
          }
 
-         inline uint32_t GetPayloadLen() const { return SWAP_VALUE(tuLenPayload) & 0xffff; }
          inline void SetPayloadLen(uint32_t len) { tuLenPayload = SWAP_VALUE(len); }
 
-         inline uint32_t GetEventLen() const { return sizeof(DogmaEvent) + GetPayloadLen() * 4; }
+         inline void SetEventLen(uint32_t sz) { SetPayloadLen((sz - sizeof(DogmaEvent)) / 4); }
 
-         DogmaTu *FirstSubevent() const { return (DogmaTu *)((char *) this + sizeof(DogmaEvent)); }
+         inline DogmaTu *FirstSubevent() const { return GetPayloadLen() * 4 < sizeof(DogmaTu) ? nullptr : (DogmaTu *)((char *) this + sizeof(DogmaEvent)); }
 
          DogmaTu *NextSubevent(DogmaTu *prev) const
          {
