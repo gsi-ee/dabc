@@ -277,7 +277,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
         }
       }
 
-   s += "inp port     pkt      data    MB/s   disc  magic   bufs  qu  drop  lost";
+   s += "inp port     pkt      data    MB/s   disc  sport   bufs  qu  drop  lost";
    if (show_bad)
       s+= "  bad";
    if (istdccal) s += "    TRB         TDC               progr   state";
