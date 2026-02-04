@@ -47,7 +47,7 @@ namespace dogma {
 
       uint64_t           fTotalRecvPacket{0};
       uint64_t           fTotalDiscardPacket{0};
-      uint64_t           fTotalDiscardMagic{0};
+      uint64_t           fTotalDiscardSPort{0};
       uint64_t           fTotalArtificialSkip{0};
       uint64_t           fTotalRecvBytes{0};
       uint64_t           fTotalDiscardBytes{0};
@@ -58,7 +58,7 @@ namespace dogma {
       {
          fTotalRecvPacket = 0;
          fTotalDiscardPacket = 0;
-         fTotalDiscardMagic = 0;
+         fTotalDiscardSPort = 0;
          fTotalArtificialSkip = 0;
          fTotalRecvBytes = 0;
          fTotalDiscardBytes = 0;
@@ -72,9 +72,9 @@ namespace dogma {
          return dabc::number_to_str(fTotalDiscardPacket);
       }
 
-      std::string GetDiscardMagicString()
+      std::string GetDiscardSPortString()
       {
-         std::string res = dabc::number_to_str(fTotalDiscardMagic);
+         std::string res = dabc::number_to_str(fTotalDiscardSPort);
 
          if (fTotalArtificialSkip > 0)
             res += std::string("#") + dabc::number_to_str(fTotalArtificialSkip);
@@ -98,6 +98,7 @@ namespace dogma {
          std::string        fHostName;           ///< host name used to create UDP socket
          int                fRecvBufLen{100000}; ///< recv buf len
          std::string        fMcastAddr;          ///< mcast address
+         int                fSourcePort{0};      ///< allowed source port
          unsigned           fMTU{0};             ///< maximal size of packet expected from DOG
          void*              fMtuBuffer{nullptr}; ///< buffer used to skip packets when no normal buffer is available
          int                fSkipCnt{0};         ///< counter used to control buffers skipping
@@ -122,7 +123,7 @@ namespace dogma {
          bool CloseBuffer();
 
       public:
-         UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, const std::string &mcast, int mtu, bool debug, bool print, int maxloop, double reduce);
+         UdpAddon(int fd, const std::string &host, int nport, int sport, int rcvbuflen, const std::string &mcast, int mtu, bool debug, bool print, int maxloop, double reduce);
          ~UdpAddon() override;
 
          bool HasBuffer() const { return !fTgtPtr.null(); }

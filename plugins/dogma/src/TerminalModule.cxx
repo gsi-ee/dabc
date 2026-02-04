@@ -320,7 +320,7 @@ void dogma::TerminalModule::ProcessTimerEvent(unsigned)
                dabc::size_to_str(info->fTotalRecvBytes).c_str(),
                rate/1024./1024.,
                info->GetDiscardString().c_str(),
-               info->GetDiscardMagicString().c_str(),
+               info->GetDiscardSPortString().c_str(),
                dabc::number_to_str(info->fTotalProducedBuffers).c_str()));
          fCalibr[n].lastrecv = info->fTotalRecvBytes;
 
