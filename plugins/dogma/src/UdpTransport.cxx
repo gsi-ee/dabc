@@ -34,13 +34,14 @@
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
 #define DEFAULT_MTU 0xFFF0
 
-dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int rcvbuflen, const std::string &mcast, int mtu, bool debug, bool print, int maxloop, double reduce) :
+dogma::UdpAddon::UdpAddon(int fd, const std::string &host, int nport, int sport, int rcvbuflen, const std::string &mcast, int mtu, bool debug, bool print, int maxloop, double reduce) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
    fHostName(host),
    fRecvBufLen(rcvbuflen),
    fMcastAddr(mcast),
+   fSourcePort(sport),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
    fMtuBuffer(nullptr),
    fSkipCnt(0),
@@ -194,8 +195,8 @@ bool dogma::UdpAddon::ReadUdp()
 
       // DOUT0("Get packet from source %u port %u port2 %u", *((uint32_t *) &addr.sin_addr), (unsigned) addr.sin_port, (unsigned) ntohs(addr.sin_port));
 
-      if (ntohs(addr.sin_port) != 2051) {
-         fTotalDiscardMagic++;
+      if ((fSourcePort > 0) && (ntohs(addr.sin_port) != fSourcePort)) {
+         fTotalDiscardSPort++;
          errmsg = "Source port is not recognized";
       }
 
