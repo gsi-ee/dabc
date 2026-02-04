@@ -188,13 +188,13 @@ bool dogma::UdpAddon::ReadUdp()
 
       std::string errmsg;
 
-      tu->SetAddr(*((uint32_t *) &addr.sin_addr));
-      tu->SetDeviceId(addr.sin_port);
+      tu->SetAddr(ntohl(addr.sin_addr.s_addr));
+      tu->SetDeviceId(ntohs(addr.sin_port));
       tu->SetRawPacketSize(res); // total tu size includes extra 12 bytes in header and aligned to 4 bytes boundary
 
-      DOUT0("Get packet from source %u port %u port2 %u", *((uint32_t *) &addr.sin_addr), (unsigned) addr.sin_port, (unsigned) ntohs(addr.sin_port));
+      // DOUT0("Get packet from source %u port %u port2 %u", *((uint32_t *) &addr.sin_addr), (unsigned) addr.sin_port, (unsigned) ntohs(addr.sin_port));
 
-      if (addr.sin_port != 2051) {
+      if (ntohs(addr.sin_port) != 2051) {
          fTotalDiscardMagic++;
          errmsg = "Source port is not recognized";
       }
