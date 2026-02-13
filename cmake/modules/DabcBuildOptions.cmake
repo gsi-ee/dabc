@@ -87,6 +87,7 @@ dabc_build_option(dogma ON "Enable DOGMA plugin")
 dabc_build_option(dofi ON "Enable DOFI plugin")
 dabc_build_option(mbsroot ON "Enable MBS-ROOT plugin")
 dabc_build_option(olmd ON "Enable Original LMD plugin")
+dabc_build_option(pex ON "Enable PEX plugin")
 dabc_build_option(profiler OFF "Time profiler for some components")
 
 # --- The 'all' option switches ON major options ------------------------------
@@ -112,6 +113,7 @@ if(all)
   set(dofi_defvalue ON)
   set(mbsroot_defvalue ON)
   set(olmd_defvalue ON)
+  set(pex_defvalue ON)
 endif()
 
 # --- The 'all' option switches ON major options ------------------------------
@@ -137,6 +139,7 @@ if(minimal)
   set(dofi_defvalue OFF)
   set(mbsroot_defvalue OFF)
   set(olmd_defvalue ON)
+  set(pex_defvalue OFF)
 endif()
 
 # --- Define at moment the options with the selected default values -----------
