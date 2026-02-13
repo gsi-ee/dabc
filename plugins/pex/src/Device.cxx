@@ -31,6 +31,7 @@
 
 //#include "pex/ReadoutApplication.h"
 
+#include "pexor/PexorTwo.h"
 #include "pexor/DMA_Buffer.h"
 
 //#include "pex/random-coll.h"

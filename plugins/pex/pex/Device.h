@@ -19,7 +19,10 @@
 #include "dabc/MemoryPool.h"
 #include "dabc/threads.h"
 
-#include "pexor/PexorTwo.h"
+namespace pexor{
+class PexorTwo;
+class DMA_Buffer;
+}
 
 #include "mbs/MbsTypeDefs.h"
 
