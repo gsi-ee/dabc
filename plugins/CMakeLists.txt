@@ -60,6 +60,10 @@ if(gosip)
   add_subdirectory(gosip)
 endif()
 
+if(pex)
+  add_subdirectory(pex)
+endif()
+
 if(dofi)
   add_subdirectory(dofi)
 endif()

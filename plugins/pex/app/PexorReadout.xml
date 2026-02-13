@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<dabc version="2">
+
+<Context host="localhost" name="PEXOR">
+		<Run>
+			<lib value="libDabcHttp.so"/>
+			<lib value="libDabcMbs.so" />
+			<lib value="libDabcPex.so" />
+      		<lib value="libDabcGosip.so"/>
+			<!--  lib value="libpexor.so" /-->
+			<logfile value="ReadoutPexor.log" />
+			<!-- <runtime value="20"/> -->
+			<debuglevel value="1"/>
+			<control value="true"/>
+			<halttime value="20"/>
+			
+		</Run>
+
+		<MemoryPool name="Pool">
+			<BufferSize value="128000" />
+			<NumBuffers value="1000" />
+		</MemoryPool>
+
+
+
+		<HttpServer name="http">
+			<port value="8091" />
+		</HttpServer>
+
+
+  		<Publisher name="publ" manager="true"/>
+
+
+
+		<Device name="PexorDevice" class="pex::GenericDevice">
+
+			<PexorID value="0" />
+			<PexorNumSlaves_0 value="2" />
+			<PexorNumSlaves_1 value="0" />
+			<PexorNumSlaves_2 value="0" />
+			<PexorNumSlaves_3 value="0" />
+			<PexorDMALen value="32768" />
+			<PexorDMABuffers value="50" />
+			<PexorDMAScatterGather value="false" />
+			<PexorDMAZeroCopy value="false" />
+			<PexorMultiTokenDMA  value="false" />
+			<PexorDirectDMA  value="true" />
+			<PexorFormatMbs value="true" />
+			<PexorSingleMbsSubevent value="true"/>
+			<PexorMbsSubcrate  value="0"/>
+			<PexorMbsControl  value="9"/>
+			<PexorMbsProcid   value="1"/>			
+			<PexorSyncReadout value="true" />
+			<PexorUseTrigger value="true" />
+			<PexorAutoReadout value="false"/>
+			<PexorAutoAsync  value="false"/>
+			<PexorTokenWaitForDataReady value="true"/>
+			<PexorTriggerTimeout value="10"/>
+			<TrixorConversionTime value="250" />
+			<TrixorFastClearTime value="30" />
+		</Device>
+
+
+		<Module name="PexorReadout" class="pex::ReadoutModule">
+			<!-- these parameters will force to create inputs/oputputs of module -->
+			<NumInputs value="1" />
+			<NumOutputs value="1" />
+
+			<InputPort name="Input0" url="device://PexorDevice" />
+
+
+			<OutputPort name="Output0" url="mbs://Stream:6900" />
+			<OutputPort name="Output1" url="lmd:///data/pexortest.lmd?maxsize=1500&log=2" />
+			
+			<Ratemeter name="*" debug="true" interval="3" width="5"
+				prec="2" />
+
+			<PexorData width="5" prec="6" low="0" up="1" interval="3" debug="1"/>
+				
+				
+
+		</Module>
+
+		 <Module name="gosip_player" class="gosip::Player">
+	     </Module>
+
+		 <Module name="pexor_player" class="pex::Player">
+	     <HtmlPath value="${DABCSYS}/plugins/pex/htm/"/>
+	     </Module>
+
+
+
+	</Context>
+</dabc>
