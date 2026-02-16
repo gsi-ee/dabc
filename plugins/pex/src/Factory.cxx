@@ -16,9 +16,15 @@
 #include "pex/Device.h"
 #include "pex/Player.h"
 
+#include "pex/FrontendBoard.h"
+#include "pex/Febex3.h"
+
+
+
 #include "dabc/Command.h"
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
+#include "dabc/Configuration.h"
 
 dabc::FactoryPlugin pexfactory (new pex::Factory ("pex"));
 
@@ -93,7 +99,52 @@ dabc::FactoryPlugin pexfactory (new pex::Factory ("pex"));
 //}
 
 
+void pex::Factory::Initialize()
+{
+   if (dabc::mgr.null()) return;
 
+   // if dabc started without config file, do not automatically start http server
+   if (!dabc::mgr()->cfg() || (dabc::mgr()->cfg()->GetVersion()<=0)) return;
+
+   dabc::XMLNodePointer_t node = nullptr;
+
+   while (dabc::mgr()->cfg()->NextCreationNode(node, "Febex3", true)) {
+
+      //const char *name = dabc::Xml::GetAttr(node, dabc::xmlNameAttr);
+      //const char *thrdname = dabc::Xml::GetAttr(node, dabc::xmlThreadAttr);
+
+//      DOUT0("Found HttpServer node name = %s!!!", name ? name : "---");
+
+//      std::string objname;
+//      if (name) objname = name;
+//      if (objname.empty()) objname = "/http";
+//      if (objname[0]!='/') objname = std::string("/") + objname;
+//      if (!thrdname || (*thrdname == 0)) thrdname = "HttpThread";
+//
+//      dabc::WorkerRef serv = new http::Civetweb(objname);
+//      serv.MakeThreadForWorker(thrdname);
+
+      dabc::mgr.CreateObject("pex::Febex3","Febex3"); // does not exist?
+
+   }
+
+}
+
+
+
+dabc::Reference pex::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
+{
+
+   pex::FrontendBoard* theboard=nullptr;
+   if (classname == "pex::Febex3")
+   {
+	   theboard=new pex::Febex3(objname, cmd);
+	   theboard->SetDevice(fDevice);
+	   return theboard;
+   }
+
+   return dabc::Factory::CreateObject(classname, objname, cmd);
+}
 
 
 
@@ -127,9 +178,9 @@ dabc::Device* pex::Factory::CreateDevice (const std::string& classname, const st
   if (strcmp (classname.c_str (), "pex::GenericDevice") != 0)
     return nullptr;
 
-  dabc::Device* dev = new pex::GenericDevice (devname, cmd);
+  fDevice = new pex::GenericDevice (devname, cmd);
 
-  return dev;
+  return fDevice;
 }
 
 

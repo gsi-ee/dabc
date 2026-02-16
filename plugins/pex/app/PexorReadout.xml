@@ -89,6 +89,9 @@
 	     </Module>
 
 
+ 		 <Febex3 name="febex" class="pex::Febex3">
+	     </Febex3>
+
 
 	</Context>
 </dabc>
