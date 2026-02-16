@@ -277,6 +277,11 @@ public:
   virtual int User_Readout(dabc::Buffer& buf, uint8_t trigtype);
 
 
+  /** JAM 2026: need getter method for the frontend components*/
+  pexor::PexorTwo* GetkinpexHandle()
+  {
+	  return fBoard;
+  }
 
 
 protected:
