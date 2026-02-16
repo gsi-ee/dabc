@@ -20,18 +20,28 @@
 namespace pex
 {
 
+class Device;
+
+
 class Factory: public dabc::Factory
 {
 public:
 
   Factory (const std::string name) :
-      dabc::Factory (name)
+      dabc::Factory (name), fDevice(nullptr)
   {
   }
-
+  virtual void  Initialize() override;
   virtual dabc::Module* CreateModule (const std::string& classname, const std::string& modulename, dabc::Command cmd) override;
 
   virtual dabc::Device* CreateDevice (const std::string& classname, const std::string& devname, dabc::Command com) override;
+
+  virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
+
+protected:
+
+  pex::Device* fDevice; //< remember device handle for frontends
+
 };
 
 }    // namespace
