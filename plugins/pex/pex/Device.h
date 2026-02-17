@@ -14,6 +14,8 @@
 #ifndef PEX_Device
 #define PEX_Device
 
+#include <vector>
+
 #include "dabc/Device.h"
 #include "dabc/Object.h"
 #include "dabc/MemoryPool.h"
@@ -49,6 +51,7 @@ namespace pex
 
 extern const char* xmlPexorID;    //< id number N of pexor device file /dev/pexor-N
 extern const char* xmlPexorSFPSlaves;    //< prefix for the sfp numbers 0,1,2,3 indicating number of slave devices connected
+extern const char* xmlPexorSlaveTypes;    //< prefix for the sfp numbers 0,1,2,3 indicating slave types
 extern const char* xmlRawFile;    //< name of output lmd file
 extern const char* xmlDMABufLen;    //< length of DMA buffers to allocate in driver
 extern const char* xmlDMABufNum;    //< number of DMA buffers
@@ -92,6 +95,25 @@ extern const char* commandInitAcq;
 
 extern const char* parDeviceDRate;
 extern const char* parDaqRunningState;
+
+
+
+
+#define MAX_DEVICE_KINDS 6
+
+typedef enum slave_kind{
+  SLAVE_NONE,
+  SLAVE_FEB3,
+  SLAVE_FEB4,
+  SLAVE_TAMEX,
+  SLAVE_CTDC,
+  SLAVE_FOOT,
+  SLAVE_POLAND
+} slave_kind_t;
+
+
+
+
 
 class Device: public dabc::Device
 {
@@ -287,6 +309,12 @@ public:
 protected:
   virtual void ObjectCleanup () override;
 
+
+
+  /** Add frontend component of given slave kind*/
+  void AddFrontendType(slave_kind_t kind);
+
+
   /** Insert mbs event header at location ptr in external buffer. Eventnumber will define event
    * sequence number, trigger marks current trigger type.
    * ptr is shifted to place after event header afterwards.
@@ -412,6 +440,12 @@ protected:
 
   /** array indicating number of slaves in chain at each sfp*/
   unsigned int fNumSlavesSFP[PEX_NUMSFP];
+
+
+  /** specifies which feb device is at what slave position */
+  std::vector<pex::slave_kind_t> fSlaveTypes[PEX_NUMSFP];
+
+
 
   /** id number of current exploder double buffer to request (0,1)*/
   int fDoubleBufID[PEX_NUMSFP];

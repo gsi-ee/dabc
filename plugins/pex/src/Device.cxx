@@ -44,6 +44,7 @@
 
 const char* pex::xmlPexorID = "PexorID";    //< id number N of pexor device file /dev/pexor-N
 const char* pex::xmlPexorSFPSlaves = "PexorNumSlaves_";    //<  prefix for the sfp numbers 0,1,2,3 indicating how many slaves are connected input
+const char* pex::xmlPexorSlaveTypes= "PexorlavesTypes_";
 const char* pex::xmlRawFile = "PexorOutFile";    //<  name of output lmd file
 const char* pex::xmlDMABufLen = "PexorDMALen";    //<  length of DMA buffers to allocate in driver
 const char* pex::xmlDMABufNum = "PexorDMABuffers";    //<  number of DMA buffers to allocate in driver
@@ -147,6 +148,24 @@ pex::Device::Device (const std::string& name, dabc::Command cmd) :
     fEnabledSFP[sfp] = fNumSlavesSFP[sfp] > 0 ? true : false;
     DOUT1(
         "Sfp %d is %s with %d slave devices.\n", sfp, (fEnabledSFP[sfp] ? "enabled" : "disabled"), fNumSlavesSFP[sfp]);
+
+
+    // JAM2026 TODO: here evaluate slave kinds from configuration list per sfp
+    fSlaveTypes[sfp].clear();
+    std::vector<pex::slave_kind_t> existingFebs;
+    std::vector<long int> arr = Cfg (dabc::format ("%s%d", xmlPexorSlaveTypes, sfp), cmd).AsIntVect();
+    for(size_t i=0; i< arr.size(); ++i)
+    {
+    	// create new kind of feb if not existing
+//    	slave_kind_t kind= ()arr[i];
+//    	if( std::find(existingFebs.begin(), existingFebs.end(), kind) === existingFebs.end())
+//    	{
+//    		existingFebs.push_back(kind);
+//    		AddFrontendType(kind); // JAM note: the check if the type is existing can be done inside this function!
+//    	}
+//        fSlaveTypes[sfp].push_back(kind); // vector index is chain index
+    }
+
     if (fEnabledSFP[sfp])
     {
       if(1)
@@ -168,6 +187,10 @@ pex::Device::Device (const std::string& name, dabc::Command cmd) :
     }
     fRequestedSFP[sfp] = false;
   }
+
+
+
+
   unsigned int size = Cfg (pex::xmlDMABufLen, cmd).AsInt (4096);
   fReadLength = size * sfpcount;    // initial value is maximum length of dma buffer times number of active chains
   DOUT1("ReadLength is %d bytes. sfpcount=%d\n", fReadLength,sfpcount );
@@ -474,6 +497,17 @@ dabc::Transport* pex::Device::CreateTransport (dabc::Command cmd, const dabc::Re
   DOUT3 (("Device thread %p\n", thread ().GetObject ()));
   return transport;
 }
+
+
+
+void pex::Device::AddFrontendType(slave_kind_t )
+{
+	// TODO internal builder method for all known feb aggregates
+
+
+}
+
+
 
 int pex::Device::RequestToken (dabc::Buffer& buf, bool synchronous)
 {
