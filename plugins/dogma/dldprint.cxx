@@ -110,8 +110,12 @@ std::unordered_map<int, ur_config> cfgs = {{2051, cfg_2051}};
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
-      printf("%sTu addr:%08x devid:%04x trigtype:%02x trignum:%06x rawsz:%u\n",
-            prefix, (unsigned)tu->GetAddr(), (unsigned)tu->GetDeviceId(),
+
+      auto has_config = cfgs.find(tu->GetDeviceId()) != cfgs.end();
+
+      printf("%sTu addr:%08x devid:%s%04x%s trigtype:%02x trignum:%06x rawsz:%u\n",
+            prefix, (unsigned)tu->GetAddr(), 
+            getCol(has_config ? col_GREEN : col_RED), (unsigned)tu->GetDeviceId(), getCol(col_RESET),
             (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
             (unsigned)tu->GetRawPacketSize());
    }
