@@ -96,22 +96,22 @@ bool is_tdc(unsigned id)
 std::map<uint32_t, TuStat> tu_stats;
 uint32_t ref_addr = 0;
 
+ur_config cfg_2051 = {
+   .coarsetime_len = 18,
+   .finetime_len = 11,
+   .tdc_type = 3,
+   .freq = 150,
+   .has_edge_type = true
+};
 
-std::unordered_map<int, ur_config> cfgs = {{2051,
-   {
-    .coarsetime_len = 18,
-    .finetime_len = 11,
-    .tdc_type = 3,
-    .freq = 150,
-    .has_edge_type = true
-  }}};
+std::unordered_map<int, ur_config> cfgs = {{2051, cfg_2051}};
 
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
 {
    if (!onlytdc || (onlytdc == tu->GetAddr())) {
-      printf("%sTu addr:%08x trigtype:%02x trignum:%06x rawsz:%u\n",
-            prefix, (unsigned)tu->GetAddr(),
+      printf("%sTu addr:%08x devid:%04x trigtype:%02x trignum:%06x rawsz:%u\n",
+            prefix, (unsigned)tu->GetAddr(), (unsigned)tu->GetDeviceId(),
             (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
             (unsigned)tu->GetRawPacketSize());
    }
@@ -130,19 +130,15 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       ur_context it;
       ur_header h;
       ur_time tm;
+      unsigned devid = tu->GetDeviceId();
+      auto entry = cfgs.find(devid);
+      if (entry != cfgs.end())
+         ur_set_config(&it, &entry->second);
+      else
+         ur_set_config(&it, &cfg_2051);
+
       const char *buf = (const char *) tu->RawHeader();
       int pktlen = tu->GetRawPacketSize();
-
-      ur_config cfg_2051 = {
-         .coarsetime_len = 18,
-         .finetime_len = 11,
-         .tdc_type = 3,
-         .freq = 150,
-         .has_edge_type = true
-      };
-
-      ur_set_config(&it, &cfg_2051);
-
       ur_parse_header(&h, &it, buf, pktlen);
 
       double last_rising_tm = 0.;
