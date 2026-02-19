@@ -91,7 +91,7 @@ namespace pex
 
 class Febex3: public pex::FrontendBoard
 {
-  friend class Device;
+  //friend class Device;
 
 public:
   Febex3(const std::string &name, dabc::Command cmd);

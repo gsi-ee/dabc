@@ -15,6 +15,8 @@
 #define PEX_Device
 
 #include <vector>
+#include <string>
+#include <stdint.h>
 
 #include "dabc/Device.h"
 #include "dabc/Object.h"
@@ -27,6 +29,8 @@ class DMA_Buffer;
 }
 
 #include "mbs/MbsTypeDefs.h"
+#include "pex/FrontendBoard.h"
+
 
 /** number of connected sfps*/
 #define PEX_NUMSFP 4
@@ -97,28 +101,14 @@ extern const char* parDeviceDRate;
 extern const char* parDaqRunningState;
 
 
-
-
-#define MAX_DEVICE_KINDS 6
-
-typedef enum slave_kind{
-  SLAVE_NONE,
-  SLAVE_FEB3,
-  SLAVE_FEB4,
-  SLAVE_TAMEX,
-  SLAVE_CTDC,
-  SLAVE_FOOT,
-  SLAVE_POLAND
-} slave_kind_t;
-
-
-
-
-
 class Device: public dabc::Device
 {
 
+
+
 public:
+
+  friend class pex::FrontendBoard;
 
   Device (const std::string& name, dabc::Command cmd);
   virtual ~Device ();
@@ -300,20 +290,30 @@ public:
 
 
   /** JAM 2026: need getter method for the frontend components*/
-  pexor::PexorTwo* GetkinpexHandle()
+  pexor::PexorTwo* GetKinpexHandle()
   {
 	  return fBoard;
   }
 
 
+
+   /** Create and add frontend component of given slave kind. Does nothing if we already have one.*/
+  pex::FrontendBoard* CreateFrontendBoard(feb_kind_t kind, const std::string& modulename, dabc::Command cmd);
+
+
+
+
 protected:
   virtual void ObjectCleanup () override;
 
+  /** Check if our readout already has component ofr given kind of gosip slave*/
+  bool ExistsFrontendType(feb_kind_t kind);
 
+  /** Add existing frontend board component to the readout*/
+  void RegisterFrontendBoard(pex::FrontendBoard* feb);
 
-  /** Add frontend component of given slave kind*/
-  void AddFrontendType(slave_kind_t kind);
-
+  /** access the frontend component of kind */
+  pex::FrontendBoard* GetFrontendBoard(feb_kind_t kind);
 
   /** Insert mbs event header at location ptr in external buffer. Eventnumber will define event
    * sequence number, trigger marks current trigger type.
@@ -443,9 +443,10 @@ protected:
 
 
   /** specifies which feb device is at what slave position */
-  std::vector<pex::slave_kind_t> fSlaveTypes[PEX_NUMSFP];
+  std::vector<pex::feb_kind_t> fSlaveTypes[PEX_NUMSFP];
 
-
+  /** specifies which feb device is at what slave position */
+   std::vector<pex::FrontendBoard*> fFrontendBoards;
 
   /** id number of current exploder double buffer to request (0,1)*/
   int fDoubleBufID[PEX_NUMSFP];

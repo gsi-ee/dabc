@@ -26,7 +26,7 @@ pex::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
 
-  std::string hpath= Cfg (pex::xmlHTML_Path, cmd).AsStr("${DABCSYS}/plugins/pexor/htm/");
+  std::string hpath= Cfg (pex::xmlHTML_Path, cmd).AsStr("${DABCSYS}/plugins/pex/htm/");
   DOUT0("pex::Player is using user file path: %s", hpath.c_str());
   fWorkerHierarchy.Create("PEX", true);
 

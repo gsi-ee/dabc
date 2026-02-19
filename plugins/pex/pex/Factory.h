@@ -15,7 +15,7 @@
 #ifndef PEX_Factory
 #define PEX_Factory
 #include "dabc/Factory.h"
-#include "../pex/Commands.h"
+#include "pex/Commands.h"
 
 namespace pex
 {
@@ -31,7 +31,7 @@ public:
       dabc::Factory (name), fDevice(nullptr)
   {
   }
-  virtual void  Initialize() override;
+//  virtual void  Initialize() override;
   virtual dabc::Module* CreateModule (const std::string& classname, const std::string& modulename, dabc::Command cmd) override;
 
   virtual dabc::Device* CreateDevice (const std::string& classname, const std::string& devname, dabc::Command com) override;

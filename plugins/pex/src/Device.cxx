@@ -29,10 +29,16 @@
 #include "pex/Transport.h"
 #include "pex/Input.h"
 
+#include "pex/Febex3.h"
+
+
 //#include "pex/ReadoutApplication.h"
 
 #include "pexor/PexorTwo.h"
 #include "pexor/DMA_Buffer.h"
+
+
+#include <vector>
 
 //#include "pex/random-coll.h"
 
@@ -44,7 +50,7 @@
 
 const char* pex::xmlPexorID = "PexorID";    //< id number N of pexor device file /dev/pexor-N
 const char* pex::xmlPexorSFPSlaves = "PexorNumSlaves_";    //<  prefix for the sfp numbers 0,1,2,3 indicating how many slaves are connected input
-const char* pex::xmlPexorSlaveTypes= "PexorlavesTypes_";
+const char* pex::xmlPexorSlaveTypes= "PexorSlavesTypes_";
 const char* pex::xmlRawFile = "PexorOutFile";    //<  name of output lmd file
 const char* pex::xmlDMABufLen = "PexorDMALen";    //<  length of DMA buffers to allocate in driver
 const char* pex::xmlDMABufNum = "PexorDMABuffers";    //<  number of DMA buffers to allocate in driver
@@ -139,6 +145,7 @@ pex::Device::Device (const std::string& name, dabc::Command cmd) :
   DOUT1("Sleep %d seconds before initializing the bus\n",initDelay);
   sleep(initDelay); // JAM 2016 - required for some kinpex board code
 
+  fFrontendBoards.clear();
   // initialize here the connected channels:
   int sfpcount=0;
   for (int sfp = 0; sfp < PEX_NUMSFP; sfp++)
@@ -151,19 +158,17 @@ pex::Device::Device (const std::string& name, dabc::Command cmd) :
 
 
     // JAM2026 TODO: here evaluate slave kinds from configuration list per sfp
+
     fSlaveTypes[sfp].clear();
-    std::vector<pex::slave_kind_t> existingFebs;
+
     std::vector<long int> arr = Cfg (dabc::format ("%s%d", xmlPexorSlaveTypes, sfp), cmd).AsIntVect();
     for(size_t i=0; i< arr.size(); ++i)
     {
     	// create new kind of feb if not existing
-//    	slave_kind_t kind= ()arr[i];
-//    	if( std::find(existingFebs.begin(), existingFebs.end(), kind) === existingFebs.end())
-//    	{
-//    		existingFebs.push_back(kind);
-//    		AddFrontendType(kind); // JAM note: the check if the type is existing can be done inside this function!
-//    	}
-//        fSlaveTypes[sfp].push_back(kind); // vector index is chain index
+    	feb_kind_t kind= (feb_kind_t) arr[i];
+    	dabc::Command dummy;
+    	CreateFrontendBoard(kind, pex::FrontendBoard::BoardName(kind), dummy); // JAM note: the check if the type is existing can be done inside this function!
+        fSlaveTypes[sfp].push_back(kind); // vector index is chain index
     }
 
     if (fEnabledSFP[sfp])
@@ -293,6 +298,55 @@ int pex::Device::InitDAQ ()
 {
   SetInfo("InitDaq is executed...");
   InitTrixor ();
+
+  // first disable all frontends
+  for(int sfp=0; sfp<PEX_NUMSFP; ++sfp)
+  {
+    for(size_t slave=0; slave<fSlaveTypes[sfp].size(); ++slave)
+    {
+      feb_kind_t kind=fSlaveTypes[sfp].at(slave);
+      FrontendBoard* theBoard=GetFrontendBoard(kind);
+      if(!theBoard)
+      {
+        EOUT("pex::Device registry error: FEB component of kind %d at sfp %d slave %ld is not yet exising!", kind, sfp, slave);
+        continue;
+      }
+      theBoard->Disable(sfp,slave);
+    }
+  }
+
+  // init all frontends
+  for(int sfp=0; sfp<PEX_NUMSFP; ++sfp)
+  {
+    for(size_t slave=0; slave<fSlaveTypes[sfp].size(); ++slave)
+    {
+      feb_kind_t kind=fSlaveTypes[sfp].at(slave);
+      FrontendBoard* theBoard=GetFrontendBoard(kind);
+      if(!theBoard)
+      {
+        EOUT("pex::Device registry error: FEB component of kind %d at sfp %d slave %ld is not yet exising!", kind, sfp, slave);
+        continue;
+      }
+      theBoard->Configure(sfp,slave);
+    }
+  }
+
+   // enable all frontends
+  for(int sfp=0; sfp<PEX_NUMSFP; ++sfp)
+   {
+     for(size_t slave=0; slave<fSlaveTypes[sfp].size(); ++slave)
+     {
+       feb_kind_t kind=fSlaveTypes[sfp].at(slave);
+       FrontendBoard* theBoard=GetFrontendBoard(kind);
+       if(!theBoard)
+       {
+         EOUT("pex::Device registry error: FEB component of kind %d at sfp %d slave %ld is not yet exising!", kind, sfp, slave);
+         continue;
+       }
+       theBoard->Enable(sfp,slave);
+     }
+   }
+
   return 0;
 }
 
@@ -499,14 +553,60 @@ dabc::Transport* pex::Device::CreateTransport (dabc::Command cmd, const dabc::Re
 }
 
 
-
-void pex::Device::AddFrontendType(slave_kind_t )
+bool pex::Device::ExistsFrontendType(feb_kind_t kind)
 {
-	// TODO internal builder method for all known feb aggregates
-
-
+  for(size_t ix=0; ix<fFrontendBoards.size(); ++ix)
+  {
+    if(fFrontendBoards[ix]->IsType(kind)) return true;
+  }
+  return false;
 }
 
+pex::FrontendBoard* pex::Device::CreateFrontendBoard(feb_kind_t kind, const std::string& modulename, dabc::Command cmd)
+{
+  pex::FrontendBoard* theboard=nullptr;
+  if(ExistsFrontendType(kind))
+    {
+      return GetFrontendBoard(kind); // if called from factory when scanning the module tag in xml file
+    }
+  switch(kind)
+  {
+    case FEB_FEBEX3:
+      theboard=new pex::Febex3(modulename, cmd);
+      break;
+    case FEB_POLAND:
+      theboard=nullptr;
+      break;
+    case  FEB_NONE:
+    case FEB_FEBEX4:
+    case FEB_TAMEX:
+    case FEB_CTDC:
+    case FEB_FOOT:
+    default:
+      theboard=nullptr;
+
+  };
+  RegisterFrontendBoard(theboard);
+  return theboard;
+}
+/** Add existing frontend board component to the readout*/
+void pex::Device::RegisterFrontendBoard(pex::FrontendBoard* feb)
+{
+  if(!feb) return;
+  fFrontendBoards.push_back(feb);
+  feb->SetDevice(this);
+}
+
+pex::FrontendBoard* pex::Device::GetFrontendBoard(feb_kind_t kind)
+{
+  pex::FrontendBoard* theboard=nullptr;
+  for(size_t ix=0; ix<fFrontendBoards.size(); ++ix)
+    {
+      theboard=fFrontendBoards[ix];
+      if(theboard->IsType(kind)) return theboard;
+    }
+return nullptr;
+}
 
 
 int pex::Device::RequestToken (dabc::Buffer& buf, bool synchronous)

@@ -9,7 +9,8 @@ if(PEX_FOUND)
     HEADERS pex/Factory.h pex/Device.h pex/Input.h  pex/Transport.h pex/Player.h pex/ReadoutModule.h pex/FrontendBoard.h pex/Febex3.h
     INCDIR pex
     LIBRARIES DabcBase DabcMbs ${PEX_LIBRARY}
-    INCLUDES ${PEX_INCLUDE_DIR})
+    INCLUDES ${PEX_INCLUDE_DIR}
+    COPY_HEADERS)
 
   dabc_install_plugin_data(
     DabcPex
