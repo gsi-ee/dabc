@@ -16,11 +16,11 @@
 
 #include "dabc/logging.h"
 
-pex::FrontendBoard::FrontendBoard (const std::string &name, dabc::Command cmd) :
-dabc::Worker(MakePair(name.empty() ? cmd.GetStr("Name","module") : name)),
-fPexorDevice (nullptr),fBoard(nullptr)
+pex::FrontendBoard::FrontendBoard (const std::string &name,  pex::feb_kind_t kind, dabc::Command /* cmd */) :
+dabc::ModuleAsync (name),
+fType(kind), fPexorDevice (nullptr),fBoard(nullptr)
 {
-  DOUT2 ("Created new pex::FrontendBoard\n");
+  DOUT2 ("Created new pex::FrontendBoard of kind %d\n",kind);
 
 
 }
@@ -29,7 +29,7 @@ void pex::FrontendBoard::SetDevice(pex::Device* dev)
  {
 	  fPexorDevice=dev;
 	  if(dev)
-		  fBoard=dev->GetkinpexHandle();
+		  fBoard=dev->GetKinpexHandle();
  }
 
 

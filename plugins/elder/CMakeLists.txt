@@ -8,7 +8,8 @@ if(ELDER_FOUND)
     INCDIR elderdabc
     LIBRARIES dabc::DabcBase dabc::DabcMbs ${ELDER_LIBRARY} ${ELDER-STD_LIBRARY} ${ELDER-GSI_LIBRARY} ${ELDER-EEL_LIBRARY} 
     INCLUDES ${ELDER_INCLUDE_DIR}
-    )
+    NOWARN)
+    
     
     dabc_install_plugin_data(
     DabcElder
@@ -16,4 +17,5 @@ if(ELDER_FOUND)
     DESTINATION ${DABC_INSTALL_PLUGINDIR}/elder
     )
     
+     target_compile_options(DabcElder PRIVATE -Wno-zero-as-null-pointer-constant -Wno-stringop-overflow -Wno-sign-compare -Wno-shadow)
 endif()

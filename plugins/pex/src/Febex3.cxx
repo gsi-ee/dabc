@@ -18,7 +18,7 @@
 #include "dabc/logging.h"
 
 pex::Febex3::Febex3 (const std::string &name, dabc::Command cmd) :
-pex::FrontendBoard::FrontendBoard(name, cmd)
+pex::FrontendBoard::FrontendBoard(name,  FEB_FEBEX3, cmd)
 {
   DOUT2 ("Created new pex::Febex3\n");
 
