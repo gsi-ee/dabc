@@ -11,27 +11,42 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
-#include "pex/FrontendBoard.h"
-#include "pex/Device.h"
+#include "pex/Poland.h"
 
 #include "dabc/logging.h"
 
-pex::FrontendBoard::FrontendBoard(const std::string &name, pex::feb_kind_t kind, dabc::Command /* cmd */) :
-    dabc::ModuleAsync(name), fType(kind), fPexorDevice(nullptr), fKinpex(nullptr)
+pex::Poland::Poland (const std::string &name, dabc::Command cmd) :
+pex::FrontendBoard::FrontendBoard(name,  FEB_POLAND, cmd)
 {
-  DOUT2("Created new pex::FrontendBoard of kind %d\n", kind);
+  DOUT2 ("Created new pex::Poland\n");
+
+
+
+
 
 }
 
-void pex::FrontendBoard::SetDevice(pex::Device *dev)
-{
-  fPexorDevice = dev;
-  if (dev)
-    fKinpex = dev->GetKinpexHandle();
-}
-
-pex::FrontendBoard::~FrontendBoard()
+pex::Poland::~Poland()
 {
 
 }
+
+int pex::Poland::Disable(int sfp, int slave) {
+
+	return sfp+slave;
+}
+
+int pex::Poland::Enable(int sfp, int slave) {
+
+	return sfp+slave;
+}
+
+int pex::Poland::Configure(int sfp, int slave) {
+
+
+	return sfp+slave;
+}
+
+
+
 
