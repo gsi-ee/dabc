@@ -168,7 +168,7 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
       {
         // create new kind of feb if not existing
         feb_kind_t kind = (feb_kind_t) arr[i];
-        DOUT1("SFP %d Slave %ld has feb type %s\n", sfp, i, pex::FrontendBoard::BoardName(kind));
+        DOUT1("SFP %d Slave %ld has feb type %s\n", sfp, i, pex::FrontendBoard::BoardName(kind).c_str());
         dabc::Command dummy;
         CreateFrontendBoard(kind, pex::FrontendBoard::BoardName(kind), dummy);    // JAM note: the check if the type is existing can be done inside this function!
         fSlaveTypes[sfp].push_back(kind);    // vector index is chain index
@@ -584,7 +584,7 @@ bool pex::Device::ExistsFrontendType(feb_kind_t kind)
 
 pex::FrontendBoard* pex::Device::CreateFrontendBoard(feb_kind_t kind, const std::string &modulename, dabc::Command cmd)
 {
-  DOUT1(" pex::Device::CreateFrontendBoard for type %s ...\n", pex::FrontendBoard::BoardName(kind));
+  DOUT1(" pex::Device::CreateFrontendBoard for type %s ...\n", pex::FrontendBoard::BoardName(kind).c_str());
   pex::FrontendBoard *theboard = GetFrontendBoard(kind);
   if (theboard)
   {
