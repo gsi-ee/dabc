@@ -26,6 +26,7 @@ const char *xmlDACMode = "DACMode";
 const char *xmlDACAllValue = "DACConstantValue";
 const char *xmlPolandTriggerMasterSFP = "TriggerMasterSFP";
 const char *xmlPolandTriggerMasterSlave = "TriggerMasterSlave";
+const char *xmlFesaMode = "UseFESAtrigger";
 const char *xmlQFWSteps = "QFWSteps";
 const char *xmlQFWTimes = "QFWTimes";
 
@@ -33,9 +34,9 @@ const char *xmlQFWTimes = "QFWTimes";
 
 
 pex::Poland::Poland (const std::string &name, dabc::Command cmd) :
-pex::FrontendBoard::FrontendBoard(name,  FEB_POLAND, cmd),fQfwMode(pex::QFWMODE_PLUS_2_5pF_0_25pC), fDACMode(pex::DACMODE_TESTSTRUCTURE),fTriggerMasterSFP(0), fTriggerMasterSlave(0), fDACallvalue(0)
+pex::FrontendBoard::FrontendBoard(name,  FEB_POLAND, cmd),fQfwMode(pex::QFWMODE_PLUS_2_5pF_0_25pC), fDACMode(pex::DACMODE_TESTSTRUCTURE),fTriggerMasterSFP(0), fTriggerMasterSlave(0), fFESAmode(false), fDACallvalue(0)
 {
-  DOUT2 ("Created new pex::Poland\n");
+  DOUT0 ("Creating new pex::Poland...\n");
 
   for(int loop=0; loop<POLAND_QFWLOOPS; ++loop)
   {
@@ -64,9 +65,12 @@ pex::FrontendBoard::FrontendBoard(name,  FEB_POLAND, cmd),fQfwMode(pex::QFWMODE_
 
   fQfwMode =(poland_qfwmode_t)  Cfg(pex::xmlQfwMode, cmd).AsInt(pex::QFWMODE_PLUS_2_5pF_0_25pC);
   fDACMode = (poland_dacmode_t) Cfg(pex::xmlDACMode, cmd).AsInt(pex::DACMODE_TESTSTRUCTURE);
+  fFESAmode =  Cfg(pex::xmlFesaMode, cmd).AsBool(false);
   fTriggerMasterSFP= Cfg(pex::xmlPolandTriggerMasterSFP, cmd).AsInt(0);
   fTriggerMasterSlave= Cfg(pex::xmlPolandTriggerMasterSlave, cmd).AsInt(0);
   fDACallvalue= Cfg(pex::xmlDACAllValue, cmd).AsInt(0);
+
+  DOUT0("Got parameters: fDACMode:%d fDACallvalue=%d \n",fDACMode, fDACallvalue);
 
 }
 
@@ -212,7 +216,9 @@ int pex::Poland::Configure(int sfp, int sl) {
 
        if(sfp==fTriggerMasterSFP && sl==fTriggerMasterSlave)
        {
-         rev = fKinpex->WriteBus (POLAND_REG_MASTERMODE, 1, sfp, sl);
+         int setup=2;
+         if(fFESAmode) setup |=1;
+         rev = fKinpex->WriteBus (POLAND_REG_MASTERMODE, setup, sfp, sl);
          if (rev)
          {
            EOUT("\n\nError %d in WriteBus setting master trigger mode (sfp:%d, device:%d)!\n", rev, sfp, sl);

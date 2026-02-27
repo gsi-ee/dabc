@@ -229,6 +229,9 @@ protected:
   /** Slave in chain with poland trigger master device*/
    int fTriggerMasterSlave;
 
+   /** if true we work in fesa mode, otherwise in MBS triggerbus mode */
+   bool fFESAmode;
+
    /** common value for all DACs in specific mode*/
    int fDACallvalue;
 

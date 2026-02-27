@@ -57,7 +57,13 @@ dabc::Module* pex::Factory::CreateModule (const std::string& classname, const st
        return theboard;
    }
 
-
+   if (classname == "pex::Poland")
+     {
+         pex::FrontendBoard* theboard=fDevice->CreateFrontendBoard(FEB_POLAND, modulename, cmd);
+         DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
+                 modulename.c_str (), FEB_POLAND);
+         return theboard;
+     }
 
   return dabc::Factory::CreateModule (classname, modulename, cmd);
 }
@@ -67,12 +73,14 @@ dabc::Device* pex::Factory::CreateDevice (const std::string& classname, const st
 {
   DOUT0 ("pex::Factory::CreateDevice called for class:%s, device:%s", classname.c_str (), devname.c_str ());
 
-  if (strcmp (classname.c_str (), "pex::GenericDevice") != 0)
-    return nullptr;
 
-  fDevice = new pex::GenericDevice (devname, cmd);
 
-  return fDevice;
+if (classname == "pex::GenericDevice")
+      {
+            fDevice = new pex::GenericDevice (devname, cmd);
+            return fDevice;
+      }
+return nullptr;
 }
 
 
