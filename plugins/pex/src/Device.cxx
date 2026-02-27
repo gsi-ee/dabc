@@ -170,7 +170,7 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
         feb_kind_t kind = (feb_kind_t) arr[i];
         DOUT1("SFP %d Slave %ld has feb type %s\n", sfp, i, pex::FrontendBoard::BoardName(kind).c_str());
         dabc::Command dummy;
-        CreateFrontendBoard(kind, pex::FrontendBoard::BoardName(kind), dummy);    // JAM note: the check if the type is existing can be done inside this function!
+        //CreateFrontendBoard(kind, pex::FrontendBoard::BoardName(kind), dummy);    // JAM: if we do this here, the xml file with feb module parameters is not scanned
         fSlaveTypes[sfp].push_back(kind);    // vector index is chain index
       }
 
@@ -254,12 +254,12 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
 
   PublishPars("$CONTEXT$/PexDevice");
 
-  rev = InitDAQ();
-  if (rev)
-  {
-    EOUT("\n\nError %d at init DAQ!!\n", rev);
-    return;    // TODO: error handling with exceptions
-  }
+//  rev = InitDAQ();
+//  if (rev)
+//  {
+//    EOUT("\n\nError %d at init DAQ!!\n", rev);
+//    return;    // TODO: error handling with exceptions
+//  }
 
   // here the memory copy test switches:
   fMemoryTest = false;    // put this to true to make memcopy performance test between driver buffer and dabc buffer
@@ -588,6 +588,7 @@ pex::FrontendBoard* pex::Device::CreateFrontendBoard(feb_kind_t kind, const std:
   pex::FrontendBoard *theboard = GetFrontendBoard(kind);
   if (theboard)
   {
+    DOUT1("    --- pex::Device::CreateFrontendBoard finds existing FEB entity (%p) %s.\n",theboard, theboard->GetName());
     return theboard;    // if called from factory when scanning the module tag in xml file. just pass the existing board
   }
   switch (kind)
@@ -1220,7 +1221,7 @@ bool pex::Device::NextSFP()
 double pex::Device::Read_Timeout()
 {
   if (!IsAcquisitionRunning())
-    return 10;
+    return 1;
   else
     return 0.5e-3;    //1.0e-3; // 10s JAM - timeout for triggerless polling mode TODO: configure in device
 }
@@ -1537,9 +1538,9 @@ pex::GenericDevice::GenericDevice(const std::string &name, dabc::Command cmd) :
     pex::Device(name, cmd)
 {
   DOUT1("Constructing GenericDevice...\n");
-  PublishPars("$CONTEXT$/PexDevice");
+  //PublishPars("$CONTEXT$/PexDevice");
   fInitDone = true;
   // initial start acquisition here, not done from transport start anymore:
-  StartAcquisition();
+  //StartAcquisition();
 }
 

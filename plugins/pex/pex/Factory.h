@@ -36,7 +36,7 @@ public:
 
   virtual dabc::Device* CreateDevice (const std::string& classname, const std::string& devname, dabc::Command com) override;
 
-  virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd) override;
+
 
 protected:
 

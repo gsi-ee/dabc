@@ -4,7 +4,8 @@
 set(PEX_FOUND 0)
 
 	#set(GOSIPHOME /mbs/driv/mbspex_$ENV{GSI_OS_VERSION}_DEB)
-    set(PEXHOME /home/adamczew/workspace/pexlibs/pexor/user)
+    #set(PEXHOME /home/adamczew/workspace/pexlibs/pexor/user)
+     set(PEXHOME /daq/usr/adamczew/workspace/drivers/pexor/user)
 	find_library(PEX_LIBRARY NAMES libpexor.so PATHS ${PEXHOME}/lib DOC "Searching pexor  library")
 	find_path(PEX_INCLUDE_DIR pexor/Board.h  ${PEXHOME}/include)
 
