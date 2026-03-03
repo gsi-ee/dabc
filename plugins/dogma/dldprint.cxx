@@ -96,15 +96,20 @@ bool is_tdc(unsigned id)
 std::map<uint32_t, TuStat> tu_stats;
 uint32_t ref_addr = 0;
 
-ur_config cfg_2051 = {
-   .coarsetime_len = 18,
-   .finetime_len = 11,
-   .tdc_type = 3,
-   .freq = 150,
-   .has_edge_type = true
-};
+ur_config cfg_2051;
 
-std::unordered_map<int, ur_config> cfgs = {{2051, cfg_2051}};
+std::unordered_map<int, ur_config> cfgs;
+
+void _init_ur_config()
+{
+   cfg_2051.coarsetime_len = 18;
+   cfg_2051.finetime_len = 11;
+   cfg_2051.tdc_type = 3;
+   cfg_2051.freq = 150;
+   cfg_2051.has_edge_type = true;
+
+   cfgs[2051] = cfg_2051;
+}
 
 
 void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
@@ -114,7 +119,7 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       auto has_config = cfgs.find(tu->GetDeviceId()) != cfgs.end();
 
       printf("%sTu addr:%08x devid:%s%04x%s trigtype:%02x trignum:%06x rawsz:%u\n",
-            prefix, (unsigned)tu->GetAddr(), 
+            prefix, (unsigned)tu->GetAddr(),
             getCol(has_config ? col_GREEN : col_RED), (unsigned)tu->GetDeviceId(), getCol(col_RESET),
             (unsigned)tu->GetTrigType(), (unsigned)tu->GetTrigNumber(),
             (unsigned)tu->GetRawPacketSize());
@@ -266,6 +271,8 @@ int main(int argc, char* argv[])
 {
    if ((argc < 2) || !strcmp(argv[1], "-help") || !strcmp(argv[1], "?"))
       return usage();
+
+   _init_ur_config();
 
    long number = 10, skip = 0, nagain = 0;
    double tmout = -1., maxage = -1.;
