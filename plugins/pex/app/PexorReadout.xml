@@ -35,8 +35,8 @@
 		<Device name="PexorDevice" class="pex::GenericDevice">
 
 			<PexorID value="0" />
-			<PexorNumSlaves_0 value="2" />
-			<PexorNumSlaves_1 value="0" />
+			<PexorNumSlaves_0 value="0" />
+			<PexorNumSlaves_1 value="2" />
 			<PexorNumSlaves_2 value="0" />
 			<PexorNumSlaves_3 value="0" />
 			
@@ -72,8 +72,10 @@
 			<PexorAutoAsync  value="false"/>
 			<PexorTokenWaitForDataReady value="true"/>
 			<PexorTriggerTimeout value="10"/>
-			<TrixorConversionTime value="250" />
-			<TrixorFastClearTime value="30" />
+			<TrixorConversionTime value="100" />
+			<TrixorFastClearTime value="10" />
+			<EarlyTriggerClear value="true" />
+			<AutoStartAcquisition value="true" />
 		</Device>
 
 
@@ -135,7 +137,7 @@
         	CALIBRATION 3
         	CONSTANT 4	 	 
 	 	 -->	 	
-	 	<DACMode value="4"/>
+	 	<DACMode value="2"/>
 	 	<DACConstantValue value="42"/>
 	 	
 	 	

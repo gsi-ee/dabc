@@ -76,7 +76,8 @@ extern const char *xmlDmaMode;          //<  switch between direct dma to host, 
 extern const char *xmlWaitTimeout;    //<  specify kernel waitqueue timeout for trigger and autoread buffers
 
 extern const char *xmlWaitForDataReady;    //<  token request returns only when frontend has data ready
-
+extern const char *xmlUserTriggerClear; //<- aka  "user trigger clear", using feb double buffers
+extern const char *xmlStartDAQOnInit; // <- start acquisition directly after init
 extern const char *xmlInitDelay;        //<  sleep time after board reset until pexor is ready
 
 extern const char *xmlTrixorConvTime;    //< conversion time of TRIXOR module
@@ -433,6 +434,9 @@ protected:
   /** if this flag is true, token request will wait until front end provides data ready state*/
   bool fWaitForDataReady;
 
+  /** if true, acquisition is started at initialization. otherwise, explicit start DAQ command is required */
+  bool fStartDAQOnInit;
+
   /** index of currently read sfp. Used for the simple round robin readout into one transport*/
   unsigned char fCurrentSFP;
 
@@ -453,6 +457,10 @@ protected:
 
   /** flag for triggerless read out to issue a timeout on next retry */
   bool fHasData;
+
+
+  /** clear trigger before requesting data. this is the MBS "user trigger clear" mode */
+  bool fEarlyTriggerClear;
 
   /** Event number since device init*/
   unsigned int fNumEvents;
