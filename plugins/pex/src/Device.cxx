@@ -73,7 +73,8 @@ const char *xmlDmaMode = "PexorDirectDMA";    //<  switch between direct dma to 
 const char *xmlWaitTimeout = "PexorTriggerTimeout";    //<  specify kernel waitqueue timeout for trigger and autoread buffers
 
 const char *xmlWaitForDataReady = "PexorTokenWaitForDataReady";    //<  token request returns only when frontend has data ready
-
+const char *xmlUserTriggerClear= "EarlyTriggerClear"; //<- aka  "user trigger clear", using feb double buffers
+const char *xmlStartDAQOnInit = "AutoStartAcquisition"; // <- start acquisition directly after init
 const char *xmlInitDelay = "PexorInitDelay";    //<  sleep time after board reset until pexor is ready
 
 const char *xmlTrixorConvTime = "TrixorConversionTime";    //<  conversion time of TRIXOR module
@@ -109,8 +110,8 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
     dabc::Device(name), fKinpex(nullptr), fMbsFormat(true), fSingleSubevent(false), fSubeventSubcrate(0),
         fSubeventProcid(0), fSubeventControl(0), fWaitTimeout(1), fAqcuisitionRunning(false), fSynchronousRead(true),
         fTriggeredRead(false), fDirectDMA(true), fMultichannelRequest(false), fAutoTriggerRead(false),
-        fMemoryTest(false), fSkipRequest(false), fWaitForDataReady(true), fCurrentSFP(0), fReadLength(0),
-        fTrixConvTime(0x20), fTrixFClearTime(0x10), fInitDone(false), fHasData(true), fNumEvents(0), fRequestMutex(true)
+        fMemoryTest(false), fSkipRequest(false), fWaitForDataReady(true),fStartDAQOnInit(true), fCurrentSFP(0), fReadLength(0),
+        fTrixConvTime(0x20), fTrixFClearTime(0x10), fInitDone(false), fHasData(true), fEarlyTriggerClear(true), fNumEvents(0), fRequestMutex(true)
 
 {
   fDeviceNum = Cfg(pex::xmlPexorID, cmd).AsInt(0);
@@ -237,7 +238,13 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
   }
 
   fWaitForDataReady = Cfg(pex::xmlWaitForDataReady, cmd).AsBool(true);
-  DOUT1("---------- Readout mode : wait for data ready is %d\n", fWaitForDataReady);
+
+  fEarlyTriggerClear= Cfg(pex::xmlUserTriggerClear, cmd).AsBool(true);
+
+  DOUT1("---------- Readout mode : wait for data ready is %s, early trigger clear is %s\n", (fWaitForDataReady? "on":"off"), (fEarlyTriggerClear ? "on":"off"));
+
+  fStartDAQOnInit= Cfg(pex::xmlStartDAQOnInit, cmd).AsBool(true);
+
 
   CreateCmdDef(pex::commandStartAcq);
   CreateCmdDef(pex::commandStopAcq);
@@ -367,7 +374,8 @@ int pex::Device::InitDAQ()
         return rev;    // TODO: error handling with exceptions
     }
   }
-
+  if(fStartDAQOnInit)
+    rev =(StartAcquisition() ? 0 :1);
   return rev;
 }
 
@@ -465,12 +473,21 @@ bool pex::Device::StartAcquisition()
     fKinpex->SetAutoTriggerReadout(IsAutoReadout(), true);
     rev = fKinpex->StartAcquisition();
   }
-#ifdef   IMPLICIT_ASYNC_WORKER
+
   else if(IsAutoAsync())
   {
+
+#ifdef   IMPLICIT_ASYNC_WORKER
     rev = fKinpex->StartTriggerlessAcquisition (); // TODO: ringbuffer parameter
-  }
+#else
+    fKinpex->SetAutoTriggerReadout(false, true);
+    rev = fKinpex->StartAcquisition();
 #endif
+
+
+  }
+
+
   SetInfo("Acqusition is started.");
   return rev;
 }
@@ -690,7 +707,7 @@ int pex::Device::RequestToken(dabc::Buffer &buf, bool synchronous)
   if (!synchronous)
     return dabc::di_Ok;
 
-  if (fTriggeredRead)
+  if (fTriggeredRead && !fEarlyTriggerClear)
     fKinpex->ResetTrigger();
   return (CopyOutputBuffer(tokbuf, buf));
 
@@ -720,7 +737,7 @@ int pex::Device::RequestMultiToken(dabc::Buffer &buf, bool synchronous, uint16_t
 
   if (!synchronous)
     return dabc::di_Ok;
-  if (fTriggeredRead)
+  if (fTriggeredRead && !fEarlyTriggerClear)
     fKinpex->ResetTrigger();
   return (CopyOutputBuffer(tokbuf, buf, trigtype));
 
@@ -748,7 +765,7 @@ int pex::Device::RequestReceiveParallelTokens(dabc::Buffer &buf, uint16_t trigty
   }
   fDoubleBufID[0] = fDoubleBufID[0] == 0 ? 1 : 0;    // in this mode, we only use double buffer id of first sfp
 
-  if (fTriggeredRead)
+  if (fTriggeredRead && !fEarlyTriggerClear)
     fKinpex->ResetTrigger();
   return (CopyOutputBuffer(tokbuf, buf, trigtype));
 }
@@ -772,7 +789,7 @@ int pex::Device::ReceiveTokenBuffer(dabc::Buffer &buf)
     return dabc::di_Error;
     //return dabc::di_SkipBuffer;
   }
-  if (fTriggeredRead)
+  if (fTriggeredRead&& !fEarlyTriggerClear )
     fKinpex->ResetTrigger();
 
   return (CopyOutputBuffer(tokbuf, buf));
@@ -815,7 +832,7 @@ int pex::Device::RequestAllTokens(dabc::Buffer &buf, bool synchronous, uint16_t 
   if (!synchronous)
     return dabc::di_Ok;
   fSkipRequest = true;
-  if (fTriggeredRead)
+  if (fTriggeredRead && !fEarlyTriggerClear)
   {
     fKinpex->ResetTrigger();
     DOUT3("RRRRRRRRRRRRRRRR pex::Device::RequestAllTokens has reset trigger!\n");
@@ -888,7 +905,7 @@ int pex::Device::ReceiveAllTokenBuffer(dabc::Buffer &buf, uint16_t trigtype)
   if (!fSkipRequest)
     fSkipRequest = true;    // switch off all subsequent requests after the first
 
-  if (fTriggeredRead)
+  if (fTriggeredRead && !fEarlyTriggerClear)
   {
     fKinpex->ResetTrigger();
     DOUT3("RRRRRRRRRRRRRRRR pex::Device::ReceiveAllTokenBuffer has reset trigger!\n");
@@ -1017,8 +1034,9 @@ int pex::Device::CopyOutputBuffer(pexor::DMA_Buffer *tokbuf, dabc::Buffer &buf, 
 
     buf.SetTypeId(mbs::mbt_MbsEvents);
   }
-  DOUT2("Token buffer size:%ld, used size%ld, target buffer size:%d\n", tokbuf->Size(), tokbuf->UsedSize(),
+  DOUT3("Token buffer size:%ld, used size%ld, target buffer size:%d\n", tokbuf->Size(), tokbuf->UsedSize(),
       buf.GetTotalSize());
+
 
   if (tokbuf->UsedSize() + used_size > buf.GetTotalSize())
   {
@@ -1065,7 +1083,7 @@ int pex::Device::CombineTokenBuffers(pexor::DMA_Buffer **src, dabc::Buffer &buf,
   // end check for triggerless readout
 
   dabc::Pointer ptr(buf);
-  DOUT3("pex::Device::CombineTokenBuffers initial pointer is 0x%x", ptr.ptr ());
+  DOUT3("pex::Device::CombineTokenBuffers initial pointer is 0x%x, dabc buffer size: %ld", ptr.ptr (), buf.GetTotalSize()); // JAM26
   unsigned int filled_size = 0, used_size = 0;
   mbs::EventHeader *evhdr = nullptr;
   mbs::SubeventHeader *subhdr = nullptr;
@@ -1115,6 +1133,7 @@ int pex::Device::CombineTokenBuffers(pexor::DMA_Buffer **src, dabc::Buffer &buf,
   }
   buf.SetTotalSize(used_size);
   fNumEvents++;
+  //sleep(1); // JAM debug
   return used_size;
 
 }
@@ -1122,8 +1141,13 @@ int pex::Device::CombineTokenBuffers(pexor::DMA_Buffer **src, dabc::Buffer &buf,
 int pex::Device::CopySubevent(pexor::DMA_Buffer *tokbuf, dabc::Pointer &cursor, char sfpnum)
 {
   unsigned int filled_size = 0;
-  DOUT2("pex::Device::CopySubevent has dma buffer %p for sfp %d, output cursor pointer :%p", tokbuf, (int ) sfpnum,
+  // JAM26
+  bool debug=false;
+  if(tokbuf->UsedSize()>30000) debug=true;
+  if(debug)
+    DOUT0("pex::Device::CopySubevent has dma buffer %p (used size:%ld) for sfp %d, output cursor pointer :%p", tokbuf,tokbuf->UsedSize(), (int ) sfpnum,
       cursor.ptr());
+
   if (fMbsFormat && !fSingleSubevent)
   {
     mbs::SubeventHeader *subhdr = PutMbsSubeventHeader(cursor, sfpnum, fSubeventControl, fSubeventProcid);
@@ -1143,9 +1167,11 @@ int pex::Device::CopySubevent(pexor::DMA_Buffer *tokbuf, dabc::Pointer &cursor, 
   DOUT3("pex::Device::CopySubevent output cursor pointer after copyfrom  and shift is:0x%x", cursor.ptr ());
   filled_size += tokbuf->UsedSize();
   fKinpex->Free_DMA_Buffer(tokbuf);
-  DOUT2("---------- token used size :%ld", tokbuf->UsedSize());
-  DOUT2("---------- filledsize :%d", filled_size);
-
+  if(debug){
+  DOUT0("---------- token used size :%ld", tokbuf->UsedSize());
+  DOUT0("---------- filledsize :%d", filled_size);
+  sleep(1);
+  }
   return filled_size;
 }
 
@@ -1367,6 +1393,8 @@ int pex::Device::User_Readout(dabc::Buffer &buf, uint8_t trigtype)
           // otherwise we might end up in unwanted "user trigger clear mode" (or no readout at all...)
 //          for (int sfp = 0; sfp < PEX_NUMSFP; sfp++)
 //          {
+//            if (!fEnabledSFP[sfp])
+//              continue;
 //            fDoubleBufID[sfp] = 0;
 //          }
 //          DOUT1("pex::Device::User_Readout resets initial bufid 0 \n");
@@ -1381,9 +1409,11 @@ int pex::Device::User_Readout(dabc::Buffer &buf, uint8_t trigtype)
           break;
 
         default:
+
           break;
       }
       ;
+// JAM 2026 moved this to start stop trigger type only
       if (!IsAutoReadout())
         fKinpex->ResetTrigger();
 
@@ -1442,6 +1472,10 @@ int pex::Device::User_Readout(dabc::Buffer &buf, uint8_t trigtype)
 
       if (!IsAutoReadout())    // only request further data if we do not have already automatically filled buffer
       {
+
+        if(fEarlyTriggerClear)
+          fKinpex->ResetTrigger(); // new JAM 3-3-2026
+
         if (IsMultichannelMode())
         {
           // NOTE: asynchronous channelmask request does not work principally with direct DMA to host buffer!

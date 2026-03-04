@@ -376,14 +376,14 @@ int pex::Febex3::Configure(int sfp, int sl)
     EOUT("\n\nError %d FEBEX setting TRIG_SUM_A failed for slave (%d,%d) \n ", rev, sfp, sl);
     return rev;
   }
-  rev = fKinpex->WriteBus(TRIG_GAP_REG, fTrigGap, sfp, sl);
+  rev = fKinpex->WriteBus(TRIG_GAP_REG, fTrigSumA + fTrigGap, sfp, sl);
   if (rev)
   {
     EOUT("\n\nError %d FEBEX setting TRIG_GAP failed for slave (%d,%d) \n ", rev, sfp, sl);
     return rev;
   }
 
-  rev = fKinpex->WriteBus(TRIG_SUM_B_REG, fTrigSumB, sfp, sl);
+  rev = fKinpex->WriteBus(TRIG_SUM_B_REG, fTrigSumA + fTrigGap + fTrigSumB + 1 , sfp, sl);
   if (rev)
   {
     EOUT("\n\nError %d FEBEX setting TRIG_SUM_B failed for slave (%d,%d) \n ", rev, sfp, sl);
@@ -397,13 +397,13 @@ int pex::Febex3::Configure(int sfp, int sl)
     EOUT("\n\nError %d FEBEX setting ENERGY_SUM_A failed for slave (%d,%d) \n ", rev, sfp, sl);
     return rev;
   }
-  rev = fKinpex->WriteBus(ENERGY_GAP_REG, fEnergyGap, sfp, sl);
+  rev = fKinpex->WriteBus(ENERGY_GAP_REG, fEnergySumA + fEnergyGap, sfp, sl);
   if (rev)
   {
     EOUT("\n\nError %d FEBEX setting ENERGY_GAP_REG failed for slave (%d,%d) \n ", rev, sfp, sl);
     return rev;
   }
-  rev = fKinpex->WriteBus(ENERGY_SUM_B_REG, fEnergySumB, sfp, sl);
+  rev = fKinpex->WriteBus(ENERGY_SUM_B_REG, fEnergySumA + fEnergyGap + fEnergySumB + 1, sfp, sl);
   if (rev)
   {
     EOUT("\n\nError %d FEBEX setting ENERGY_SUM_B failed for slave (%d,%d) \n ", rev, sfp, sl);

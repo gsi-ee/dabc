@@ -37,6 +37,9 @@ bool pex::Transport::StartTransport()
 	DOUT1("StartTransport() %p\n", thread().GetObject());
 	// start/stop acquisition (trigger) is independent of dabc running state!
 	//fPexorDevice->StartAcquisition();
+	// but we may initialize DAQ here at first startup JAM 02-mar-26:
+
+	fPexorDevice->InitDAQ();
 	return dabc::InputTransport::StartTransport();
 
 }
