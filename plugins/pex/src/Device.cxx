@@ -39,6 +39,10 @@
 
 #include <vector>
 
+// enable this to prepend mbs style padding word before dma payload????
+//#define FILL_PADDING_WORD 1
+
+
 //#include "pex/random-coll.h"
 
 /** check if device object is valid. may specify return value depending on function where it is used: */
@@ -1020,12 +1024,14 @@ int pex::Device::CopyOutputBuffer(pexor::DMA_Buffer *tokbuf, dabc::Buffer &buf, 
     filled_size += sizeof(mbs::SubeventHeader);
     used_size += sizeof(mbs::SubeventHeader);
 
+#ifdef FILL_PADDING_WORD
     // here account for zero copy alignment: headers+int give 32 bytes before payload
     // fill padding space with pattern like in mbs:
     if (PutMbsPaddingWords(ptr, 1) < 0)
       return dabc::di_SkipBuffer;
     filled_size += sizeof(int);
     used_size += sizeof(int);
+#endif
     // UsedSize contains the real received token data length, as set by driver
     //subhdr->SetRawDataSize (tokbuf->UsedSize () + sizeof(int));
     filled_size += tokbuf->UsedSize();
@@ -1101,6 +1107,8 @@ int pex::Device::CombineTokenBuffers(pexor::DMA_Buffer **src, dabc::Buffer &buf,
         return dabc::di_SkipBuffer;    // buffer too small error
       used_size += sizeof(mbs::SubeventHeader);
       filled_size += sizeof(mbs::SubeventHeader);
+
+#ifdef FILL_PADDING_WORD
       // here account for zero copy alignment: headers+int give 32 bytes before payload
       // necessary for the explodertest unpacker up to now
       // we need some padding words here for mbs tailored unpacker:
@@ -1109,6 +1117,7 @@ int pex::Device::CombineTokenBuffers(pexor::DMA_Buffer **src, dabc::Buffer &buf,
       used_size += sizeof(int);
       filled_size += sizeof(int);
       // TODO: can we switch padding behaviour by parameter?
+#endif
     }
   }
   DOUT3("pex::Device::CombineTokenBuffers output pointer after mbs header is 0x%x", ptr.ptr ());
@@ -1155,12 +1164,19 @@ int pex::Device::CopySubevent(pexor::DMA_Buffer *tokbuf, dabc::Pointer &cursor, 
       return dabc::di_SkipBuffer;    // buffer too small error
 
     filled_size += sizeof(mbs::SubeventHeader);
+#ifdef FILL_PADDING_WORD
     // here account for zero copy alignment: headers+int give 32 bytes before payload
     // fill with padding word descriptor like in mbs:
     if (PutMbsPaddingWords(cursor, 1) < 0)
       return dabc::di_SkipBuffer;
     filled_size += sizeof(int);
     subhdr->SetRawDataSize(tokbuf->UsedSize() + sizeof(int));
+#else
+    subhdr->SetRawDataSize(tokbuf->UsedSize());
+
+#endif
+
+
   }
   cursor.copyfrom(tokbuf->Data(), tokbuf->UsedSize());
   cursor.shift(tokbuf->UsedSize());    // NOTE: you have to shift current pointer yourself after copyfrom!!
@@ -1213,7 +1229,7 @@ mbs::SubeventHeader* pex::Device::PutMbsSubeventHeader(dabc::Pointer &ptr, int8_
 
 int pex::Device::PutMbsPaddingWords(dabc::Pointer &ptr, uint8_t num)
 {
-// TODO: check if padding words would exceed buffer length.
+ // TODO: check if padding words would exceed buffer length.
   if (ptr.rawsize() < num * sizeof(int))
   {
     DOUT0("pex::Device::PutMbsPaddingWords fails because no more space in buffer, restsize=%d bytes, paddingwords=%d",
