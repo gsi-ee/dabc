@@ -87,6 +87,13 @@ extern const char *xmlModuleThread;    //< Name of readout thread
 extern const char *xmlDeviceName;    //< Name of device instance
 extern const char *xmlDeviceThread;    //< Name of readout thread
 
+#ifdef PEXOR_USE_WHITERABBIT
+extern const char *xmlTLUaddress; //< wishbone address of the white rabbit time latch unit on the PEXARIA (if any);
+extern const char *xmlWRSubID; //< user defined subsystem id of this timestamped data stream
+#endif
+
+
+
 extern const char *nameReadoutAppClass;
 extern const char *nameDeviceClass;
 extern const char *nameTransportClass;
@@ -369,6 +376,11 @@ protected:
   /** For mbsformat: defines subevent control*/
   unsigned int fSubeventControl;
 
+
+
+
+
+
   /** wait timeout in seconds for kernel receive queues*/
   int fWaitTimeout;
 
@@ -461,6 +473,13 @@ protected:
 
   /** clear trigger before requesting data. this is the MBS "user trigger clear" mode */
   bool fEarlyTriggerClear;
+
+
+  /** white rabbit subsystem id. arbitratily user defined, for later data stream stiching */
+   int fWRSubsystem;
+
+   /** wishbone address of trigger time latch unit on the white rabbit receiver (pexaria). depends on WR firmware version*/
+   unsigned long fTLUAddress;
 
   /** Event number since device init*/
   unsigned int fNumEvents;

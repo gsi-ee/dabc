@@ -75,6 +75,11 @@
 			<TrixorConversionTime value="30" />
 			<TrixorFastClearTime value="10" />
 			<EarlyTriggerClear value="true" />
+			
+<!-- 			<WhiteRabbitTLUaddress value="0x4000100" />  -->
+			<WhiteRabbitTLUaddress value="0x4000100" /> 
+            <WhiteRabbitSubsystemID value="0x300" /> 
+			
 			<AutoStartAcquisition value="true" />
 		</Device>
 
