@@ -86,6 +86,12 @@ const char *xmlTrixorFastClearTime = "TrixorFastClearTime";    //<  fast clear t
 
 //const char* xmlExploderSubmem	= "ExploderSubmemSize"; //<  size of exploder submem test buffer
 
+
+
+const char *xmlTLUaddress = "WhiteRabbitTLUaddress";
+const char *xmlWRSubID = "WhiteRabbitSubsystemID";
+
+
 const char *xmlModuleName = "PexorModuleName";    //<  Name of readout module instance
 const char *xmlModuleThread = "PexorModuleThread";    //< Name of thread for readout module
 const char *xmlDeviceName = "PexorDeviceName";
@@ -106,6 +112,9 @@ const char *parDeviceDRate = "DeviceReceiveRate";
 
 const char *parDaqRunningState = "PexorAcquisitionRunning";
 
+
+
+
 }
 
 unsigned int pex::Device::fgThreadnum = 0;
@@ -115,7 +124,9 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
         fSubeventProcid(0), fSubeventControl(0), fWaitTimeout(1), fAqcuisitionRunning(false), fSynchronousRead(true),
         fTriggeredRead(false), fDirectDMA(true), fMultichannelRequest(false), fAutoTriggerRead(false),
         fMemoryTest(false), fSkipRequest(false), fWaitForDataReady(true),fStartDAQOnInit(true), fCurrentSFP(0), fReadLength(0),
-        fTrixConvTime(0x20), fTrixFClearTime(0x10), fInitDone(false), fHasData(true), fEarlyTriggerClear(true), fNumEvents(0), fRequestMutex(true)
+        fTrixConvTime(0x20), fTrixFClearTime(0x10), fInitDone(false), fHasData(true), fEarlyTriggerClear(true),
+        fWRSubsystem(0x600), fTLUAddress(0),
+        fNumEvents(0), fRequestMutex(true)
 
 {
   fDeviceNum = Cfg(pex::xmlPexorID, cmd).AsInt(0);
@@ -247,6 +258,12 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
 
   DOUT1("---------- Readout mode : wait for data ready is %s, early trigger clear is %s\n", (fWaitForDataReady? "on":"off"), (fEarlyTriggerClear ? "on":"off"));
 
+
+  fTLUAddress = Cfg(pex::xmlTLUaddress, cmd).AsInt(0); //0x4000100
+  fWRSubsystem = Cfg(pex::xmlWRSubID, cmd).AsInt(0x500);
+  DOUT1("---------- Define TLU address: 0x%lx , WR subsystem:0x%x\n", fTLUAddress, fWRSubsystem);
+
+
   fStartDAQOnInit= Cfg(pex::xmlStartDAQOnInit, cmd).AsBool(true);
 
 
@@ -317,10 +334,32 @@ int pex::Device::InitDAQ()
 {
   int rev = 0;
   SetInfo("InitDaq is executed...");
+
+#ifdef PEXOR_USE_WHITERABBIT
+  if(fTLUAddress)
+  {
+    DOUT0("Enabling white rabbit timestamp readout for TLU address 0x%lx, subsystem id=0x%x",fTLUAddress, fWRSubsystem);
+  }
+  else
+  {
+    DOUT0("Disabling white rabbit timestamp readout.");
+  }
+  bool result = fKinpex->ConfigureWRTimestampReadout(fWRSubsystem, fTLUAddress);
+  if (!result) return -1;
+
+
+#else
+  DOUT0("Note: White rabbit timestamp readout is not supported by kernel module library!");
+#endif
+
+  DOUT0("Before InitChains....");
+
   rev = InitChains();
   if (rev)
     return rev;    // TODO: error handling with exceptions
   InitTrixor();
+
+
 
   // first disable all frontends
   for (int sfp = 0; sfp < PEX_NUMSFP; ++sfp)
