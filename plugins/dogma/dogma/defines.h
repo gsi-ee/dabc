@@ -39,9 +39,9 @@ namespace dogma {
          uint32_t tuAddr = 0;
          uint32_t tuDeviceId = 0;
          uint32_t tuLenPayload = 0; // number of bytes in payload
+         uint32_t tuTrigTypeNumber = 0;
          uint32_t tuTrigTimeHigh = 0;
          uint32_t tuTrigTimeLow = 0;
-         uint32_t tuTrigTypeNumber = 0;
 
       public:
 
