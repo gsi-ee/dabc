@@ -93,10 +93,10 @@ inline void ur_set_config(ur_context *it, const ur_config *cfg)
 inline void ur_parse_header(ur_header *h, ur_context *it, const char *buf,
                             int n) {
   it->i = 0;
-  h->trig_time = be64conv(*(uint64_t *)(buf + it->i));
-  it->i += 8;
   uint32_t trig_type_num = be32conv(*(uint32_t *)(buf + it->i));
   it->i += 4;
+  h->trig_time = be64conv(*(uint64_t *)(buf + it->i));
+  it->i += 8;
   h->trig_type = trig_type_num >> 28;
   h->trig_num = trig_type_num & 0x0fffffff;
   it->cur_chan = 0;
