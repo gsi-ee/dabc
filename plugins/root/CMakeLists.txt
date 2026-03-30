@@ -3,6 +3,7 @@ if(ROOT_FOUND)
 
   find_library(ROOT_RHTTP_LIBRARY RHTTP HINTS ${ROOT_LIBRARY_DIR})
   find_library(ROOT_XMLIO_LIBRARY XMLIO HINTS ${ROOT_LIBRARY_DIR})
+  find_library(ROOT_HIST_LIBRARY Hist HINTS ${ROOT_LIBRARY_DIR})
 
   dabc_link_library(
     DabcRoot
@@ -24,5 +25,5 @@ if(ROOT_FOUND)
   dabc_executable(
     dabc_root
     SOURCES utils/dabc_root.cxx
-    LIBRARIES DabcBase DabcRoot ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY} ${ROOT_XMLIO_LIBRARY})
+    LIBRARIES DabcBase DabcRoot ${ROOT_RHTTP_LIBRARY} ${ROOT_XMLIO_LIBRARY} ${ROOT_HIST_LIBRARY})
 endif()
