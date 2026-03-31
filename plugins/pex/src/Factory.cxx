@@ -65,6 +65,15 @@ dabc::Module* pex::Factory::CreateModule (const std::string& classname, const st
          return theboard;
      }
 
+   if (classname == "pex::Tamex")
+       {
+           pex::FrontendBoard* theboard=fDevice->CreateFrontendBoard(FEB_TAMEX, modulename, cmd);
+           DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
+                   modulename.c_str (), FEB_TAMEX);
+           return theboard;
+       }
+
+
   return dabc::Factory::CreateModule (classname, modulename, cmd);
 }
 

@@ -17,11 +17,7 @@
 #include "dabc/Manager.h"
 #include "dabc/Application.h"
 
-//#include "mbs/MbsTypeDefs.h"
-//#include "mbs/Factory.h"
 
-//#include "dabc/MemoryPool.h"
-//#include "dabc/Buffer.h"
 #include "dabc/Pointer.h"
 #include "dabc/Port.h"
 
@@ -31,8 +27,8 @@
 
 #include "pex/Febex3.h"
 #include "pex/Poland.h"
+#include "pex/Tamex.h"
 
-//#include "pex/ReadoutApplication.h"
 
 #include "pexor/PexorTwo.h"
 #include "pexor/DMA_Buffer.h"
@@ -659,9 +655,11 @@ pex::FrontendBoard* pex::Device::CreateFrontendBoard(feb_kind_t kind, const std:
     case FEB_POLAND:
       theboard = new pex::Poland(modulename, cmd);
       break;
+    case FEB_TAMEX:
+      theboard = new pex::Tamex(modulename, cmd);
+      break;
     case FEB_NONE:
     case FEB_FEBEX4:
-    case FEB_TAMEX:
     case FEB_CTDC:
     case FEB_FOOT:
     default:
