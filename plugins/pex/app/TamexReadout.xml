@@ -1,0 +1,232 @@
+<?xml version="1.0"?>
+<dabc version="2">
+
+<Context host="localhost" name="PEXOR">
+		<Run>
+			<lib value="libDabcHttp.so"/>
+			<lib value="libDabcMbs.so" />
+			<lib value="libDabcPex.so" />
+      		<lib value="libDabcGosip.so"/>
+			<logfile value="ReadoutTamex.log" />
+			<!-- <runtime value="20"/> -->
+			<debuglevel value="1"/>
+			<control value="true"/>
+			<halttime value="20"/>
+			
+		</Run>
+
+		<MemoryPool name="Pool">
+			<BufferSize value="128000" />
+			<NumBuffers value="1000" />
+		</MemoryPool>
+
+
+
+		<HttpServer name="http">
+			<port value="8091" />
+		</HttpServer>
+
+
+  		<Publisher name="publ" manager="true"/>
+
+
+
+		<Device name="PexorDevice" class="pex::GenericDevice">
+
+			<PexorID value="0" />
+			<PexorNumSlaves_0 value="2" />
+			<PexorNumSlaves_1 value="0" />
+			<PexorNumSlaves_2 value="0" />
+			<PexorNumSlaves_3 value="0" />
+			
+			
+<!-- 			Pexor Slave types are:		
+		 0 :SLAVE_NONE
+  		 1: FEBEX3,
+  		 2: FEBEX4,
+  		 3: TAMEX,
+  		 4: CTDC,
+  		 5: FOOT,
+  		 6: POLAND
+			 -->
+			<PexorSlavesTypes_0 value="[3,3]" />
+			<PexorSlavesTypes_1 value="[]" />
+			<PexorSlavesTypes_2 value="[]" />
+			<PexorSlavesTypes_3 value="[]" />
+			
+			<PexorDMALen value="32768" />
+			<PexorDMABuffers value="50" />
+			<PexorDMAScatterGather value="false" />
+			<PexorDMAZeroCopy value="false" />
+			<PexorMultiTokenDMA  value="false" />
+			<PexorDirectDMA  value="true" />
+			<PexorFormatMbs value="true" />
+			<PexorSingleMbsSubevent value="true"/>
+			<PexorMbsSubcrate  value="0"/>
+			<PexorMbsControl  value="9"/>
+			<PexorMbsProcid   value="1"/>			
+			<PexorSyncReadout value="true" />
+			<PexorUseTrigger value="true" />
+			<PexorAutoReadout value="true"/>
+			<PexorAutoAsync  value="false"/>
+			<PexorTokenWaitForDataReady value="true"/>
+			<PexorTriggerTimeout value="10"/>
+			<TrixorConversionTime value="30" />
+			<TrixorFastClearTime value="10" />
+			<EarlyTriggerClear value="true" />
+			
+			<WhiteRabbitTLUaddress value="0x4000100" /> 
+            <WhiteRabbitSubsystemID value="0x300" /> 
+			
+			<AutoStartAcquisition value="true" />
+		</Device>
+
+
+		<Module name="PexorReadout" class="pex::ReadoutModule">
+			<!-- these parameters will force to create inputs/oputputs of module -->
+			<NumInputs value="1" />
+			<NumOutputs value="1" />
+
+			<InputPort name="Input0" url="device://PexorDevice" />
+
+
+			<OutputPort name="Output0" url="mbs://Stream:6900" />
+			<OutputPort name="Output1" url="lmd:///data/pexortest.lmd?maxsize=1500&log=2" />
+			
+			<Ratemeter name="*" debug="true" interval="3" width="5"
+				prec="2" />
+
+			<PexorData width="5" prec="6" low="0" up="1" interval="3" debug="1"/>
+				
+				
+
+		</Module>
+
+		 <Module name="gosip_player" class="gosip::Player">
+	     </Module>
+
+		 <Module name="pexor_player" class="pex::Player">
+	     <HtmlPath value="${DABCSYS}/plugins/pex/htm/"/>
+	     </Module>
+
+
+	 <Module name="tamex" class="pex::Tamex">
+	 
+		<!-- 	  The type of tamex, may be different for each sfp chain
+		       1 TAMEX2 with passive signal input interface 
+		       2 TAMEX2 with PADI    signal input interface
+		       3 TAMEX-PADI1, TAMEX4
+		      10 TAMEX3
+		      41 TAMEX4 with PQDC1 Frontend
+		 -->
+	 	<TamexTypel value="[3, 3, 10, 10]"/>
+	 	
+	 	
+     	 <TamexDoInitModules value="true"/>
+	 	 
+ 		<!--Enable 	measurement of AccTrig on CH0 -->
+		<TamexEnableReferenceChannel value="true"/>
+	 
+		
+	    
+	<!-- enable trigger window selection mode - only hits inside window are transferred; if false, everything will be written out -->
+	  <TamexEnableTriggerWindow value="true"/>
+	  
+	 <!-- 	 trigger window times
+             in nr of time slices a 5.00 ns: max 0x7ff := 2047 * 5.00 ns -->
+	 	<TamexPreTriggerTime value="200"/>
+	    <TamexPostTriggerTime value="200"/>
+	  
+	<!-- with TamexUseLongTriggerWindow enabled trigger window control will be
+                                  // handled implicitly (TamexEnableTriggerWindow has no effect!):
+                                 // trigger window control OFF when PRE_TRIG_TIME and POST_TRIG_TIME are set to 0
+                                 // trigger window control ON  when PRE_TRIG_TIME and POST_TRIG_TIME are set to not 0 -->	
+		<TamexUseLongTriggerWindow value="true"/>
+
+
+		<!--    enable channel mask (still common for all slaves)
+ 			trigger enable 32-1 (only on TAMEX-PADI1 so far)
+ 			0xffffffff -> all channels enabled for trigger output -->
+  		<TamexChmaskEnabled value="0xffffffff"/>
+  
+ 		<!-- 	trigger channel mask (still common for all slaves)  -->	
+		<TamexChmaskTrigger value="0xffffffff"/>
+
+		<!--  	channel polarity mask (still common for all slaves)
+ 		 	Input signal polarity (0 for negative, 1 for positive) -->
+ 		 <TamexChmaskPolarity value="0x00000000"/>
+ 		<!--  data reduction
+ 			switch on meta data suppression for all readout tamex boards 
+ 			in case of no hit found in tamex
+ 			0x1 meta data reduction enabled  0x0 disabled  -->
+ 		<TamexDataReductionEnabled value="0x0"/>
+ 			
+		<!--  clock source modes TAMEX2
+        	 0x20 -> External CLK via 2 pin lemo (200 MHz)
+    		 0x21 -> CLK from TRBus (25 MHz) via on-board PLL            ! to be tested
+         	 0x22 -> CLK from TRBus + Module 0 feeds 25 MHz CLK to TRBus ! to be tested
+         	 0x24 -> On-board oscillator (200 MHz) -->
+       	<TamexClockTam2 value="0x24"/>
+
+		<!--   clock source modes TAMEX3
+	         0x26 -> External CLK from backplane (200 MHz)
+          	 0x2a -> On-board oscillator (200 MHz)
+             0x22 -> CLK from TRBus (25 MHz) via on-board PLL
+                  (Module 0 feeds 25 MHz CLK to TRBus) 
+             0x20 -> External CLK from backplane (25 MHz) -->
+		<TamexClockTam3 value="0x2a"/>
+
+		<!--   clock source modes TAMEX4-PADI1
+  			 0x0 -> CLK from previous module via backplane
+                     (feed in 200 MHz on crate interface)
+             0x1 -> CLK from on-board oscillator
+             0x2 -> CLK from module front panel (feed in 200 MHz)
+             0x4 -> CLK from previous module via backplane
+                    (first module CLK-master with local CLK)
+             0x8 -> CLK from previous module via backplane
+                    (first module CLK-master with external CLK from front) -->
+	<TamexClockTam4Padi value="0x4"/>
+
+		<!--  test pulse setup
+ 		enable internal test pulse (1 on, 0 off) -->
+	<TamexTestPulseOn value="0"/>
+	 	<!--  test pulse delay 
+ 		The test pulse produced in FPGA has 2nd pulse with the delay of 8nsec*this valu
+ 		Maximum delay can be 120 nsec with the value=0xf. value 0 disables 2nd pulse -->
+    <TamexTestPulseDelay value="0"/>
+  
+		<!--  test pulse frequency
+   			0 - >30kHz 1-> 120kHz -->
+   	<TamexTestPulseFrequency value="0"/>	
+
+		<!-- # testpulse channel mask
+ 		each bit 1 enables testpulse of such channel -->
+  	<TamexChmaskTestPulse value="0xffffffff"/>
+  	 
+  <!----PADI discriminator settings (TAMEX-PADI1 & TAMEX2 with PADI add-on)
+       PADI thresholds set at startup 2x16 bits for PADI1/2 -->    
+    <TamexSetPadiThresh value="false"/>    
+	<TamexPadiThreshDefault value="0xa000a000"/>
+    
+   <!--   PQDC/PADIWA Thresholds
+   			PQDC fast branch threshold in mV relative to baseline (signal AC coupled and amplified 20-30 times)
+                // neg signal >> negative value
+                // pos signal >> positive value -->
+    <TamexSetPQDCThresh value="true"/>
+    <TamexPQDCThreshDefault value="-800"/>
+    
+    
+                            
+   <!--   // If true, OR signals from both PADIs are combined to one OR_out signal -->
+    <TamexCombinePadiTriggerOr value="true"/>
+    
+    <!--  // If true , NIM trigger signals are generated from PADI OR on TAMEX2 -->
+    <TamexEnableOrTamex2 value="false"/>
+	 	
+  	 
+	 
+     </Module>
+
+
+	</Context>
+</dabc>
