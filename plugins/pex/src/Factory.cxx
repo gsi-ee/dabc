@@ -17,7 +17,6 @@
 #include "pex/Player.h"
 
 #include "pex/FrontendBoard.h"
-//#include "pex/Febex3.h"
 
 
 
@@ -71,6 +70,14 @@ dabc::Module* pex::Factory::CreateModule (const std::string& classname, const st
            DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
                    modulename.c_str (), FEB_TAMEX);
            return theboard;
+       }
+
+   if (classname == "pex::ClockTdc")
+       {
+             pex::FrontendBoard* theboard=fDevice->CreateFrontendBoard(FEB_CTDC, modulename, cmd);
+             DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
+                     modulename.c_str (), FEB_CTDC);
+             return theboard;
        }
 
 

@@ -5,8 +5,8 @@ find_package(PEX)
 if(PEX_FOUND)
   dabc_link_library(
     DabcPex
-    SOURCES src/Factory.cxx src/Device.cxx src/Input.cxx  src/Transport.cxx src/Player.cxx src/ReadoutModule.cxx src/FrontendBoard.cxx src/Febex3.cxx src/Poland.cxx src/Tamex.cxx
-    HEADERS pex/Factory.h pex/Device.h pex/Input.h  pex/Transport.h pex/Player.h pex/ReadoutModule.h pex/FrontendBoard.h pex/Poland.h pex/Febex3.h pex/Tamex.h
+    SOURCES src/Factory.cxx src/Device.cxx src/Input.cxx  src/Transport.cxx src/Player.cxx src/ReadoutModule.cxx src/FrontendBoard.cxx src/Febex3.cxx src/Poland.cxx src/Tamex.cxx src/ClockTdc.cxx
+    HEADERS pex/Factory.h pex/Device.h pex/Input.h  pex/Transport.h pex/Player.h pex/ReadoutModule.h pex/FrontendBoard.h pex/Poland.h pex/Febex3.h pex/Tamex.h pex/ClockTdc.h
     INCDIR pex
     LIBRARIES DabcBase DabcMbs ${PEX_LIBRARY}
     INCLUDES ${PEX_INCLUDE_DIR}
