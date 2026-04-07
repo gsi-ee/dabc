@@ -28,6 +28,7 @@
 #include "pex/Febex3.h"
 #include "pex/Poland.h"
 #include "pex/Tamex.h"
+#include "pex/ClockTdc.h"
 
 
 #include "pexor/PexorTwo.h"
@@ -658,9 +659,12 @@ pex::FrontendBoard* pex::Device::CreateFrontendBoard(feb_kind_t kind, const std:
     case FEB_TAMEX:
       theboard = new pex::Tamex(modulename, cmd);
       break;
+    case FEB_CTDC:
+      theboard = new pex::ClockTdc(modulename, cmd);
+      break;
     case FEB_NONE:
     case FEB_FEBEX4:
-    case FEB_CTDC:
+
     case FEB_FOOT:
     default:
       theboard = nullptr;
