@@ -18,6 +18,7 @@
 #include <string>
 #include <unistd.h>
 #include <stdlib.h>
+#include <libgen.h>
 
 #include "dabc/Manager.h"
 
@@ -277,7 +278,7 @@ int main (int argc, char *argv[])
    std::string mess= dcmd.GetStr ("MESSAGE", "OK");
    if(mess.compare("OK")!=0)
      {
-       DOUT0 (mess.c_str());
+       DOUT0 ("%s",mess.c_str());
      }
 
   return l_status;
