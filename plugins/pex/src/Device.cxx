@@ -26,6 +26,7 @@
 #include "pex/Input.h"
 
 #include "pex/Febex3.h"
+#include "pex/Febex4.h"
 #include "pex/Poland.h"
 #include "pex/Tamex.h"
 #include "pex/ClockTdc.h"
@@ -653,6 +654,9 @@ pex::FrontendBoard* pex::Device::CreateFrontendBoard(feb_kind_t kind, const std:
     case FEB_FEBEX3:
       theboard = new pex::Febex3(modulename, cmd);
       break;
+    case FEB_FEBEX4:
+      theboard = new pex::Febex4(modulename, cmd);
+      break;
     case FEB_POLAND:
       theboard = new pex::Poland(modulename, cmd);
       break;
@@ -663,8 +667,6 @@ pex::FrontendBoard* pex::Device::CreateFrontendBoard(feb_kind_t kind, const std:
       theboard = new pex::ClockTdc(modulename, cmd);
       break;
     case FEB_NONE:
-    case FEB_FEBEX4:
-
     case FEB_FOOT:
     default:
       theboard = nullptr;

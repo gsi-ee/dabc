@@ -55,8 +55,14 @@ dabc::Module* pex::Factory::CreateModule (const std::string& classname, const st
                modulename.c_str (), FEB_FEBEX3);
        return theboard;
    }
-
-   if (classname == "pex::Poland")
+   else if (classname == "pex::Febex4")
+     {
+         pex::FrontendBoard* theboard=fDevice->CreateFrontendBoard(FEB_FEBEX4, modulename, cmd);
+         DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
+                 modulename.c_str (), FEB_FEBEX3);
+         return theboard;
+     }
+   else if (classname == "pex::Poland")
      {
          pex::FrontendBoard* theboard=fDevice->CreateFrontendBoard(FEB_POLAND, modulename, cmd);
          DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
@@ -64,7 +70,7 @@ dabc::Module* pex::Factory::CreateModule (const std::string& classname, const st
          return theboard;
      }
 
-   if (classname == "pex::Tamex")
+   else if (classname == "pex::Tamex")
        {
            pex::FrontendBoard* theboard=fDevice->CreateFrontendBoard(FEB_TAMEX, modulename, cmd);
            DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
@@ -72,14 +78,14 @@ dabc::Module* pex::Factory::CreateModule (const std::string& classname, const st
            return theboard;
        }
 
-   if (classname == "pex::ClockTdc")
+   else if (classname == "pex::ClockTdc")
        {
              pex::FrontendBoard* theboard=fDevice->CreateFrontendBoard(FEB_CTDC, modulename, cmd);
              DOUT1 ("pex::Factory::CreateModule - Created Frontend Board %s for type %d",
                      modulename.c_str (), FEB_CTDC);
              return theboard;
        }
-
+   else {}
 
   return dabc::Factory::CreateModule (classname, modulename, cmd);
 }

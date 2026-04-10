@@ -128,6 +128,7 @@ pex::Febex3::Febex3(const std::string &name, dabc::Command cmd) :
 
     for (int slave = 0; slave < PEX_MAXSLAVES; slave++)
     {
+      fThreshold[sfp][slave].clear();
       arr.clear();
       arr = Cfg(dabc::format("%s%d_%X", pex::xmlChannelThreshold, sfp, slave), cmd).AsIntVect();
       for (size_t i = 0; i < arr.size(); ++i)

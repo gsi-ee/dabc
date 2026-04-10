@@ -46,7 +46,7 @@ void printm (char *fmt, ...)
   if (com.verboselevel) com.dump_command ();
 
 gosip::TerminalModule::TerminalModule (const std::string &name, dabc::Command cmd) :
-    dabc::ModuleAsync (name, cmd), fFD_pex(0),fDevnum(0),fConfigfile(0), fLinecount(0),fErrcount(0)
+    dabc::ModuleAsync (name, cmd), fFD_pex(0),fDevnum(0),fConfigfile(nullptr), fLinecount(0),fErrcount(0)
 {
 }
 
@@ -238,12 +238,12 @@ int gosip::TerminalModule::next_config_values (gosip::Command &com)
     // parse optional command identifier
     //if (strcasestr (cmd[4], "setbit") != 0)
     //JAM2017 -  this was not posix standard, gcc 6.3 doesnt like it. we do workaround:
-    if ((strstr (cmd[4], "setbit") != 0) || (strstr (cmd[4], "SETBIT") != 0))
+    if ((strstr (cmd[4], "setbit") != nullptr) || (strstr (cmd[4], "SETBIT") != nullptr))
     {
       com.command = GOSIP_SETBIT;
     }
     //else if (strcasestr (cmd[4], "clearbit") != 0)
-    if ((strstr (cmd[4], "clearbit") != 0) || (strstr (cmd[4], "CLEARBIT") != 0))
+    if ((strstr (cmd[4], "clearbit") != nullptr) || (strstr (cmd[4], "CLEARBIT") != nullptr))
     {
       com.command = GOSIP_CLEARBIT;
     }
