@@ -28,7 +28,7 @@ extern  const char *xmlFsqDestination;
 extern  const char *xmlFsqPort;
 extern const char *xmlFsqNode;
 extern  const char *xmlFsqPass;
-
+extern const char *xmlRun;
 
 
 
@@ -82,7 +82,11 @@ protected:
   std::string fFsqPass;
 
 
+  /** current Run number */
+  int fRunNum;
 
+  /** remember previous file name to optionally increment run number */
+  std::string fLastFileName;
 
 
 };

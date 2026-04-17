@@ -28,6 +28,8 @@ namespace pex
   const char *xmlFsqPort = "FsqPort";
   const char *xmlFsqNode = "FsqNode";
   const char *xmlFsqPass = "FsqPass";
+  const char *xmlRun = "RunNumber";
+
 }
 
 pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command  cmd  ) :
@@ -57,6 +59,7 @@ pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command  cmd  )
   fFsqNode= Cfg(xmlFsqNode, cmd).AsStr("myaccount");
   fFsqPass= Cfg(xmlFsqPass, cmd).AsStr("secret");
 
+  fRunNum=Cfg(pex::xmlRun, cmd).AsInt(0); // user may optionally set the beginning run number
 
 
 
@@ -156,65 +159,75 @@ void pex::ReadoutModule::DoPexorReadout ()
 
 }
 
-int pex::ReadoutModule::ExecuteCommand(dabc::Command cmd)
+int pex::ReadoutModule::ExecuteCommand (dabc::Command cmd)
 {
 
   // this is section taken from mbs combiner
-  if (cmd.IsName(mbs::comStartFile)) {
+  if (cmd.IsName (mbs::comStartFile))
+  {
+    std::string fname = cmd.GetStr (dabc::xmlFileName);    //"filename")
+    int maxsize = cmd.GetInt (dabc::xml_maxsize, 30);    // maxsize
+    bool usefsq = cmd.GetBool (pex::xmlUseFsq, fUseFsq);    // FSQ mode
 
-    std::string fname = cmd.GetStr(dabc::xmlFileName); //"filename")
-    int maxsize = cmd.GetInt(dabc::xml_maxsize, 30); // maxsize
-    bool usefsq = cmd.GetBool(pex::xmlUseFsq, fUseFsq); // FSQ mode
+    if (fLastFileName != fname)
+      fRunNum = 0;    // reset file sequence number if user has changed the run name - later TODO: run number configuration
+
     std::string url;
-    if(usefsq)
+    if (usefsq)
     {
-      url= dabc::format("%s://%s?%s=%d&ltsm&ltsmUseFSD=true&ltsmNode=%s&ltsmPass=%s&ltsmFsname=%s&ltsmFSDServerName=%s&ltsmFSDServerPort=%d&ltsmFSQDestination=%d",
-          mbs::protocolLmd, fname.c_str(), dabc::xml_maxsize, maxsize, fFsqNode.c_str(),fFsqPass.c_str(), fFsqFilesystem.c_str(), fFsqServer.c_str(), fFsqPort, fFsqDestination);
-      // JAM26 for hades this looks like:
-      //&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}&ltsmFsname=${LTSMFSNAME}&ltsmOwner=hadesdst&ltsmUseFSD=${USEFSD}&ltsmFSDServerName=${FSDSERVER}&ltsmFSDServerPort=${FSDPORT}&ltsmMaxSessionFiles=${LTSMSESSIONFILES}&ltsmDaysubfolders=true&ltsmFSQDestination=${FSQDEST}&slave" queue="5000" onerror="exit"/>
+      url =
+          dabc::format (
+              "%s://%s_%03d?%s=%d&ltsm&ltsmUseFSD=true&ltsmNode=%s&ltsmPass=%s&ltsmFsname=%s&ltsmFSDServerName=%s&ltsmFSDServerPort=%d&ltsmFSQDestination=%d",
+              mbs::protocolLmd, fname.c_str (), fRunNum, dabc::xml_maxsize, maxsize, fFsqNode.c_str (), fFsqPass.c_str (),
+              fFsqFilesystem.c_str (), fFsqServer.c_str (), fFsqPort, fFsqDestination);
     }
     else
     {
-      url= dabc::format("%s://%s?%s=%d", mbs::protocolLmd, fname.c_str(), dabc::xml_maxsize, maxsize);
+      url = dabc::format ("%s://%s_%03d?%s=%d", mbs::protocolLmd, fname.c_str (), fRunNum, dabc::xml_maxsize, maxsize);
     }
 
+    fLastFileName = fname;
+    fRunNum++;
 
+    EnsurePorts (0, 2);
+    bool res = dabc::mgr.CreateTransport (OutputName (1, true), url);
+    DOUT0("Started file %s res = %d", url.c_str (), res);
+    SetInfo (dabc::format ("Execute StartFile for %s, result=%d", url.c_str (), res), true);
+    ChangeFileState (true);
+    return cmd_bool (res);
+  }
+  else if (cmd.IsName (mbs::comStopFile))
+  {
+    FindPort (OutputName (1)).Disconnect ();
+    SetInfo ("Stopped file", true);
+    ChangeFileState (false);
+    return dabc::cmd_true;
+  }
+  else if (cmd.IsName (mbs::comStartServer))
+  {
+    if (NumOutputs () < 1)
+    {
+      EOUT("No ports was created for the server");
+      return dabc::cmd_false;
+    }
+    std::string skind = cmd.GetStr (mbs::xmlServerKind);
 
-    EnsurePorts(0, 2);
-    bool res = dabc::mgr.CreateTransport(OutputName(1, true), url);
-    DOUT0("Started file %s res = %d", url.c_str(), res);
-    SetInfo(dabc::format("Execute StartFile for %s, result=%d",url.c_str(), res), true);
-    ChangeFileState(true);
-    return cmd_bool(res);
-     } else
-     if (cmd.IsName(mbs::comStopFile)) {
-        FindPort(OutputName(1)).Disconnect();
-        SetInfo("Stopped file", true);
-        ChangeFileState(false);
-        return dabc::cmd_true;
-     } else
-     if (cmd.IsName(mbs::comStartServer)) {
-        if (NumOutputs()<1) {
-           EOUT("No ports was created for the server");
-           return dabc::cmd_false;
-        }
-        std::string skind = cmd.GetStr(mbs::xmlServerKind);
+    int port = cmd.GetInt (mbs::xmlServerPort, 6666);
+    std::string url = dabc::format ("mbs://%s?%s=%d", skind.c_str (), mbs::xmlServerPort, port);
+    EnsurePorts (0, 1);
+    bool res = dabc::mgr.CreateTransport (OutputName (0, true));
+    DOUT0("Started server %s res = %d", url.c_str (), res);
+    SetInfo (dabc::format ("Execute StartServer for %s, result=%d", url.c_str (), res), true);
+    return cmd_bool (res);
+  }
+  else if (cmd.IsName (mbs::comStopServer))
+  {
+    FindPort (OutputName (0)).Disconnect ();
+    SetInfo ("Stopped server", true);
+    return dabc::cmd_true;
+  }
 
-        int port = cmd.GetInt(mbs::xmlServerPort, 6666);
-        std::string url = dabc::format("mbs://%s?%s=%d", skind.c_str(), mbs::xmlServerPort,  port);
-        EnsurePorts(0, 1);
-        bool res = dabc::mgr.CreateTransport(OutputName(0, true));
-        DOUT0("Started server %s res = %d", url.c_str(), res);
-        SetInfo(dabc::format("Execute StartServer for %s, result=%d",url.c_str(), res), true);
-        return cmd_bool(res);
-     } else
-     if (cmd.IsName(mbs::comStopServer)) {
-        FindPort(OutputName(0)).Disconnect();
-        SetInfo("Stopped server", true);
-        return dabc::cmd_true;
-     }
-
-   return dabc::ModuleAsync::ExecuteCommand(cmd);
+  return dabc::ModuleAsync::ExecuteCommand (cmd);
 }
 
 

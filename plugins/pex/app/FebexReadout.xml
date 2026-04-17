@@ -28,7 +28,6 @@
 			<port value="8091" />
 		</HttpServer>
 
-
   		<Publisher name="publ" manager="true"/>
 
 
