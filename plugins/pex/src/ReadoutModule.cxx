@@ -19,7 +19,18 @@
 #include "dabc/Manager.h"
 #include "mbs/MbsTypeDefs.h"
 
-pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command /* cmd */ ) :
+namespace pex
+{
+  const char *xmlUseFsq = "UseFsq";    //< switch usage of FSQ lustre/tape storage server
+  const char *xmlFsqServer = "FsqServername";
+  const char *xmlFsqFilesystem = "FsqFSname";
+  const char *xmlFsqDestination = "FsqDestination";
+  const char *xmlFsqPort = "FsqPort";
+  const char *xmlFsqNode = "FsqNode";
+  const char *xmlFsqPass = "FsqPass";
+}
+
+pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command  cmd  ) :
     dabc::ModuleAsync (name)
 {
   EnsurePorts (1, 1, dabc::xmlWorkPool);
@@ -38,9 +49,30 @@ pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command /* cmd 
   Par (fEventRateName).SetDebugLevel (1);
 
 
+  fUseFsq= Cfg(pex::xmlUseFsq, cmd).AsBool(false);
+  fFsqServer= Cfg(xmlFsqServer, cmd).AsStr("lxfsq11");
+  fFsqPort= Cfg(xmlFsqPort, cmd).AsInt(7625);
+  fFsqDestination= Cfg(xmlFsqDestination, cmd).AsInt(4);
+  fFsqFilesystem= Cfg(xmlFsqFilesystem, cmd).AsStr("/lustre");
+  fFsqNode= Cfg(xmlFsqNode, cmd).AsStr("myaccount");
+  fFsqPass= Cfg(xmlFsqPass, cmd).AsStr("secret");
+
+
+
+
+
+
+
+
   CreateCmdDef(mbs::comStartFile)
         .AddArg(dabc::xmlFileName, "string", true)
-        .AddArg(dabc::xmlFileSizeLimit, "int", false, 1000);
+        .AddArg(dabc::xmlFileSizeLimit, "int", false, 1000) //;
+        .AddArg(pex::xmlUseFsq, "bool", false, false);
+
+
+
+
+
 
      CreateCmdDef(mbs::comStopFile);
 
@@ -51,6 +83,9 @@ pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command /* cmd 
 
 
   PublishPars("$CONTEXT$/PexReadout");
+
+
+  DOUT1("pex::ReadoutModule configured with FSQ=%d (server=%s, node=%s, port=%d, filesystem=%s)", fUseFsq, fFsqServer.c_str(), fFsqNode.c_str(), fFsqPort, fFsqFilesystem.c_str());
 
 }
 
@@ -129,7 +164,22 @@ int pex::ReadoutModule::ExecuteCommand(dabc::Command cmd)
 
     std::string fname = cmd.GetStr(dabc::xmlFileName); //"filename")
     int maxsize = cmd.GetInt(dabc::xml_maxsize, 30); // maxsize
-    std::string url = dabc::format("%s://%s?%s=%d", mbs::protocolLmd, fname.c_str(), dabc::xml_maxsize, maxsize);
+    bool usefsq = cmd.GetBool(pex::xmlUseFsq, fUseFsq); // FSQ mode
+    std::string url;
+    if(usefsq)
+    {
+      url= dabc::format("%s://%s?%s=%d&ltsm&ltsmUseFSD=true&ltsmNode=%s&ltsmPass=%s&ltsmFsname=%s&ltsmFSDServerName=%s&ltsmFSDServerPort=%d&ltsmFSQDestination=%d",
+          mbs::protocolLmd, fname.c_str(), dabc::xml_maxsize, maxsize, fFsqNode.c_str(),fFsqPass.c_str(), fFsqFilesystem.c_str(), fFsqServer.c_str(), fFsqPort, fFsqDestination);
+      // JAM26 for hades this looks like:
+      //&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}&ltsmFsname=${LTSMFSNAME}&ltsmOwner=hadesdst&ltsmUseFSD=${USEFSD}&ltsmFSDServerName=${FSDSERVER}&ltsmFSDServerPort=${FSDPORT}&ltsmMaxSessionFiles=${LTSMSESSIONFILES}&ltsmDaysubfolders=true&ltsmFSQDestination=${FSQDEST}&slave" queue="5000" onerror="exit"/>
+    }
+    else
+    {
+      url= dabc::format("%s://%s?%s=%d", mbs::protocolLmd, fname.c_str(), dabc::xml_maxsize, maxsize);
+    }
+
+
+
     EnsurePorts(0, 2);
     bool res = dabc::mgr.CreateTransport(OutputName(1, true), url);
     DOUT0("Started file %s res = %d", url.c_str(), res);

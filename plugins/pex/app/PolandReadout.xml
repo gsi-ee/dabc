@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<dabc version="2">
+
+<Context host="localhost" name="PEXOR">
+		<Run>
+			<lib value="libDabcHttp.so"/>
+			<lib value="libDabcMbs.so" />
+			<lib value="libDabcPex.so" />
+      		<lib value="libDabcGosip.so"/>
+	  	<!-- NOTE: enable libDabcLtsm for FSQ tape storage -->
+      		<!-- <lib value="libDabcLtsm.so"/> -->
+			<logfile value="ReadoutPoland.log" />
+			<!-- <runtime value="20"/> -->
+			<debuglevel value="1"/>
+			<control value="true"/>
+			<halttime value="20"/>
+			
+		</Run>
+
+		<MemoryPool name="Pool">
+			<BufferSize value="128000" />
+			<NumBuffers value="1000" />
+		</MemoryPool>
+
+
+
+		<HttpServer name="http">
+			<port value="8091" />
+		</HttpServer>
+
+
+  		<Publisher name="publ" manager="true"/>
+
+
+
+		<Device name="PexorDevice" class="pex::GenericDevice">
+
+			<PexorID value="0" />
+			<PexorNumSlaves_0 value="0" />
+			<PexorNumSlaves_1 value="2" />
+			<PexorNumSlaves_2 value="0" />
+			<PexorNumSlaves_3 value="0" />
+			
+			
+<!-- 			Pexor Slave types are:		
+		 0 :SLAVE_NONE
+  		 1: FEBEX3,
+  		 2: FEBEX4,
+  		 3: TAMEX,
+  		 4: CTDC,
+  		 5: FOOT,
+  		 6: POLAND
+			 -->
+			<PexorSlavesTypes_0 value="[6,6]" />
+			<PexorSlavesTypes_1 value="[1,1]" />
+			<PexorSlavesTypes_2 value="[]" />
+			<PexorSlavesTypes_3 value="[]" />
+			
+			<PexorDMALen value="32768" />
+			<PexorDMABuffers value="50" />
+			<PexorDMAScatterGather value="false" />
+			<PexorDMAZeroCopy value="false" />
+			<PexorMultiTokenDMA  value="false" />
+			<PexorDirectDMA  value="true" />
+			<PexorFormatMbs value="true" />
+			<PexorSingleMbsSubevent value="true"/>
+			<PexorMbsSubcrate  value="0"/>
+			<PexorMbsControl  value="9"/>
+			<PexorMbsProcid   value="1"/>			
+			<PexorSyncReadout value="true" />
+			<PexorUseTrigger value="true" />
+			<PexorAutoReadout value="true"/>
+			<PexorAutoAsync  value="false"/>
+			<PexorTokenWaitForDataReady value="true"/>
+			<PexorTriggerTimeout value="10"/>
+			<TrixorConversionTime value="30" />
+			<TrixorFastClearTime value="10" />
+			<EarlyTriggerClear value="true" />
+			
+			<WhiteRabbitTLUaddress value="0x4000100" /> 
+            <WhiteRabbitSubsystemID value="0x300" /> 
+			
+			<AutoStartAcquisition value="true" />
+		</Device>
+
+
+		<Module name="PexorReadout" class="pex::ReadoutModule">
+			<!-- these parameters will force to create inputs/oputputs of module -->
+			<NumInputs value="1" />
+			<NumOutputs value="1" />
+
+			<InputPort name="Input0" url="device://PexorDevice" />
+
+
+			<OutputPort name="Output0" url="mbs://Stream:6900" />
+			<OutputPort name="Output1" url="lmd:///data/pexortest.lmd?maxsize=1500&log=2" />
+			
+			<Ratemeter name="*" debug="true" interval="3" width="5"
+				prec="2" />
+
+			<PexorData width="5" prec="6" low="0" up="1" interval="3" debug="1"/>
+
+ 		    <!-- switch usage of FSQ lustre/tape storage server, parameters below 
+ 		    	 NOTE: requires to load libDabcLtsm in <Run> section above!-->
+			<UseFsq value="false"/>
+			
+			<!-- nodename of machine hosting the FSQ service-->
+			<FsqServername value="lxfsq11"/>
+			
+			<!-- FSQ service port-->
+
+
+ 	
+
+			
+			<FsqPort value="7625"/>
+			
+ 			<!-- Filesystem prefix for storage path-->
+			<FsqFSname value="/lustre"/>			
+	
+			<!-- FSQ storage destination:  0 - null (network test to FSQ server only), 
+										   1 - to FSQ server local disk, 
+										   2 - to lustre, 
+										   3 - to tsm, 
+										   4 - to lustre+tsm,  -->
+			<FsqDestination value="4"/>
+	
+			<!-- FSQ node (user account)-->
+			<FsqNode value="myacount"/>
+			<!-- FSQ password of user account)-->
+			<FsqPass value="mysecret"/>
+
+
+
+				
+				
+
+		</Module>
+
+		 <Module name="gosip_player" class="gosip::Player">
+	     </Module>
+
+		 <Module name="pexor_player" class="pex::Player">
+	     <HtmlPath value="${DABCSYS}/plugins/pex/htm/"/>
+	     </Module>
+
+
+
+	 <Module name="poland" class="pex::Poland">
+	 	
+	 	<TriggerMasterSFP value="0"/>
+ 		<TriggerMasterSlave value="0"/>
+		<UseFESAtrigger value="false"/>
+
+		<!-- TODO: modes and time slices for individual sfp,slaves
+ -->
+ 
+ 
+ 
+	 <!-- 	allowed QFW sampling modes:
+	 	(-)[ 2.5pF &amp; 0.25pC]</string> 				= 0
+		(-)[25.0pF &amp; 2.50pC]</string> 				= 1
+		(+)[ 2.5pF &amp; 0.25pC]</string> 				= 2
+		(+)[25.0pF &amp; 2.50pC]</string> 				= 3
+		1000uA (-) [ 2.5pF &amp; 0.25pC]</string> 	=16
+		1000uA (-) [25.0pF &amp; 2.50pC]</string> 	=17
+		1000uA (+) [ 2.5pF &amp; 0.25pC]</string> 	=18
+		1000uA (+) [25.0pF &amp; 2.50pC]</string> 	=19
+	 	 -->	 	
+	 	<QFWMode value="2"/>
+	 	
+	 	 <!-- 	allowed DAC operation modes:
+	 	  	MANUAL 1
+        	TESTSTRUCTURE 2
+        	CALIBRATION 3
+        	CONSTANT 4	 	 
+	 	 -->	 	
+	 	<DACMode value="2"/>
+	 	<DACConstantValue value="42"/>
+	 	
+	 	
+	 	<QFWSteps value="[2,100,3]"/>
+	 	
+	 	<!-- slice times in microseconds -->
+	 	<QFWTimes value="[1000,10,500]"/>
+	 	
+	 	
+	 
+	 
+		</Module>
+
+	</Context>
+</dabc>

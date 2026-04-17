@@ -21,6 +21,17 @@
 namespace pex
 {
 
+extern  const char *xmlUseFsq;
+extern  const char *xmlFsqServer;
+extern  const char *xmlFsqFilesystem;
+extern  const char *xmlFsqDestination;
+extern  const char *xmlFsqPort;
+extern const char *xmlFsqNode;
+extern  const char *xmlFsqPass;
+
+
+
+
 class ReadoutModule: public dabc::ModuleAsync
 {
 
@@ -48,6 +59,31 @@ protected:
   std::string fDataRateName;
   std::string fInfoName;
   std::string fFileStateName;
+
+  /** switch usage of fsq storage on/off */
+  bool fUseFsq;
+
+  /** FSQ server hostname */
+  std::string fFsqServer;
+
+  /** FSQ server socket port */
+  int fFsqPort;
+
+  /** FSQ storage destination:  0 - null, 1 - only FSQ server local, 2 - lustre, 3 -tsm, 4 - lustre+tsm,  */
+  int fFsqDestination;
+
+  /** "filesystem" prefix for FSQ storate path */
+  std::string fFsqFilesystem;
+
+  /** FSQ node (user name) */
+  std::string fFsqNode;
+
+  /** FSQ password for user name */
+  std::string fFsqPass;
+
+
+
+
 
 };
 }

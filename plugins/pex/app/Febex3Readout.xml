@@ -7,6 +7,8 @@
 			<lib value="libDabcMbs.so" />
 			<lib value="libDabcPex.so" />
       		<lib value="libDabcGosip.so"/>
+      	<!-- NOTE: enable libDabcLtsm for FSQ tape storage -->
+      		<!-- <lib value="libDabcLtsm.so"/> -->
 			<logfile value="ReadoutFebex.log" />
 			<!-- <runtime value="20"/> -->
 			<debuglevel value="1"/>
@@ -98,7 +100,34 @@
 				prec="2" />
 
 			<PexorData width="5" prec="6" low="0" up="1" interval="3" debug="1"/>
-				
+
+ 		    <!-- switch usage of FSQ lustre/tape storage server, parameters below 
+ 		    	 NOTE: requires to load libDabcLtsm in <Run> section above!-->
+			<UseFsq value="false"/>
+			
+			<!-- nodename of machine hosting the FSQ service-->
+			<FsqServername value="lxfsq11"/>
+			
+			<!-- FSQ service port-->
+			<FsqPort value="7625"/>
+			
+ 			<!-- Filesystem prefix for storage path-->
+			<FsqFSname value="/lustre"/>			
+	
+			<!-- FSQ storage destination:  0 - null (network test to FSQ server only), 
+										   1 - to FSQ server local disk, 
+										   2 - to lustre, 
+										   3 - to tsm, 
+										   4 - to lustre+tsm,  -->
+			<FsqDestination value="4"/>
+	
+			<!-- FSQ node (user account)-->
+			<FsqNode value="myacount"/>
+			<!-- FSQ password of user account)-->
+			<FsqPass value="mysecret"/>
+
+
+
 				
 
 		</Module>
