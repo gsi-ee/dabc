@@ -17,6 +17,7 @@
 #include "dabc/ModuleAsync.h"
 
 #include "dabc/statistic.h"
+#include "mbs/Iterator.h"
 
 namespace pex
 {
@@ -42,18 +43,25 @@ public:
   virtual void BeforeModuleStart () override;
   virtual void AfterModuleStop () override;
 
-  virtual void ProcessInputEvent (unsigned port) override;
-  virtual void ProcessOutputEvent (unsigned port) override;
+//  virtual void ProcessInputEvent (unsigned port) override;
+//  virtual void ProcessOutputEvent (unsigned port) override;
+  bool ProcessRecv(unsigned) override { return DoPexorReadout(); }
+  bool ProcessSend(unsigned) override { return DoPexorReadout(); }
 
   virtual int ExecuteCommand(dabc::Command cmd) override;
 
 
 protected:
   void SetInfo(const std::string& info, bool forceinfo);
-  void DoPexorReadout ();
+  bool DoPexorReadout ();
 
   /** change file on/off state in application*/
   void ChangeFileState(bool on);
+
+  /** Send current output buffer further. Inspired by mbs CombinerModule*/
+  bool FlushBuffer();
+
+  void ProcessTimerEvent(unsigned) override;
 
   std::string fEventRateName;
   std::string fDataRateName;
@@ -88,6 +96,14 @@ protected:
   /** remember previous file name to optionally increment run number */
   std::string fLastFileName;
 
+  /** handle content of output buffer with write iterator class*/
+  mbs::WriteIterator              fOut;
+
+  /** used for output buffer flush timer */
+  bool               fFlushFlag;
+
+  /** period of output buffer flushing timer */
+  double             fFlushTimeout;
 
 };
 }

@@ -18,7 +18,8 @@
 		</Run>
 
 		<MemoryPool name="Pool">
-			<BufferSize value="128000" />
+			<!-- <BufferSize value="128000" /> -->
+			 <BufferSize value="4000000"/>
 			<NumBuffers value="1000" />
 		</MemoryPool>
 
@@ -126,7 +127,7 @@
 			<FsqPass value="mysecret"/>
 
 
-
+			<FlushTimeout value="0.5"/>
 				
 				
 

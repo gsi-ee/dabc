@@ -33,7 +33,7 @@ namespace pex
 }
 
 pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command  cmd  ) :
-    dabc::ModuleAsync (name)
+    dabc::ModuleAsync (name), fOut(), fFlushFlag(true)
 {
   EnsurePorts (1, 1, dabc::xmlWorkPool);
   std::string ratesprefix = "Pexor";
@@ -60,10 +60,8 @@ pex::ReadoutModule::ReadoutModule (const std::string name, dabc::Command  cmd  )
   fFsqPass= Cfg(xmlFsqPass, cmd).AsStr("secret");
 
   fRunNum=Cfg(pex::xmlRun, cmd).AsInt(0); // user may optionally set the beginning run number
-
-
-
-
+  fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
+  if (fFlushTimeout>0.) CreateTimer("FlushTimer", fFlushTimeout);
 
 
 
@@ -104,59 +102,71 @@ void pex::ReadoutModule::AfterModuleStop ()
 
 }
 
-void pex::ReadoutModule::ProcessInputEvent (unsigned /* port*/ )
-{
-  DoPexorReadout ();
-}
 
-void pex::ReadoutModule::ProcessOutputEvent (unsigned /* port*/  )
-{
-  DoPexorReadout ();
-}
 
-void pex::ReadoutModule::DoPexorReadout ()
+bool pex::ReadoutModule::DoPexorReadout ()
 {
-  dabc::Buffer ref;
+  dabc::Buffer inbuf;
+  uint32_t eventsize=0;
   DOUT3 ("pex::DoPexorReadout\n");
   try
   {
-    while (CanRecv ())
-    {
-      if (!CanSendToAllOutputs ())
-      {
-        DOUT3 ("pex::ReadoutModule::DoPexorReadout - can not send to all outputs. skip event \n");
-        return;
-      }
-      ref = Recv ();
-      if (!ref.null ())
-      {
-        Par (fDataRateName).SetValue ((double)(ref.GetTotalSize ()) / 1024. / 1024.);
-        DOUT3 ("pex::ReadoutModule::DoPexorReadout - has buffer size: total %d bytes  \n",ref.GetTotalSize ());
-        SendToAllOutputs (ref);
-        Par (fEventRateName).SetValue (1);
-      }
-    }
+          inbuf = Recv ();
+          //ref=RecvQueueItem(0, 0);
+          if (!inbuf.null ())
+          {
+            eventsize=inbuf.GetTotalSize ();
+            Par (fDataRateName).SetValue ((double)(eventsize) / 1024. / 1024.);
+            Par (fEventRateName).SetValue (1);
+            DOUT3 ("pex::ReadoutModule::DoPexorReadout - has input buffer size: total %d bytes  \n",eventsize);
 
-
-
+            // from mbs Combiner Module: get new buffer
+            if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(eventsize- sizeof(mbs::EventHeader),false )) //raw data is behind subevent header! use CopyEventFrom
+              {
+                if (!FlushBuffer()) return false;
+              }
+            if (!fOut.IsBuffer())
+              {
+                dabc::Buffer buf = TakeBuffer();
+                if (buf.null()) return false;
+                if (!fOut.Reset(buf)) {
+                  EOUT("Cannot use buffer for output - hard error!!!!");
+                  buf.Release();
+                  dabc::mgr.StopApplication();
+                  return false;
+                }
+              }
+            if (!fOut.IsPlaceForEvent(eventsize - sizeof(mbs::EventHeader),false ))
+              {
+                EOUT("Event size %lu too big for buffer, skip event completely", (long unsigned) (eventsize));
+              }
+            else
+            {
+               // copy input buffer to output iterator
+              //  We do not need information of input event headers (read iterator in mbs combiner); just copy complete payload here
+              dabc::Pointer inptr(inbuf);
+              fOut.CopyEventFrom(inptr, true);
+            }
+            return true;
+          }
   }
   catch (dabc::Exception& e)
   {
     DOUT1 ("pex::ReadoutModule::DoPexorReadout - raised dabc exception %s", e.what ());
-    ref.Release ();
+    inbuf.Release ();
     // how do we treat this?
   }
   catch (std::exception& e)
   {
     DOUT1 ("pex::ReadoutModule::DoPexorReadout - raised std exception %s ", e.what ());
-    ref.Release ();
+    inbuf.Release ();
   }
   catch (...)
   {
     DOUT1 ("pex::ReadoutModule::DoPexorReadout - Unexpected exception!!!");
     throw;
   }
-
+  return false;
 }
 
 int pex::ReadoutModule::ExecuteCommand (dabc::Command cmd)
@@ -270,3 +280,29 @@ void pex::ReadoutModule::ChangeFileState(bool on)
 
 
 }
+
+
+// JAM 20-04-26 - stolen from mbs CombinerModule
+bool pex::ReadoutModule::FlushBuffer()
+{
+   DOUT3("pex::ReadoutModule::FlushBuffer() ....");
+   if (fOut.IsEmpty() || !fOut.IsBuffer()) return false;
+   if (!CanSendToAllOutputs()) return false;
+   dabc::Buffer buf = fOut.Close();
+   DOUT3("Send buffer of size = %d", buf.GetTotalSize());
+   SendToAllOutputs(buf);
+   fFlushFlag = false; // indicate that next flush timeout one not need to send buffer
+   return true;
+}
+
+void pex::ReadoutModule::ProcessTimerEvent(unsigned)
+{
+   if (fFlushFlag) {
+      unsigned cnt = 0;
+      while (IsRunning() && (cnt < 100) && DoPexorReadout()) ++cnt;
+      FlushBuffer();
+   }
+   fFlushFlag = true;
+}
+
+
