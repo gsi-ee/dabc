@@ -39,6 +39,7 @@ void printm (char *fmt, ...)
 }
 
 
+
 /* helper macro to check mbspex device in each command function*/
 #define GOSIP_ASSERT_DEVHANDLE if(!com.assert_command ()) return -1; \
   open_device(com.devnum);\
@@ -48,6 +49,11 @@ void printm (char *fmt, ...)
 gosip::TerminalModule::TerminalModule (const std::string &name, dabc::Command cmd) :
     dabc::ModuleAsync (name, cmd), fFD_pex(0),fDevnum(0),fConfigfile(nullptr), fLinecount(0),fErrcount(0)
 {
+  //** JAM2026 - just suppress warnings abouot unused  gLinkspeed*/
+  for (int ls = 1; ls < PEXOR_MAX_SPEEDSETUP; ++ls)
+    {
+      DOUT0("available gosip linkspeeds preset %d (%s)\n", ls, gLinkspeed[ls]);
+    }
 }
 
 gosip::TerminalModule::~TerminalModule()

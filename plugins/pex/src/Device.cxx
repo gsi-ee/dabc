@@ -511,7 +511,7 @@ bool pex::Device::StartAcquisition()
   fAqcuisitionRunning = true;
   if (IsTriggeredRead())
   {
-    fKinpex->SetAutoTriggerReadout(IsAutoReadout(), true);
+    fKinpex->SetAutoTriggerReadout(IsAutoReadout(), fEarlyTriggerClear);
     rev = fKinpex->StartAcquisition();
   }
 

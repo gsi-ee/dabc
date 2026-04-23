@@ -50,7 +50,7 @@ bool pex::Transport::StopTransport()
 	//fPexorDevice->StopAcquisition();
 	// start/stop acquisition (trigger) is independent of dabc running state!
 	bool rev=dabc::InputTransport::StopTransport();
-	DOUT1("\npex::Transport stopped with result %d. Total number of token errors: %d in %e s\n",  rev, fPexorInput->fErrorRate.GetNumOper(),  fPexorInput->fErrorRate.GetTotalTime());
+	//DOUT1("\npex::Transport stopped with result %d. Total number of token errors: %d in %e s\n",  rev, fPexorInput->fErrorRate.GetNumOper(),  fPexorInput->fErrorRate.GetTotalTime());
 	return rev;
 
 }
