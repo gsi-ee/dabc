@@ -150,7 +150,7 @@
 		      10 TAMEX3
 		      41 TAMEX4 with PQDC1 Frontend
 		 -->
-	 	<TamexTypel value="[3, 3, 10, 10]"/>
+	 	<TamexType value="[3, 3, 10, 10]"/>
 	 	
 	 	
      	 <TamexDoInitModules value="true"/>

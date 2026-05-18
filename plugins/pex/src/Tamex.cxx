@@ -62,7 +62,7 @@ const char *xmlTamexEnableOr = "TamexEnableOrTamex2";
 pex::Tamex::Tamex (const std::string &name, dabc::Command cmd) :
     pex::FrontendBoard::FrontendBoard (name, FEB_TAMEX, cmd)
 {
-  DOUT2("Created new pex::Tamex...\n");
+  DOUT0("Created new pex::Tamex...\n");
 
   fPostTrigTime = Cfg (pex::xmlTamexPostTrigTime, cmd).AsInt (POST_TRIG_TIME);
   fPreTrigTime = Cfg (pex::xmlTamexPreTrigTime, cmd).AsInt (PRE_TRIG_TIME);
@@ -79,6 +79,11 @@ pex::Tamex::Tamex (const std::string &name, dabc::Command cmd) :
   fTestPulseFreq = Cfg (pex::xmlTamexTestpulseFreq, cmd).AsInt (TEST_PULSE_FREQ);
 
   // more configuration bits from arrays:
+  for (size_t i = 0; i < PEX_NUMSFP; ++i)
+  {
+      fTamexType[i]=TAMEX4_PADI;
+  } // a reasonable default if user does not specify it in xml file
+
   std::vector<long> arr;
   arr.clear ();
   arr = Cfg (pex::xmlTamexType, cmd).AsIntVect ();
@@ -120,6 +125,13 @@ pex::Tamex::Tamex (const std::string &name, dabc::Command cmd) :
     if (fEnableTriggerWindow)
       fTriggerWindow |= (1 << 31);
   }
+  fTriggerWindow &= 0xFFFFFFFF;
+
+  DOUT1("Tamex is using triggerwindow 0x%lx (%d,%d), data reduction:%d, pulser:%d\n", fTriggerWindow, fPreTrigTime, fPostTrigTime, fDataReduction,fTestPulseOn );
+  DOUT1("Tamex chmask:0x%x trigmask:0x%x, pulsmask:0x%lx\n", fEnabledTdcCh, fEnabledTrigCh, fTestPulseCh);
+  DOUT1("Tamex combinepaditrigger:%d, enableor:%d, enabletriggerwindow:%d, longtriggerwindow:%d\n", fCombinePadiTrigger, fEnableOrTamex2,fEnableTriggerWindow, fLongTriggerWindow);
+
+
 }
 
 pex::Tamex::~Tamex ()
@@ -150,7 +162,7 @@ int pex::Tamex::Configure (int sfp, int sl)
   unsigned long tam_rst_stat = 0;
 //    unsigned long tam_ctrl = 0, feb_time = 0;
   //  unsigned long qfw_ctrl = 0;
-
+  DOUT1("TAMEX at sfp %d slave %d: Configure for tamex type %d  \n", sfp, sl, fTamexType[sfp]);
   // needed for check of meta data, read it in any case
   //    printm ("SFP: %d, FEBEX3: %d \n", sfp, dev);
   //    // get address offset of febex buffer 0,1 for each febex/exploder
@@ -243,6 +255,8 @@ int pex::Tamex::Configure (int sfp, int sl)
 
   if (fSetPadiThresholdsAtInit)
   {
+    DOUT1("Tamex (%d, %d) is setting PADI thresholds 0x%x ...\n",  sfp, sl, fPadiThreshold);
+
     if ((fTamexType[sfp] == TAMEX2_PADI) || (fTamexType[sfp] == TAMEX4_PADI))    // TAMEX2+PADI & TAMEX-PADI1
     {
 
@@ -272,8 +286,12 @@ int pex::Tamex::Configure (int sfp, int sl)
   //    // Set PQDC default thresholds
   if (fSetPqdcThresholdsAtInit)
   {
+
     if (fTamexType[sfp] == TAMEX4_PQDC1)    // TAMEX4 PQDC1
     {
+      DOUT1("Tamex (&d, %d) is setting PQDC thresholds %e ...\n",  sfp, sl, fPqdcThreshold);
+
+
       int l_pqdc_th = (int) (((1100.0 - fPqdcThreshold) / 3300.0) * 65535.0);
       // Channel 1 / 4 on all 4 FPGAS
       // printm (RON"DEBUG>>"RES" SPI DATA: 0x%x \n", (0x800000 | l_pqdc_th));
@@ -409,7 +427,7 @@ int pex::Tamex::Configure (int sfp, int sl)
     {
       if (fClkSrcTdcTam4Padi == 0x4)    // First module clock master for crate with local oscillator
       {
-        if (sfp == 0)
+        if (sl == 0)
         {
 
           rev = fKinpex->WriteBus (REG_TAM_CLK_SEL, 0x1, sfp, sl);
@@ -431,7 +449,7 @@ int pex::Tamex::Configure (int sfp, int sl)
       }
       else if (fClkSrcTdcTam4Padi == 0x8)    // First module clock master for crate with clock from front panel
       {
-        if (sfp == 0)
+        if (sl == 0)
         {
           rev = fKinpex->WriteBus (REG_TAM_CLK_SEL, 0x2, sfp, sl);
           if (rev)
@@ -468,7 +486,7 @@ int pex::Tamex::Configure (int sfp, int sl)
         EOUT("\n\nError %d TAMEX  Setting clock source failed  for slave (%d,%d) \n ", rev, sfp, sl);
         return rev;
       }
-      if ((fClkSrcTdcTam3 == 0x22) && (sfp == 0))    // If clock from TRBus used
+      if ((fClkSrcTdcTam3 == 0x22) && (sl == 0))    // If clock from TRBus used
       {
         rev = fKinpex->WriteBus (REG_TAM_BUS_EN, 0x80, sfp, sl);    // Set same clock source on all modules
         if (rev)
@@ -486,7 +504,7 @@ int pex::Tamex::Configure (int sfp, int sl)
 #endif
   }
 
-  DOUT0("Set TAMEX trigger window: 0x%x   for slave (%d,%d) \n ", rev, sfp, sl);
+  DOUT0("Set TAMEX trigger window: 0x%lx   for slave (%d,%d) \n ", fTriggerWindow, sfp, sl);
   rev = fKinpex->WriteBus (REG_TAM_TRG_WIN, fTriggerWindow, sfp, sl);    // Set trigger window
   if (rev)
   {
@@ -510,6 +528,7 @@ int pex::Tamex::Configure (int sfp, int sl)
       EOUT("\n\nError %d TAMEX  TDC reset failed  for slave (%d,%d) \n ", rev, sfp, sl);
       return rev;
     }
+    DOUT1("TAMEX at sfp %d slave %d:  wrote to 0x%x the value: 0x%x  \n", sfp, sl, REG_TAM_CTRL,   0x20d0 | l_tam_fifo_almost_full_sh);
 
     if ((fTamexType[sfp] == TAMEX2_PASSIVE) || (fTamexType[sfp] == TAMEX2_PADI) || (fTamexType[sfp] == TAMEX4_PADI)
         || (fTamexType[sfp] == TAMEX4_PQDC1))    // TAMEX2 & TAMEX-PADI1 & TAMEX4
@@ -523,6 +542,10 @@ int pex::Tamex::Configure (int sfp, int sl)
         EOUT("\n\nError %d TAMEX  Setting TDC control register failed for slave (%d,%d) \n ", rev, sfp, sl);
         return rev;
       }
+
+      DOUT1("TAMEX at sfp %d slave %d:  wrote to 0x%x the value: 0x%x  \n", sfp, sl, REG_TAM_CTRL,  0x20c0 | l_enable_or | l_combine_trig | l_tam_fifo_almost_full_sh);
+
+
     }
     else if (fTamexType[sfp] == TAMEX3)                             // TAMEX3
     {
