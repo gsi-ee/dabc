@@ -172,7 +172,8 @@ bool hadaq::ReadIterator::NextEvent()
       ShiftEvPtr(evnt()->GetPaddedSize());
 
    if (fEvPtrLen < sizeof(hadaq::RawEvent)) {
-      EOUT("Raw size less than event header - not supported !!!!");
+      if (fEvPtrLen > 0)
+         EOUT("Raw size %u less than event header - not supported !!!!", (unsigned) fEvPtrLen);
       ResetEvPtr();
       return false;
    }
