@@ -80,6 +80,8 @@ extern const char *xmlUserTriggerClear; //<- aka  "user trigger clear", using fe
 extern const char *xmlStartDAQOnInit; // <- start acquisition directly after init
 extern const char *xmlInitDelay;        //<  sleep time after board reset until pexor is ready
 
+extern const char *xmlReinitOnError;  //< enable automatic reinitialization of DAQ in case of readout error
+
 extern const char *xmlTrixorConvTime;    //< conversion time of TRIXOR module
 extern const char *xmlTrixorFastClearTime;    //< fast clear time of TRIXOR module
 extern const char *xmlModuleName;    //< Name of readout module instance
@@ -347,6 +349,11 @@ protected:
 
   void SetInfo(const std::string &info, bool forceinfo = true);
 
+
+  /* In case of readout errors may try to reinit FEBs. Evaluates previous error status; return value is new error status*/
+  int HandleReinitDAQ(int status);
+
+
 protected:
 
   pexor::PexorTwo *fKinpex;
@@ -474,6 +481,8 @@ protected:
   /** clear trigger before requesting data. this is the MBS "user trigger clear" mode */
   bool fEarlyTriggerClear;
 
+  /** if true, try reset of FEB if readout sees any error */
+   bool fReInitOnError;
 
   /** white rabbit subsystem id. arbitratily user defined, for later data stream stiching */
    int fWRSubsystem;

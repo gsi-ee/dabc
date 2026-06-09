@@ -289,7 +289,7 @@ int pex::Tamex::Configure (int sfp, int sl)
 
     if (fTamexType[sfp] == TAMEX4_PQDC1)    // TAMEX4 PQDC1
     {
-      DOUT1("Tamex (&d, %d) is setting PQDC thresholds %e ...\n",  sfp, sl, fPqdcThreshold);
+      DOUT1("Tamex (%d, %d) is setting PQDC thresholds %e ...\n",  sfp, sl, fPqdcThreshold);
 
 
       int l_pqdc_th = (int) (((1100.0 - fPqdcThreshold) / 3300.0) * 65535.0);

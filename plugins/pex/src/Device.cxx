@@ -64,6 +64,8 @@ const char *xmlSingleMbsSubevt = "PexorSingleMbsSubevent";    //<  use one singl
 const char *xmlMultichannelRequest = "PexorMultiTokenDMA";    //<  enable channelpattern request with combined dma for multiple sfps
 const char *xmlAutoTriggerRead = "PexorAutoReadout";    //<  enable automatic readout of all configured token data in driver for each trigger
 const char *xmlAutoAsyncRead = "PexorAutoAsync";    //< enable automatic triggerless readout of asynchronous sfp chains in driver
+const char *xmlReinitOnError = "PexorReinitOnError"; //< enable automatic reinitialization of DAQ in case of readout error
+
 const char *xmlMbsSubevtCrate = "PexorMbsSubcrate";    //<  define crate number for subevent header
 const char *xmlMbsSubevtControl = "PexorMbsControl";    //<  define crate number for subevent header
 const char *xmlMbsSubevtProcid = "PexorMbsProcid";    //<  define procid number for subevent header
@@ -122,7 +124,7 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
         fSubeventProcid(0), fSubeventControl(0), fWaitTimeout(1), fAqcuisitionRunning(false), fSynchronousRead(true),
         fTriggeredRead(false), fDirectDMA(true), fMultichannelRequest(false), fAutoTriggerRead(false),
         fMemoryTest(false), fSkipRequest(false), fWaitForDataReady(true),fStartDAQOnInit(true), fCurrentSFP(0), fReadLength(0),
-        fTrixConvTime(0x20), fTrixFClearTime(0x10), fInitDone(false), fHasData(true), fEarlyTriggerClear(true),
+        fTrixConvTime(0x20), fTrixFClearTime(0x10), fInitDone(false), fHasData(true), fEarlyTriggerClear(true),fReInitOnError(false),
         fWRSubsystem(0x600), fTLUAddress(0),
         fNumEvents(0), fRequestMutex(true)
 
@@ -227,6 +229,7 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
   fAutoTriggerRead = Cfg(pex::xmlAutoTriggerRead, cmd).AsBool(false);
   fAutoAsyncRead = Cfg(pex::xmlAutoAsyncRead, cmd).AsBool(false);
 
+
   fSubeventSubcrate = Cfg(pex::xmlMbsSubevtCrate, cmd).AsInt(0);
   fSubeventProcid = Cfg(pex::xmlMbsSubevtProcid, cmd).AsInt(fDeviceNum);
   fSubeventControl = Cfg(pex::xmlMbsSubevtControl, cmd).AsInt(0);
@@ -251,10 +254,9 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
   }
 
   fWaitForDataReady = Cfg(pex::xmlWaitForDataReady, cmd).AsBool(true);
-
   fEarlyTriggerClear= Cfg(pex::xmlUserTriggerClear, cmd).AsBool(true);
-
-  DOUT1("---------- Readout mode : wait for data ready is %s, early trigger clear is %s\n", (fWaitForDataReady? "on":"off"), (fEarlyTriggerClear ? "on":"off"));
+  fReInitOnError= Cfg(pex::xmlReinitOnError, cmd).AsBool(false);
+  DOUT1("---------- Readout mode : wait for data ready is %s, early trigger clear is %s, reinit on error is %s \n", (fWaitForDataReady? "on":"off"), (fEarlyTriggerClear ? "on":"off"), (fReInitOnError ? "on":"off"));
 
 
   fTLUAddress = Cfg(pex::xmlTLUaddress, cmd).AsInt(0); //0x4000100
@@ -521,7 +523,7 @@ bool pex::Device::StartAcquisition()
 #ifdef   IMPLICIT_ASYNC_WORKER
     rev = fKinpex->StartTriggerlessAcquisition (); // TODO: ringbuffer parameter
 #else
-    fKinpex->SetAutoTriggerReadout(false, true);
+    fKinpex->SetAutoTriggerReadout(false, false);
     rev = fKinpex->StartAcquisition();
 #endif
 
@@ -1374,7 +1376,7 @@ unsigned pex::Device::Read_Complete(dabc::Buffer &buf)
       {
         retsize = ReceiveAutoTriggerBuffer(buf, trigtype);
         if (retsize < 0)
-          return retsize;
+            return HandleReinitDAQ(retsize);
       }
       else
       {
@@ -1417,12 +1419,42 @@ unsigned pex::Device::Read_Complete(dabc::Buffer &buf)
     // asynchronous dabc readout without trigger - special case not used for standard daq
     retsize = ReceiveAllTokenBuffer(buf);
   }
-  if (retsize < 0)
-    return retsize;
+
+  // now optionally reinit frontendes in case of error:
+  retsize=HandleReinitDAQ(retsize);
+  if(retsize<0) return retsize;
   Par(pex::parDeviceDRate).SetValue(((double) retsize) / 1024.);
   //fReadLength=retsize; // do not always adjust receive buffer length by default!
   return (unsigned) res;
 }
+
+
+int pex::Device::HandleReinitDAQ(int status)
+{
+  if (status < 0){
+      if(fReInitOnError)
+        {
+        DOUT0("pex::Device::Read_Complete: try to re-init DAQ after readout error...\n");
+        sleep(1);
+        bool startdaqsave=fStartDAQOnInit;
+        fStartDAQOnInit=false; // do not try restart automatically
+        int res=InitDAQ();
+        fStartDAQOnInit=startdaqsave;
+        if(res==0){
+          //StopAcquisition();
+          fAqcuisitionRunning=false; // instead of explicit StopAcquisition; this will be too late, since we never see trigger 15 event here!
+          StartAcquisition(); // need explicit restart to be consistent with feb bufid?
+        }
+        return (res==0 ? dabc::di_Ok : dabc::di_RepeatTimeOut); //dabc::di_Error);
+        }
+      else
+      {
+          return status;
+      }
+    }
+  return status;
+}
+
 
 int pex::Device::User_Readout(dabc::Buffer &buf, uint8_t trigtype)
 {
