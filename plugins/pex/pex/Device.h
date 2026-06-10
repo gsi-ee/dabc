@@ -81,6 +81,7 @@ extern const char *xmlStartDAQOnInit; // <- start acquisition directly after ini
 extern const char *xmlInitDelay;        //<  sleep time after board reset until pexor is ready
 
 extern const char *xmlReinitOnError;  //< enable automatic reinitialization of DAQ in case of readout error
+extern const char *xmlGosipLinkspeed; //< specifiy link speed of gosip chains
 
 extern const char *xmlTrixorConvTime;    //< conversion time of TRIXOR module
 extern const char *xmlTrixorFastClearTime;    //< fast clear time of TRIXOR module

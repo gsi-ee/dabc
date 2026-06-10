@@ -56,6 +56,16 @@
 			<PexorSlavesTypes_2 value="[]" />
 			<PexorSlavesTypes_3 value="[]" />
 			
+<!-- 		Gosip link speed preset:		
+		 0 : none,
+    	 1: 2.0   Gb
+    	 2: 2.5   Gb
+    	 3: 3.125 Gb
+    	 4: 5.0   Gb
+    	 5: 6.250 Gb
+			 -->
+ 			<GosipLinkspeed value="1" />
+			
 			<PexorDMALen value="32768" />
 			<PexorDMABuffers value="50" />
 			<PexorDMAScatterGather value="false" />

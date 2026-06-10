@@ -86,7 +86,7 @@ const char *xmlTrixorFastClearTime = "TrixorFastClearTime";    //<  fast clear t
 
 //const char* xmlExploderSubmem	= "ExploderSubmemSize"; //<  size of exploder submem test buffer
 
-
+const char*  xmlGosipLinkspeed = "GosipLinkspeed"; //< specifiy link speed of gosip chains
 
 const char *xmlTLUaddress = "WhiteRabbitTLUaddress";
 const char *xmlWRSubID = "WhiteRabbitSubsystemID";
@@ -150,12 +150,19 @@ pex::Device::Device(const std::string &name, dabc::Command cmd) :
 
   // JAM 13-02-2026: TODO adjust frontend linkspeed from setup
   // currently we only dump what is available from pexor driver library:
-  DOUT1("TODO: add linkspeed settings from DABC!!!\n");
-  for (int ls = 1; ls < PEXOR_MAX_SPEEDSETUP; ++ls)
-  {
-    DOUT1("   Available linkspeed preset %d (%s)\n", ls, gLinkspeed[ls]);
-  }
+//  DOUT1("TODO: add linkspeed settings from DABC!!!\n");
+//  for (int ls = 1; ls < PEXOR_MAX_SPEEDSETUP; ++ls)
+//  {
+//    DOUT1("   Available linkspeed preset %d (%s)\n", ls, gLinkspeed[ls]);
+//  }
 // TODO fKinpex->SetLinkspeed(ls); ls from config
+
+
+  pexor_linkspeed ls = (pexor_linkspeed) Cfg(pex::xmlGosipLinkspeed, cmd).AsInt(1);
+  fKinpex->ConfigureLinkSpeed(-1, ls);
+  DOUT1("Configured GOSIP link speed to preset %d (%s)\n", ls, gLinkspeed[ls]);
+
+
   //////////////
 
   DOUT1("Sleep %d seconds before initializing the bus\n", initDelay);
