@@ -1,6 +1,6 @@
 find_package(Stream QUIET PATHS $ENV{STREAMSYS})
 
-if(Stream_FOUND)
+if(TARGET stream::Stream)
   dabc_link_library(
     DabcStream
     SOURCES src/DabcProcMgr.cxx src/Factory.cxx src/RecalibrateModule.cxx
@@ -8,8 +8,7 @@ if(Stream_FOUND)
     HEADERS stream/DabcProcMgr.h stream/Factory.h stream/RecalibrateModule.h
             stream/RunModule.h stream/TdcCalibrationModule.h
     INCDIR stream
-    LIBRARIES dabc::DabcBase dabc::DabcMbs dabc::DabcHadaq ${Stream_LIBRARY}
-    INCLUDES ${STREAM_INCLUDE_DIR})
+    LIBRARIES dabc::DabcBase dabc::DabcMbs dabc::DabcHadaq stream::Stream)
 
   # file used in code relative to $DABCSYS, keep path for a while
   configure_file(
