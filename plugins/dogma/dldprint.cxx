@@ -63,9 +63,10 @@ int usage(const char *errstr = nullptr)
 }
 
 struct TuStat {
-   int cnt{0}; // number of stats
-   int64_t min_diff{0}; // minimal time diff
-   int64_t max_diff{0}; // maximal time diff
+   int cnt = 0; // number of stats
+   int64_t min_diff = 0; // minimal time diff
+   int64_t max_diff = 0; // maximal time diff
+   std::map<unsigned, int64_t> trigcnt; // count of found trigger
 
    dogma::DogmaTu *tu{nullptr}; // current tu
 };
@@ -221,6 +222,10 @@ void stat_evnt(dogma::DogmaEvent *evnt)
 
       entry.cnt++;
 
+      unsigned tri_type = entry.tu->GetTrigType();
+
+      entry.trigcnt[tri_type]++;
+
       if (!ref || (pairs.first == ref_addr))
          continue;
 
@@ -228,8 +233,7 @@ void stat_evnt(dogma::DogmaEvent *evnt)
       diff -= ref->GetTrigTime();
 
       if (entry.cnt == 1) {
-         entry.min_diff = diff;
-         entry.max_diff = diff;
+         entry.max_diff = entry.min_diff = diff;
       } else {
          if (entry.min_diff < diff)
             entry.min_diff = diff;
@@ -242,7 +246,14 @@ void stat_evnt(dogma::DogmaEvent *evnt)
 void print_stat()
 {
    for (auto &pairs : tu_stats) {
-      printf("  addr:%04x cnt:%d min_diff:%ld max_diff:%ld\n", (unsigned) pairs.first, pairs.second.cnt, (long) pairs.second.min_diff, (long) pairs.second.max_diff);
+      printf("  addr:%04x cnt:%d", (unsigned) pairs.first, pairs.second.cnt);
+      for (auto &p : pairs.second.trigcnt)
+         printf(" trig%X:%ld", p.first, (long) p.second);
+      if (pairs.second.min_diff != 0)
+         printf(" min_trig_time_diff:%ld", (long) pairs.second.min_diff);
+      if (pairs.second.max_diff != 0)
+         printf(" max_trig_time_diff:%ld", (long) pairs.second.max_diff);
+      printf("\n");
    }
 }
 
