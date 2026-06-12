@@ -63,6 +63,7 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
       // JAM24 todo: take parameters from port tags in xml file
       // fCfg[n].fResort = FindPort(InputName(n)).Cfg("resort").AsBool(false);
       fCfg[n].wr_timestamped =  FindPort(InputName(n)).Cfg("whiterabbit").AsBool(true);
+      fCfg[n].selected = false;
       fCfg[n].real_mbs =  FindPort(InputName(n)).Cfg("realmbs").AsBool(true);
       fCfg[n].real_evnt_num =  FindPort(InputName(n)).Cfg("realevntnum").AsBool(true);
       fCfg[n].no_evnt_num =  FindPort(InputName(n)).Cfg("noevntnum").AsBool(false);
@@ -302,7 +303,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
          }
 
          if (fCfg[ninp].curr_wr_ts!=0){
-            DOUT4("Found WR timestamp 0x%lx on input %u", fCfg[ninp].curr_wr_ts, ninp);
+            DOUT3("Found WR timestamp 0x%lx on input %u", fCfg[ninp].curr_wr_ts, ninp);
             foundevent = true;
          }
          else
@@ -670,29 +671,49 @@ bool mbs::CombinerModule::BuildTimesortedEvent()
    mbs::WRTimeStampType mintimestamp = 0;
    int num_valid = 0;
    int16_t trignum=1;
+   bool firstevent=true;
+   // first ensure that we have events on all inputs:
+   int scount=0,maxshifts=10000;
+   for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
+        if (!fInp[ninp].evnt()) {
+           while(!ShiftToNextEvent(ninp)) {
+              //if (scount %100 == 0) DOUT1("BuildTimesortedEvent try %d to shift to next event at input %u", scount, ninp);
 
+              if(scount++ >= maxshifts){
+                 DOUT3("BuildTimesortedEvent could not find any event at input %u after %u, try next cycle", ninp,maxshifts);
+                 return false;
+              }
+           }
+        }
+   } // for ninp  first loop
+
+   // second loop for input selection
    for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
       fCfg[ninp].selected = false;
-      if (!fInp[ninp].evnt()) {
-         if (!ShiftToNextEvent(ninp)) {
-            return false;
-         }
-//         else {
-//   //         fCfg[ninp].last_valid_tm = tm_now;
-//         }
+      // recheck after try to shift to an event:
+      if (fInp[ninp].evnt()) {
+         num_valid++;
+      }
+      else
+      {
+         EOUT("NEver come here - BuildTimesortedEvent() has no valid event at input %u", ninp);
+         return false;
       }
 
+
       mbs::WRTimeStampType curtimestamp= fCfg[ninp].curr_wr_ts;
-      if (num_valid == 0)  {
+      if (firstevent && num_valid>0)  {
          mintimestamp=curtimestamp;
          trignum=fInp[ninp].evnt()->TriggerNumber();
+         firstevent=false;
       } else {
          if (curtimestamp < mintimestamp) {
             mintimestamp = curtimestamp;
             trignum=fInp[ninp].evnt()->TriggerNumber();
          }
       }
-      num_valid++;
+      DOUT3("BuildTimesortedEvent sees WR ts 0x%lx at input %u, mintimestamp is 0x%lx", curtimestamp, ninp, mintimestamp);
+
    } // for ninp
 
    if (num_valid == 0) return false;
@@ -706,9 +727,13 @@ bool mbs::CombinerModule::BuildTimesortedEvent()
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++){
       // select alls subevents within time slice window:
       if (fCfg[ninp].valid && (fCfg[ninp].curr_wr_ts <= mintimestamp + fWRTimeWindow)){
+      //if (fCfg[ninp].valid && (fCfg[ninp].curr_wr_ts == mintimestamp)){  // JAM26
       fCfg[ninp].selected = true;
       subeventssize += fInp[ninp].evnt()->SubEventsSize();
       }
+
+
+
    }
 
 
@@ -735,7 +760,7 @@ bool mbs::CombinerModule::BuildTimesortedEvent()
 
 // build output event:
 
-   DOUT4("Building event %u, ts:0x%lx ,num_valid %u", fBuildevid, mintimestamp, num_valid);
+   DOUT3("Building event %u, ts:0x%lx ,num_valid %u", fBuildevid, mintimestamp, num_valid);
    fOut.NewEvent(fBuildevid++); // merged events have new event sequence number from here.
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
          if (fCfg[ninp].selected) {
@@ -747,7 +772,9 @@ bool mbs::CombinerModule::BuildTimesortedEvent()
                sub = fInp[ninp].evnt()->NextSubEvent(sub);
                if(sub) fOut.AddSubevent(sub);
             } while(sub);
+            DOUT3("..  using subevent from input %u",ninp);
          }
+
       }
    fOut.evnt()->iTrigger = trignum; // keep original trigger type from MBS here
    fOut.FinishEvent();
@@ -761,12 +788,17 @@ bool mbs::CombinerModule::BuildTimesortedEvent()
          FlushBuffer();
 
 
-   // now progress the already used inputs only:
+//   // now progress the already used inputs only:
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++){
         if (fCfg[ninp].selected) {
-              if(!ShiftToNextEvent(ninp)) return false;
+              if(!ShiftToNextEvent(ninp))
+              {
+                 DOUT3("BuildTimesortedEvent after building: could not shift to next event at input %u", ninp);
+                 continue;
+              }
         }
    }
+///////// JAM26- we handle shift of not yet selected  inputs in next call
 return true;
 }
 
