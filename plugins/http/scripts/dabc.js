@@ -1087,17 +1087,18 @@ function afterItemRequest(h, item, obj, option) {
    Object.assign(obj, { fName: item._name, fTitle: _title,
                         fX: x, fY: y, fNpoints: x.length,
                         fLineColor: 2, fLineWidth: 2 });
-   const kNotEditable = JSROOT.BIT(18);   // bit set if graph is non editable
+   const kNotEditable = JSROOT.BIT(18), // bit set if graph is non editable
+         kNoStats = JSROOT.BIT(9);             // bit for histogram to disable stats display
    obj.InvertBit(kNotEditable);
 
    let xrange = x[x.length-1] - x[0];
+   obj.fHistogram.fBits |= kNoStats; // no stats box
    obj.fHistogram.fTitle = obj.fTitle;
    obj.fHistogram.fXaxis.fXmin = x[0] - xrange*0.03;
    obj.fHistogram.fXaxis.fXmax = x[x.length-1] + xrange*0.03;
 
-   let ymin = Math.min.apply(null,y), ymax = Math.max.apply(null,y);
-
-   if (!ymin) ymin = 0; if (!ymax) ymax = 0;
+   const ymin = Math.min.apply(null,y) || 0,
+         ymax = Math.max.apply(null,y) || 0;
 
    obj.fHistogram.fYaxis.fXmin = ymin - 0.05 * (ymax-ymin);
    obj.fHistogram.fYaxis.fXmax = ymax + 0.05 * (ymax-ymin);
