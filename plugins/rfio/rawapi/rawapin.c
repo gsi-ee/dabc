@@ -573,7 +573,7 @@ int rfio_open_gsidaq(
             if (iObjInit)
             {
                /* new open also with file specification */
-               pcc = strstr(pcFile, cObject);
+               pcc = (char *) strstr(pcFile, cObject);
                if (pcc != NULL)
                {
                   if (iDebug)
@@ -608,8 +608,8 @@ int rfio_open_gsidaq(
                   iiopen, pCommAPI->cNodeCacheMgr, ii1, ii);
             }
 
-            pcc = strstr(pcFile, "lxgstore");
-            pcc1 = strstr(pcFile, "rfiocopy");
+            pcc = (char *) strstr(pcFile, "lxgstore");
+            pcc1 = (char *) strstr(pcFile, "rfiocopy");
             if ( (pcc) && (pcc1 == NULL) )
             {
                if (strlen(pcc) > 8)
@@ -5447,7 +5447,7 @@ int rfio_unlink(const char *pcFile)                   /* file name */
       "\n-D- begin %s: delete file %s in gStore\n", cModule, pcFile);
 
    /* node name must be appended by 'del' to identify delete action */
-   pcc = strstr(pcFile, "lxgstore");
+   pcc = (char *) strstr(pcFile, "lxgstore");
    if (pcc == NULL)
    {
       fprintf(fLogClient,
@@ -5854,7 +5854,7 @@ int rfio_stat(const char *pcFile, struct stat *pStatBuf)
          if (iDebug)
             printf("    %d: %s already open\n", ii, cObject);
 
-         pcc = strstr(pcFile, cObject);
+         pcc = (char *) strstr(pcFile, cObject);
          if (pcc != NULL)
          {
             iMapFound = 1;
@@ -5967,7 +5967,7 @@ int rfio_cache_stat(const char *pcFile)
          if (iDebug)
             printf("    %d: %s already open\n", ii, cObject);
 
-         pcc = strstr(pcFile, cObject);
+         pcc = (char *) strstr(pcFile, cObject);
          if (pcc != NULL)
          {
             iMapFound = 1;

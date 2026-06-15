@@ -90,8 +90,8 @@ inline void ur_set_config(ur_context *it, const ur_config *cfg)
       8; // FT bytes we need to load after the first 32 bit word
 }
 
-inline void ur_parse_header(ur_header *h, ur_context *it, const char *buf,
-                            int n) {
+inline void ur_parse_header(ur_header *h, ur_context *it, const char *buf, int /* n */)
+{
   it->i = 0;
   uint32_t trig_type_num = be32conv(*(uint32_t *)(buf + it->i));
   it->i += 4;
@@ -102,6 +102,7 @@ inline void ur_parse_header(ur_header *h, ur_context *it, const char *buf,
   it->cur_chan = 0;
   it->is_first = 1;
 }
+
 inline int ur_parse_next(
     ur_time *res, ur_context *it, const char *buf,
     int n) // return codes: negative: error; zero: success; positive: continue
