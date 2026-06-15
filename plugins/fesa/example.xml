@@ -1,5 +1,5 @@
 <!-- This is example of http server usage in DABC
-     Example provide several components plus http server --> 
+     Example provide several components plus http server -->
 
 <?xml version="1.0"?>
 <dabc version="2">
@@ -20,15 +20,17 @@
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-    
-    <Module name="test" class="fesa::Player"/>
+
+    <Module name="test" class="fesa::Player">
+      <UpdateInterval value="1"/>
+    </Module>
 
     <Module name="fesa_monitor" class="fesa::Monitor">
        <Server value="DummyDevice_DU.linev.asl732"/>
        <Device value="MyDevice"/>
        <Cycle value=""/>
        <Services value="[GetMeasVoltage,GetMeasCurrent,GetMeasWeight]"/>
-       
+
        <NumOutputs value="1"/>
        <OutputPort name="Output0" url="mbs://Stream:6007"/>
        <FlushTimeout value="3"/>
