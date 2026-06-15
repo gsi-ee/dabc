@@ -96,7 +96,7 @@ fesa::Player::Player(const std::string &name, dabc::Command cmd) :
    fService = Cfg("Service", cmd).AsStr();
    fField = Cfg("Field", cmd).AsStr();
 
-   CreateTimer("update", 1.);
+   CreateTimer("update", Cfg("UpdateInterval", cmd).AsDouble(1.));
 
    fCounter = 0;
 
