@@ -412,12 +412,12 @@ bool dabc::SocketIOAddon::StartSend(const void* buf1, unsigned size1,
 }
 
 
-bool dabc::SocketIOAddon::StartRecv(void* buf, size_t size)
+bool dabc::SocketIOAddon::StartRecv(void *buf, size_t size)
 {
    return StartRecvHdr(nullptr, 0, buf, size);
 }
 
-bool dabc::SocketIOAddon::StartSend(const Buffer& buf)
+bool dabc::SocketIOAddon::StartSend(const Buffer &buf)
 {
    // this is simple version,
    // where only buffer itself without header is transported
@@ -425,14 +425,15 @@ bool dabc::SocketIOAddon::StartSend(const Buffer& buf)
    return StartNetSend(nullptr, 0, buf);
 }
 
-bool dabc::SocketIOAddon::StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size)
+bool dabc::SocketIOAddon::StartRecvHdr(void *hdr, unsigned hdrsize, void *buf, size_t size)
 {
-   if (fRecvIOVNumber>0) {
+   if (fRecvIOVNumber > 0) {
       EOUT("Current recv operation not yet completed");
       return false;
    }
 
-   if (fRecvIOVSize<2) AllocateRecvIOV(8);
+   if (fRecvIOVSize < 2)
+      AllocateRecvIOV(8);
 
    int indx = 0;
 
@@ -506,16 +507,18 @@ bool dabc::SocketIOAddon::StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf,
    return true;
 }
 
-bool dabc::SocketIOAddon::StartNetSend(void* hdr, unsigned hdrsize, const Buffer& buf)
+bool dabc::SocketIOAddon::StartNetSend(void *hdr, unsigned hdrsize, const Buffer &buf, dabc::BufferSize_t datasize)
 {
    if (fSendIOVNumber > 0) {
       EOUT("Current send operation not yet completed");
       return false;
    }
 
-   if (buf.null()) return false;
+   if (buf.null())
+      return false;
 
-   if (fSendIOVSize<=buf.NumSegments()) AllocateSendIOV(buf.NumSegments()+1);
+   if (fSendIOVSize <= buf.NumSegments())
+      AllocateSendIOV(buf.NumSegments()+1);
 
    fSendUseMsg = fUseMsgOper;
    fSendIOVFirst = 0;
@@ -528,11 +531,21 @@ bool dabc::SocketIOAddon::StartNetSend(void* hdr, unsigned hdrsize, const Buffer
       indx++;
    }
 
-   for (unsigned nseg=0; nseg<buf.NumSegments(); nseg++) {
+   bool send_more = datasize > 0;
+   long send_remain = datasize;
+
+   for (unsigned nseg = 0; nseg < buf.NumSegments(); nseg++) {
       fSendIOV[indx].iov_base = buf.SegmentPtr(nseg);
       fSendIOV[indx].iov_len = buf.SegmentSize(nseg);
+      if (send_more)
+         send_remain -= fSendIOV[indx].iov_len;
       indx++;
    }
+
+   // if more bytes want to be send, we suppose that segment has valid memory behind
+   // mode is used for legacy MBS which want to send full buffer at the end
+   if (send_more && send_remain > 0)
+      fSendIOV[indx-1].iov_len += send_remain;
 
    fSendIOVNumber = indx;
 
