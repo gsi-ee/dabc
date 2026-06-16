@@ -392,10 +392,11 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    if (url.HasOption("deliverall"))
       fDeliverAll = true;
 
-   DOUT0("Create MBS server fd:%d kind:%s port:%d limit:%d blocking:%s deliverall:%s bufsize 0x%04x",
-         connaddon->Socket(), mbs::ServerKindToStr(fKind), fPortNum, fClientsLimit, DBOOL(fBlocking), DBOOL(fDeliverAll), fBufSize);
+   DOUT0("Create %s server fd:%d kind:%s port:%d limit:%d blocking:%s deliverall:%s bufsize 0x%04x",
+         fLegacy ? "MBS legacy" : "MBS", connaddon->Socket(), mbs::ServerKindToStr(fKind), fPortNum, fClientsLimit, DBOOL(fBlocking), DBOOL(fDeliverAll), fBufSize);
 
-   if (fClientsLimit>0) DOUT0("Set client limit for MBS server to %d ", fClientsLimit);
+   if (fClientsLimit > 0)
+      DOUT0("Set client limit for MBS server to %d ", fClientsLimit);
 
 //   DOUT0("mbs::ServerTransport   isinp=%s", DBOOL(connaddon->IsDoingInput()));
 }
