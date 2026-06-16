@@ -116,7 +116,8 @@ namespace mbs {
          bool fDeliverAll{false};  ///< if true, server will try deliver all events when clients are there (default for transport)
          std::string fIterKind;    ///< iterator kind when non-mbs events should be delivered to clients
          uint32_t fSubevId{0};     ///< subevent id when non-MBS events are used
-         unsigned fBufSize{0};    ///< maximal buffer size
+         unsigned fBufSize{0};     ///< maximal buffer size
+         bool fLegacy = false;     ///< attempt to emulate native MBS transport, which sends complete buffer
 
          bool StartTransport() override;
          bool StopTransport() override;
