@@ -353,12 +353,21 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    if (url.HasOption("bufsize"))
       fBufSize = (unsigned) url.GetOptionInt("bufsize", 0) * 0x100000;
 
+   if (url.HasOption("legacy"))
+      fLegacy = true;
+
    if (fBufSize == 0) {
-      fBufSize = 0x400000;
       dabc::MemoryPoolRef pool = dabc::mgr.FindPool(dabc::xmlWorkPool);
-      auto maxbuf = pool.GetMaxBufSize() * 3 / 2;
-      if (maxbuf > fBufSize)
-         fBufSize = maxbuf;
+      auto maxbuf = pool.GetMaxBufSize();
+
+      if (fLegacy)
+         fBufSize = maxbuf + sizeof(mbs::BufferHeader);
+      else {
+         fBufSize = 0x400000;
+         maxbuf *= 1.5;
+         if (maxbuf > fBufSize)
+            fBufSize = maxbuf;
+      }
    }
 
    // by default transport server is blocking and stream is unblocking
@@ -369,10 +378,13 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
 
    fDeliverAll = (fKind == mbs::TransportServer);
 
-   if (url.HasOption("nonblock")) fBlocking = false; else
-   if (url.HasOption("blocking")) fBlocking = true;
+   if (url.HasOption("nonblock"))
+      fBlocking = false;
+   else if (url.HasOption("blocking"))
+      fBlocking = true;
 
-   if (url.HasOption("deliverall")) fDeliverAll = true;
+   if (url.HasOption("deliverall"))
+      fDeliverAll = true;
 
    DOUT0("Create MBS server fd:%d kind:%s port:%d limit:%d blocking:%s deliverall:%s bufsize 0x%04x",
          connaddon->Socket(), mbs::ServerKindToStr(fKind), fPortNum, fClientsLimit, DBOOL(fBlocking), DBOOL(fDeliverAll), fBufSize);
