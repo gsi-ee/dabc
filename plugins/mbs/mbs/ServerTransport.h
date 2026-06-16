@@ -70,7 +70,8 @@ namespace mbs {
          mbs::SubeventHeader   fSubHdr; // additional MBS subevent header (for non-MBS events)
          uint32_t              fEvCounter{0}; // special events counter
          uint32_t              fSubevId{0};  // full id of subevent
-         bool                  fHasExtraRequest{false};
+         bool                  fHasExtraRequest = false;
+         bool                  fLegacyFormat = false;
 
          // from addon
          void OnThreadAssigned() override;
@@ -90,7 +91,7 @@ namespace mbs {
          ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid);
          virtual ~ServerOutputAddon();
 
-         void FillServInfo(int32_t maxbytes, bool isnewformat);
+         void FillServInfo(int32_t maxbytes, bool legacy);
          void SetServerKind(int kind) { fKind = kind; }
 
          // code from the DataOutput
