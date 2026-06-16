@@ -259,7 +259,8 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
          while (iter->NextEvent())
             events++;
          iter->Close();
-         if (events == 0) return dabc::do_Skip;
+         if (events == 0)
+            return dabc::do_Skip;
       } else {
          sendsize = 0;
          unsigned rawsize = 0;
@@ -274,7 +275,8 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
          }
          iter->Close();
 
-         if (rawsize == 0) return dabc::do_Skip;
+         if (rawsize == 0)
+            return dabc::do_Skip;
 
          iter->Assign(buf);
          iter->NextEvent(); // shift to first event
@@ -282,7 +284,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    }
 
 
-   fHeader.Init(true);
+   fHeader.Init(!fLegacyFormat);
    fHeader.SetUsedBufferSize(sendsize);
    fHeader.SetNumEvents(events);
 
