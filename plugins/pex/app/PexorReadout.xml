@@ -65,7 +65,7 @@
     	 4: 5.0   Gb
     	 5: 6.250 Gb
 			 -->
- 			<GosipLinkspeed value="1" />
+ 		<GosipLinkspeed value="1" />
 			
 			
 			<PexorDMALen value="32768" />
@@ -105,6 +105,7 @@
 
 
 			<OutputPort name="Output0" url="mbs://Stream:6900" />
+<!-- 			<OutputPort name="Output0" url="mbs://Transport?legacy" /> -->
 			<OutputPort name="Output1" url="lmd:///data/pexortest.lmd?maxsize=1500&log=2" />
 			
 			<Ratemeter name="*" debug="true" interval="3" width="5"

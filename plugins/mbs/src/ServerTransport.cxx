@@ -284,7 +284,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    }
 
 
-   fHeader.Init(!fLegacyFormat);
+   fHeader.Init(true);
    fHeader.SetUsedBufferSize(sendsize);
    fHeader.SetNumEvents(events);
 
