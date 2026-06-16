@@ -42,14 +42,16 @@ mbs::ServerOutputAddon::~ServerOutputAddon()
    DOUT3("Destroy ServerOutputAddon %p", this);
 }
 
-void mbs::ServerOutputAddon::FillServInfo(int32_t maxbytes, bool isnewformat)
+void mbs::ServerOutputAddon::FillServInfo(int32_t maxbytes, bool legacy)
 {
    memset(&fServInfo, 0, sizeof(fServInfo));
 
-   fServInfo.iEndian = 1;              // byte order. Set to 1 by sender
-   fServInfo.iMaxBytes = maxbytes;     // maximum buffer size
-   fServInfo.iBuffers = 1;             // buffers per stream
-   fServInfo.iStreams = isnewformat ? 0 : 1;     // number of streams (could be set to -1 to indicate variable length buffers, size l_free[1])
+   fServInfo.iEndian = 1;               // byte order. Set to 1 by sender
+   fServInfo.iMaxBytes = maxbytes;      // maximum buffer size
+   fServInfo.iBuffers = 1;              // buffers per stream
+   fServInfo.iStreams = legacy ? 1 : 0; // number of streams (could be set to -1 to indicate variable length buffers, size l_free[1])
+
+   fLegacyFormat = legacy;
 }
 
 void mbs::ServerOutputAddon::OnThreadAssigned()
@@ -447,9 +449,10 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       auto addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
 
-      addon->FillServInfo(fBufSize, true);
+      addon->FillServInfo(fBufSize, fLegacy);
 
-      if (portindx<0) portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
+      if (portindx < 0)
+         portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
 
       dabc::TransportRef tr = new dabc::OutputTransport(dabc::Command(), FindPort(OutputName(portindx)), addon, false);
 
