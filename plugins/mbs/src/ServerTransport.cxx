@@ -296,7 +296,9 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
    if (fIter.null() || is_mbs_buffer) {
       fState = oSendingBuffer;
-      StartNetSend(&fHeader, sizeof(fHeader), buf);
+      dabc::BufferSize_t datasize = !fLegacyFormat ? 0 : fServInfo.iMaxBytes - sizeof(fHeader);
+      // when send legacy format - complete buffer size has to be send
+      StartNetSend(&fHeader, sizeof(fHeader), buf, datasize);
    } else {
       fState = oSendingEvents;
       StartSend(&fHeader, sizeof(fHeader));
