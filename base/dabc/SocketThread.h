@@ -225,8 +225,8 @@ namespace dabc {
          bool StartSend(const Buffer& buf);
          bool StartRecv(Buffer& buf, BufferSize_t datasize);
 
-         bool StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf, BufferSize_t datasize);
-         bool StartNetSend(void* hdr, unsigned hdrsize, const Buffer& buf);
+         bool StartNetRecv(void *hdr, unsigned hdrsize, Buffer &buf, BufferSize_t datasize);
+         bool StartNetSend(void *hdr, unsigned hdrsize, const Buffer &buf, BufferSize_t datasize = 0);
 
          /** \brief Method should be used to cancel all running I/O operation of the socket.
           * Should be used for instance when worker want to be deleted */
