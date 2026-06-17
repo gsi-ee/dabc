@@ -1028,7 +1028,8 @@ function makeItemRequest(h, item, fullpath, option) {
 }
 
 function afterItemRequest(h, item, obj, option) {
-   if (!obj) return;
+   if (!obj)
+      return;
 
    if (!('_history' in item) || (option=="gauge") || (option=='last')) {
       obj.fullitemname = item.fullitemname;
@@ -1070,41 +1071,42 @@ function afterItemRequest(h, item, obj, option) {
 
    // now we should produce TGraph from the object
 
-   let x = DABC.ExtractSeries("time", "time", obj, item.history),
-       y = DABC.ExtractSeries("value", "number", obj, item.history);
+   let x = DABC.ExtractSeries("time", "time", obj, item.history) || [],
+       y = DABC.ExtractSeries("value", "number", obj, item.history) || [];
 
-   for (let k in obj) delete obj[k];  // delete all object keys
+   for (let k in obj)
+      delete obj[k];  // delete all object keys
 
-   if (!x) x = [];
-   if (!y) y = [];
+   if (!x.length || (x.length != y.length))
+      return;
 
    obj._typename = 'TGraph';
    create('TGraph', obj);
-   obj.fHistogram = JSROOT.createHistogram('TH1F', x.length);
 
    let _title = item._title || item.fullitemname;
 
    Object.assign(obj, { fName: item._name, fTitle: _title,
                         fX: x, fY: y, fNpoints: x.length,
                         fLineColor: 2, fLineWidth: 2 });
-   const kNotEditable = JSROOT.BIT(18), // bit set if graph is non editable
-         kNoStats = JSROOT.BIT(9);             // bit for histogram to disable stats display
-   obj.InvertBit(kNotEditable);
+   const kNotEditable = JSROOT.BIT(18); // bit set if graph is non editable
+   obj.fBits |= kNotEditable;
 
-   let xrange = x[x.length-1] - x[0];
+   const kNoStats = JSROOT.BIT(9); // no stats box on histogram
+   obj.fHistogram = JSROOT.createHistogram('TH1F', x.length);
+   const xrange = x[x.length-1] - x[0] || 1;
    obj.fHistogram.fBits |= kNoStats; // no stats box
    obj.fHistogram.fTitle = obj.fTitle;
    obj.fHistogram.fXaxis.fXmin = x[0] - xrange*0.03;
    obj.fHistogram.fXaxis.fXmax = x[x.length-1] + xrange*0.03;
-
-   const ymin = Math.min.apply(null,y) || 0,
-         ymax = Math.max.apply(null,y) || 0;
-
-   obj.fHistogram.fYaxis.fXmin = ymin - 0.05 * (ymax-ymin);
-   obj.fHistogram.fYaxis.fXmax = ymax + 0.05 * (ymax-ymin);
-
    obj.fHistogram.fXaxis.fTimeDisplay = true;
    obj.fHistogram.fXaxis.fTimeFormat = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
+
+   // do not selet Y range - it should be done automatically by TGraph painter
+   // const ymin = Math.min.apply(null, y) || 0,
+   //      ymax = Math.max.apply(null, y) || 0;
+   // obj.fHistogram.fYaxis.fXmin = ymin - 0.05 * (ymax-ymin);
+   // obj.fHistogram.fYaxis.fXmax = ymax + 0.05 * (ymax-ymin);
+
 }
 
 class GaugePainter extends BasePainter {
