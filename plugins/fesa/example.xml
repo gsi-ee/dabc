@@ -22,7 +22,7 @@
     </MemoryPool>
 
     <Module name="test" class="fesa::Player">
-      <UpdateInterval value="1"/>
+      <UpdateInterval value="0.1"/>
     </Module>
 
     <Module name="fesa_monitor" class="fesa::Monitor">
