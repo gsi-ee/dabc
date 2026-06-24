@@ -896,12 +896,17 @@ bool dogma::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
       cfg.fDataError = 0;
 
-      int diff = (cfg.fLastTrigNr != kNoTrigger) ? CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr) : fTriggerNumStep;
-
+      int diff = fTriggerNumStep;
+      if (cfg.fLastTrigNr != kNoTrigger)
+         diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
       cfg.fLastTrigNr = cfg.fTrigNr;
 
-      if (diff >= 2*fTriggerNumStep)
-         cfg.fLostTrig += diff / fTriggerNumStep - 1;
+      if (diff > fTriggerNumStep) {
+         int lost = diff / fTriggerNumStep - 1;
+         // because of wrong configuration TriggerNumStep can differ from actual value
+         // therefore increase lost trigger by at least one
+         cfg.fLostTrig += (lost > 0 ? lost : 1);
+      }
 
       cfg.fTotalDataSize += cfg.data_size;
    }
@@ -1008,11 +1013,17 @@ bool dogma::CombinerModule::ShiftToNextSubEventDebug(unsigned ninp, bool fast, b
    cfg.fEmpty = cfg.subevnt->GetPayloadLen() == 0;
    cfg.fDataError = 0;
 
-   int diff = (cfg.fLastTrigNr != kNoTrigger) ? CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr) : fTriggerNumStep;
+   int diff = fTriggerNumStep;
+   if (cfg.fLastTrigNr != kNoTrigger)
+      diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
    cfg.fLastTrigNr = cfg.fTrigNr;
 
-   if (diff >= 2*fTriggerNumStep)
-      cfg.fLostTrig += diff / fTriggerNumStep - 1;
+   if (diff > fTriggerNumStep) {
+      int lost = diff / fTriggerNumStep - 1;
+      // because of wrong configuration TriggerNumStep can differ from actual value
+      // therefore increase lost trigger by at least one
+      cfg.fLostTrig += (lost > 0 ? lost : 1);
+   }
 
    cfg.fTotalDataSize += cfg.data_size;
 
