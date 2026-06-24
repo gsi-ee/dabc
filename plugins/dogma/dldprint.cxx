@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
          dabc::str_to_uint(argv[++n], &tdcmask);
          tdcs.emplace_back(tdcmask);
       } else if ((strcmp(argv[n], "-mhz5") == 0) && (n + 1 < argc)) {
-         mhz5 = 300.;
+         mhz5 = 150.;
          dabc::str_to_double(argv[++n], &mhz5);
          coarse_tmlen5 = 1000. / mhz5;
       } else if ((strcmp(argv[n], "-fine-min5") == 0) && (n + 1 < argc)) {

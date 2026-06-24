@@ -12,9 +12,9 @@
 #include <endian.h>
 #endif
 
-#define Tdc5FreqMhz 300.
-#define Tdc5FineMin 19
-#define Tdc5FineMax 395
+#define Tdc5FreqMhz 150.
+#define Tdc5FineMin 100
+#define Tdc5FineMax 1200
 
 struct tdc5_parse_it {
 	int i;
