@@ -22,8 +22,6 @@
 
 #pragma pack(push, 1)
 
-#define DOGMA_MAGIC 0xecc1701d
-
 #define SWAP_VALUE(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
 namespace dogma {
