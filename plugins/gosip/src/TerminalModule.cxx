@@ -50,7 +50,7 @@ gosip::TerminalModule::TerminalModule (const std::string &name, dabc::Command cm
     dabc::ModuleAsync (name, cmd), fFD_pex(0),fDevnum(0),fConfigfile(nullptr), fLinecount(0),fErrcount(0)
 {
   //** JAM2026 - just suppress warnings abouot unused  gLinkspeed*/
-  for (int ls = 1; ls < PEXOR_MAX_SPEEDSETUP; ++ls)
+  for (int ls = 1; ls < PEX_MAX_SPEEDSETUP; ++ls)
     {
       DOUT0("available gosip linkspeeds preset %d (%s)\n", ls, gLinkspeed[ls]);
     }
