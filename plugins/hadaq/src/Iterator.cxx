@@ -135,7 +135,8 @@ bool hadaq::ReadIterator::NextHadTu()
       ShiftEvPtr(hadtu()->GetPaddedSize());
 
    if (fEvPtrLen < sizeof(hadaq::HadTu)) {
-      EOUT("Raw size less than transport unit header - not supported !!!!");
+      if (fEvPtrLen > 0)
+         EOUT("Raw size %u less than transport unit header - not supported !!!!", fEvPtrLen);
       ResetEvPtr();
       return false;
    }
