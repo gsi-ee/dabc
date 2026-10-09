@@ -100,19 +100,30 @@ bool is_tdc(unsigned id)
 std::map<uint32_t, TuStat> tu_stats;
 uint32_t ref_addr = 0;
 
-ur_config cfg_2051;
-
 std::unordered_map<int, ur_config> cfgs;
+ur_config default_cfg;
 
 void _init_ur_config()
 {
-   cfg_2051.coarsetime_len = 18;
-   cfg_2051.finetime_len = 11;
-   cfg_2051.tdc_type = 3;
-   cfg_2051.freq = 150;
-   cfg_2051.has_edge_type = true;
+   if (!cfgs.empty())
+      return;
+
+   // TODO: Handle this in separate TDC configuration files
+   ur_default_config(&default_cfg);
+
+   // TODO: Handle this in separate TDC configuration files
+   ur_config cfg_2051, cfg_2052, cfg_2053;
+
+   cfg_2053 = cfg_2052 = cfg_2051 = default_cfg;
+
+   cfg_2052.coarsetime_len = 17;
+   cfg_2052.finetime_len = 12;
+   cfg_2053.coarsetime_len = 16;
+   cfg_2053.finetime_len = 13;
 
    cfgs[2051] = cfg_2051;
+   cfgs[2052] = cfg_2052;
+   cfgs[2053] = cfg_2053;
 }
 
 
@@ -145,10 +156,8 @@ void print_tu(dogma::DogmaTu *tu, const char *prefix = "")
       ur_time tm;
       unsigned devid = tu->GetDeviceId();
       auto entry = cfgs.find(devid);
-      if (entry != cfgs.end())
-         ur_set_config(&it, &entry->second);
-      else
-         ur_set_config(&it, &cfg_2051);
+      ur_config *cfg = entry != cfgs.end() ? &entry->second : &default_cfg;
+      ur_set_config(&it, cfg);
 
       const char *buf = (const char *) tu->RawHeader();
       int pktlen = tu->GetRawPacketSize();
