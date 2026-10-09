@@ -21,7 +21,6 @@
 #include <ctime>
 
 #include "dogma/api.h"
-#include "dogma/tdc5.h"
 #include "dogma/ur-unpacker.h"
 #include "dabc/Url.h"
 #include "dabc/api.h"
@@ -29,6 +28,10 @@
 #include "../hadaq/tdc_print_code.cxx"
 
 #include <unordered_map>
+
+#define Tdc5FreqMhz 150.
+#define Tdc5FineMin 100
+#define Tdc5FineMax 1200
 
 int usage(const char *errstr = nullptr)
 {
