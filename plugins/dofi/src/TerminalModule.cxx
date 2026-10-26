@@ -245,7 +245,7 @@ int dofi::TerminalModule::next_config_values (dofi::Command &com)
     return -1;
   }
   com.address = strtoul (cmd[0], NULL, com.hexformat == 1 ? 16 : 0);
-  com.value = strtoul (cmd[1], NULL, com.hexformat == 1 ? 16 : 0);
+  com.value = strtoull (cmd[1], NULL, com.hexformat == 1 ? 16 : 0);
   if (cmdlen > 2)
   {
     // parse optional command identifier
