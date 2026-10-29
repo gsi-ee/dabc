@@ -20,7 +20,7 @@
 #include "dabc/Manager.h"
 #include "dabc/DataTransport.h"
 
-mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid) :
+mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid, uint32_t wrid) :
    dabc::SocketIOAddon(fd, false, true),
    dabc::DataOutput(dabc::Url()),
    fState(oInit),
@@ -32,6 +32,7 @@ mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIterator
    fSubHdr(),
    fEvCounter(0),
    fSubevId(subid),
+   fWhiteRabbitId(wrid),
    fHasExtraRequest(false)
 {
    DOUT3("Create MBS server addon fd:%d kind:%s", fd, mbs::ServerKindToStr(kind));
@@ -103,7 +104,8 @@ void mbs::ServerOutputAddon::OnSendCompleted()
 
          fSubHdr.InitFull(fSubevId);
          unsigned kind = iter->EventKind();
-         if (kind > 1) fSubHdr.iControl = kind - 1;
+         if (kind > 1)
+            fSubHdr.iControl = kind - 1;
          fSubHdr.SetRawDataSize(evsize);
 
          fEvHdr.Init(fEvCounter++);
@@ -339,7 +341,8 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    fBlocking(false),
    fDeliverAll(false),
    fIterKind(),
-   fSubevId(0x1f)
+   fSubevId(0x1f),
+   fWhiteRabbitId(0)
 {
    // this addon handles connection
    AssignAddon(connaddon);
@@ -355,6 +358,9 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
 
    if (url.HasOption("subid"))
       fSubevId = (unsigned) url.GetOptionInt("subid", fSubevId);
+
+   if (url.HasOption("white_rabbit"))
+      fWhiteRabbitId = (unsigned) url.GetOptionInt("white_rabbit", fWhiteRabbitId);
 
    if (url.HasOption("bufsize"))
       fBufSize = (unsigned) url.GetOptionInt("bufsize", 0) * 0x100000;
@@ -452,7 +458,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       dabc::SocketThread::SetNoDelaySocket(fd);
 
-      auto addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
+      auto addon = new ServerOutputAddon(fd, fKind, iter, fSubevId, fWhiteRabbitId);
 
       addon->FillServInfo(fBufSize, fLegacy);
 
