@@ -431,6 +431,8 @@ typedef uint64_t WRTimeStampType;
    extern const char *xmlCombinerRatesPrefix;
    extern const char *xmlTimesliceWindow;
 
+   extern "C" uint32_t FillWhiteRabitSubevent(unsigned char *buf, uint32_t bufsize, uint32_t subid, uint64_t timestamp);
+
 };
 
 #endif
