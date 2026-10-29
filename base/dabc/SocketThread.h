@@ -217,7 +217,8 @@ namespace dabc {
 
          bool StartSend(const void* buf, unsigned size,
                         const void* buf2 = nullptr, unsigned size2 = 0,
-                        const void* buf3 = nullptr, unsigned size3 = 0);
+                        const void* buf3 = nullptr, unsigned size3 = 0,
+                        const void* buf4 = nullptr, unsigned size4 = 0);
          bool StartRecv(void* buf, size_t size);
 
          bool StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size);
