@@ -67,6 +67,7 @@ namespace mbs {
          long                  fDroppedBuffers{0};
          dabc::EventsIteratorRef fIter;
          mbs::EventHeader      fEvHdr;  // additional MBS event header (for non-MBS events)
+         unsigned char         fWhiteRabbitSubEvent[40]; // raw buffer for white rabbit subevent
          mbs::SubeventHeader   fSubHdr; // additional MBS subevent header (for non-MBS events)
          uint32_t              fEvCounter = 0; // special events counter
          uint32_t              fSubevId = 0;       // full id of subevent
