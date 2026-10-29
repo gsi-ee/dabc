@@ -108,10 +108,20 @@ void mbs::ServerOutputAddon::OnSendCompleted()
             fSubHdr.iControl = kind - 1;
          fSubHdr.SetRawDataSize(evsize);
 
-         fEvHdr.Init(fEvCounter++);
-         fEvHdr.SetFullSize(evsize + sizeof(fEvHdr) + sizeof(fSubHdr));
+         uint32_t full_size = evsize + sizeof(fEvHdr) + sizeof(fSubHdr);
+         uint32_t white_rabit_size = 0;
+         if (fWhiteRabbitId > 0) {
+            white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), fWhiteRabbitId, iter->GetWhiteRabbitTimeStamp());
+            full_size += white_rabit_size;
+         }
 
-         StartSend(&fEvHdr, sizeof(fEvHdr), &fSubHdr, sizeof(fSubHdr), iter->Event(), evsize);
+         fEvHdr.Init(fEvCounter++);
+         fEvHdr.SetFullSize(full_size);
+
+         StartSend(&fEvHdr, sizeof(fEvHdr),
+                   fWhiteRabbitSubEvent, white_rabit_size, // will not be included when white_rabit_size == 0
+                   &fSubHdr, sizeof(fSubHdr),
+                   iter->Event(), evsize);
 
          if (!iter->NextEvent())
             // if there are no move event - close iterator and wait for completion
