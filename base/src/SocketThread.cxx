@@ -368,31 +368,39 @@ void dabc::SocketIOAddon::AllocateRecvIOV(unsigned size)
 
 bool dabc::SocketIOAddon::StartSend(const void* buf1, unsigned size1,
                                     const void* buf2, unsigned size2,
-                                    const void* buf3, unsigned size3)
+                                    const void* buf3, unsigned size3,
+                                    const void* buf4, unsigned size4)
 {
    if (fSendIOVNumber>0) {
       EOUT("Current send operation not yet completed");
       return false;
    }
 
-   if (fSendIOVSize<3) AllocateSendIOV(8);
+   if (fSendIOVSize < 3)
+      AllocateSendIOV(8);
 
    int indx = 0;
-   if (buf1 && (size1>0)) {
+   if (buf1 && (size1 > 0)) {
       fSendIOV[indx].iov_base = (void*) buf1;
       fSendIOV[indx].iov_len = size1;
       indx++;
    }
 
-   if (buf2 && (size2>0)) {
+   if (buf2 && (size2 > 0)) {
       fSendIOV[indx].iov_base = (void*) buf2;
       fSendIOV[indx].iov_len = size2;
       indx++;
    }
 
-   if (buf3 && (size3>0)) {
+   if (buf3 && (size3 > 0)) {
       fSendIOV[indx].iov_base = (void*) buf3;
       fSendIOV[indx].iov_len = size3;
+      indx++;
+   }
+
+   if (buf4 && (size4 > 0)) {
+      fSendIOV[indx].iov_base = (void*) buf4;
+      fSendIOV[indx].iov_len = size4;
       indx++;
    }
 
