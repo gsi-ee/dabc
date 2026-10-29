@@ -42,11 +42,13 @@ dabc::Module *mbs::Factory::CreateTransport(const dabc::Reference& port, const s
    dabc::PortRef portref = port;
    std::string prot = url.GetProtocol(), host = url.GetHostName();
    int kind = 0, portnum = url.GetPort();
-   if (prot == mbs::protocolMbss) kind = mbs::StreamServer; else
-   if (prot == mbs::protocolMbst) kind = mbs::TransportServer; else
-   if (prot == mbs::protocolMbs) {
+   if (prot == mbs::protocolMbss)
       kind = mbs::StreamServer;
-      if (portnum==DefualtServerPort(mbs::TransportServer))
+   else if (prot == mbs::protocolMbst)
+      kind = mbs::TransportServer;
+   else if (prot == mbs::protocolMbs) {
+      kind = mbs::StreamServer;
+      if (portnum == DefualtServerPort(mbs::TransportServer))
          kind = mbs::TransportServer;
       if (StrToServerKind(host) != NoServer) {
          kind = StrToServerKind(host);
@@ -56,12 +58,13 @@ dabc::Module *mbs::Factory::CreateTransport(const dabc::Reference& port, const s
 
    if (portref.IsOutput() && (kind>0)) {
 
-      if (portnum == 0) portnum = DefualtServerPort(kind);
+      if (portnum == 0)
+         portnum = DefualtServerPort(kind);
 
-      dabc::SocketServerAddon *addon = dabc::SocketThread::CreateServerAddon(host, portnum);
+      auto addon = dabc::SocketThread::CreateServerAddon(host, portnum);
 
       if (!addon) {
-         DOUT3("Fail assign MBS server to port:%d", portnum);
+         EOUT("Fail assign MBS server to port: %d", portnum);
          return nullptr;
       }
 
