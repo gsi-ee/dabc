@@ -53,6 +53,7 @@ namespace dabc {
          virtual void* Event() = 0;
          virtual BufferSize_t EventSize() = 0;
          virtual unsigned EventKind() const { return 1; }
+         virtual uint64_t GetWhiteRabbitTimeStamp() const { return 0; }
 
          unsigned NumEvents(const Buffer& buf);
    };

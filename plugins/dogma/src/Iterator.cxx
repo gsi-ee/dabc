@@ -545,3 +545,20 @@ bool dogma::WriteIterator::CopyEvent(const dogma::ReadIterator &iter)
 
    return true;
 }
+
+
+
+/////////////////////////////////////////////////////////////////
+/// Provide white rabbit time stamp from current event or Tu
+
+uint64_t dogma::RawIterator::GetWhiteRabbitTimeStamp() const
+{
+   dogma::DogmaTu *tu = nullptr;
+   if (fIter.IsEvent()) {
+      auto evnt = fIter.evnt();
+      tu = evnt ? evnt->NextSubevent(nullptr) : nullptr;
+   } else if (fIter.IsTu())
+      tu = fIter.tu();
+
+   return tu ? tu->GetTrigTime() : 0;
+}

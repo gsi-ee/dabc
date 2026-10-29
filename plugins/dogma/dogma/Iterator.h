@@ -231,6 +231,8 @@ namespace dogma {
          void *Event() override { return fIter.block(); }
          dabc::BufferSize_t EventSize() override { return fIter.blocksize(); }
          unsigned EventKind() const override { return fIter.IsTu() ? 1 : (fIter.IsEvent() ? 2 : 0); }
+
+         uint64_t GetWhiteRabbitTimeStamp() const override;
    };
 
 }
