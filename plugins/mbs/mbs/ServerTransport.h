@@ -67,9 +67,11 @@ namespace mbs {
          long                  fDroppedBuffers{0};
          dabc::EventsIteratorRef fIter;
          mbs::EventHeader      fEvHdr;  // additional MBS event header (for non-MBS events)
+         unsigned char         fWhiteRabbitSubEvent[40]; // raw buffer for white rabbit subevent
          mbs::SubeventHeader   fSubHdr; // additional MBS subevent header (for non-MBS events)
-         uint32_t              fEvCounter{0}; // special events counter
-         uint32_t              fSubevId{0};  // full id of subevent
+         uint32_t              fEvCounter = 0; // special events counter
+         uint32_t              fSubevId = 0;       // full id of subevent
+         uint32_t              fWhiteRabbitId = 0; // subevent id for white rabbit data
          bool                  fHasExtraRequest = false;
          bool                  fLegacyFormat = false;
 
@@ -88,7 +90,7 @@ namespace mbs {
          dabc::WorkerAddon* Write_GetAddon()  override { return nullptr; }
 
       public:
-         ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid);
+         ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid, uint32_t wrid = 0);
          virtual ~ServerOutputAddon();
 
          void FillServInfo(int32_t maxbytes, bool legacy);
@@ -116,7 +118,8 @@ namespace mbs {
          bool fBlocking{false};    ///< if true, server will block buffers until it can be delivered
          bool fDeliverAll{false};  ///< if true, server will try deliver all events when clients are there (default for transport)
          std::string fIterKind;    ///< iterator kind when non-mbs events should be delivered to clients
-         uint32_t fSubevId{0};     ///< subevent id when non-MBS events are used
+         uint32_t fSubevId = 0;    ///< subevent id when non-MBS events are used
+         uint32_t fWhiteRabbitId = 0; // subevent id for white rabbit data
          unsigned fBufSize{0};     ///< maximal buffer size
          bool fLegacy = false;     ///< attempt to emulate native MBS transport, which sends complete buffer
 

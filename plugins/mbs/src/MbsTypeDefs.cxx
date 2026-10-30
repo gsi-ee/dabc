@@ -15,8 +15,11 @@
 
 #include "mbs/MbsTypeDefs.h"
 
+#include "dabc/logging.h"
+
 #include <cstring>
 #include <cstdio>
+
 
 #if defined(__APPLE__)
 // Mac OS X / Darwin features
@@ -339,4 +342,51 @@ int mbs::StrToServerKind(const std::string &str)
    return NoServer;
 }
 
+#define TS__ID_L16        0x3e1
+#define TS__ID_M16         0x4e1
+#define TS__ID_H16         0x5e1
+#define TS__ID_X16         0x6e1
+
+
+uint32_t mbs::FillWhiteRabitSubevent(unsigned char *buf, uint32_t bufsize, uint32_t subid, uint64_t timestamp)
+{
+   if (!buf || bufsize < sizeof(SubeventHeader) + 16) {
+      EOUT("Raw buffer to small to fill white rabbit subevent");
+      return 0;
+   }
+
+   uint32_t *pl_dat = (uint32_t *) buf;
+
+   if (subid > 0) {
+      auto hdr = (SubeventHeader *) buf;
+      hdr->InitFull(subid);
+      hdr->iControl = 0; // that is best
+      hdr->SetRawDataSize(16);
+      pl_dat = (uint32_t *)(buf + sizeof(SubeventHeader));
+   }
+
+   uint64_t ll_ts = timestamp;
+
+   uint64_t ll_l16 = (ll_ts >> 0) & 0xffff;
+   uint64_t ll_m16 = (ll_ts >> 16) & 0xffff;
+   uint64_t ll_h16 = (ll_ts >> 32) & 0xffff;
+   uint64_t ll_x16 = (ll_ts >> 48) & 0xffff;
+
+   uint32_t l_time_l16 = (uint32_t) (ll_l16);
+   uint32_t l_time_m16 = (uint32_t) (ll_m16);
+   uint32_t l_time_h16 = (uint32_t) (ll_h16);
+   uint32_t l_time_x16 = (uint32_t) (ll_x16);
+
+   l_time_l16 = (l_time_l16 & 0xffff) + (TS__ID_L16 << 16);
+   l_time_m16 = (l_time_m16 & 0xffff) + (TS__ID_M16 << 16);
+   l_time_h16 = (l_time_h16 & 0xffff) + (TS__ID_H16 << 16);
+   l_time_x16 = (l_time_x16 & 0xffff) + (TS__ID_X16 << 16);
+
+   *pl_dat++ = l_time_l16;
+   *pl_dat++ = l_time_m16;
+   *pl_dat++ = l_time_h16;
+   *pl_dat++ = l_time_x16;
+
+   return (subid > 0 ? sizeof(SubeventHeader) : 0) + 16;
+}
 

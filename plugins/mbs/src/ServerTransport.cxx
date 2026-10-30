@@ -20,7 +20,7 @@
 #include "dabc/Manager.h"
 #include "dabc/DataTransport.h"
 
-mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid) :
+mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid, uint32_t wrid) :
    dabc::SocketIOAddon(fd, false, true),
    dabc::DataOutput(dabc::Url()),
    fState(oInit),
@@ -32,6 +32,7 @@ mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIterator
    fSubHdr(),
    fEvCounter(0),
    fSubevId(subid),
+   fWhiteRabbitId(wrid),
    fHasExtraRequest(false)
 {
    DOUT3("Create MBS server addon fd:%d kind:%s", fd, mbs::ServerKindToStr(kind));
@@ -103,13 +104,41 @@ void mbs::ServerOutputAddon::OnSendCompleted()
 
          fSubHdr.InitFull(fSubevId);
          unsigned kind = iter->EventKind();
-         if (kind > 1) fSubHdr.iControl = kind - 1;
+         if (kind > 1)
+            fSubHdr.iControl = kind - 1;
          fSubHdr.SetRawDataSize(evsize);
 
-         fEvHdr.Init(fEvCounter++);
-         fEvHdr.SetFullSize(evsize + sizeof(fEvHdr) + sizeof(fSubHdr));
+         uint32_t full_size = evsize + sizeof(fEvHdr) + sizeof(fSubHdr);
+         uint32_t white_rabit_size = 0;
 
-         StartSend(&fEvHdr, sizeof(fEvHdr), &fSubHdr, sizeof(fSubHdr), iter->Event(), evsize);
+         // should be always false, just keep here for showing how separate event should be handled
+         bool use_separate_subevent = false; // (fWhiteRabbitId == 0x7777);
+
+         if (fWhiteRabbitId > 0) {
+            // depending on subid parameter data with or without subevent header will be filled
+            white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), use_separate_subevent ? fWhiteRabbitId : 0, iter->GetWhiteRabbitTimeStamp());
+            full_size += white_rabit_size;
+            if (!use_separate_subevent)
+               fSubHdr.SetRawDataSize(evsize + white_rabit_size);
+         }
+
+         fEvHdr.Init(fEvCounter++);
+         fEvHdr.SetFullSize(full_size);
+
+         if ((fWhiteRabbitId == 0) || (white_rabit_size == 0))
+            StartSend(&fEvHdr, sizeof(fEvHdr),
+                      &fSubHdr, sizeof(fSubHdr),
+                      iter->Event(), evsize);
+         else if (use_separate_subevent)
+            StartSend(&fEvHdr, sizeof(fEvHdr),
+                      fWhiteRabbitSubEvent, white_rabit_size, // add white rabbit data as separate subevent
+                      &fSubHdr, sizeof(fSubHdr),
+                      iter->Event(), evsize);
+         else
+            StartSend(&fEvHdr, sizeof(fEvHdr),
+                      &fSubHdr, sizeof(fSubHdr),
+                      fWhiteRabbitSubEvent, white_rabit_size, // inject white rabbit data into first MBS event before all other data
+                      iter->Event(), evsize);
 
          if (!iter->NextEvent())
             // if there are no move event - close iterator and wait for completion
@@ -339,7 +368,8 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    fBlocking(false),
    fDeliverAll(false),
    fIterKind(),
-   fSubevId(0x1f)
+   fSubevId(0x1f),
+   fWhiteRabbitId(0)
 {
    // this addon handles connection
    AssignAddon(connaddon);
@@ -355,6 +385,9 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
 
    if (url.HasOption("subid"))
       fSubevId = (unsigned) url.GetOptionInt("subid", fSubevId);
+
+   if (url.HasOption("white_rabbit"))
+      fWhiteRabbitId = (unsigned) url.GetOptionInt("white_rabbit", fWhiteRabbitId);
 
    if (url.HasOption("bufsize"))
       fBufSize = (unsigned) url.GetOptionInt("bufsize", 0) * 0x100000;
@@ -452,7 +485,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       dabc::SocketThread::SetNoDelaySocket(fd);
 
-      auto addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
+      auto addon = new ServerOutputAddon(fd, fKind, iter, fSubevId, fWhiteRabbitId);
 
       addon->FillServInfo(fBufSize, fLegacy);
 
