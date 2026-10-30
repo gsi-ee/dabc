@@ -355,12 +355,15 @@ uint32_t mbs::FillWhiteRabitSubevent(unsigned char *buf, uint32_t bufsize, uint3
       return 0;
    }
 
-   auto hdr = (SubeventHeader *) buf;
-   hdr->InitFull(subid);
-   hdr->iControl = 0; // that is best
-   hdr->SetRawDataSize(16);
+   uint32_t *pl_dat = (uint32_t *) buf;
 
-   auto pl_dat = (uint32_t *)(buf + sizeof(SubeventHeader));
+   if (subid > 0) {
+      auto hdr = (SubeventHeader *) buf;
+      hdr->InitFull(subid);
+      hdr->iControl = 0; // that is best
+      hdr->SetRawDataSize(16);
+      pl_dat = (uint32_t *)(buf + sizeof(SubeventHeader));
+   }
 
    uint64_t ll_ts = timestamp;
 
@@ -384,6 +387,6 @@ uint32_t mbs::FillWhiteRabitSubevent(unsigned char *buf, uint32_t bufsize, uint3
    *pl_dat++ = l_time_h16;
    *pl_dat++ = l_time_x16;
 
-   return sizeof(SubeventHeader) + 16;
+   return (subid > 0 ? sizeof(SubeventHeader) : 0) + 16;
 }
 
