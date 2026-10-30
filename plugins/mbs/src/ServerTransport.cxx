@@ -110,18 +110,34 @@ void mbs::ServerOutputAddon::OnSendCompleted()
 
          uint32_t full_size = evsize + sizeof(fEvHdr) + sizeof(fSubHdr);
          uint32_t white_rabit_size = 0;
+
+         bool use_separate_subevent = (fWhiteRabbitId == 0x77ff);
+
          if (fWhiteRabbitId > 0) {
-            white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), fWhiteRabbitId, iter->GetWhiteRabbitTimeStamp());
+            // depending on subid parameter data with or without subevent header will be filled
+            white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), use_separate_subevent ? fWhiteRabbitId : 0, iter->GetWhiteRabbitTimeStamp());
             full_size += white_rabit_size;
+            if (!use_separate_subevent)
+               fSubHdr.SetRawDataSize(evsize + white_rabit_size);
          }
 
          fEvHdr.Init(fEvCounter++);
          fEvHdr.SetFullSize(full_size);
 
-         StartSend(&fEvHdr, sizeof(fEvHdr),
-                   fWhiteRabbitSubEvent, white_rabit_size, // will not be included when white_rabit_size == 0
-                   &fSubHdr, sizeof(fSubHdr),
-                   iter->Event(), evsize);
+         if ((fWhiteRabbitId == 0) || (white_rabit_size == 0))
+            StartSend(&fEvHdr, sizeof(fEvHdr),
+                      &fSubHdr, sizeof(fSubHdr),
+                      iter->Event(), evsize);
+         else if (use_separate_subevent)
+            StartSend(&fEvHdr, sizeof(fEvHdr),
+                      fWhiteRabbitSubEvent, white_rabit_size, // add white rabbit data as separate subevent
+                      &fSubHdr, sizeof(fSubHdr),
+                      iter->Event(), evsize);
+         else
+            StartSend(&fEvHdr, sizeof(fEvHdr),
+                      &fSubHdr, sizeof(fSubHdr),
+                      fWhiteRabbitSubEvent, white_rabit_size, // inject white rabbit data into first MBS event before all other data
+                      iter->Event(), evsize);
 
          if (!iter->NextEvent())
             // if there are no move event - close iterator and wait for completion
