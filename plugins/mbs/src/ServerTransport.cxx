@@ -111,7 +111,8 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          uint32_t full_size = evsize + sizeof(fEvHdr) + sizeof(fSubHdr);
          uint32_t white_rabit_size = 0;
 
-         bool use_separate_subevent = (fWhiteRabbitId == 0x77ff);
+         // should be always false, just keep here for showing how separate event should be handled
+         bool use_separate_subevent = false; // (fWhiteRabbitId == 0x7777);
 
          if (fWhiteRabbitId > 0) {
             // depending on subid parameter data with or without subevent header will be filled
