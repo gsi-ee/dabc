@@ -67,11 +67,11 @@ namespace mbs {
          long                  fDroppedBuffers{0};
          dabc::EventsIteratorRef fIter;
          mbs::EventHeader      fEvHdr;  // additional MBS event header (for non-MBS events)
-         unsigned char         fWhiteRabbitSubEvent[40]; // raw buffer for white rabbit subevent
+         unsigned char         fWhiteRabbitSubEvent[50]; // raw buffer for white rabbit subevent
          mbs::SubeventHeader   fSubHdr; // additional MBS subevent header (for non-MBS events)
          uint32_t              fEvCounter = 0; // special events counter
          uint32_t              fSubevId = 0;       // full id of subevent
-         uint32_t              fWhiteRabbitId = 0; // subevent id for white rabbit data
+         uint32_t              fWhiteRabbitId = 0; // id for white rabbit data
          bool                  fHasExtraRequest = false;
          bool                  fLegacyFormat = false;
 
@@ -119,7 +119,7 @@ namespace mbs {
          bool fDeliverAll{false};  ///< if true, server will try deliver all events when clients are there (default for transport)
          std::string fIterKind;    ///< iterator kind when non-mbs events should be delivered to clients
          uint32_t fSubevId = 0;    ///< subevent id when non-MBS events are used
-         uint32_t fWhiteRabbitId = 0; // subevent id for white rabbit data
+         uint32_t fWhiteRabbitId = 0; // id for white rabbit data
          unsigned fBufSize{0};     ///< maximal buffer size
          bool fLegacy = false;     ///< attempt to emulate native MBS transport, which sends complete buffer
 

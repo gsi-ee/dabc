@@ -116,7 +116,7 @@ void mbs::ServerOutputAddon::OnSendCompleted()
 
          if (fWhiteRabbitId > 0) {
             // depending on subid parameter data with or without subevent header will be filled
-            white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), use_separate_subevent ? fWhiteRabbitId : 0, iter->GetWhiteRabbitTimeStamp());
+            white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), use_separate_subevent, fWhiteRabbitId, iter->GetWhiteRabbitTimeStamp());
             full_size += white_rabit_size;
             if (!use_separate_subevent)
                fSubHdr.SetRawDataSize(evsize + white_rabit_size);
