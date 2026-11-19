@@ -134,16 +134,44 @@ uint32_t mbs::ServerOutputAddon::SendNextEvent(unsigned char *buf, uint32_t maxs
    if (total > maxsize)
       return 0;
 
-
+   memcpy(buf, ptr1, sz1); buf += sz1;
+   memcpy(buf, ptr2, sz2); buf += sz2;
+   memcpy(buf, ptr3, sz3); buf += sz3;
+   if (ptr4) {
+      memcpy(buf, ptr4, sz4); buf += sz4;
+   }
 
    return total;
-
 }
 
 
 void mbs::ServerOutputAddon::SendLegacyEvents()
 {
+   fLegacyBlob.resize(fServInfo.iMaxBytes - sizeof(fHeader));
+   std::fill(fLegacyBlob.begin(), fLegacyBlob.end(), 0);
 
+   unsigned remainsz = fLegacyBlob.size();
+   auto buf = fLegacyBlob.data();
+   bool failure = false;
+
+   while(fIter()->EventSize() && remainsz) {
+      auto sz = SendNextEvent(buf, remainsz);
+      if (sz == 0) {
+         failure = true;
+         break;
+      }
+      buf += sz;
+      remainsz -= sz;
+      if (!fIter()->NextEvent())
+         break;
+   }
+
+   if (fIter()->EventSize())
+      failure = true;
+   if (failure)
+      EOUT("Not all events pass to output buffer, reduce input buffers or increase mbs buffer");
+
+   StartSend(&fHeader, sizeof(fHeader), fLegacyBlob.data(), fLegacyBlob.size());
 }
 
 
@@ -367,6 +395,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
       StartNetSend(&fHeader, sizeof(fHeader), buf, datasize);
    } else if (!fIter.null() && fLegacyFormat) {
       // which legacy we need to send one buffer with all padding bytes at once
+      fState = oSendingLastEvent;
       SendLegacyEvents();
    } else {
       fState = oSendingEvents;

@@ -36,6 +36,7 @@
 #include "mbs/MbsTypeDefs.h"
 #endif
 
+#include <vector>
 namespace mbs {
 
    /** \brief %Addon for output of server-side different kinds of MBS server */
@@ -75,6 +76,7 @@ namespace mbs {
          bool                  fSendWhiteRabbitAsExtraSubevent = false; // not yet used
          bool                  fHasExtraRequest = false;
          bool                  fLegacyFormat = false;
+         std::vector<unsigned char> fLegacyBlob; // blob buffer for legacy buffer
 
          // from addon
          void OnThreadAssigned() override;
