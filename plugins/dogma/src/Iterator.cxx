@@ -547,7 +547,6 @@ bool dogma::WriteIterator::CopyEvent(const dogma::ReadIterator &iter)
 }
 
 
-
 /////////////////////////////////////////////////////////////////
 /// Provide white rabbit time stamp from current event or Tu
 
@@ -560,5 +559,7 @@ uint64_t dogma::RawIterator::GetWhiteRabbitTimeStamp() const
    } else if (fIter.IsTu())
       tu = fIter.tu();
 
-   return tu ? tu->GetTrigTime() : 0;
+   // Dogma trigger time counted with 150 MHz clock, white rabbit require 1ns
+   // therefor need multiply but approx 6.66667
+   return tu ? (uint64_t) (((double) tu->GetTrigTime()) * 20. / 3.) : 0;
 }
