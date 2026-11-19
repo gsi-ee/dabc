@@ -348,9 +348,11 @@ int mbs::StrToServerKind(const std::string &str)
 #define TS__ID_X16         0x6e1
 
 
+const int mbs::WhiteRabbitPayloadSize = 20;
+
 uint32_t mbs::FillWhiteRabitSubevent(unsigned char *buf, uint32_t bufsize, bool use_separate_subevent, uint32_t subid, uint64_t timestamp)
 {
-   if (!buf || bufsize < sizeof(SubeventHeader) + 20) {
+   if (!buf || bufsize < sizeof(SubeventHeader) + mbs::WhiteRabbitPayloadSize) {
       EOUT("Raw buffer to small to fill white rabbit subevent");
       return 0;
    }
@@ -361,7 +363,7 @@ uint32_t mbs::FillWhiteRabitSubevent(unsigned char *buf, uint32_t bufsize, bool 
       auto hdr = (SubeventHeader *) buf;
       hdr->InitFull(subid);
       hdr->iControl = 0; // that is best
-      hdr->SetRawDataSize(20);
+      hdr->SetRawDataSize(mbs::WhiteRabbitPayloadSize);
       pl_dat = (uint32_t *)(buf + sizeof(SubeventHeader));
    }
 
@@ -388,6 +390,6 @@ uint32_t mbs::FillWhiteRabitSubevent(unsigned char *buf, uint32_t bufsize, bool 
    *pl_dat++ = l_time_h16;
    *pl_dat++ = l_time_x16;
 
-   return (use_separate_subevent ? sizeof(SubeventHeader) : 0) + 20;
+   return (use_separate_subevent ? sizeof(SubeventHeader) : 0) + mbs::WhiteRabbitPayloadSize;
 }
 

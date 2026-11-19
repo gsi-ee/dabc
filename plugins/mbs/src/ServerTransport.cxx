@@ -74,6 +74,79 @@ double mbs::ServerOutputAddon::ProcessTimeout(double)
    return 1.;
 }
 
+uint32_t mbs::ServerOutputAddon::SendNextEvent(unsigned char *buf, uint32_t maxsize)
+{
+   dabc::EventsIterator* iter = fIter();
+
+   unsigned evsize = iter->EventSize();
+   if (evsize % 2) evsize++;
+
+   fSubHdr.InitFull(fSubevId);
+   unsigned kind = iter->EventKind();
+   if (kind > 1)
+      fSubHdr.iControl = kind - 1;
+   fSubHdr.SetRawDataSize(evsize);
+
+   uint32_t full_size = evsize + sizeof(fEvHdr) + sizeof(fSubHdr);
+   uint32_t white_rabit_size = 0;
+
+   if (fWhiteRabbitId > 0) {
+      // depending on subid parameter data with or without subevent header will be filled
+      white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), fSendWhiteRabbitAsExtraSubevent, fWhiteRabbitId, iter->GetWhiteRabbitTimeStamp());
+      full_size += white_rabit_size;
+      if (!fSendWhiteRabbitAsExtraSubevent)
+         fSubHdr.SetRawDataSize(evsize + white_rabit_size);
+   }
+
+   fEvHdr.Init(fEvCounter++);
+   fEvHdr.SetFullSize(full_size);
+
+   void *ptr1 = nullptr, *ptr2 = nullptr, *ptr3 = nullptr, *ptr4 = nullptr;
+   unsigned sz1 = 0, sz2 = 0, sz3 = 0, sz4 = 0;
+
+   if ((fWhiteRabbitId == 0) || (white_rabit_size == 0)) {
+      ptr1 = &fEvHdr; sz1 = sizeof(fEvHdr);
+      ptr2 = &fSubHdr; sz2 = sizeof(fSubHdr);
+      ptr3 = iter->Event(); sz3 = evsize;
+   } else if (fSendWhiteRabbitAsExtraSubevent) {
+      ptr1 = &fEvHdr; sz1 = sizeof(fEvHdr);
+      ptr2 = fWhiteRabbitSubEvent; sz2 = white_rabit_size; // add white rabbit data as separate subevent
+      ptr3 = &fSubHdr; sz3 = sizeof(fSubHdr);
+      ptr4 = iter->Event(); sz4 = evsize;
+   } else {
+      ptr1 = &fEvHdr; sz1 = sizeof(fEvHdr);
+      ptr2 = &fSubHdr; sz2 = sizeof(fSubHdr);
+      ptr3 = fWhiteRabbitSubEvent; sz3 = white_rabit_size; // inject white rabbit data into first MBS event before all other data
+      ptr4 = iter->Event(); sz4 = evsize;
+   }
+
+   if (!buf) {
+      // direct send of the event
+      StartSend(ptr1, sz1,
+                ptr2, sz2,
+                ptr3, sz3,
+                ptr4, sz4);
+      return 0;
+   }
+
+   unsigned total = sz1 + sz2 + sz3 + sz4;
+
+   if (total > maxsize)
+      return 0;
+
+
+
+   return total;
+
+}
+
+
+void mbs::ServerOutputAddon::SendLegacyEvents()
+{
+
+}
+
+
 #if defined(__GNUC__) && (__GNUC__ >= 11)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
@@ -97,50 +170,9 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          return;
 
       case oSendingEvents: {
-         dabc::EventsIterator* iter = fIter();
+         SendNextEvent(); // send next event
 
-         unsigned evsize = iter->EventSize();
-         if (evsize % 2) evsize++;
-
-         fSubHdr.InitFull(fSubevId);
-         unsigned kind = iter->EventKind();
-         if (kind > 1)
-            fSubHdr.iControl = kind - 1;
-         fSubHdr.SetRawDataSize(evsize);
-
-         uint32_t full_size = evsize + sizeof(fEvHdr) + sizeof(fSubHdr);
-         uint32_t white_rabit_size = 0;
-
-         // should be always false, just keep here for showing how separate event should be handled
-         bool use_separate_subevent = false; // (fWhiteRabbitId == 0x7777);
-
-         if (fWhiteRabbitId > 0) {
-            // depending on subid parameter data with or without subevent header will be filled
-            white_rabit_size = mbs::FillWhiteRabitSubevent(fWhiteRabbitSubEvent, sizeof(fWhiteRabbitSubEvent), use_separate_subevent, fWhiteRabbitId, iter->GetWhiteRabbitTimeStamp());
-            full_size += white_rabit_size;
-            if (!use_separate_subevent)
-               fSubHdr.SetRawDataSize(evsize + white_rabit_size);
-         }
-
-         fEvHdr.Init(fEvCounter++);
-         fEvHdr.SetFullSize(full_size);
-
-         if ((fWhiteRabbitId == 0) || (white_rabit_size == 0))
-            StartSend(&fEvHdr, sizeof(fEvHdr),
-                      &fSubHdr, sizeof(fSubHdr),
-                      iter->Event(), evsize);
-         else if (use_separate_subevent)
-            StartSend(&fEvHdr, sizeof(fEvHdr),
-                      fWhiteRabbitSubEvent, white_rabit_size, // add white rabbit data as separate subevent
-                      &fSubHdr, sizeof(fSubHdr),
-                      iter->Event(), evsize);
-         else
-            StartSend(&fEvHdr, sizeof(fEvHdr),
-                      &fSubHdr, sizeof(fSubHdr),
-                      fWhiteRabbitSubEvent, white_rabit_size, // inject white rabbit data into first MBS event before all other data
-                      iter->Event(), evsize);
-
-         if (!iter->NextEvent())
+         if (!fIter()->NextEvent())
             // if there are no move event - close iterator and wait for completion
             fState = oSendingLastEvent;
 
@@ -275,7 +307,8 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    unsigned sendsize = buf.GetTotalSize();
    unsigned events = 0;
 
-   if (sendsize == 0) return dabc::do_Skip;
+   if (sendsize == 0)
+      return dabc::do_Skip;
 
    bool is_mbs_buffer = (buf.GetTypeId() == mbs::mbt_MbsEvents);
 
@@ -298,6 +331,11 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
             sendsize += sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
             unsigned evsize = iter->EventSize();
             if (evsize % 2) evsize++;
+            if (fWhiteRabbitId) {
+               if (fSendWhiteRabbitAsExtraSubevent)
+                   evsize += sizeof(mbs::SubeventHeader);
+               evsize += mbs::WhiteRabbitPayloadSize;
+            }
             sendsize += evsize;
             rawsize += evsize;
             events++;
@@ -311,7 +349,6 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
          iter->NextEvent(); // shift to first event
       }
    }
-
 
    fHeader.Init(true);
    fHeader.SetUsedBufferSize(sendsize);
@@ -328,6 +365,9 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
       dabc::BufferSize_t datasize = !fLegacyFormat ? 0 : fServInfo.iMaxBytes - sizeof(fHeader);
       // when send legacy format - complete buffer size has to be send
       StartNetSend(&fHeader, sizeof(fHeader), buf, datasize);
+   } else if (!fIter.null() && fLegacyFormat) {
+      // which legacy we need to send one buffer with all padding bytes at once
+      SendLegacyEvents();
    } else {
       fState = oSendingEvents;
       StartSend(&fHeader, sizeof(fHeader));

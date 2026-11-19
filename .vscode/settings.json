@@ -61,5 +61,6 @@
       "__split_buffer": "cpp",
       "locale": "cpp",
       "second.C": "cpp"
-   }
+   },
+   "makefile.configureOnOpen": false
 }

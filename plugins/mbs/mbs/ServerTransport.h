@@ -72,6 +72,7 @@ namespace mbs {
          uint32_t              fEvCounter = 0; // special events counter
          uint32_t              fSubevId = 0;       // full id of subevent
          uint32_t              fWhiteRabbitId = 0; // id for white rabbit data
+         bool                  fSendWhiteRabbitAsExtraSubevent = false; // not yet used
          bool                  fHasExtraRequest = false;
          bool                  fLegacyFormat = false;
 
@@ -85,6 +86,10 @@ namespace mbs {
          double ProcessTimeout(double last_diff) override;
 
          void OnSocketError(int err, const std::string &info) override;
+
+         uint32_t SendNextEvent(unsigned char *buf = nullptr, uint32_t maxsize = 0);
+
+         void SendLegacyEvents();
 
          // IMPORTANT: do not provide addon here, set it directly in server
          dabc::WorkerAddon* Write_GetAddon()  override { return nullptr; }
