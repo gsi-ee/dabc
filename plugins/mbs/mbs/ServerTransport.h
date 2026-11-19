@@ -66,6 +66,7 @@ namespace mbs {
          mbs::BufferHeader     fHeader;
          long                  fSendBuffers{0};
          long                  fDroppedBuffers{0};
+         unsigned              fSendEventsSize = 0;
          dabc::EventsIteratorRef fIter;
          mbs::EventHeader      fEvHdr;  // additional MBS event header (for non-MBS events)
          unsigned char         fWhiteRabbitSubEvent[50]; // raw buffer for white rabbit subevent

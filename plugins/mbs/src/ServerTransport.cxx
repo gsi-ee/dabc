@@ -120,16 +120,16 @@ uint32_t mbs::ServerOutputAddon::SendNextEvent(unsigned char *buf, uint32_t maxs
       ptr4 = iter->Event(); sz4 = evsize;
    }
 
+   unsigned total = sz1 + sz2 + sz3 + sz4;
+
    if (!buf) {
       // direct send of the event
       StartSend(ptr1, sz1,
                 ptr2, sz2,
                 ptr3, sz3,
                 ptr4, sz4);
-      return 0;
+      return total;
    }
-
-   unsigned total = sz1 + sz2 + sz3 + sz4;
 
    if (total > maxsize)
       return 0;
@@ -198,7 +198,8 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          return;
 
       case oSendingEvents: {
-         SendNextEvent(); // send next event
+         unsigned sz = SendNextEvent(); // send next event
+         fSendEventsSize += sz;
 
          if (!fIter()->NextEvent())
             // if there are no move event - close iterator and wait for completion
@@ -209,6 +210,20 @@ void mbs::ServerOutputAddon::OnSendCompleted()
 
       case oSendingLastEvent:
          fIter()->Close(); // close here to ensure memory for send operation
+         if (fLegacyFormat) {
+            // in legacy exact amount of data need to be send
+            long remainsz = fServInfo.iMaxBytes - sizeof(fHeader);
+            remainsz -= fSendEventsSize;
+            if (remainsz > 0) {
+               if ((long) fLegacyBlob.size() < remainsz)
+                  fLegacyBlob.resize(remainsz);
+               std::fill(fLegacyBlob.begin(), fLegacyBlob.end(), 0);
+
+               StartSend(fLegacyBlob.data(), remainsz);
+               fState = oSendingBuffer;
+               break; // wait until
+            }
+         }
          /* no break */
 
       case oSendingBuffer:
@@ -393,13 +408,13 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
       dabc::BufferSize_t datasize = !fLegacyFormat ? 0 : fServInfo.iMaxBytes - sizeof(fHeader);
       // when send legacy format - complete buffer size has to be send
       StartNetSend(&fHeader, sizeof(fHeader), buf, datasize);
-   } else if (!fIter.null() && fLegacyFormat) {
-      // which legacy we need to send one buffer with all padding bytes at once
-      fState = oSendingLastEvent;
-      SendLegacyEvents();
+   //} else if (!fIter.null() && fLegacyFormat) {
+   //   fState = oSendingLastEvent;
+   //   SendLegacyEvents();
    } else {
       fState = oSendingEvents;
       StartSend(&fHeader, sizeof(fHeader));
+      fSendEventsSize = 0;
    }
 
    return dabc::do_CallBack;
