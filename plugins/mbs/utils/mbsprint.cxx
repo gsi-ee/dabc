@@ -32,8 +32,8 @@ int usage(const char *errstr = nullptr)
    printf("mbsprint source [args]\n\n");
    printf("Following source kinds are supported:\n");
    printf("   lmd://path/file.lmd     - LMD file reading\n");
-   printf("   mbs://mbsnode/Transport - MBS transport server\n");
-   printf("   mbs://mbsnode/Stream    - MBS stream server\n");
+   printf("   mbst://mbsnode:port     - MBS transport server\n");
+   printf("   mbss://mbsnode:port     - MBS stream server\n");
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
    printf("   -maxage value           - maximal age time for events, if expired queue are cleaned (default off)\n");
