@@ -19,7 +19,7 @@
 
 #include "mbs/Iterator.h"
 
-mbs::ClientTransport::ClientTransport(int fd, int kind) :
+mbs::ClientTransport::ClientTransport(int fd, int kind, bool legacy) :
    dabc::SocketIOAddon(fd),
    dabc::DataInput(),
    fState(ioInit),
@@ -30,6 +30,8 @@ mbs::ClientTransport::ClientTransport(int fd, int kind) :
    fSpanBuffer()
 {
    fServInfo.iStreams = 0; // by default, new format
+
+   fLegacyFormat = legacy; // if true, old MBS protocol is used
 
    DOUT3("Create mbs::ClientTransport::ClientTransport() %p fd:%d kind:%d", this, fd, kind);
 }
@@ -122,17 +124,16 @@ void mbs::ClientTransport::OnRecvCompleted()
 
       case ioRecvHeader:
 
-         if (fSwapping) mbs::SwapData(&fHeader, sizeof(fHeader));
+         if (fSwapping)
+            mbs::SwapData(&fHeader, sizeof(fHeader));
 
-//         DOUT0("MbsClient:: Header received, size %u, rest size = %u used %u", fHeader.BufferLength(), ReadBufferSize(), fHeader.UsedBufferSize());
+         //  DOUT0("MbsClient:: Header received, size %u, rest size = %u used %u", fHeader.BufferLength(), ReadBufferSize(), fHeader.UsedBufferSize());
 
          if (ReadBufferSize() > (unsigned) fServInfo.iMaxBytes) {
             EOUT("Buffer size %u bigger than allowed by info record %d", ReadBufferSize(), fServInfo.iMaxBytes);
             fState = ioError;
             MakeCallback(dabc::di_Error);
-         } else
-         if (ReadBufferSize() == 0) {
-
+         } else if (ReadBufferSize() == 0) {
             DOUT4("Keep alive buffer from MBS side");
             fState = ioReady;
             MakeCallback(dabc::di_SkipBuffer);
@@ -141,7 +142,9 @@ void mbs::ClientTransport::OnRecvCompleted()
             fState = ioWaitBuffer;
 
             // when spanning is used, we need normal-size buffer
-            MakeCallback(fSpanning ? dabc::di_DfltBufSize : ReadBufferSize());
+            // for legacy format we need buffer which is reported by MBS
+            // in DABC mode MBS sends exactly number of bytes which are used in the buffer
+            MakeCallback(fSpanning ? dabc::di_DfltBufSize : (fLegacyFormat ? fServInfo.iMaxBytes : ReadBufferSize()));
          }
 
          break;
@@ -241,7 +244,7 @@ void mbs::ClientTransport::MakeCallback(unsigned arg)
       fState = ioError;
       SubmitWorkerCmd(dabc::Command("CloseTransport"));
    } else {
-       DOUT4("Activate CallBack with arg %u", arg);
+      DOUT4("Activate CallBack with arg %u", arg);
       tr->Read_CallBack(arg);
    }
 }
@@ -303,7 +306,8 @@ unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
       // extra buffer required only here, later normal buffer can be used
       started = StartRecv(extra, ReadBufferSize());
    } else {
-      started = StartRecv(buf, ReadBufferSize());
+      // in legacy mode many 0 will be send at the end to fill complete buffer
+      started = StartRecv(buf, fLegacyFormat ? fServInfo.iMaxBytes - sizeof(fHeader) : ReadBufferSize());
    }
 
    if (!started) return dabc::di_Error;
@@ -318,20 +322,20 @@ unsigned mbs::ClientTransport::Read_Complete(dabc::Buffer& buf)
    //DOUT0("mbs::ClientTransport::Read_Complete");
 
    // JAM 18.07.2024: in this case callback wants to skip buffer, forward it:
-   if (fState==ioReady) {
+   if (fState == ioReady) {
       DOUT4("Read complete with ready state %d, skip buffer !!!", fState);
       return dabc::di_SkipBuffer;
    }
 
    //  JAM 18.07.2024 all other behaviour are real errors like before:
-   if (fState!=ioComplBuffer) {
-         EOUT("Read complete begins with strange state %d !!!", fState);
-         return dabc::di_Error;
-      }
+   if (fState != ioComplBuffer) {
+      EOUT("Read complete begins with strange state %d !!!", fState);
+      return dabc::di_Error;
+   }
 
    unsigned read_shift = 0;
-   if (!fSpanBuffer.null()) read_shift = fSpanBuffer.GetTotalSize() - sizeof(mbs::Header);
-
+   if (!fSpanBuffer.null())
+      read_shift = fSpanBuffer.GetTotalSize() - sizeof(mbs::Header);
 
    // first of all, swap data where it was received
    if (fSwapping) {

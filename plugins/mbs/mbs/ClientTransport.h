@@ -59,6 +59,7 @@ namespace mbs {
          EIOState             fState{ioInit};
          bool                 fSwapping{false};
          bool                 fSpanning{false};  //!< when true, MBS could deliver spanned events
+         bool                 fLegacyFormat = false; //!< legacy is plain MBS protocol sending full buffersize
 
          mbs::BufferHeader    fHeader;
          char                 fSendBuf[12];
@@ -95,7 +96,7 @@ namespace mbs {
 
       public:
 
-         ClientTransport(int fd, int kind);
+         ClientTransport(int fd, int kind, bool legacy);
          virtual ~ClientTransport();
 
          int Kind() const { return fKind; }

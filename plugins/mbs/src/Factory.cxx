@@ -56,7 +56,7 @@ dabc::Module *mbs::Factory::CreateTransport(const dabc::Reference& port, const s
       }
    }
 
-   if (portref.IsOutput() && (kind>0)) {
+   if (portref.IsOutput() && (kind > 0)) {
 
       if (portnum == 0)
          portnum = DefualtServerPort(kind);
@@ -115,14 +115,16 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string &typ)
 
       int fd = dabc::SocketThread::StartClient(url.GetHostName(), portnum);
 
+      bool legacy = url.HasOption("legacy");
+
       if (fd <= 0) {
          DOUT3("Fail connecting to host:%s port:%d", url.GetHostName().c_str(), portnum);
          return nullptr;
       }
 
-      DOUT0("Connect MBS %s server %s:%d", mbs::ServerKindToStr(kind), url.GetHostName().c_str(),  portnum);
+      DOUT0("Connect MBS %s server %s:%d %s", mbs::ServerKindToStr(kind), url.GetHostName().c_str(), portnum, legacy ? "legacy" : "");
 
-      return new mbs::ClientTransport(fd, kind);
+      return new mbs::ClientTransport(fd, kind, legacy);
    }
 
    return nullptr;
